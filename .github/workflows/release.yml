@@ -6,7 +6,7 @@ name: Release
 #   "Run workflow" button (Actions tab)                →  tests and build only; the APK is a downloadable artifact of the run.
 #
 # Secrets it needs (Settings → Secrets and variables → Actions); `npm run signing:key` makes the first four:
-#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD (the last only matters for an old JKS keystore)
 #   EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY   (optional: without them the APK is built with sharing turned off)
 on:
   push:
@@ -61,6 +61,7 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS; do
             if [ -z "${!name}" ]; then
@@ -78,6 +79,19 @@ jobs:
             exit 1
           fi
           echo "KEY_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
+          # A PKCS12 keystore (what 'npm run signing:key' makes) has one password for the store and the key, so ANDROID_KEY_PASSWORD is not
+          # used for it. Only an older JKS keystore can have a separate key password, and that one is tried here.
+          type=$(keytool -list -keystore "$KEYSTORE_FILE" -storepass:env ANDROID_KEYSTORE_PASSWORD | sed -n 's/^Keystore type: //p')
+          if [ "${type^^}" != "PKCS12" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
+            if ! keytool -importkeystore -noprompt -srckeystore "$KEYSTORE_FILE" -srcstorepass:env ANDROID_KEYSTORE_PASSWORD \
+                -srcalias "$ANDROID_KEY_ALIAS" -srckeypass:env ANDROID_KEY_PASSWORD \
+                -destkeystore "$RUNNER_TEMP/check.p12" -deststoretype PKCS12 -deststorepass:env ANDROID_KEYSTORE_PASSWORD > /dev/null 2>&1; then
+              echo "::error::The key in the keystore could not be opened with ANDROID_KEY_PASSWORD. Set that secret again, or delete it if the key has the same password as the keystore."
+              exit 1
+            fi
+            rm -f "$RUNNER_TEMP/check.p12"
+            echo "SEPARATE_KEY_PASSWORD=true" >> "$GITHUB_ENV"
+          fi
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
             echo "::warning::EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY are not set: this APK is built with sharing between parents turned off."
           fi
@@ -103,12 +117,14 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          key_password="$ANDROID_KEYSTORE_PASSWORD"
+          if [ "$SEPARATE_KEY_PASSWORD" = "true" ]; then key_password="$ANDROID_KEY_PASSWORD"; fi
           ./gradlew assembleRelease --no-daemon \
             -PreactNativeArchitectures=arm64-v8a,armeabi-v7a \
             -Pandroid.injected.signing.store.file="$KEYSTORE_FILE" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="${ANDROID_KEY_PASSWORD:-$ANDROID_KEYSTORE_PASSWORD}"
+            -Pandroid.injected.signing.key.password="$key_password"
 
       # An APK signed with any other key (the debug key, say) could not update the app on anyone's phone, so it must never be published.
       - name: Check the APK is signed with the release key
