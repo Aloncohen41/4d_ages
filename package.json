@@ -14,6 +14,7 @@
     "android:sync": "expo prebuild --platform android --clean",
     "brand:assets": "python3 branding/make-assets.py",
     "db:setup": "node scripts/setup-database.mjs",
+    "signing:key": "node scripts/make-release-keystore.mjs",
     "check": "node scripts/check-setup.mjs",
     "prestart": "node scripts/check-setup.mjs",
     "preandroid": "node scripts/check-setup.mjs",
