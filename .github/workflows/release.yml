@@ -37,7 +37,6 @@ jobs:
       EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
       # Goes up by one with every run, so Android accepts each release as an update of the one before (read by app.config.js).
       ANDROID_VERSION_CODE: ${{ github.run_number }}
-      KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
     steps:
       - uses: actions/checkout@v7
 
@@ -69,6 +68,8 @@ jobs:
               exit 1
             fi
           done
+          KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
+          echo "KEYSTORE_FILE=$KEYSTORE_FILE" >> "$GITHUB_ENV"
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
           fingerprint=$(keytool -list -v -keystore "$KEYSTORE_FILE" -storepass:env ANDROID_KEYSTORE_PASSWORD -alias "$ANDROID_KEY_ALIAS" \
             | sed -n 's/^.*SHA256: //p' | head -n 1 | tr -d ':' | tr 'A-F' 'a-f')
@@ -116,7 +117,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           built=android/app/build/outputs/apk/release/app-release.apk
-          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
           signed_by=$("$apksigner" verify --print-certs "$built" | grep -m 1 'certificate SHA-256 digest:' | awk '{print $NF}')
           if [ "$signed_by" != "$KEY_FINGERPRINT" ]; then
             echo "::error::The APK is signed with $signed_by, not with the release key ($KEY_FINGERPRINT)."
@@ -135,7 +136,7 @@ jobs:
 
       - name: Remove the release key from the runner
         if: always()
-        run: rm -f "$KEYSTORE_FILE"
+        run: rm -f "$RUNNER_TEMP/release.keystore"
 
       - uses: actions/upload-artifact@v7
         with:
