@@ -7,7 +7,7 @@
  * second app, and a different storage key hides every saved memory.
  */
 export const APP_NAME = "4D Ages";
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.0.1";
 export const TAGLINE = "A baby book that grows with them";
 /** The warm cream the splash screen and the loading screen share — sampled from the icon picture's own backdrop, so the hand-over is invisible. */
 export const SPLASH_BG = "#FEFBF6";
