@@ -1,0 +1,164 @@
+name: Release
+
+# Builds the standalone Android APK, signed with the release key kept in this repository's secrets.
+#
+#   Push a tag "v<version>" (the version in app.json)  →  tests, build, and a GitHub Release with the APK attached.
+#   "Run workflow" button (Actions tab)                →  tests and build only; the APK is a downloadable artifact of the run.
+#
+# Secrets it needs (Settings → Secrets and variables → Actions); `npm run signing:key` makes the first four:
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#   EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY   (optional: without them the APK is built with sharing turned off)
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build signed APK
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    env:
+      # The two public Supabase values; app.config.js puts them in the app while it is bundled.
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      # Goes up by one with every run, so Android accepts each release as an update of the one before (read by app.config.js).
+      ANDROID_VERSION_CODE: ${{ github.run_number }}
+      KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the version (a tag must match app.json)
+        id: version
+        run: |
+          version=$(node -p "require('./app.json').expo.version")
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the version in app.json ($version). Set the version in app.json and src/brand.ts, then tag v<that version>."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Done before the long build, so a missing or wrong secret fails in seconds rather than after 20 minutes.
+      - name: Load the release key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The secret $name is not set. Run 'npm run signing:key' and add the secrets it writes (see README, 'Releases')."
+              exit 1
+            fi
+          done
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
+          fingerprint=$(keytool -list -v -keystore "$KEYSTORE_FILE" -storepass:env ANDROID_KEYSTORE_PASSWORD -alias "$ANDROID_KEY_ALIAS" \
+            | sed -n 's/^.*SHA256: //p' | head -n 1 | tr -d ':' | tr 'A-F' 'a-f')
+          if [ -z "$fingerprint" ]; then
+            echo "::error::The keystore could not be opened with ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS."
+            exit 1
+          fi
+          echo "KEY_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "::warning::EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY are not set: this APK is built with sharing between parents turned off."
+          fi
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate the Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The generated project signs release builds with the debug key; these properties make Gradle sign with the release key instead.
+      # Phones only (arm64-v8a, armeabi-v7a): the x86 builds are for emulators and would double the size of the APK.
+      - name: Build the APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -PreactNativeArchitectures=arm64-v8a,armeabi-v7a \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_FILE" \
+            -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="${ANDROID_KEY_PASSWORD:-$ANDROID_KEYSTORE_PASSWORD}"
+
+      # An APK signed with any other key (the debug key, say) could not update the app on anyone's phone, so it must never be published.
+      - name: Check the APK is signed with the release key
+        id: apk
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          built=android/app/build/outputs/apk/release/app-release.apk
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          signed_by=$("$apksigner" verify --print-certs "$built" | grep -m 1 'certificate SHA-256 digest:' | awk '{print $NF}')
+          if [ "$signed_by" != "$KEY_FINGERPRINT" ]; then
+            echo "::error::The APK is signed with $signed_by, not with the release key ($KEY_FINGERPRINT)."
+            exit 1
+          fi
+          mkdir -p dist
+          apk="4d-ages-$VERSION.apk"
+          cp "$built" "dist/$apk"
+          (cd dist && sha256sum "$apk" > "$apk.sha256")
+          {
+            echo "### 4D Ages $VERSION (build $ANDROID_VERSION_CODE)"
+            echo "- APK: \`$apk\`, $(du -h "dist/$apk" | cut -f1)"
+            echo "- SHA-256 of the file: \`$(cut -d ' ' -f1 "dist/$apk.sha256")\`"
+            echo "- Signing certificate (SHA-256): \`$KEY_FINGERPRINT\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the release key from the runner
+        if: always()
+        run: rm -f "$KEYSTORE_FILE"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: 4d-ages-${{ steps.version.outputs.version }}-apk
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: 4d-ages-${{ needs.build.outputs.version }}-apk
+          path: dist
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "4D Ages $VERSION" --generate-notes --verify-tag

@@ -38,8 +38,47 @@ APK: `android/app/build/outputs/apk/release/app-release.apk`
 Install: `adb install -r app-release.apk` (or copy it to the phone and tap it).
 
 This APK is signed with the debug key — fine for your own phone. Before sharing with family,
-use EAS Build (`npx eas-cli build -p android --profile preview`) so one stable key signs every update.
+use the releases below so one stable key signs every update.
 Switching keys later forces an uninstall, which erases the app's data.
+
+## Releases (GitHub Actions)
+
+GitHub builds the APK, signs it with the release key and publishes it; nobody needs Android Studio or Java for that.
+
+- **Every push and pull request** (`.github/workflows/ci.yml`): `npm run check`, `npm run typecheck`, `npm test`.
+- **A tag `v<version>`** (`.github/workflows/release.yml`): the same checks, then the signed APK, attached to a new GitHub Release
+  as `4d-ages-<version>.apk` with its SHA-256. The *Run workflow* button on the Actions tab does the same without publishing: the APK is
+  an artifact of the run, which is the way to try a build first.
+
+**Once: make the release key and give it to GitHub.**
+
+```
+npm run signing:key                                 # writes ~/4d-ages-signing/release.keystore and github-secrets.env
+gh secret set -f ~/4d-ages-signing/github-secrets.env
+gh secret set EXPO_PUBLIC_SUPABASE_URL              # the two public values from your .env (it asks for each value)
+gh secret set EXPO_PUBLIC_SUPABASE_ANON_KEY
+```
+
+Keep a copy of `~/4d-ages-signing` somewhere safe (a password manager). Android only installs an update signed with the same key as the
+app already on the phone, so a lost key means everyone uninstalls — and loses every memory that isn't in the shared online copy. For the
+same reason, an app installed from a debug-signed APK can't be updated by a release. If a phone already holds memories in such a build,
+either turn on sharing there first (SHARING.md) so they come back after the reinstall, or use that build's `debug.keystore` as the
+release key instead of making a new one (its base64, password `android` and alias `androiddebugkey` as the four `ANDROID_…` secrets).
+Without the two Supabase secrets the build still succeeds (with a warning) but sharing between parents is off in that APK.
+
+**Each release:**
+
+```
+make bump          # 1.0.0 → 1.0.1; or: make bump PART=minor, make bump PART=major, make bump VERSION=1.4.2
+make release       # tests, commits the bump, tags v<version> and pushes main and the tag
+```
+
+`make bump` (without make: `npm run release:bump -- minor`) writes the version to `app.json`, `src/brand.ts`, `package.json` and
+`package-lock.json` — `npm test` checks the first two agree. `make release` only runs on `main` with nothing else uncommitted. By hand it is:
+commit, then `git tag v1.1.0 && git push origin main v1.1.0` (the tag must be `v` + that version, or the run stops straight away).
+
+The build number Android compares (`versionCode`) is the number of the workflow run, so it rises by itself; `app.config.js` reads it from
+`ANDROID_VERSION_CODE`. Before publishing, the workflow checks that the APK really is signed with the release key and stops if it isn't.
 
 ## What's inside
 
