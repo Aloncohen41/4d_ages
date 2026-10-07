@@ -32,7 +32,7 @@ DerivedData/
 
 # Signing keys and credentials
 *.keystore
-!debug.keystore
+release.keystore
 *.jks
 *.p8
 *.p12
@@ -43,9 +43,12 @@ google-services.json
 GoogleService-Info.plist
 credentials.json
 service-account*.json
+github-secrets.env
+4d-ages-signing/
 
 # Environment variables
 .env*
+*.env
 !.env.example
 
 # Supabase local dev
