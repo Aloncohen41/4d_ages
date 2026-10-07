@@ -1,0 +1,80 @@
+{
+  "expo": {
+    "name": "4D Ages",
+    "slug": "4d-ages",
+    "scheme": "fourdages",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.alonc.fourdages",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FEFBF6",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
+      },
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "intentFilters": [
+        {
+          "action": "SEND",
+          "category": [
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "mimeType": "image/*"
+            },
+            {
+              "mimeType": "video/*"
+            }
+          ]
+        },
+        {
+          "action": "SEND_MULTIPLE",
+          "category": [
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "mimeType": "image/*"
+            },
+            {
+              "mimeType": "video/*"
+            }
+          ]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 288,
+          "resizeMode": "contain",
+          "backgroundColor": "#FEFBF6"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "4D Ages lets you choose photos and videos for your baby book."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#974164"
+        }
+      ],
+      "./plugins/withKeepScreenAlive"
+    ]
+  }
+}

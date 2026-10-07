@@ -1,0 +1,28 @@
+apply plugin: 'com.android.library'
+
+group = 'expo.modules.videoexport'
+version = '0.1.0'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+def rootInt = { String name, int fallback ->
+  rootProject.ext.has(name) ? rootProject.ext.get(name) : fallback
+}
+
+android {
+  namespace "expo.modules.videoexport"
+  compileSdkVersion rootInt("compileSdkVersion", 36)
+  defaultConfig {
+    minSdkVersion rootInt("minSdkVersion", 24)
+    targetSdkVersion rootInt("targetSdkVersion", 36)
+    versionCode 1
+    versionName "0.1.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+}

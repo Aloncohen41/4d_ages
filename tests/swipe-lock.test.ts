@@ -1,0 +1,17 @@
+import { holdSwipe, releaseSwipe, isSwipeHeld, subscribeSwipe } from "../src/lib/swipeGuard";
+let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
+let calls = 0;
+const off = subscribeSwipe(() => calls++);
+ok("starts free", !isSwipeHeld());
+holdSwipe();
+ok("holding locks the pager and tells the layout once", isSwipeHeld() && calls === 1);
+holdSwipe();
+ok("holding twice doesn't re-notify", calls === 1);
+releaseSwipe();
+ok("releasing frees it and tells the layout", !isSwipeHeld() && calls === 2);
+releaseSwipe();
+ok("releasing when already free is harmless", !isSwipeHeld() && calls === 2);
+off(); holdSwipe(); releaseSwipe();
+ok("an unsubscribed listener is no longer called", calls === 2);
+console.log(fails ? `${fails} FAILED` : "all swipe-lock tests passed");
+setTimeout(() => process.exit(fails ? 1 : 0), 10);
