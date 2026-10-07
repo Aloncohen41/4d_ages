@@ -42,6 +42,7 @@ DerivedData/
 google-services.json
 GoogleService-Info.plist
 credentials.json
+github-secrets.env
 service-account*.json
 
 # Environment variables

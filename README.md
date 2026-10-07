@@ -68,8 +68,14 @@ Without the two Supabase secrets the build still succeeds (with a warning) but s
 
 **Each release:**
 
-1. Set the new version in `app.json` (`expo.version`) and `src/brand.ts` (`APP_VERSION`) — `npm test` checks they agree — and push to `main`.
-2. `git tag v1.1.0 && git push origin v1.1.0` (the tag must be `v` + that version, or the run stops straight away).
+```
+make bump          # 1.0.0 → 1.0.1; or: make bump PART=minor, make bump PART=major, make bump VERSION=1.4.2
+make release       # tests, commits the bump, tags v<version> and pushes main and the tag
+```
+
+`make bump` (without make: `npm run release:bump -- minor`) writes the version to `app.json`, `src/brand.ts`, `package.json` and
+`package-lock.json` — `npm test` checks the first two agree. `make release` only runs on `main` with nothing else uncommitted. By hand it is:
+commit, then `git tag v1.1.0 && git push origin main v1.1.0` (the tag must be `v` + that version, or the run stops straight away).
 
 The build number Android compares (`versionCode`) is the number of the workflow run, so it rises by itself; `app.config.js` reads it from
 `ANDROID_VERSION_CODE`. Before publishing, the workflow checks that the APK really is signed with the release key and stops if it isn't.

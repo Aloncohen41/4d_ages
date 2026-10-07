@@ -15,6 +15,7 @@
     "brand:assets": "python3 branding/make-assets.py",
     "db:setup": "node scripts/setup-database.mjs",
     "signing:key": "node scripts/make-release-keystore.mjs",
+    "release:bump": "node scripts/bump-version.mjs",
     "check": "node scripts/check-setup.mjs",
     "prestart": "node scripts/check-setup.mjs",
     "preandroid": "node scripts/check-setup.mjs",
