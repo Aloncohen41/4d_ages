@@ -4,7 +4,7 @@ import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { MILESTONE_CATALOG } from "../lib/types";
 import { milestonesLogged } from "../lib/selectors";
-import { AREA_META, AreaReport, STATUS_COPY, Status, activitiesFor, ageLabel, ageMonths, analyze, bandLabel, highlightText, reachedText, reinforceBand } from "../lib/development";
+import { AREA_META, areaSoft, AreaReport, STATUS_COPY, Status, activitiesFor, ageLabel, ageMonths, analyze, bandLabel, highlightText, reachedText, reinforceBand } from "../lib/development";
 import { todayISO } from "../lib/date";
 import { Btn, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
@@ -14,7 +14,7 @@ export function ReinforceButton({ onPress }: { onPress: () => void }) {
   const t = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityLabel="Reinforce" style={{ flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 99, paddingLeft: 6, paddingRight: 13, paddingVertical: 6 }}>
-      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.accentDeep, alignItems: "center", justifyContent: "center" }}><Icon name="arrow-up-right" size={16} color="#fff" /></View>
+      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.accentDeep, alignItems: "center", justifyContent: "center" }}><Icon name="arrow-up-right" size={16} color={t.onAccent} /></View>
       <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>Reinforce</Text>
     </Pressable>
   );
@@ -48,7 +48,7 @@ export function ReinforceSheet({ visible, onClose }: { visible: boolean; onClose
     return (
       <View key={r.area} style={{ paddingVertical: 10, borderTopWidth: 1, borderTopColor: t.line }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: meta.soft, borderWidth: 2, borderColor: meta.color, alignItems: "center", justifyContent: "center" }}><Icon name={meta.icon as IconName} size={16} color={meta.color} /></View>
+          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: areaSoft(meta, t), borderWidth: 2, borderColor: meta.color, alignItems: "center", justifyContent: "center" }}><Icon name={meta.icon as IconName} size={16} color={meta.color} /></View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>{meta.label}</Text>
             {r.reached > 0 ? <Text style={{ color: t.ink3, fontSize: 12.5 }}>{reachedText(r.reached)}</Text> : null}

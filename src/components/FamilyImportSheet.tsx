@@ -88,7 +88,7 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
                   {dup ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 2 }}>Looks like someone already in {child.name}'s family</Text> : null}
                 </View>
                 <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2.5, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accent : "transparent", alignItems: "center", justifyContent: "center" }}>
-                  {on ? <Icon name="check" size={16} color="#fff" /> : null}
+                  {on ? <Icon name="check" size={16} color={t.onAccent} /> : null}
                 </View>
               </Pressable>
             );

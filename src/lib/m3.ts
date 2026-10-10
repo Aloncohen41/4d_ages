@@ -113,6 +113,32 @@ export function lightScheme(seed: string): M3Scheme {
   };
 }
 
+/**
+ * The dark scheme from the same palettes, with Material's dark tones: primary is tone 80 with tone-20 text on it, containers are tone 30
+ * with tone-90 text, and the surfaces are neutral tones 4–22 (tinted by the seed's hue, so each child's dark theme keeps its colour).
+ */
+export function darkScheme(seed: string): M3Scheme {
+  const { hue } = hueChromaOf(seed);
+  const P = (t: number) => colorAt(t, 40, hue);
+  const S = (t: number) => colorAt(t, 16, hue);
+  const T = (t: number) => colorAt(t, 22, hue + 60);
+  const N = (t: number) => colorAt(t, 4, hue);
+  const NV = (t: number) => colorAt(t, 8, hue);
+  const E = (t: number) => colorAt(t, 64, 36);
+  return {
+    primary: P(80), onPrimary: P(20), primaryContainer: colorAt(30, 26, hue), onPrimaryContainer: P(90),
+    secondary: S(80), onSecondary: S(20), secondaryContainer: S(30), onSecondaryContainer: S(90),
+    tertiary: T(80), onTertiary: T(20), tertiaryContainer: T(30), onTertiaryContainer: T(90),
+    error: E(80), onError: E(20), errorContainer: E(30), onErrorContainer: E(90),
+    surface: N(6), onSurface: N(90), onSurfaceVariant: NV(80),
+    surfaceContainerLowest: N(4), surfaceContainerLow: N(10), surfaceContainer: N(12), surfaceContainerHigh: N(17), surfaceContainerHighest: N(22),
+    outline: NV(60), outlineVariant: NV(30),
+    inverseSurface: N(90), inverseOnSurface: N(20), inversePrimary: P(40),
+    primaryDeep: P(90),
+    onSurfaceMuted: NV(72), onSurfaceSubtle: NV(66), outlineSoft: NV(25),
+  };
+}
+
 /** The colour with an opacity, as 8-digit hex ("#rrggbbaa"): Material's state layers (hover 8%, press 12%) and disabled content (38%) use these. */
 export function withAlpha(hex: string, alpha: number): string {
   const a = Math.round(Math.min(1, Math.max(0, alpha)) * 255).toString(16).padStart(2, "0");

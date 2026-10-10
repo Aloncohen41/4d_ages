@@ -3,10 +3,10 @@
     "name": "4D Ages",
     "slug": "4d-ages",
     "scheme": "fourdages",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.alonc.fourdages",
       "versionCode": 1,

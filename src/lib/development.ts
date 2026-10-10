@@ -1,6 +1,7 @@
 import { AREAS, Area, BANDS, Memory, MilestoneDef } from "./types";
 import { addMonths, daysBetween } from "./date";
 import { monthsOld } from "./growth";
+import { withAlpha } from "./m3";
 
 /*
  * How milestones are matched, asked about and understood. Everything here is meant to be encouraging:
@@ -23,6 +24,9 @@ export const AREA_META: Record<Area, AreaMeta> = {
   Movement: { label: "Movement", phrase: "movement", emoji: "🏃", icon: "activity", color: "#E9604A", soft: "#F9DAD5" },
   Other: { label: "Your own", phrase: "their own milestones", emoji: "⭐", icon: "star", color: "#8A7A80", soft: "#EFE6E9" },
 };
+
+/** An area's soft ground: its pastel in the light theme, its own colour at 24% in the dark one (a pastel there would glare and hide the text). */
+export const areaSoft = (meta: { color: string; soft: string }, theme: { dark: boolean }) => (theme.dark ? withAlpha(meta.color, 0.24) : meta.soft);
 
 const AREA_ALIASES: Record<string, Area> = {
   "Social & Emotional": "Social & Emotional", "Social & emotional": "Social & Emotional", Language: "Language", Cognitive: "Cognitive",

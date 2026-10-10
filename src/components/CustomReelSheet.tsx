@@ -134,7 +134,7 @@ export function CustomReelSheet({ child, memories, initial, onClose }: { child: 
           const on = p.from === range.from && p.to === range.to;
           return (
             <Pressable key={p.id} onPress={() => preset(p.from, p.to)} style={chip(on)}>
-              <Text style={{ color: on ? "#fff" : t.accentDeep, fontWeight: "700", fontSize: 12 }}>{p.label}</Text>
+              <Text style={{ color: on ? t.onAccent : t.accentDeep, fontWeight: "700", fontSize: 12 }}>{p.label}</Text>
             </Pressable>
           );
         })}

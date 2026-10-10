@@ -136,7 +136,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
               return (
                 <Pressable key={s.id} onPress={() => phase !== "working" && setCoverId(s.id)} accessibilityLabel="Use as the cover" accessibilityState={{ selected: on }} style={{ width: 76, height: 76, borderRadius: 12, overflow: "hidden", borderWidth: 3, borderColor: on ? t.accent : "transparent", backgroundColor: t.bg3 }}>
                   <PhotoView photo={slideView(s)} fit="cover" style={{ width: "100%", height: "100%" }} emojiSize={22} />
-                  {on ? <Text style={{ position: "absolute", left: 0, right: 0, bottom: 0, textAlign: "center", color: "#fff", backgroundColor: t.accent, fontSize: 10, fontWeight: "700", paddingVertical: 1 }}>COVER</Text> : null}
+                  {on ? <Text style={{ position: "absolute", left: 0, right: 0, bottom: 0, textAlign: "center", color: t.onAccent, backgroundColor: t.accent, fontSize: 10, fontWeight: "700", paddingVertical: 1 }}>COVER</Text> : null}
                 </Pressable>
               );
             })}

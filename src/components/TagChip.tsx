@@ -13,8 +13,8 @@ export function TagChip({ tag, onPress, onRemove, small, muted }: { tag: Tag; on
   const member = tag.category === "person" ? relatives.find((r) => r.id === tag.relatedFamilyMemberId) : undefined;
   const palette = {
     person: { bg: t.accentSoft, fg: t.accentDeep },
-    event: { bg: t.goldSoft, fg: "#8a6414" },
-    place: { bg: "#e4efdc", fg: "#436b33" },
+    event: { bg: t.goldSoft, fg: t.eventInk },
+    place: { bg: t.place, fg: t.placeInk },
     other: { bg: t.bg2, fg: t.ink3 },
   }[tag.category];
   const fs = small ? 10.5 : 12.5;

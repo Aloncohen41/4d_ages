@@ -112,7 +112,7 @@ export default function TabsLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <StatusBar style="dark" />
+      <StatusBar style={t.dark ? "light" : "dark"} />
       <TopBar />{/* above the pager, so it stays still while the tabs slide */}
       <Tabs
         tabBarPosition="bottom"

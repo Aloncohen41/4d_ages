@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useActiveChild, useChildSwitching, useShownChild, useStore, uid } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
+import { WORDMARKS } from "../lib/wordmark";
 import { THEMES, THEME_ORDER, TYPE } from "../theme";
 import { withAlpha } from "../lib/m3";
 import { AvatarCrop, KidTheme } from "../lib/types";
@@ -44,7 +45,7 @@ export function TopBar() {
   return (
     <View style={{ backgroundColor: t.bg, paddingTop: insets.top + 8, paddingBottom: 8 }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 14 }}>
-        <Image source={require("../../assets/4d-ages-wordmark.png")} accessibilityLabel={APP_NAME} style={{ height: 42, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
+        <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ height: 42, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
       </View>
       <HScroll contentContainerStyle={{ gap: 8, paddingHorizontal: 14, paddingTop: 10 }}>
         {kids.map((k) => {
@@ -343,7 +344,7 @@ function Welcome({ onAdd }: { onAdd: () => void }) {
   const setShareOpen = useStore((s) => s.setShareOpen);
   return (
     <View style={{ padding: 28, alignItems: "center" }}>
-      <Image source={require("../../assets/4d-ages-wordmark.png")} accessibilityLabel={APP_NAME} style={{ width: 300, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
+      <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ width: 300, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
       <Text style={[TYPE.headlineSmall, { color: t.ink, textAlign: "center", marginTop: 6 }]}>{TAGLINE}</Text>
       <Text style={{ color: t.ink3, textAlign: "center", fontSize: 15, lineHeight: 22, marginTop: 8 }}>
         Add your little one, pick the photos you love, and watch their story build itself — with milestones, family and a keepsake book you can export.

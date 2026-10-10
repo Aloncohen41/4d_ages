@@ -42,7 +42,7 @@ export function ThumbPicker({ videoUri, current, onChoose, onClose }: { videoUri
             <Pressable key={f} onPress={() => setPicked(f)} style={{ width: "48%", aspectRatio: 16 / 10, borderRadius: 14, overflow: "hidden", borderWidth: 3, borderColor: picked === f ? t.accent : "transparent", backgroundColor: t.bg3 }}>
               <Image source={{ uri: f }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
               {f === current && i === 0 ? <Text style={{ position: "absolute", left: 6, top: 6, backgroundColor: "#0009", color: "#fff", fontSize: 10, fontWeight: "700", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>Current</Text> : null}
-              {picked === f ? <Text style={{ position: "absolute", right: 6, bottom: 6, backgroundColor: t.accent, color: "#fff", fontSize: 11, fontWeight: "700", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>✓</Text> : null}
+              {picked === f ? <Text style={{ position: "absolute", right: 6, bottom: 6, backgroundColor: t.accent, color: t.onAccent, fontSize: 11, fontWeight: "700", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>✓</Text> : null}
             </Pressable>
           ))}
         </View>

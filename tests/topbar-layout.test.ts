@@ -17,7 +17,7 @@ const ret = layout.slice(layout.indexOf("return (", layout.indexOf("export defau
 ok("the top bar is rendered by the tabs layout, above the pager (before <Tabs>, not inside it)", /<TopBar \/>/.test(layout) && ret.indexOf("<TopBar />") > -1 && ret.indexOf("<TopBar />") < ret.indexOf("<Tabs"));
 ok("…and only once in the whole app", [..."app src".split(" ").flatMap((d) => walk(d))].map((f) => (read(f).match(/<TopBar \/>/g) || []).length).reduce((a, b) => a + b, 0) === 1);
 function walk(d: string): string[] { return readdirSync(join(root, d)).flatMap((x) => { const p = join(d, x); return statSync(join(root, p)).isDirectory() ? walk(p) : /\.tsx$/.test(x) ? [p] : []; }); }
-ok("the bar holds the 4D Ages wordmark (top-left) and the child switcher", /4d-ages-wordmark\.png/.test(topBarFn) && /accessibilityLabel=\{APP_NAME\}/.test(topBarFn) && /kids\.map/.test(topBarFn) && /setActive/.test(topBarFn) && /Add a child/.test(topBarFn));
+ok("the bar holds the 4D Ages wordmark (top-left) and the child switcher", /WORDMARKS\[t\.key\]/.test(topBarFn) && /accessibilityLabel=\{APP_NAME\}/.test(topBarFn) && /kids\.map/.test(topBarFn) && /setActive/.test(topBarFn) && /Add a child/.test(topBarFn));
 ok("the bar respects the phone's top inset itself (the pages no longer do)", /insets\.top/.test(topBarFn) && /useSafeAreaInsets/.test(screen));
 ok("each tab's page no longer contains the brand row, the child switcher or a sticky header", !/kids\.map|setActive|stickyHeaderIndices|wordmark|APP_NAME/.test(screenFn));
 ok("the status bar is set once, in the layout, not per page", /<StatusBar /.test(layout) && !/<StatusBar /.test(screen));

@@ -4,7 +4,7 @@ import { useShownChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { AREAS, BANDS, MILESTONE_CATALOG, MILESTONE_DEFS, Memory, MilestoneDef } from "../lib/types";
 import { milestonesLogged } from "../lib/selectors";
-import { AREA_META, ageChip, ageMonths, celebration, areaOf, bandIndex, bandLabel, bandOfDef, defaultMilestoneDate, memoryForDef, pastChart, suggestionsFor } from "../lib/development";
+import { AREA_META, areaSoft, ageChip, ageMonths, celebration, areaOf, bandIndex, bandLabel, bandOfDef, defaultMilestoneDate, memoryForDef, pastChart, suggestionsFor } from "../lib/development";
 import { logMilestone } from "../lib/saveMilestone";
 import { addMonths, formatDate, todayISO } from "../lib/date";
 import { Btn, DateField, Seg, Sheet } from "./ui";
@@ -88,7 +88,7 @@ export function MilestoneChecklist() {
           {m ? <Text style={{ color: t.ink3, fontSize: 12, marginTop: 1 }}>{formatDate(m.date)}{m.description ? " · " + m.description : ""}</Text> : null}
         </Pressable>
         {m ? (
-          <Pressable onPress={() => edit(def)} hitSlop={8} accessibilityLabel={`Edit ${def.label}`} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: meta.soft, alignItems: "center", justifyContent: "center" }}>
+          <Pressable onPress={() => edit(def)} hitSlop={8} accessibilityLabel={`Edit ${def.label}`} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: areaSoft(meta, t), alignItems: "center", justifyContent: "center" }}>
             <Icon name="edit-2" size={15} color={meta.color} />
           </Pressable>
         ) : null}
@@ -139,7 +139,7 @@ export function MilestoneChecklist() {
         const done = list.filter((d) => memoryForDef(d, logged)).length;
         return (
           <View key={area} style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, marginTop: 14, overflow: "hidden" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: meta.soft, paddingHorizontal: 14, paddingVertical: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: areaSoft(meta, t), paddingHorizontal: 14, paddingVertical: 12 }}>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: meta.color, alignItems: "center", justifyContent: "center" }}><Icon name={meta.icon as IconName} size={18} color="#fff" /></View>
               <Text style={{ flex: 1, color: t.ink, fontWeight: "700", fontSize: 16 }}>{meta.label}</Text>
               {done >= 2 ? <Text style={{ color: meta.color, fontWeight: "700", fontSize: 12.5 }}>{done} reached</Text> : done === 1 ? <Icon name="star" size={15} color={meta.color} /> : null}

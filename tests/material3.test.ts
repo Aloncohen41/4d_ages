@@ -1,5 +1,5 @@
 import { lightScheme, toneOf, contrast, colorAt, hueChromaOf } from "../src/lib/m3";
-import { THEMES, THEME_ORDER, TYPE } from "../src/theme";
+import { THEMES, THEMES_DARK, THEME_ORDER, TYPE } from "../src/theme";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 
 // ---------- the colour maths
@@ -12,7 +12,13 @@ ok("contrast: black on white is 21:1, same colour is 1:1", Math.abs(contrast("#0
 
 // ---------- the three themes
 ok("there are three themes, each with its own palette", THEME_ORDER.length === 3 && new Set(THEME_ORDER.map((k) => THEMES[k].accent)).size === 3 && new Set(THEME_ORDER.map((k) => THEMES[k].bg)).size === 3);
-ok("every token is a valid colour", THEME_ORDER.every((k) => Object.entries(THEMES[k]).filter(([n]) => !["key", "label", "swatch"].includes(n)).every(([, v]) => /^#[0-9a-f]{6}([0-9a-f]{2})?$/.test(v as string))));
+ok("every token is a valid colour, light and dark", [THEMES, THEMES_DARK].every((set) => THEME_ORDER.every((k) => Object.entries(set[k]).filter(([n]) => !["key", "label", "swatch", "dark"].includes(n)).every(([, v]) => /^#[0-9a-f]{6}([0-9a-f]{2})?$/.test(v as string)))));
+// ---------- dark mode: each child theme has a dark version, and its text reads as well as the light one's
+ok("each child has a dark theme, marked dark, with a dark page and light text", THEME_ORDER.every((k) => THEMES_DARK[k].dark && !THEMES[k].dark && toneOf(THEMES_DARK[k].bg) < 10 && toneOf(THEMES_DARK[k].ink) > 85));
+ok("the dark themes keep each child's colour (three different accents)", new Set(THEME_ORDER.map((k) => THEMES_DARK[k].accent)).size === 3);
+ok("dark: body, quiet and hint text read at 4.5:1 on the page, cards and containers", THEME_ORDER.every((k) => { const t = THEMES_DARK[k]; return [t.ink, t.ink2, t.ink3, t.ink4].every((c) => [t.bg, t.bg2, t.card].every((g) => contrast(c, g) >= 4.5)); }));
+ok("dark: text on the accent, on tonal containers and on tags reads at 4.5:1", THEME_ORDER.every((k) => { const t = THEMES_DARK[k]; return contrast(t.onAccent, t.accent) >= 4.5 && contrast(t.onAccent, t.accentDeep) >= 4.5 && contrast(t.onChipOn, t.chipOn) >= 4.5 && contrast(t.accentDeep, t.accentSoft) >= 4.5 && contrast(t.danger, t.dangerSoft) >= 4.5 && contrast(t.eventInk, t.goldSoft) >= 4.5 && contrast(t.placeInk, t.place) >= 4.5; }));
+ok("dark: field and button outlines stand out from the page at 3:1", THEME_ORDER.every((k) => contrast(THEMES_DARK[k].outline, THEMES_DARK[k].bg) >= 3));
 ok("the roles sit at Material's tones: primary 40, container 90, on-container 10, surface 98, on-surface 10", THEME_ORDER.every((k) => { const t = THEMES[k]; return Math.abs(toneOf(t.accent) - 40) < 1.2 && Math.abs(toneOf(t.accentSoft) - 90) < 1.2 && Math.abs(toneOf(t.onAccentSoft) - 10) < 1.2 && Math.abs(toneOf(t.bg) - 98) < 1.2 && Math.abs(toneOf(t.ink) - 10) < 1.2; }));
 ok("the surfaces step up in tone like Material's containers: surface > low > container > highest", THEME_ORDER.every((k) => { const t = THEMES[k]; return toneOf(t.bg) > toneOf(t.card) && toneOf(t.card) > toneOf(t.bg2) && toneOf(t.bg2) > toneOf(t.surfaceHigh) && toneOf(t.surfaceHigh) > toneOf(t.bg3); }));
 ok("each theme's colour comes from its own hue (pink reads warm, blue cool, green between)", (() => { const h = (k: any) => hueChromaOf(THEMES[k as "pink"].accent).hue; return (h("pink") > 330 || h("pink") < 20) && h("blue") > 230 && h("blue") < 270 && h("green") > 110 && h("green") < 160; })());

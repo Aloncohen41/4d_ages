@@ -80,7 +80,7 @@ function Family() {
 
       {sources.length ? (
         <Pressable onPress={() => setImporting(true)} accessibilityLabel={`Import family from ${importFrom}`} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14, padding: 12, borderRadius: 16, backgroundColor: t.accentSoft, borderWidth: 1.5, borderColor: t.accent }}>
-          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" }}><Icon name="download" size={17} color="#fff" /></View>
+          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" }}><Icon name="download" size={17} color={t.onAccent} /></View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 14.5 }}>Import family from {importFrom}</Text>
             <Text style={{ color: t.ink3, fontSize: 12 }}>Choose who to bring over — everyone is marked to begin with.</Text>
