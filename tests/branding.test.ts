@@ -141,8 +141,8 @@ ok("the two supplied pictures and the generator are kept in branding/", existsSy
 ok("no earlier logo source is left behind", readdirSync(join(root, "branding")).sort().join() === "4d-ages-icon.jpg,4d-ages-wordmark.png,make-assets.py,make-wordmarks.mjs");
 ok("there is a wordmark for every child theme, the same size as the original (so WORDMARK_ASPECT holds for each)", ["blue", "green"].every((c) => { const p = png(`assets/4d-ages-wordmark-${c}.png`), o = png(WORDMARK); return p.w === o.w && p.h === o.h; }));
 ok("the logo follows the child's colour: every place that shows it picks the themed wordmark", ["src/components/Screen.tsx", "src/components/AboutCard.tsx"].every((f) => { const s = readFileSync(join(root, f), "utf8"); return /WORDMARKS\[t\.key\]/.test(s) && !/4d-ages-wordmark\.png/.test(s); }));
-const skip = new Set(["node_modules", "assets", "branding", ".git"]); const strays: string[] = [];
-const scan = (d: string) => readdirSync(d).forEach((x) => { const p = join(d, x); if (skip.has(x)) return; statSync(p).isDirectory() ? scan(p) : /\.(png|jpe?g|svg|webp|gif|ico)$/i.test(x) && strays.push(relative(root, p)); });
-scan(root);
+// What the project ships: every file git tracks or would add (anything .gitignore covers, like local build output in android/ or .expo/, is left out).
+const shipped: string[] = require("node:child_process").execSync("git ls-files --cached --others --exclude-standard", { cwd: root, encoding: "utf8" }).split("\n").filter(Boolean);
+const strays = shipped.filter((f) => /\.(png|jpe?g|svg|webp|gif|ico)$/i.test(f) && !/^(assets|branding)\//.test(f));
 ok("no other image files anywhere in the project" + (strays.length ? " — found " + strays.join(", ") : ""), strays.length === 0);
 console.log(fails ? `${fails} FAILED` : "all branding tests passed");

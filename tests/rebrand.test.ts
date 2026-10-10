@@ -28,8 +28,10 @@ ok("the pre-migration backup keys are still derived from it", /backup-v/.test(re
 
 // ---- no visible old name anywhere
 const TEXT = /\.(ts|tsx|kt|sql|md|json|js|mjs|cjs|py|html|txt)$/;
+// What the project ships: every file git tracks or would add (anything .gitignore covers, like local build output in android/ or .expo/, is left out).
+const shipped: string[] = require("node:child_process").execSync("git ls-files --cached --others --exclude-standard", { cwd: root, encoding: "utf8" }).split("\n").filter(Boolean);
 const files: string[] = [];
-const walk = (d: string) => readdirSync(join(root, d)).forEach((x) => { if (["node_modules", ".git"].includes(x)) return; const rel = join(d, x); statSync(join(root, rel)).isDirectory() ? walk(rel) : TEXT.test(x) && x !== "emoji.json" && files.push(rel); });
+const walk = (d: string) => shipped.forEach((f) => { if (f.startsWith(d + "/") && TEXT.test(f) && !f.endsWith("/emoji.json")) files.push(f); });
 // ---- the previous name is gone from every file, comment, setting and file name: only 4D Ages remains
 // (the pattern is assembled from pieces so that this file doesn't contain the name it is looking for)
 ["app", "src", "modules", "supabase", "plugins", "branding", "tests"].forEach(walk);
@@ -40,7 +42,7 @@ for (const f of files) read(f).split("\n").forEach((line, i) => { if (OLD.test(l
 ok("the previous name appears nowhere — not in screens, notifications, share text, PDF, docs, comments, tests, settings or Kotlin" + (hits.length ? " — found: " + hits[0] : ""), hits.length === 0);
 ok("no file or folder is named after it either", !files.some((f) => OLD.test(f)));
 ok("the npm package is named 4d-ages", pkg.name === "4d-ages");
-ok("no hand-kept android/ folder is shipped (it is regenerated from app.json)", !existsSync(join(root, "android")));
+ok("no hand-kept android/ folder is shipped (it is regenerated from app.json)", !shipped.some((f) => f.startsWith("android/")));
 ok("an npm script regenerates the Android project (android:sync = prebuild --clean)", /prebuild --platform android --clean/.test(pkg.scripts["android:sync"] || ""));
 ok("the docs explain the app id and syncing Android", /android:sync/.test(read("README.md")) && /com\.alonc\.fourdages/.test(read("README.md")) && /4d-ages-v1/.test(read("README.md")));
 console.log(fails ? `${fails} FAILED` : "all rebrand tests passed");
