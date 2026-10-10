@@ -8,6 +8,7 @@ name: Release
 # Secrets it needs (Settings → Secrets and variables → Actions); `npm run signing:key` makes the first four:
 #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD (the last only matters for an old JKS keystore)
 #   EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY   (optional: without them the APK is built with sharing turned off)
+#   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID                          (optional: without it there is no "Continue with Google" button)
 on:
   push:
     tags: ["v*"]
@@ -35,6 +36,7 @@ jobs:
       # The two public Supabase values; app.config.js puts them in the app while it is bundled.
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
       # Goes up by one with every run, so Android accepts each release as an update of the one before (read by app.config.js).
       ANDROID_VERSION_CODE: ${{ github.run_number }}
     steps:

@@ -3,7 +3,7 @@ import { Pressable, Share, Text, View } from "react-native";
 import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { APP_NAME } from "../brand";
-import { isConfigured, keyIsSecret, signIn, signOut, signUp, useSession } from "../lib/supabase";
+import { googleReady, isConfigured, keyIsSecret, signIn, signInWithGoogle, signOut, signUp, useSession } from "../lib/supabase";
 import { createInvite, joinWithCode, leaveChild, listMembers, shareChild, syncAll } from "../lib/sync";
 import { Btn, Input, Label, Sheet } from "./ui";
 
@@ -83,6 +83,12 @@ export function ShareSheet() {
         <View style={card}>
           <Text style={h}>{mode === "in" ? "Sign in" : "Create your account"}</Text>
           <Text style={p}>Each parent has their own login. Your photos stay private to the people you invite.</Text>
+          {googleReady ? (
+            <>
+              <Btn label={busy ? "One moment…" : "Continue with Google"} kind="line" onPress={() => run(async () => { await signInWithGoogle(); })} disabled={busy} style={{ marginTop: 14 }} />
+              <Text style={{ color: t.ink3, fontSize: 12, textAlign: "center", marginTop: 12 }}>or use your email</Text>
+            </>
+          ) : null}
           <Label>Email</Label>
           <Input value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" placeholder="you@example.com" />
           <Label>Password</Label>

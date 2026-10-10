@@ -65,6 +65,27 @@ the **project reference** in your database connection string (only that public r
 
 After you create or change `.env`, restart the development server with `npx expo start -c` (or run `npm run android` again).
 
+## 4b. Optional: "Continue with Google"
+
+Parents can sign in with their Google account instead of an email and password. It needs three things in the Google Cloud project
+**d-ages** (**APIs & Services → Credentials**) and one switch in Supabase:
+
+1. **An Android OAuth client** (done): package name `com.alonc.fourdages` and the SHA-1 of the key that signs the app. Its client ID is
+   `374884084370-5k2g584ndqcp09kbig9mm4af1thg6am2.apps.googleusercontent.com`. The app doesn't use this ID; Google uses the client to
+   recognise the app. Debug builds use the debug key's SHA-1 (`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`);
+   **release builds need a second Android client with the release key's SHA-1** (`keytool -list -v -keystore release.keystore`).
+2. **A Web application OAuth client** (Create credentials → OAuth client ID → Web application; no URLs needed). Copy its **client ID**
+   and **client secret**.
+3. **Supabase → Authentication → Sign In / Providers → Google**: turn it on, paste the **web** client ID and secret, and save.
+4. **`.env`**: add the web client ID (it's public, like the publishable key; the secret stays in Supabase only):
+
+   ```
+   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=1234567890-abc123.apps.googleusercontent.com
+   ```
+
+The **Continue with Google** button appears in the sign-in card once that line is in `.env` and the app is rebuilt. Without it, email sign-in
+works as before. Never commit the `client_secret_….json` file Google lets you download: `.gitignore` keeps it out.
+
 ## 5. Rebuild once
 
 ```

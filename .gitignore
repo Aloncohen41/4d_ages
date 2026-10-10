@@ -43,6 +43,7 @@ google-services.json
 GoogleService-Info.plist
 credentials.json
 service-account*.json
+client_secret*.json
 github-secrets.env
 4d-ages-signing/
 

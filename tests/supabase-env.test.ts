@@ -76,5 +76,12 @@ const leak = JSON.stringify(build({}, { supabase_secretkey: SECRET, supabase_db_
 ok("the derived URL is all that is used: the password, the connection string and the secret key never reach the app", !leak.includes("UNIQUE") && !leak.includes("Zx9") && !leak.includes("postgres") && !leak.includes("TOP-SECRET"));
 ok("an explicit URL always beats a derived one", pickSupabase({ SUPABASE_URL: "https://explicitprojectabc.supabase.co", DB: pooled }).url === "https://explicitprojectabc.supabase.co");
 ok("text that isn't a Supabase connection string gives no reference", ["", "hello", "postgresql://user:pw@localhost:5432/db", "mysql://postgres.abcdefghijklmnop:pw@host/db", "postgresql://nopassword"].every((v) => require("../plugins/supabaseEnv").refFromConnectionString(v) === ""));
+// ---------- "Continue with Google": the web client ID goes in only when it looks like one
+const appConfig = require("../app.config.js");
+const google = (v?: string) => { const before = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; if (v === undefined) delete process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; else process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = v; try { return appConfig({ config: { name: "4D Ages", extra: {} } }).extra.googleWebClientId; } finally { if (before === undefined) delete process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; else process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = before; } };
+ok("a Google web client ID from .env reaches the app's settings", google(" 374884084370-abc123def.apps.googleusercontent.com ") === "374884084370-abc123def.apps.googleusercontent.com");
+ok("no ID, or something that isn't a Google client ID (a client secret, a URL), leaves Google sign-in off", [undefined, "", "GOCSPX-secretvalue", "https://example.com"].every((v) => google(v) === undefined));
+ok("the Google button only shows when the ID is set, and the client secret file can't be committed", /googleReady \? \(/.test(sheet) && /googleReady = isConfigured && GOOGLE_WEB_CLIENT_ID\.length > 0/.test(sb) && /^client_secret\*\.json$/m.test(read(".gitignore")));
+
 console.log(fails ? `${fails} FAILED` : "all Supabase environment tests passed");
 
