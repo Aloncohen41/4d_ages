@@ -11,7 +11,7 @@ import { openMemory } from "../lib/openMemory";
 import { Btn, Input, PhotoView, Seg, Sheet } from "./ui";
 import { TagChip } from "./TagChip";
 
-const typeLabel = (p: Memory) => `${KIND_META[p.type].emoji} ${KIND_META[p.type].label}`;
+const typeLabel = (p: Memory) => KIND_META[p.type].label;
 
 /** The child's memories (photos, stories, milestones, firsts, lasts, measurements…) as one list. */
 function useMemories(childId?: string): Memory[] {
@@ -91,7 +91,7 @@ function Browser({ initial, childId, childName, onClose }: { initial: string[]; 
         <>
           <Input value={query} onChangeText={setQuery} placeholder="Search tags — try “Grandma”, a place or an event" returnKeyType="search" />
           <View style={{ marginTop: 10 }}>
-            <Seg options={[{ id: "all" as const, label: "All" }, ...TAG_CATEGORIES.map((k) => ({ id: k.id, label: `${k.emoji} ${k.short}` }))]} value={kind} onChange={setKind} />
+            <Seg options={[{ id: "all" as const, label: "All" }, ...TAG_CATEGORIES.map((k) => ({ id: k.id, label: k.short }))]} value={kind} onChange={setKind} />
           </View>
 
           {query.trim() && shown.filter((s) => s.category === "person").length > 1 ? (

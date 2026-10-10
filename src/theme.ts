@@ -31,6 +31,7 @@ export interface Theme {
   ink4: string;
   gold: string;
   goldSoft: string;
+  goldInk: string; // text on `gold` (the milestone badge)
   danger: string;
   dangerSoft: string;
   // Material 3 roles used directly
@@ -68,7 +69,7 @@ function build(key: KidTheme, dark = false): Theme {
     bg: m.surface, bg2: m.surfaceContainer, bg3: m.surfaceContainerHighest, card: m.surfaceContainerLow, line: m.outlineSoft,
     accent: m.primary, accentSoft: m.primaryContainer, accentDeep: m.primaryDeep,
     ink: m.onSurface, ink2: m.onSurfaceVariant, ink3: m.onSurfaceMuted, ink4: m.onSurfaceSubtle,
-    gold: GOLD, goldSoft: dark ? colorAt(24, 18, gold) : "#f8ecd0", danger: m.error, dangerSoft: m.errorContainer,
+    gold: GOLD, goldInk: "#2c1f15", goldSoft: dark ? colorAt(24, 18, gold) : "#f8ecd0", danger: m.error, dangerSoft: m.errorContainer,
     onAccent: m.onPrimary, onAccentSoft: m.onPrimaryContainer, chipOn: m.secondaryContainer, onChipOn: m.onSecondaryContainer,
     surfaceHigh: m.surfaceContainerHigh, outline: m.outline, onDanger: m.onError, inverse: m.inverseSurface, onInverse: m.inverseOnSurface,
     scrim: dark ? "#00000099" : "#00000052", // Material's scrim: black at 32% (60% in the dark, where 32% barely shows)
@@ -81,6 +82,9 @@ function build(key: KidTheme, dark = false): Theme {
 export const THEMES: Record<KidTheme, Theme> = { pink: build("pink"), blue: build("blue"), green: build("green") };
 export const THEMES_DARK: Record<KidTheme, Theme> = { pink: build("pink", true), blue: build("blue", true), green: build("green", true) };
 export const THEME_ORDER: KidTheme[] = ["pink", "blue", "green"];
+
+/** The expressive display face, used sparingly (the login tagline). Loaded in app/_layout.tsx; Android falls back to its serif if it fails. */
+export const DISPLAY_FONT = "Fraunces_600SemiBold_Italic";
 
 /**
  * Material 3's type scale, on the phone's own font (Roboto on Android). Weights are Material's: 400 for reading text, 500 for titles and labels.

@@ -22,7 +22,8 @@ ok("every file that fills with the selected container also sets its text colour 
 ok("chips are rounded rectangles (Material's), not full pills", !tsx.some((f) => read(f).split("\n").some((l) => /t\.chipOn/.test(l) && /borderRadius: 99/.test(l))));
 
 // ---------- type and fonts
-ok("the serif font is gone: no Fraunces, no FONT_SERIF; only the icon font is loaded", !all.some((f) => /FONT_SERIF|[Ff]raunces/.test(read(f))) && /useFonts\(\{ \.\.\.ICON_FONT \}\)/.test(read("app/_layout.tsx")) && !/fraunces/i.test(read("package.json")));
+// The UI is set in Roboto. The one exception is the login page's tagline, in an expressive display face (feedback session, LOGIN-05).
+ok("the old serif theme is gone (no FONT_SERIF); a display face is loaded only for the login tagline", !all.some((f) => /FONT_SERIF/.test(read(f))) && /useFonts\(\{ \.\.\.ICON_FONT, Fraunces_600SemiBold_Italic \}\)/.test(read("app/_layout.tsx")) && all.filter((f) => /DISPLAY_FONT/.test(read(f))).sort().join() === "app/login.tsx,src/theme.ts");
 ok("headings use Material's type scale", /TYPE\.headlineSmall/.test(ui) && /TYPE\.titleLarge/.test(ui) && /TYPE\.labelLarge/.test(ui) && /TYPE\.headlineLarge/.test(screen));
 ok("no text is bolder than Roboto's real bold (no 800 / 900 weights)", !tsx.some((f) => /fontWeight: "(800|900)"/.test(read(f))));
 

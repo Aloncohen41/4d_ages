@@ -35,6 +35,7 @@ export interface EntrySheetState {
 export interface Incoming {
   items: SharedItem[];
   busy?: number; // number of files still being copied
+  source?: "share" | "picker"; // shared in from another app (the default), or picked with the + button
 }
 
 export interface State {
@@ -52,6 +53,12 @@ export interface State {
   tombstones: Tombstone[];
   syncMeta: Record<string, { cursor?: string; lastSync?: string }>;
   notif: NotifPrefs;
+  /** Each child's family, in the order the parent arranged it (people not listed follow, in the order they were added). */
+  familyOrder: Record<string, string[]>;
+  /** The account this phone's data belongs to (set at sign-in), so another account never opens someone else's book. */
+  accountUserId?: string;
+  /** Exploring the sample family without an account (from the login page). Signing in removes the sample. */
+  preview: boolean;
   // not saved
   sync: SyncStatus;
   shareOpen: boolean;
@@ -97,7 +104,11 @@ export interface State {
   setTagSheet: (v: { keys: string[] } | null) => void;
   setPhotoEdit: (id: string | null) => void;
   setIncoming: (v: Incoming | null) => void;
+  setFamilyOrder: (childId: string, ids: string[]) => void;
+  setAccountUserId: (id: string | undefined) => void;
   loadSample: () => void;
+  /** Take the sample family out again (leaving the preview, or signing in). Anything of your own is left alone. */
+  clearSample: () => void;
   resetAll: () => void;
 }
 
@@ -113,7 +124,7 @@ function addTomb(s: State, childId: string, t: Omit<Tombstone, "childId" | "ts">
 /** Delete a memory's files from the phone. */
 const deleteMedia = (m: Memory) => filesOf(m.media).forEach(deleteFile);
 
-export const STORE_VERSION = 5;
+export const STORE_VERSION = 6;
 // Not brand, and never to be renamed: this key is where every existing phone keeps its memories (and where the pre-migration backups are made).
 const STORE_KEY = "4d-ages-v1";
 
@@ -142,6 +153,9 @@ export const useStore = create<State>()(
       tombstones: [],
       syncMeta: {},
       notif: { enabled: false, daysBefore: 3, hour: 9 },
+      familyOrder: {},
+      accountUserId: undefined,
+      preview: false,
       sync: { busy: false },
       shareOpen: false,
       pendingRecap: null,
@@ -288,21 +302,44 @@ export const useStore = create<State>()(
       setShareOpen: (shareOpen) => set({ shareOpen }),
       setPendingRecap: (pendingRecap) => set({ pendingRecap }),
 
+      setFamilyOrder: (childId, ids) => set((s) => ({ familyOrder: { ...s.familyOrder, [childId]: ids } })),
+      setAccountUserId: (accountUserId) => set({ accountUserId }),
+
       loadSample: () => {
         const d = buildSample();
         set((s) => ({
-          kids: [...s.kids, ...d.kids],
+          preview: true,
+          kids: [...s.kids.filter((k) => !d.kids.some((x) => x.id === k.id)), ...d.kids],
           activeId: s.activeId || d.kids[0].id,
-          memories: [...s.memories, ...d.memories],
-          relatives: [...s.relatives, ...d.relatives],
+          memories: [...s.memories.filter((m) => !d.memories.some((x) => x.id === m.id)), ...d.memories],
+          relatives: [...s.relatives.filter((r) => !d.relatives.some((x) => x.id === r.id)), ...d.relatives],
           tags: d.tags.reduce((acc, t) => upsertTagIn(acc, t), s.tags),
         }));
+      },
+
+      clearSample: () => {
+        const d = buildSample();
+        const kidIds = new Set(d.kids.map((k) => k.id));
+        const relIds = new Set(d.relatives.map((r) => r.id));
+        set((s) => {
+          const kids = s.kids.filter((k) => !kidIds.has(k.id));
+          return {
+            preview: false,
+            kids,
+            activeId: kids.some((k) => k.id === s.activeId) ? s.activeId : kids[0]?.id ?? "",
+            memories: s.memories.filter((m) => !kidIds.has(m.childId)),
+            relatives: s.relatives.filter((r) => !relIds.has(r.id)),
+            customDefs: Object.fromEntries(Object.entries(s.customDefs).filter(([id]) => !kidIds.has(id))),
+            familyOrder: Object.fromEntries(Object.entries(s.familyOrder).filter(([id]) => !kidIds.has(id))),
+          };
+        });
+        get().pruneTags();
       },
 
       resetAll: () => {
         get().memories.forEach(deleteMedia);
         get().relatives.forEach((r) => r.photoUri && deleteFile(r.photoUri));
-        set({ kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {} });
+        set({ kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, preview: false, accountUserId: undefined });
       },
     }),
     {
@@ -324,6 +361,9 @@ export const useStore = create<State>()(
         tombstones: s.tombstones,
         syncMeta: s.syncMeta,
         notif: s.notif,
+        familyOrder: s.familyOrder,
+        accountUserId: s.accountUserId,
+        preview: s.preview,
       }),
       onRehydrateStorage: () => () => {
         useStore.setState({ hydrated: true });

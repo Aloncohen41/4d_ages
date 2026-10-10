@@ -91,7 +91,7 @@ export function AvatarCropper({ uri, value, onChange, size = 240 }: { uri: strin
 
       <View style={{ flexDirection: "row", gap: 8, alignSelf: "stretch", marginTop: 4 }}>
         <Btn label="⊕ Centre" kind="soft" onPress={() => apply(recenter(value))} style={{ flex: 1, paddingVertical: 10 }} />
-        <Btn label="🙂 Face higher" kind="soft" onPress={() => apply(faceHigh(value))} style={{ flex: 1, paddingVertical: 10 }} />
+        <Btn label="Face higher" icon="smile" kind="soft" onPress={() => apply(faceHigh(value))} style={{ flex: 1, paddingVertical: 10 }} />
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginTop: 14 }}>

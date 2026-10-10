@@ -37,9 +37,18 @@ export function makeTag(category: TagCategory, name: string, memberId?: string):
 /** The tag for a family member. */
 export const personTag = (r: Relative): Tag => makeTag("person", personLabel(r), r.id);
 
-export const relationLabel = (r: Pick<Relative, "relation" | "customLabel">) => r.customLabel?.trim() || (r.relation === "Other" ? "Family" : r.relation);
+/** The relationship in the family's own words ("Mummy", "Stepmum"). Data from before free-text relationships may still carry its old wording. */
+export const relationLabel = (r: Pick<Relative, "relation" | "customLabel">) => r.customLabel?.trim() || (r.relation === "Other" ? "Family" : r.relation?.trim() || "Family");
+/** How a person is titled: their nickname if they have one, else their name (else, for someone with neither, the relationship). */
+export const displayName = (r: Pick<Relative, "name" | "nickname" | "relation" | "customLabel">) => r.nickname?.trim() || r.name.trim() || relationLabel(r);
+/** The line under their name: the relationship, plus their name when the title is a nickname ("Grandma · Rosa"). */
+export const relationLine = (r: Pick<Relative, "name" | "nickname" | "relation" | "customLabel">) =>
+  [relationLabel(r), r.nickname?.trim() && r.name.trim() ? r.name.trim() : ""].filter(Boolean).join(" · ");
 /** "Grandma Rosa" — the relationship first so that searching "grandma" finds her. */
 export const personLabel = (r: Pick<Relative, "name" | "relation" | "customLabel">) => [relationLabel(r), r.name.trim()].filter(Boolean).join(" ");
+/** Initials for a person without a photo: "Rosa Lind" → "RL", "Nana" → "N". */
+export const initialsOf = (name: string) =>
+  name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => Array.from(w)[0]?.toUpperCase() ?? "").join("") || "?";
 
 /** Add a tag to the list, or refresh its name. Returns the same list when nothing changed. */
 export function upsertTagIn(list: Tag[], tag: Tag): Tag[] {
@@ -135,7 +144,7 @@ export function searchTags(stats: TagStat[], query: string, relatives: Relative[
     if (s.label.toLowerCase().includes(q) || s.tag.name.toLowerCase().includes(q)) return true;
     if (s.category === "person") {
       const r = relatives.find((x) => x.id === s.tag.relatedFamilyMemberId);
-      return !!r && [r.name, r.relation, r.customLabel || ""].some((v) => v.toLowerCase().includes(q));
+      return !!r && [r.name, r.relation, r.customLabel || "", r.nickname || ""].some((v) => v.toLowerCase().includes(q));
     }
     return false;
   });

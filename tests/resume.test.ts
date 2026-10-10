@@ -44,7 +44,7 @@ const wait = () => new Promise((r) => setTimeout(r, 5));
   ok("if neither exists, the first child; with no children, nothing", pickChild(["maya", "leo"], "x", "y") === "maya" && pickChild([], "x", "y") === undefined);
 
   // ---- which tab opens
-  ok("tabs are the six real ones; paths map to the routes (Home is “/”)", TAB_NAMES.length === 6 && tabPath("index") === "/" && tabPath("milestones") === "/milestones" && isTab("book") && !isTab("settings") && !isTab(undefined));
+  ok("tabs are the four real ones (Family and Add left the bar); paths map to the routes (Home is “/”)", TAB_NAMES.length === 4 && !isTab("family") && !isTab("add") && tabPath("index") === "/" && tabPath("milestones") === "/milestones" && isTab("book") && !isTab("settings") && !isTab(undefined));
 
   // ---- the bug: an old notification tap must not drag you back to its child
   const day = phone(); const app = createResume(day); await app.load();
@@ -61,10 +61,10 @@ const wait = () => new Promise((r) => setTimeout(r, 5));
 
   // ---- the wiring
   const rootSrc = read("app/_layout.tsx"), tabsSrc = read("app/(tabs)/_layout.tsx");
-  ok("the app isn't shown until the record has been read and applied (no flash of the wrong child)", /const ready = \(fontsLoaded \|\| !!fontError\) && hydrated && resumed;/.test(rootSrc) && /if \(!ready\) return <BrandScreen \/>/.test(rootSrc) && /resume\.load\(\)/.test(rootSrc) && /pickChild\(/.test(rootSrc));
+  ok("the app isn't shown until the record has been read and applied (no flash of the wrong child)", /const ready = \(fontsLoaded \|\| !!fontError\) && hydrated && resumed && authReady;/.test(rootSrc) && /if \(!ready\) return <BrandScreen \/>/.test(rootSrc) && /resume\.load\(\)/.test(rootSrc) && /pickChild\(/.test(rootSrc));
   ok("every change of child is saved straight away", /useStore\.subscribe\(\(s, p\) => \{[\s\S]*activeId !== p\.activeId[\s\S]*resume\.save\(\{ childId/.test(rootSrc));
   ok("notification taps are acted on once and then cleared (no replays)", /shouldHandleNotification\(nid, resume\.get\(\)\.handledNotification\)/.test(rootSrc) && /resume\.save\(\{ handledNotification: nid \}\)/.test(rootSrc) && /clearLastNotificationResponseAsync/.test(rootSrc));
-  ok("notification taps wait until the screens exist (they used to navigate while the app was still loading)", /if \(!ready \|\| !d \|\| !d\.childId/.test(rootSrc) && /\[response, ready\]/.test(rootSrc));
+  ok("notification taps wait until the screens exist (they used to navigate while the app was still loading)", /if \(!ready \|\| !signedIn \|\| !d \|\| !d\.childId/.test(rootSrc) && /\[response, ready, signedIn\]/.test(rootSrc));
   ok("the current tab is saved whenever it changes", /resume\.save\(\{ tab: current \}\)/.test(tabsSrc));
   ok("…but not while the saved tab is still being restored (or Home would overwrite it)", /if \(restoreTo\) \{[\s\S]*return;\s*\}\s*if \(isTab\(current\)\) resume\.save/.test(tabsSrc));
   ok("the saved tab is restored without animation, hidden behind a cover that matches the splash, with a timeout so it can't stick", /animationEnabled: !restoring/.test(tabsSrc) && /restoring \? <View style=\{StyleSheet\.absoluteFill\}><BrandScreen \/>/.test(tabsSrc) && /setTimeout\(\(\) => setRestoring\(false\), 1500\)/.test(tabsSrc));

@@ -16,10 +16,6 @@ import { Fab, FAB_GAP } from "../../src/components/Fab";
 import { Icon, IconName } from "../../src/components/Icon";
 import { TYPE } from "../../src/theme";
 import { withAlpha } from "../../src/lib/m3";
-import { EntrySheet } from "../../src/components/EntrySheet";
-import { EditPhotoSheet } from "../../src/components/EditPhotoSheet";
-import { TagBrowserSheet } from "../../src/components/TagBrowser";
-import { ShareSheet } from "../../src/components/ShareSheet";
 
 /*
  * The tabs are a native pager (react-native-pager-view), the same kind of swipe you get in a photo gallery.
@@ -35,10 +31,8 @@ const TABS = [
   { name: "index", title: "Home", icon: "nav-home" },
   { name: "milestones", title: "Milestones", icon: "nav-milestones" },
   { name: "growth", title: "Growth", icon: "nav-growth" },
-  { name: "family", title: "Family", icon: "nav-family" },
   { name: "book", title: "Book", icon: "nav-book" },
-  { name: "add", title: "Add", icon: "nav-add" },
-] as const;
+] as const; // Family is in the top-left menu; adding happens through the + button
 
 export const TAB_BAR_HEIGHT = 74;
 
@@ -129,12 +123,8 @@ export default function TabsLayout() {
         ))}
       </Tabs>
 
-      {/* shared by every tab, so they exist once instead of once per tab */}
+      {/* shared by every tab, so it exists once instead of once per tab (the forms it opens live in the root layout) */}
       {active ? <Fab bottom={TAB_BAR_HEIGHT + insets.bottom + FAB_GAP} /> : null}
-      <EntrySheet />
-      <EditPhotoSheet />
-      <TagBrowserSheet />
-      <ShareSheet />
       {restoring ? <View style={StyleSheet.absoluteFill}><BrandScreen /></View> : null}
     </View>
   );

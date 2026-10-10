@@ -30,7 +30,7 @@ ok("row → tags the other phone should add to its central list", tagsInRow(out)
 const d = mergeDefs([{ id: "x", label: "Old", emoji: "🌟", hint: "", custom: true, updatedAt: 1 }], [{ id: "x", label: "New", emoji: "🌟", hint: "", category: "Movement", client_ts: 9 }, { id: "y", label: "Y", client_ts: 3 }]);
 ok("custom milestones merge (with their type)", d.length === 2 && d[0].label === "New" && d[0].category === "Movement");
 const rel = mergeRelatives([{ id: "r", name: "Rosa", relation: "Grandma", emoji: "👵", photoUri: "file:///p.jpg", updatedAt: 1 }], [{ id: "r", name: "Rosa B", relation: "Grandma", custom_label: "Nana", client_ts: 9 }]);
-ok("family merge keeps the local picture and takes the custom label", rel[0].name === "Rosa B" && rel[0].customLabel === "Nana" && rel[0].photoUri === "file:///p.jpg");
+ok("family merge keeps the local picture; an older app's own wording becomes the relationship", rel[0].name === "Rosa B" && rel[0].relation === "Nana" && rel[0].customLabel === undefined && rel[0].photoUri === "file:///p.jpg");
 const c = mergeChild({ id: "c", name: "Maya", birth: "2024-01-01", theme: "pink", emoji: "🌸", updatedAt: 5 } as any, { name: "Maya R.", birth: "2024-01-01", theme: "blue", emoji: "🌸", client_ts: 9, avatar_photo_id: "p1", growth_ref: "girl" });
 ok("child row merge", c.name === "Maya R." && c.theme === "blue" && c.avatarPhotoId === "p1");
 ok("cursor = newest updated_at", newestCursor("2025-01-01T00:00:00Z", [{ updated_at: "2025-03-01T00:00:00Z" }], [{ updated_at: "2025-02-01T00:00:00Z" }]) === "2025-03-01T00:00:00Z");

@@ -1,16 +1,14 @@
 import React, { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { Screen } from "../../src/components/Screen";
-import { Avatar, Btn, Heading, PhotoView, Seg } from "../../src/components/ui";
+import { Btn, Heading, Seg } from "../../src/components/ui";
+import { BookPageView, BookPreviewModal } from "../../src/components/BookPreview";
 import { useShownChild, useStore } from "../../src/lib/store";
-import { heightSeries } from "../../src/lib/selectors";
-import { byMoment, coverOf } from "../../src/lib/display";
-import { APP_NAME } from "../../src/brand";
 import { useTheme } from "../../src/lib/useTheme";
 import { TYPE } from "../../src/theme";
 import { MILESTONE_DEFS } from "../../src/lib/types";
-import { ageShort, formatDate, smartAge } from "../../src/lib/date";
-import { BOOK_SIZES, BOOK_STYLES, BookSize, BookStyle, exportBook } from "../../src/lib/pdf";
+import { BOOK_PHOTO_LIMIT, BOOK_SIZES, BOOK_STYLES, BookSizeId, BookStyle, DEFAULT_BOOK_SIZE, planBook, sizeById } from "../../src/lib/bookPages";
+import { exportBook } from "../../src/lib/pdf";
 
 export default function BookTab() {
   return (
@@ -20,115 +18,100 @@ export default function BookTab() {
   );
 }
 
+/**
+ * The keepsake book, ready made: the birth date, then every memory in the order it happened. Choose a print size and a style, see every page,
+ * and export the PDF at exactly that size.
+ */
 function Book() {
   const t = useTheme();
+  const { width } = useWindowDimensions();
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
   const custom = useStore((s) => s.customDefs);
-  const unit = useStore((s) => s.heightUnit);
   const relatives = useStore((s) => s.relatives);
   const tagList = useStore((s) => s.tags);
   const [style, setStyle] = useState<BookStyle>("classic");
-  const [size, setSize] = useState<BookSize>("square");
+  const [sizeId, setSizeId] = useState<BookSizeId>(DEFAULT_BOOK_SIZE);
+  const [previewAt, setPreviewAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
+  const size = sizeById(sizeId);
   const defs = useMemo(() => [...MILESTONE_DEFS, ...(child ? custom[child.id] || [] : [])], [custom, child]);
-  const mine = useMemo(() => (child ? memories.filter((p) => p.childId === child.id).sort(byMoment) : []), [memories, child]);
-  const heights = useMemo(() => (child ? heightSeries(memories, child.id) : []), [memories, child]);
-
-  if (!child) return null;
-  const milestones = mine.filter((p) => p.type === "milestone");
-  const firsts = mine.filter((p) => p.type === "first");
-  const lasts = mine.filter((p) => p.type === "last");
-  const between = mine.filter((p) => p.type !== "milestone" && p.type !== "first" && p.type !== "last");
-  const sm = smartAge(child.birth);
-  const realCount = mine.filter((p) => coverOf(p.media)?.kind === "photo").length;
-  const heightCount = heights.length;
-  const nameOf = (m: { milestoneId?: string; title?: string }) => defs.find((d) => d.id === m.milestoneId)?.label ?? m.title ?? "Milestone";
+  // the page count follows the size and the content
+  const plan = useMemo(() => (child ? planBook(child, memories, size) : null), [child, memories, size]);
+  if (!child || !plan) return null;
 
   const doExport = async () => {
     setBusy(true);
     setMsg("");
     try {
-      await exportBook({ child, defs, memories: mine, style, size, heights, unit, relatives, tags: tagList });
-      setMsg("✓ Your book is ready — pick where to save or send it.");
+      await exportBook({ child, defs, memories: memories.filter((m) => m.childId === child.id), style, size: sizeId, relatives, tags: tagList });
+      setMsg("Your book is ready. Pick where to save or send it.");
     } catch {
-      setMsg("Couldn't build the PDF. Try again with fewer photos.");
+      setMsg("Couldn't build the PDF. Try again.");
     } finally {
       setBusy(false);
     }
   };
 
+  const pageProps = { child, memories, defs, size, style };
+  const thumbW = (width - 32 - 2 * 10) / 3;
+  const first = plan.pages.slice(0, 6);
+
   return (
     <View>
-      <Heading title="Keepsake book" desc="A preview of the keepsake. Export it as a PDF to save, share or print later." />
+      <Heading title="Keepsake book" desc="Ready made from their photos and milestones, in date order from the day they were born." />
 
-      <View style={{ backgroundColor: t.card, borderRadius: 24, borderWidth: 1, borderColor: t.line, overflow: "hidden" }}>
-        <View style={{ backgroundColor: t.bg2, alignItems: "center", padding: 28 }}>
-          <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 11 }}>{APP_NAME} presents</Text>
-          <Text style={[TYPE.headlineMedium, { color: t.ink, marginTop: 6, textAlign: "center" }]}>{child.name}'s First Years</Text>
-          <Text style={{ color: t.ink3, marginTop: 2 }}>born {formatDate(child.birth)}</Text>
-          <View style={{ marginTop: 16 }}><Avatar child={child} size={96} ring /></View>
-        </View>
+      {/* the cover, as it will be printed */}
+      <Pressable onPress={() => setPreviewAt(0)} accessibilityRole="button" accessibilityLabel="Preview the book" style={{ alignSelf: "center", elevation: 3, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+        <BookPageView page={plan.pages[0]} width={Math.min(width - 32, size.wCm >= size.hCm ? width - 32 : (width - 32) * 0.78)} {...pageProps} />
+      </Pressable>
 
-        {[
-          { title: "Milestones", rows: milestones.map((p) => ({ key: p.id, emoji: p.emoji, title: nameOf(p), date: p.date, note: p.description, cover: coverOf(p.media) })) },
-          { title: "Firsts", rows: firsts.map((p) => ({ key: p.id, emoji: p.emoji, title: p.title || "A first", date: p.date, note: p.description, cover: coverOf(p.media) })) },
-          { title: "Lasts", rows: lasts.map((p) => ({ key: p.id, emoji: p.emoji, title: p.title || "A last", date: p.date, note: p.description, cover: coverOf(p.media) })) },
-        ]
-          .filter((sec) => sec.rows.length)
-          .map((sec) => (
-            <View key={sec.title} style={{ padding: 18, borderTopWidth: 1, borderTopColor: t.line }}>
-              <Text style={[TYPE.titleLarge, { color: t.ink, textAlign: "center", marginBottom: 6 }]}>{sec.title}</Text>
-              {sec.rows.map((r) => (
-                <View key={r.key} style={{ flexDirection: "row", gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: t.line, alignItems: "center" }}>
-                  {r.cover ? (
-                    <PhotoView photo={{ uri: r.cover.uri, kind: r.cover.kind, emoji: r.emoji, palette: "peach" }} style={{ width: 52, height: 52, borderRadius: 12, overflow: "hidden" }} emojiSize={22} />
-                  ) : (
-                    <Text style={{ fontSize: 26, width: 52, textAlign: "center" }}>{r.emoji}</Text>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: t.ink, fontWeight: "700" }}>{r.title}</Text>
-                    <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11 }}>{formatDate(r.date)}</Text>
-                    {r.note ? <Text style={{ color: t.ink3, fontSize: 12, marginTop: 2 }} numberOfLines={2}>{r.note}</Text> : null}
-                  </View>
-                </View>
-              ))}
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", marginTop: 16 }}>
+        <Text style={[TYPE.titleMedium, { color: t.ink }]}>{plan.pages.length} pages</Text>
+        <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{plan.pictures} photo{plan.pictures === 1 ? "" : "s"}</Text>
+      </View>
+      {plan.available > plan.pictures ? (
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2 }]}>Up to {BOOK_PHOTO_LIMIT} photos fit in one book, chosen evenly across the years. The rest of those memories are in it as words.</Text>
+      ) : null}
+
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
+        {first.map((p, i) => (
+          <Pressable key={p.key} onPress={() => setPreviewAt(i)} accessibilityLabel={`Page ${i + 1}`} style={{ alignItems: "center" }}>
+            <View style={{ width: thumbW, height: thumbW, alignItems: "center", justifyContent: "center", backgroundColor: t.bg2, borderRadius: 8 }}>
+              <BookPageView page={p} width={size.wCm >= size.hCm ? thumbW - 8 : (thumbW - 8) * (size.wCm / size.hCm)} {...pageProps} />
             </View>
-          ))}
-        {!milestones.length && !firsts.length && !lasts.length ? <Text style={{ color: t.ink3, textAlign: "center", padding: 18, borderTopWidth: 1, borderTopColor: t.line }}>No milestones, firsts or lasts yet — add some with the + button.</Text> : null}
+            <Text style={[TYPE.labelSmall, { color: t.ink3, marginTop: 3 }]}>Page {i + 1}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Btn label={`Preview all ${plan.pages.length} pages`} icon="nav-book" kind="line" onPress={() => setPreviewAt(0)} style={{ marginTop: 12 }} />
 
-        <View style={{ padding: 18, borderTopWidth: 1, borderTopColor: t.line }}>
-          <Text style={[TYPE.titleLarge, { color: t.ink, textAlign: "center", marginBottom: 10 }]}>Moments in between</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {between.slice(-6).map((p) => (
-              <View key={p.id} style={{ width: "31.5%" }}>
-                <PhotoView photo={p} style={{ aspectRatio: 1, borderRadius: 10, overflow: "hidden" }} emojiSize={28} />
-                <Text style={{ color: t.ink3, fontSize: 10, textAlign: "center", marginTop: 3 }}>{ageShort(child.birth, p.date)}</Text>
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 22, marginBottom: 8 }]}>Page size</Text>
+      <View style={{ gap: 6 }}>
+        {BOOK_SIZES.map((s) => {
+          const on = s.id === sizeId;
+          return (
+            <Pressable key={s.id} onPress={() => setSizeId(s.id)} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: t.card }}>
+              <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: on ? t.accent : t.outline, alignItems: "center", justifyContent: "center" }}>
+                {on ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: t.accent }} /> : null}
               </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={{ padding: 18, backgroundColor: t.bg2, alignItems: "center" }}>
-          <Text style={[TYPE.headlineMedium, { color: t.ink }]}>{sm.value}</Text>
-          <Text style={{ color: t.ink3, fontWeight: "700" }}>{sm.unit} today</Text>
-        </View>
+              <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>{s.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 20, marginBottom: 6 }}>Style</Text>
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 18, marginBottom: 6 }]}>Style</Text>
       <Seg options={BOOK_STYLES.map((s) => ({ id: s.id, label: s.label }))} value={style} onChange={setStyle} />
       <Text style={{ color: t.ink3, fontSize: 12, marginTop: 6 }}>{BOOK_STYLES.find((s) => s.id === style)?.desc}</Text>
-      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 14, marginBottom: 6 }}>Page size</Text>
-      <Seg options={BOOK_SIZES.map((s) => ({ id: s.id, label: s.label }))} value={size} onChange={setSize} />
 
-      {heightCount > 0 ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5, marginTop: 12 }}>📏 Your {heightCount} height measurement{heightCount === 1 ? "" : "s"} will appear as a little ruler on the side of the pages.</Text> : null}
-      <Btn label={busy ? "Building your PDF…" : "📄 Export as PDF"} onPress={doExport} disabled={busy} style={{ marginTop: 18 }} />
-      <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>
-        Includes up to 24 of your photos ({realCount} available) — milestones, firsts and lasts first — plus every note.
-      </Text>
+      <Btn label={busy ? "Building your PDF…" : "Export as PDF"} icon="pdf" onPress={doExport} disabled={busy} style={{ marginTop: 18 }} />
+      <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>{size.label} · {plan.pages.length} pages</Text>
       {msg ? <Text style={{ color: t.accentDeep, fontWeight: "700", textAlign: "center", marginTop: 8 }}>{msg}</Text> : null}
+
+      {previewAt !== null ? <BookPreviewModal pages={plan.pages} start={previewAt} onClose={() => setPreviewAt(null)} {...pageProps} /> : null}
     </View>
   );
 }

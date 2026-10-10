@@ -87,6 +87,11 @@ create table if not exists public.relatives (
 
 create index if not exists memories_child_updated on public.memories (child_id, updated_at);
 
+-- ---------- added later (each line is safe to run again) ----------
+alter table public.children add column if not exists gender text;          -- 'girl' | 'boy' | 'unspecified'
+alter table public.relatives add column if not exists nickname text;        -- what the child calls them
+alter table public.relatives add column if not exists description text;     -- who they are, for the child to read later
+
 -- ---------- the server stamps every change (used as the "what's new" cursor) ----------
 create or replace function public.touch_updated_at() returns trigger
 language plpgsql as $$
@@ -180,8 +185,37 @@ begin
   return row_to_json(v_child);
 end $$;
 
+-- ---------- deleting your account (Settings → Remove my data and delete my account) ----------
+-- The app first removes the photos of every child that will be deleted, then calls this. A child this account owns but shares with
+-- another parent is handed over to them (it is their book too); every other child it owns is deleted with its memories.
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+declare v_uid uuid := auth.uid(); r record;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in';
+  end if;
+  for r in
+    select c.id,
+           (select m.user_id from public.child_members m where m.child_id = c.id and m.user_id <> v_uid order by m.created_at limit 1) as heir
+    from public.children c where c.owner_id = v_uid
+  loop
+    if r.heir is not null then
+      update public.children set owner_id = r.heir where id = r.id;
+      update public.child_members set role = 'owner' where child_id = r.id and user_id = r.heir;
+    else
+      delete from public.children where id = r.id;   -- memories, custom milestones, family and invites go with it
+    end if;
+  end loop;
+  delete from public.child_members where user_id = v_uid;
+  delete from public.invites where created_by = v_uid;
+  delete from auth.users where id = v_uid;
+end $$;
+
 grant execute on function public.create_invite(text) to authenticated;
 grant execute on function public.join_child(text) to authenticated;
+revoke execute on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
 
 -- ---------- private storage for photos and videos ----------
 insert into storage.buckets (id, name, public) values ('media', 'media', false) on conflict (id) do nothing;

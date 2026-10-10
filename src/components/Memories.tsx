@@ -42,7 +42,7 @@ export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" })
     ? banner.daysUntil > 0
       ? `${child.name} turns ${banner.turning} in ${banner.daysUntil} day${banner.daysUntil === 1 ? "" : "s"}`
       : banner.daysUntil === 0
-      ? `Happy birthday, ${child.name}! 🎂`
+      ? `Happy birthday, ${child.name}!`
       : `${child.name} turned ${banner.turning} ${-banner.daysUntil} day${banner.daysUntil === -1 ? "" : "s"} ago`
     : "";
 
@@ -50,7 +50,7 @@ export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" })
     <View style={{ marginBottom: 14 }}>
       {banner && part !== "rest" ? (
         <Pressable onPress={() => setRecapYear(banner.turning)} style={{ backgroundColor: t.accentSoft, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: t.accent, marginBottom: 12 }}>
-          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12 }}>🎈 Year in review is ready</Text>
+          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12 }}>Year in review is ready</Text>
           <Text style={[TYPE.titleLarge, { color: t.ink, marginTop: 2 }]}>{bannerText}</Text>
           <Text style={{ color: t.ink2, marginTop: 4, fontSize: 13 }}>See the highlights of {child.name}'s year {banner.turning} — tap to play or export it.</Text>
         </Pressable>
@@ -58,7 +58,7 @@ export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" })
 
       {flashbacks.length && part !== "banner" ? (
         <View style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 14, marginBottom: 12 }}>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>🕰️ On this day</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>On this day</Text>
           <HScroll contentContainerStyle={{ gap: 10, paddingTop: 10 }}>
             {flashbacks.map(({ memory, yearsAgo }) => (
               <View key={memory.id} style={{ width: 130 }}>
@@ -73,7 +73,7 @@ export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" })
 
       {hasPhotos && !banner && part !== "banner" ? (
         <Pressable onPress={() => setRecapYear(currentYear(child.birth, today))}>
-          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 13, textDecorationLine: "underline" }}>✨ See {child.name}'s year in review</Text>
+          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 13, textDecorationLine: "underline" }}>See {child.name}'s year in review</Text>
         </Pressable>
       ) : null}
 
@@ -93,7 +93,7 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
   const [year, setYear] = useState(initialYear);
   const [playing, setPlaying] = useState(false);
   const [style, setStyle] = useState<BookStyle>("storybook");
-  const [size] = useState<BookSize>("square");
+  const [size] = useState<BookSize>("square-20");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -115,11 +115,10 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
     setMsg("");
     try {
       await exportBook({
-        child, defs, memories: recap.highlights,
-        heights: heightSeries(memories, child.id), unit, relatives, tags: tagList, style, size,
+        child, defs, memories: recap.highlights, relatives, tags: tagList, style, size,
         title: `${child.name}'s Year ${year}`, subtitle: `${formatDate(recap.win.start)} – ${formatDate(recap.win.end)}`,
       });
-      setMsg("✓ Your recap is ready — pick where to save or send it.");
+      setMsg("Your recap is ready. Pick where to save or send it.");
     } catch {
       setMsg("Couldn't build the PDF. Try again.");
     } finally {
@@ -151,15 +150,15 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
         <Text style={{ color: t.ink3, textAlign: "center", marginTop: 24 }}>No photos from this year yet — add some on the timeline and come back.</Text>
       ) : (
         <>
-          <Btn label={playing ? "Hide player" : "▶ Play the year"} onPress={() => setPlaying((p) => !p)} style={{ marginTop: 16 }} />
+          <Btn label={playing ? "Hide player" : "Play the year"} icon={playing ? undefined : "play"} onPress={() => setPlaying((p) => !p)} style={{ marginTop: 16 }} />
           {playing ? <View style={{ marginTop: 14 }}><GrowPlayer slides={slidesOf(recap.highlights)} child={child} title={`${child.name}'s year ${year}`} fileLabel={`Year ${year}`} /></View> : null}
 
           {recap.milestones.length || recap.firsts.length ? (
             <View style={{ marginTop: 18 }}>
               <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15, marginBottom: 6 }}>Milestones, firsts & lasts this year</Text>
               {[
-                ...recap.milestones.map((m) => ({ key: m.id, date: m.date, text: `${m.emoji} ${defs.find((d) => d.id === m.milestoneId)?.label || m.title || "Milestone"}` })),
-                ...recap.firsts.map((p) => ({ key: p.id, date: p.date, text: `${p.emoji} ${p.title || (p.type === "last" ? "A last" : "A first")}` })),
+                ...recap.milestones.map((m) => ({ key: m.id, date: m.date, text: `${defs.find((d) => d.id === m.milestoneId)?.label || m.title || "Milestone"}` })),
+                ...recap.firsts.map((p) => ({ key: p.id, date: p.date, text: `${p.title || (p.type === "last" ? "A last" : "A first")}` })),
               ]
                 .sort((a, b) => a.date.localeCompare(b.date))
                 .map((x) => (
@@ -177,7 +176,7 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
 
           <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 20, marginBottom: 6 }}>PDF style</Text>
           <Seg options={BOOK_STYLES.map((s) => ({ id: s.id, label: s.label }))} value={style} onChange={setStyle} />
-          <Btn label={busy ? "Building your PDF…" : "📄 Export this year as PDF"} onPress={doExport} disabled={busy} style={{ marginTop: 14 }} />
+          <Btn icon={busy ? undefined : "pdf"} label={busy ? "Building your PDF…" : "Export this year as PDF"} onPress={doExport} disabled={busy} style={{ marginTop: 14 }} />
           {msg ? <Text style={{ color: t.accentDeep, fontWeight: "700", textAlign: "center", marginTop: 8 }}>{msg}</Text> : null}
         </>
       )}

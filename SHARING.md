@@ -35,10 +35,14 @@ the connection string, and the password is never printed. Running it twice is ha
 2. Open `supabase/schema.sql` from this project, copy **everything**, paste it in, press **Run**.
 3. You should see *Success. No rows returned.* (Running it twice is harmless.)
 
-## 3. Make sign-up simple
+## 3. Email verification and the link back into the app
 
-**Authentication → Sign In / Providers → Email** → turn **off** “Confirm email” → Save.
-(If you leave it on, new users must tap a link in an email before they can sign in.)
+Everyone signs in before using the app, and new accounts verify their email: the email's button opens the app, signed in.
+
+1. **Authentication → Sign In / Providers → Email** → keep **“Confirm email” on** (the default).
+2. **Authentication → URL Configuration → Redirect URLs** → **Add URL** → `fourdages://auth-callback` → Save.
+   Without it, the button in the email opens a web page instead of the app.
+3. Optional: **Authentication → Emails → Confirm signup**, to change the email's wording. Keep the `{{ .ConfirmationURL }}` link in it.
 
 ## 4. Put your two public values in `.env`
 
@@ -97,10 +101,12 @@ npm run android    # rebuilds the app on your phone
 
 ## 6. Use it
 
-**Parent 1:** a child's profile (tap their picture) → **Share with the other parent** → create an account →
-**Share {name}** (uploads everything; the first time can take a few minutes) → **Invite the other parent** → send the code.
+Everyone signs in first (email and password, or Google). Every child is saved to the account automatically, so signing in on a new
+phone brings the books back.
 
-**Parent 2:** install the app → **Join my partner's baby book** → create *their own* account → enter the code.
+**Parent 1:** a child's profile (tap their picture) → **Share with the other parent** → **Invite the other parent** → send the code.
+
+**Parent 2:** install the app → sign in with *their own* account → **Join a partner's baby book** → enter the code.
 The child appears on their phone and everything downloads. From then on both phones sync by themselves: when you open the
 app, when you come back to it, every 2 minutes, and a few seconds after any change.
 
@@ -122,5 +128,6 @@ app, when you come back to it, every 2 minutes, and a few seconds after any chan
 | “…is a SECRET key, which must never be inside an app” | The key found is a secret key. Use the **publishable / anon** key instead (step 4) |
 | “new row violates row-level security policy” / “permission denied” | The SQL from step 2 wasn't run (or failed) — run `schema.sql` again |
 | “Invalid login credentials” | Wrong password, or the account wasn't created yet |
-| “Email not confirmed” | Turn off *Confirm email* (step 3) or tap the link in the email |
+| “Email not confirmed” | Tap the button in the verification email, or use “Send the email again” on the login page |
+| The email's button opens a web page, not the app | Add `fourdages://auth-callback` to Supabase's Redirect URLs (step 3) |
 | “That code is invalid or has expired” | Make a fresh code on the first phone |

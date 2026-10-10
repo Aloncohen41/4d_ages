@@ -31,10 +31,10 @@ export function RemindersCard() {
     sendTestNotification(child.name, kind);
     setMsg("Sent — it will arrive in about 5 seconds. Lock your phone or leave the app to see it.");
   };
-  const row = (emoji: string, title: string, sub: string, value: boolean, onChange: (v: boolean) => void) => (
+  const row = (title: string, sub: string, value: boolean, onChange: (v: boolean) => void) => (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }}>{emoji} {title}</Text>
+        <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }}>{title}</Text>
         <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 2 }}>{sub}</Text>
       </View>
       <Switch value={value} onValueChange={onChange} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={value ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
@@ -42,10 +42,10 @@ export function RemindersCard() {
   );
 
   return (
-    <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 16, marginTop: 22 }}>
+    <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>🔔 Reminders & cheers</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>Reminders and cheers</Text>
           <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Birthdays, a little celebration for every new month, and a gentle nudge about milestones.</Text>
         </View>
         <Switch value={notif.enabled} onValueChange={toggle} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={notif.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
@@ -53,8 +53,8 @@ export function RemindersCard() {
 
       {notif.enabled ? (
         <View style={{ marginTop: 6 }}>
-          {row("🎉", "Celebrate every month", "“Wow — they're 6 months old today!” on the day, with a peek at their milestones.", notif.milestoneAges !== false, (v) => setNotif({ milestoneAges: v }))}
-          {row("👀", "“Is this happening?”", "A little before each new stage begins, we ask whether they've started any of its milestones.", notif.milestoneAsks !== false, (v) => setNotif({ milestoneAsks: v }))}
+          {row("Celebrate every month", "“Wow — they're 6 months old today!” on the day, with a peek at their milestones.", notif.milestoneAges !== false, (v) => setNotif({ milestoneAges: v }))}
+          {row("“Is this happening?”", "A little before each new stage begins, we ask whether they've started any of its milestones.", notif.milestoneAsks !== false, (v) => setNotif({ milestoneAsks: v }))}
 
           <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 18, marginBottom: 6 }}>Remind me before a birthday</Text>
           <Seg options={[{ id: 1, label: "1 day" }, { id: 3, label: "3 days" }, { id: 7, label: "1 week" }]} value={notif.daysBefore} onChange={(v) => setNotif({ daysBefore: v })} />

@@ -1,4 +1,4 @@
-import { Child, KidTheme, RELATION_EMOJI, Relative } from "./types";
+import { Child, KidTheme, Relative } from "./types";
 
 /*
  * Each child has their own family. A person is one record that can be in the family of several children (Grandma is in both siblings'),
@@ -20,7 +20,7 @@ export const pinToExistingChildren = (relatives: Relative[], existingKidIds: str
 const norm = (x: string | undefined) => (x ?? "").trim().toLowerCase();
 /** Looks like someone already in the family (same name and same relationship) — probably the same person entered twice. */
 export const looksLikeSomeoneIn = (r: Relative, family: Relative[]) =>
-  family.some((x) => norm(x.name) !== "" && norm(x.name) === norm(r.name) && x.relation === r.relation && norm(x.customLabel) === norm(r.customLabel));
+  family.some((x) => norm(x.name) !== "" && norm(x.name) === norm(r.name) && norm(x.relation) === norm(r.relation));
 
 export interface ImportSource {
   child: Child;
@@ -48,6 +48,34 @@ export const defaultSelection = (src: ImportSource): string[] => src.people.filt
 /** One tap on a person: marked → left out, left out → marked. */
 export const toggleSelection = (selected: string[], id: string): string[] => (selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
 
+/** A family in the order the parent arranged it: the people they placed first, in that order, then everyone else in the order they were added. */
+export function orderedFamily(family: Relative[], order: string[] | undefined): Relative[] {
+  const pos = new Map((order ?? []).map((id, i) => [id, i]));
+  const placed = pos.size;
+  const key = (id: string, i: number) => pos.get(id) ?? placed + i;
+  return family
+    .map((r, i) => ({ r, k: key(r.id, i) }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.r);
+}
+
+/** Moves one person up or down by one place; returns the full new order (every id in the list). */
+export function moveInOrder(ids: string[], id: string, by: -1 | 1): string[] {
+  const i = ids.indexOf(id);
+  const j = i + by;
+  if (i < 0 || j < 0 || j >= ids.length) return ids;
+  const out = ids.slice();
+  [out[i], out[j]] = [out[j], out[i]];
+  return out;
+}
+
+/** People whose name, nickname or relationship contains the search text. */
+export function searchFamily(family: Relative[], query: string): Relative[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return family;
+  return family.filter((r) => [r.name, r.nickname, r.relation, r.customLabel].some((v) => (v ?? "").toLowerCase().includes(q)));
+}
+
 /** Adds the child to each of these people. People already in that family, or unknown, are left alone. */
 export function addToFamily(relatives: Relative[], childId: string, ids: string[], stamp: number): Relative[] {
   const want = new Set(ids);
@@ -67,10 +95,12 @@ export const SIBLING_RELATIONS: readonly string[] = ["Sister", "Brother", "Sibli
 /** By the colour chosen for the child: pink → Sister, blue → Brother, green → Sibling. */
 export const siblingRelation = (theme: KidTheme): string => (theme === "pink" ? "Sister" : theme === "blue" ? "Brother" : "Sibling");
 
-const newSibling = (k: Child, inFamiliesOf: string[], stamp: number, id: string): Relative => {
-  const relation = siblingRelation(k.theme);
-  return { id, name: k.name, relation, emoji: k.emoji || RELATION_EMOJI[relation], childRef: k.id, childIds: inFamiliesOf, updatedAt: stamp };
-};
+/** A child's sibling wording: from their gender when it is set (Girl → Sister, Boy → Brother, Prefer not to say → Sibling), else from their colour as before. */
+export const siblingRelationOf = (k: Pick<Child, "theme" | "gender">): string =>
+  k.gender === "girl" ? "Sister" : k.gender === "boy" ? "Brother" : k.gender === "unspecified" ? "Sibling" : siblingRelation(k.theme);
+
+const newSibling = (k: Child, inFamiliesOf: string[], stamp: number, id: string): Relative =>
+  ({ id, name: k.name, relation: siblingRelationOf(k), childRef: k.id, childIds: inFamiliesOf, updatedAt: stamp });
 
 /**
  * A new child has just been added. Every child gets ONE sibling-person (linked to the child), who is in the family of every OTHER child:
@@ -128,14 +158,13 @@ export function setUpSiblings(relatives: Relative[], kids: Child[], stamp: numbe
   return out;
 }
 
-/** When a child is renamed (or their colour/emoji changes), their sibling-person follows — unless the person was changed by hand. */
+/** When a child is renamed (or their colour or gender changes), their sibling-person follows — unless the person was changed by hand. */
 export function followChild(relatives: Relative[], before: Child, after: Child, stamp: number): Relative[] {
   return relatives.map((r) => {
     if (r.childRef !== after.id) return r;
     const patch: Partial<Relative> = {};
     if (after.name !== before.name && r.name === before.name) patch.name = after.name;
-    if (after.emoji !== before.emoji && r.emoji === before.emoji) patch.emoji = after.emoji;
-    if (after.theme !== before.theme && r.relation === siblingRelation(before.theme)) patch.relation = siblingRelation(after.theme);
+    if (siblingRelationOf(after) !== siblingRelationOf(before) && r.relation === siblingRelationOf(before)) patch.relation = siblingRelationOf(after);
     return Object.keys(patch).length ? { ...r, ...patch, updatedAt: stamp } : r;
   });
 }

@@ -77,7 +77,7 @@ console.log(fails ? `${fails} FAILED` : "all family tests passed");
   ok("adding a blue child: he is a BROTHER in the existing child's family…", who(rs, "maya") === "Leo:Brother");
   ok("…and the existing pink child is a SISTER in the new child's family — both set up automatically", who(rs, "leo") === "Maya:Sister");
   ok("nobody is in their own family as a sibling", !familyOf(rs, "leo").some((r: any) => r.childRef === "leo") && !familyOf(rs, "maya").some((r: any) => r.childRef === "maya"));
-  ok("each sibling is one person record linked to the child (and their emoji is the child's)", rs.find((r: any) => r.childRef === "leo")?.emoji === "🚀" && rs.find((r: any) => r.childRef === "maya")?.emoji === "🌸" && rs.filter((r: any) => r.childRef).length === 2);
+  ok("each sibling is one person record linked to the child (people have no emoji any more: a placeholder with initials is drawn)", rs.filter((r: any) => r.childRef).length === 2 && rs.filter((r: any) => r.childRef).every((r: any) => r.emoji === undefined && r.name));
   ok("the parents already in Maya's family are untouched", rs[0].name === "Dana" && JSON.stringify(rs[0].childIds) === '["maya"]');
 
   // a third child, green

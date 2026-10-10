@@ -156,7 +156,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
           <Btn label="Cancel" kind="soft" onPress={cancelGrowVideo} style={{ marginTop: 12 }} />
         </View>
       ) : (
-        <Btn label={phase === "done" ? "🎬 Make it again with these settings" : "🎬 Create video"} onPress={create} disabled={!usable.length || !isVideoExportAvailable()} style={{ marginTop: 20 }} />
+        <Btn icon="film" label={phase === "done" ? "Make it again with these settings" : "Create video"} onPress={create} disabled={!usable.length || !isVideoExportAvailable()} style={{ marginTop: 20 }} />
       )}
 
       <Text style={{ color: t.ink4, fontSize: 11.5, textAlign: "center", marginTop: 8 }}>Saved as “{fileName}”</Text>

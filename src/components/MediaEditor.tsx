@@ -79,7 +79,7 @@ export function MediaEditor({ media, onChange, onAdded, protectedFiles, videos =
     <View>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 18, marginBottom: 8 }}>
         <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>{label} {media.length ? `(${media.length})` : ""}</Text>
-        <Btn label={busy ? "Adding…" : media.length ? "＋ Add more" : "＋ Add"} onPress={add} disabled={busy} style={{ paddingVertical: 8, paddingHorizontal: 14 }} />
+        <Btn icon={busy ? undefined : "plus"} label={busy ? "Adding…" : media.length ? "Add more" : "Add"} onPress={add} disabled={busy} style={{ paddingVertical: 8, paddingHorizontal: 14 }} />
       </View>
 
       {!media.length ? (

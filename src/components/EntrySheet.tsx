@@ -20,11 +20,11 @@ import { EmojiPicker } from "./EmojiPicker";
 import { TagPicker } from "./TagPicker";
 
 const TITLE: Record<EntryKind, { label: string; placeholder: string; text: string; textPlaceholder: string }> = {
-  story: { label: "Title (optional)", placeholder: "e.g. A day at the lake", text: "Your story", textPlaceholder: "What happened? Who was there? How did it feel?" },
-  milestone: { label: "Milestone", placeholder: "e.g. Rolls over", text: "Notes", textPlaceholder: "How it happened, who saw it… (optional)" },
-  measure: { label: "Title (optional)", placeholder: "e.g. 9-month check-up", text: "Note (optional)", textPlaceholder: "Anything worth remembering about this measurement" },
-  first: { label: "What was the first?", placeholder: "e.g. First bath, first snow…", text: "Description", textPlaceholder: "Tell the story of the first time (optional)" },
-  last: { label: "What was the last?", placeholder: "e.g. Last bottle, last nap in the cot…", text: "Description", textPlaceholder: "Tell the story of the last time (optional)" },
+  story: { label: "Title (optional)", placeholder: "Example: A day at the lake", text: "Your story", textPlaceholder: "What happened? Who was there? How did it feel?" },
+  milestone: { label: "Milestone", placeholder: "Example: Rolls over", text: "Notes", textPlaceholder: "How it happened, who saw it… (optional)" },
+  measure: { label: "Title (optional)", placeholder: "Example: 9-month check-up", text: "Note (optional)", textPlaceholder: "Anything worth remembering about this measurement" },
+  first: { label: "What was the first?", placeholder: "Example: First bath, first snow…", text: "Description", textPlaceholder: "Tell the story of the first time (optional)" },
+  last: { label: "What was the last?", placeholder: "Example: Last bottle, last nap in the cot…", text: "Description", textPlaceholder: "Tell the story of the last time (optional)" },
 };
 
 const round = (n: number, d: number) => Number(n.toFixed(d));
@@ -121,20 +121,20 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
       if (heightText.trim()) {
         const n = parseNumber(heightText);
         const cm = n == null ? NaN : toCm(n, heightUnit);
-        if (!(cm >= 20 && cm <= 200)) return setErr(`That height doesn't look right — enter it in ${heightUnit}.`);
+        if (!(cm >= 20 && cm <= 230)) return setErr(`That height doesn't look right — enter it in ${heightUnit}.`);
         heightCm = round(cm, 1);
       }
       if (weightText.trim()) {
         const n = parseNumber(weightText);
         const kg = n == null ? NaN : toKg(n, weightUnit);
-        if (!(kg >= 0.5 && kg <= 100)) return setErr(`That weight doesn't look right — enter it in ${weightUnit}.`);
+        if (!(kg >= 0.5 && kg <= 180)) return setErr(`That weight doesn't look right — enter it in ${weightUnit}.`);
         weightKg = round(kg, 3);
       }
       if (heightCm == null && weightKg == null) return setErr("Enter a height, a weight, or both.");
     } else if (kind === "story") {
       if (!title.trim() && !text.trim() && !media.length) return setErr("Add a title, a few words or a photo.");
     } else if (!title.trim()) {
-      return setErr(kind === "first" ? "What was the first? e.g. “First bath”." : "What was the last? e.g. “Last bottle”.");
+      return setErr(kind === "first" ? "What was the first? Example: “First bath”." : "What was the last? Example: “Last bottle”.");
     }
 
     saveMemory({ id: editId, childId: child.id, type: kind, title, description: text, date, time, location: place, tagIds: finalTags, media, emoji, heightCm, weightKg });
@@ -210,7 +210,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                 {openMilestones.map((d) => (
                   <Pressable key={d.id} onPress={() => { setTitle(d.label); setEmoji(d.emoji); }} style={chip(title === d.label)}>
-                    <Text style={{ color: title === d.label ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{d.emoji} {d.label}</Text>
+                    <Text style={{ color: title === d.label ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{d.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -226,7 +226,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {ideas.map((i) => (
               <Pressable key={i.title} onPress={() => { setTitle(i.title); setEmoji(i.emoji); }} style={chip(title === i.title)}>
-                <Text style={{ color: title === i.title ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{i.emoji} {i.title}</Text>
+                <Text style={{ color: title === i.title ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{i.title}</Text>
               </Pressable>
             ))}
           </View>
@@ -238,15 +238,15 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
         <View style={{ backgroundColor: t.bg2, borderRadius: 16, padding: 14, marginTop: 14, gap: 4 }}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>📏 Height</Text>
-              <Input value={heightText} onChangeText={setHeightText} keyboardType="decimal-pad" placeholder={heightUnit === "cm" ? "e.g. 74.5" : "e.g. 29.5"} />
+              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>Height</Text>
+              <Input value={heightText} onChangeText={setHeightText} keyboardType="decimal-pad" placeholder={heightUnit === "cm" ? "Example: 74.5" : "Example: 29.5"} />
             </View>
             <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: "cm" }, { id: "in" as const, label: "in" }]} value={heightUnit} onChange={setHeightUnit} /></View>
           </View>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: 8 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>⚖️ Weight</Text>
-              <Input value={weightText} onChangeText={setWeightText} keyboardType="decimal-pad" placeholder={weightUnit === "kg" ? "e.g. 9.2" : "e.g. 20.3"} />
+              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>Weight</Text>
+              <Input value={weightText} onChangeText={setWeightText} keyboardType="decimal-pad" placeholder={weightUnit === "kg" ? "Example: 9.2" : "Example: 20.3"} />
             </View>
             <View style={{ width: 92 }}><Seg options={[{ id: "kg" as const, label: "kg" }, { id: "lb" as const, label: "lb" }]} value={weightUnit} onChange={setWeightUnit} /></View>
           </View>
@@ -264,7 +264,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
         <>
           <TimeField value={time} onChange={setTime} />
           <Label>Location</Label>
-          <Input value={location} onChangeText={setLocation} placeholder="📍 Where was this? (optional)" maxLength={80} />
+          <Input value={location} onChangeText={setLocation} placeholder="Where was this? (optional)" maxLength={80} />
         </>
       ) : null}
 

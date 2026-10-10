@@ -92,7 +92,9 @@ export function mergeRelatives(cur: Relative[], rows: any[], childId?: string): 
     if (r.deleted) continue;
     const i = out.findIndex((x) => x.id === r.id);
     const ts = tsOf(r);
-    const fromRemote: Relative = { id: r.id, name: r.name ?? "", relation: r.relation ?? "Family", customLabel: r.custom_label ?? undefined, emoji: r.emoji ?? "🙂", updatedAt: ts, syncedTs: ts };
+    // relationships are free text now; a row from an older app may still carry its own wording beside a preset, which wins
+    const relation = (typeof r.custom_label === "string" && r.custom_label.trim()) || (r.relation === "Other" ? "Family" : r.relation) || "Family";
+    const fromRemote: Relative = { id: r.id, name: r.name ?? "", relation, nickname: r.nickname ?? undefined, description: r.description ?? undefined, updatedAt: ts, syncedTs: ts };
     if (i < 0) out.push(childId ? { ...fromRemote, childIds: [childId] } : fromRemote);
     else {
       const have = out[i];
@@ -120,6 +122,7 @@ export function mergeChild(cur: Child, row: any): Child {
       emoji: row.emoji ?? cur.emoji,
       avatarPhotoId: row.avatar_photo_id ?? undefined,
       growthRef: row.growth_ref ?? undefined,
+      gender: row.gender ?? cur.gender,
       updatedAt: ts,
       syncedTs: ts,
     };

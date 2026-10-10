@@ -2,9 +2,12 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { CATEGORY_ICON, implicitPlace, labelOfTag, resolveTags } from "../lib/tags";
-import { Tag } from "../lib/types";
+import { implicitPlace, labelOfTag, resolveTags } from "../lib/tags";
+import { Tag, TagCategory } from "../lib/types";
 import { MemberAvatar } from "./ui";
+import { Icon, IconName } from "./Icon";
+
+const CATEGORY_GLYPH: Record<TagCategory, IconName> = { person: "family", event: "star", place: "place", other: "tag" };
 
 /** One tag, coloured by its category. People show their picture. Tap to browse everything with that tag. */
 export function TagChip({ tag, onPress, onRemove, small, muted }: { tag: Tag; onPress?: () => void; onRemove?: () => void; small?: boolean; muted?: boolean }) {
@@ -19,8 +22,8 @@ export function TagChip({ tag, onPress, onRemove, small, muted }: { tag: Tag; on
   }[tag.category];
   const fs = small ? 10.5 : 12.5;
   return (
-    <Pressable onPress={onPress} disabled={!onPress && !onRemove} style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: palette.bg, paddingLeft: member?.photoUri ? 3 : small ? 8 : 11, paddingRight: onRemove ? 8 : small ? 8 : 11, paddingVertical: small ? 3 : 5, borderRadius: 99, opacity: muted ? 0.75 : 1 }}>
-      {member?.photoUri ? <MemberAvatar member={member} size={small ? 16 : 20} /> : <Text style={{ fontSize: fs - 1 }}>{member ? member.emoji : CATEGORY_ICON[tag.category]}</Text>}
+    <Pressable onPress={onPress} disabled={!onPress && !onRemove} style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: palette.bg, paddingLeft: member ? 3 : small ? 8 : 11, paddingRight: onRemove ? 8 : small ? 8 : 11, paddingVertical: small ? 3 : 5, borderRadius: 99, opacity: muted ? 0.75 : 1 }}>
+      {member ? <MemberAvatar member={member} size={small ? 16 : 20} /> : <Icon name={CATEGORY_GLYPH[tag.category]} size={fs + 1} color={palette.fg} />}
       <Text style={{ color: palette.fg, fontWeight: "700", fontSize: fs }}>{labelOfTag(tag, relatives)}</Text>
       {onRemove ? (
         <Pressable onPress={onRemove} hitSlop={8}>

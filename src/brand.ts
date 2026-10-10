@@ -9,6 +9,8 @@
 export const APP_NAME = "4D Ages";
 export const APP_VERSION = "1.0.3";
 export const TAGLINE = "A baby book that grows with them";
+/** The one line on the login page, set in the display face (see theme.ts). */
+export const LOGIN_TAGLINE = "Keepsake books for the ages.";
 /** The warm cream the splash screen and the loading screen share — sampled from the icon picture's own backdrop, so the hand-over is invisible. */
 export const SPLASH_BG = "#FEFBF6";
 /** Width (dp) the splash icon is drawn at: Android 12's round splash mask is two-thirds of a 288 dp area, and the art is sized for it. */

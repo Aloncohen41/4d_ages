@@ -11,7 +11,8 @@ import { coverOf } from "../../src/lib/display";
 import { heightSeries, weightSeries } from "../../src/lib/selectors";
 import { GrowthRef } from "../../src/lib/types";
 import { ageShort, formatDate } from "../../src/lib/date";
-import { HeightUnit, WeightUnit, formatHeight, formatWeight, funComparisons, monthsOld, nextUp, rangeStatus } from "../../src/lib/growth";
+import { HeightUnit, WeightUnit, effectiveRef, formatHeight, formatWeight, funComparisons, monthsOld, nextUp, rangeStatus } from "../../src/lib/growth";
+import { TYPE } from "../../src/theme";
 
 export default function GrowthTab() {
   return (
@@ -41,8 +42,8 @@ function Comparisons({ cm, unit }: { cm: number; unit: HeightUnit }) {
         </View>
       ))}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
-        {next ? <Text style={{ color: t.ink3, fontSize: 12, flex: 1 }}>Next up: {next.ref.emoji} {next.ref.name} — {formatHeight(next.gap, unit)} to go</Text> : <View />}
-        <Pressable onPress={() => setOffset((o) => o + 1)} hitSlop={8}><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>🔄 More</Text></Pressable>
+        {next ? <Text style={{ color: t.ink3, fontSize: 12, flex: 1 }}>Next up: {next.ref.name}, {formatHeight(next.gap, unit)} to go</Text> : <View />}
+        <Pressable onPress={() => setOffset((o) => o + 1)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="refresh-cw" size={14} color={t.accentDeep} /><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>More</Text></Pressable>
       </View>
     </View>
   );
@@ -70,7 +71,9 @@ function Growth() {
   const prev = heights[heights.length - 2];
   const latestW = weights[weights.length - 1];
   const prevW = weights[weights.length - 2];
-  const status = latest ? rangeStatus(child.growthRef, monthsOld(child.birth, latest.date), latest.cm) : null;
+  // Girls / Boys / All: the parent's choice, or by default the child's gender (Prefer not to say → All)
+  const ref = effectiveRef(child);
+  const status = latest ? rangeStatus(ref, monthsOld(child.birth, latest.date), latest.cm) : null;
   const statusText = { below: "a little below the typical range", within: "within the typical range", above: "a little above the typical range" };
 
   const confirmDelete = (id: string, label: string) => {
@@ -103,10 +106,10 @@ function Growth() {
 
   return (
     <View>
-      <Heading title="Growth" desc="Log height and weight together or separately, with an optional note, photo and tags. They also appear on the timeline and as a ruler beside the book's pages." />
-      <Btn label="📏 Add height / weight" onPress={() => setEntrySheet({ kind: "measure" })} />
+      <Heading title="Growth" />
+      <Btn label="Add height / weight" icon="add-measure" onPress={() => setEntrySheet({ kind: "measure" })} />
       <View style={{ marginTop: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
-        <View style={{ flex: 1.4 }}><Seg options={[{ id: "height" as const, label: "📏 Height" }, { id: "weight" as const, label: "⚖️ Weight" }]} value={mode} onChange={setMode} /></View>
+        <View style={{ flex: 1.4 }}><Seg options={[{ id: "height" as const, label: "Height" }, { id: "weight" as const, label: "Weight" }]} value={mode} onChange={setMode} /></View>
         <View style={{ flex: 1 }}>
           {mode === "height" ? <Seg options={[{ id: "cm" as HeightUnit, label: "cm" }, { id: "in" as HeightUnit, label: "in" }]} value={unit} onChange={setUnit} /> : <Seg options={[{ id: "kg" as WeightUnit, label: "kg" }, { id: "lb" as WeightUnit, label: "lb" }]} value={wUnit} onChange={setWUnit} />}
         </View>
@@ -114,7 +117,7 @@ function Growth() {
 
       {empty ? (
         <View style={{ alignItems: "center", padding: 30 }}>
-          <Text style={{ fontSize: 48 }}>{mode === "height" ? "📏" : "⚖️"}</Text>
+          <Icon name={mode === "height" ? "add-measure" : "scale"} size={44} color={t.ink3} />
           <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>No {mode} logged yet</Text>
           <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{mode === "height" ? `Measure ${child.name} lying down (before 2) or standing, then tap “Add height / weight”.` : "Tap “Add height / weight” after the next weigh-in."}</Text>
         </View>
@@ -125,15 +128,15 @@ function Growth() {
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 34, marginTop: 2 }}>{formatHeight(latest.cm, unit)}</Text>
             {prev ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{latest.cm >= prev.cm ? "+" : ""}{formatHeight(latest.cm - prev.cm, unit)} since {formatDate(prev.date)}</Text> : null}
             <Comparisons cm={latest.cm} unit={unit} />
-            {status ? <Text style={{ color: t.ink3, marginTop: 10, fontSize: 12.5 }}>Height is {statusText[status]} for {child.growthRef === "boy" ? "boys" : "girls"} this age. Every child grows in their own way.</Text> : null}
+            {status ? <Text style={{ color: t.ink3, marginTop: 10, fontSize: 12.5 }}>Height is {statusText[status]} for {ref === "boy" ? "boys" : ref === "girl" ? "girls" : "children"} this age. Every child grows in their own way.</Text> : null}
           </View>
 
-          <Label>Compare with a typical range (optional)</Label>
-          <Seg options={[{ id: "girl" as GrowthRef, label: "Girls" }, { id: "boy" as GrowthRef, label: "Boys" }, { id: "none" as GrowthRef, label: "Off" }]} value={child.growthRef || "none"} onChange={(v) => updateChild(child.id, { growthRef: v })} />
+          <Label>Compare with a typical range</Label>
+          <Seg options={[{ id: "girl" as GrowthRef, label: "Girls" }, { id: "boy" as GrowthRef, label: "Boys" }, { id: "all" as GrowthRef, label: "All" }]} value={ref} onChange={(v) => updateChild(child.id, { growthRef: v })} />
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>Height curve</Text>
           <LineChart child={child} entries={heights} unit={unit} />
-          {child.growthRef && child.growthRef !== "none" ? <Text style={{ color: t.ink4, fontSize: 11, marginTop: 6 }}>Shaded band: approximate typical range, simplified from the WHO growth standards (0–5 years). For information only — ask your pediatrician about growth.</Text> : null}
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>The door frame</Text>
+          <Text style={{ color: t.ink4, fontSize: 11, marginTop: 6 }}>Shaded band: approximate typical range, simplified from the WHO growth standards (0–5 years). For information only. Ask your pediatrician about growth.</Text>
+          <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22, marginBottom: 8 }]}>The door frame</Text>
           <DoorFrame child={child} entries={heights} unit={unit} />
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>History</Text>
           {[...heights].reverse().map((e) => row(e.id, formatHeight(e.cm, unit), e.date))}

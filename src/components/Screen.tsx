@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useActiveChild, useChildSwitching, useShownChild, useStore, uid } from "../lib/store";
@@ -7,16 +8,16 @@ import { useTheme } from "../lib/useTheme";
 import { WORDMARKS } from "../lib/wordmark";
 import { THEMES, THEME_ORDER, TYPE } from "../theme";
 import { withAlpha } from "../lib/m3";
-import { AvatarCrop, KidTheme } from "../lib/types";
+import { AvatarCrop, Gender, KidTheme } from "../lib/types";
 import { ageLong, ageTotals, formatDate, smartAge, todayISO } from "../lib/date";
 import { pickMedia, toMemories } from "../lib/media";
 import { coverOf } from "../lib/display";
-import { Avatar, Btn, DateField, Input, Label, PhotoView, Sheet, ThemePicker } from "./ui";
+import { Avatar, Btn, DateField, Input, Label, PhotoView, Seg, Sheet, ThemePicker } from "./ui";
 import { EmojiPicker } from "./EmojiPicker";
 import { AvatarCropper } from "./AvatarCropper";
 import { HScroll } from "./HScroll";
-import { APP_NAME, TAGLINE, WORDMARK_ASPECT } from "../brand";
-import { Icon } from "./Icon";
+import { APP_NAME, WORDMARK_ASPECT } from "../brand";
+import { Icon, IconName } from "./Icon";
 import { CollectionSheet, CollectionKind } from "./CollectionSheet";
 
 interface Controls { toTop: () => void; toBottom: () => void; subscribeNearEnd: (cb: () => void) => () => void }
@@ -42,9 +43,13 @@ export function TopBar() {
   const setActive = useStore((s) => s.setActive);
   const active = useActiveChild();
   const [adding, setAdding] = useState(false);
+  const [menu, setMenu] = useState(false);
   return (
     <View style={{ backgroundColor: t.bg, paddingTop: insets.top + 8, paddingBottom: 8 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 6, gap: 2 }}>
+        <Pressable onPress={() => setMenu(true)} accessibilityLabel="Menu" accessibilityRole="button" hitSlop={4} android_ripple={{ color: withAlpha(t.ink, 0.12), borderless: true, radius: 22 }} style={st.menuBtn}>
+          <Icon name="menu" size={26} color={t.ink2} />
+        </Pressable>
         <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ height: 42, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
       </View>
       <HScroll contentContainerStyle={{ gap: 8, paddingHorizontal: 14, paddingTop: 10 }}>
@@ -56,7 +61,7 @@ export function TopBar() {
             <Pressable key={k.id} onPress={() => setActive(k.id)} accessibilityRole="button" accessibilityState={{ selected: on }} android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }]}>
               <Avatar child={k} size={32} />
               <View>
-                <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}{k.shared ? " 🔗" : ""}</Text>
+                <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}</Text>
                 <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{a.value} {a.unit}</Text>
               </View>
             </Pressable>
@@ -67,7 +72,30 @@ export function TopBar() {
         </Pressable>
       </HScroll>
       <AddChildSheet visible={adding} onClose={() => setAdding(false)} />
+      <AppMenu visible={menu} onClose={() => setMenu(false)} />
     </View>
+  );
+}
+
+/** The menu behind the top-left button: the pages that aren't tabs. */
+function AppMenu({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const t = useTheme();
+  const insets = useSafeAreaInsets();
+  const go = (path: "/family" | "/settings") => { onClose(); router.push(path); };
+  const item = (icon: IconName, label: string, path: "/family" | "/settings") => (
+    <Pressable key={path} onPress={() => go(path)} accessibilityRole="menuitem" android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={st.menuItem}>
+      <Icon name={icon} size={22} color={t.ink2} />
+      <Text style={[TYPE.labelLarge, { color: t.ink, fontSize: 15 }]}>{label}</Text>
+    </Pressable>
+  );
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
+      <View style={[st.menuCard, { top: insets.top + 54, backgroundColor: t.surfaceHigh, shadowColor: "#000" }]}>
+        {item("family", "Family", "/family")}
+        {item("settings", "Settings", "/settings")}
+      </View>
+    </Modal>
   );
 }
 
@@ -77,7 +105,6 @@ export function TopBar() {
  */
 export function Screen({ children, hero = false }: { children: React.ReactNode; hero?: boolean }) {
   const t = useTheme();
-  const [adding, setAdding] = useState(false); // only for the welcome screen's button, when there is no child yet
   const active = useActiveChild();
   const switching = useChildSwitching();
   const scrollRef = React.useRef<ScrollView>(null);
@@ -107,11 +134,8 @@ export function Screen({ children, hero = false }: { children: React.ReactNode; 
             {hero ? <Hero /> : null}
             <ScrollControls.Provider value={controls}><View style={{ padding: 16 }}>{children}</View></ScrollControls.Provider>
           </View>
-        ) : (
-          <Welcome onAdd={() => setAdding(true)} />
-        )}
+        ) : null}
       </ScrollView>
-      <AddChildSheet visible={adding} onClose={() => setAdding(false)} />
     </View>
   );
 }
@@ -148,7 +172,7 @@ function Hero() {
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.headlineLarge, { color: t.onAccentSoft }]} numberOfLines={1}>{child.name}</Text>
           <Pressable onPress={() => setAgeOpen(true)} hitSlop={6}>
-            <Text style={[TYPE.labelLarge, { color: t.accentDeep, marginTop: 2 }]}>🎂 {ageLong(child.birth, todayISO())} old</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{ageLong(child.birth, todayISO())} old</Text></View>
           </Pressable>
         </View>
       </View>
@@ -173,7 +197,7 @@ function AgeSheet({ visible, onClose }: { visible: boolean; onClose: () => void 
   const rows: [string, string][] = [[x.years, "years"], [x.months.toLocaleString(), "months"], [x.weeks.toLocaleString(), "weeks"], [x.days.toLocaleString(), "days"]];
   return (
     <Sheet visible={visible} onClose={onClose} title={`${child.name}'s age, every way`}>
-      <Text style={{ color: t.ink3, marginBottom: 14 }}>🎂 Born {formatDate(child.birth)} — {ageLong(child.birth, todayISO())} ago.</Text>
+      <Text style={{ color: t.ink3, marginBottom: 14 }}>Born {formatDate(child.birth)}, {ageLong(child.birth, todayISO())} ago.</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
         {rows.map(([v, l]) => (
           <View key={l} style={{ width: "48%", backgroundColor: t.card, borderColor: t.line, borderWidth: 1, borderRadius: 16, paddingVertical: 16, alignItems: "center" }}>
@@ -200,12 +224,13 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
   const [avatarId, setAvatarId] = useState<string | undefined>();
   const [crop, setCrop] = useState<AvatarCrop | undefined>();
   const [emoji, setEmoji] = useState("🌸");
+  const [gender, setGender] = useState<Gender>("unspecified");
   const [showEmoji, setShowEmoji] = useState(false);
   const [err, setErr] = useState("");
 
   React.useEffect(() => {
     if (visible && child) {
-      setName(child.name); setBirth(child.birth); setTheme(child.theme); setAvatarId(child.avatarPhotoId); setCrop(child.avatarCrop); setEmoji(child.emoji); setShowEmoji(false); setErr("");
+      setName(child.name); setBirth(child.birth); setTheme(child.theme); setAvatarId(child.avatarPhotoId); setCrop(child.avatarCrop); setEmoji(child.emoji); setGender(child.gender ?? "unspecified"); setShowEmoji(false); setErr("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -230,7 +255,7 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
   const save = () => {
     if (!name.trim()) return setErr("Please keep a name — even a nickname works.");
     if (birth > todayISO()) return setErr("Birth date can't be in the future.");
-    updateChild(child.id, { name: name.trim(), birth, theme, avatarPhotoId: avatarId, avatarCrop: avatarId ? crop : undefined, emoji });
+    updateChild(child.id, { name: name.trim(), birth, theme, avatarPhotoId: avatarId, avatarCrop: avatarId ? crop : undefined, emoji, gender });
     onClose();
   };
 
@@ -240,12 +265,14 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
       <Input value={name} onChangeText={setName} />
       <Label>Birth date</Label>
       <DateField value={birth} onChange={setBirth} max={todayISO()} />
+      <Label>Gender</Label>
+      <GenderPicker value={gender} onChange={setGender} />
       <Label>Color mode</Label>
       <ThemePicker value={theme} onChange={setTheme} order={THEME_ORDER} themes={THEMES} />
       <Label>Profile picture — choose one of their photos</Label>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, backgroundColor: t.bg2, padding: 8, borderRadius: 16, borderWidth: 1, borderColor: t.line }}>
         <Pressable onPress={upload} style={[st.tile, { borderStyle: "dashed", borderColor: t.line, backgroundColor: t.card, borderWidth: 2, alignItems: "center", justifyContent: "center" }]}>
-          <Text style={{ fontSize: 18 }}>⬆️</Text><Text style={{ color: t.ink3, fontSize: 10, fontWeight: "700" }}>Upload</Text>
+          <Icon name="image" size={20} color={t.ink3} /><Text style={{ color: t.ink3, fontSize: 10, fontWeight: "700" }}>Upload</Text>
         </Pressable>
         {mine.map((p) => (
           <Pressable key={p.id} onPress={() => pickAvatar(avatarId === p.id ? undefined : p.id)} style={[st.tile, { borderWidth: avatarId === p.id ? 3 : 0, borderColor: t.accent, overflow: "hidden" }]}>
@@ -265,19 +292,24 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
           {showEmoji ? <View style={{ marginTop: 8 }}><EmojiPicker value={emoji} onChange={setEmoji} /></View> : null}
         </>
       ) : (
-        <Pressable onPress={() => pickAvatar(undefined)}><Text style={{ color: t.ink3, fontWeight: "700", marginTop: 10, textDecorationLine: "underline" }}>Use an emoji instead</Text></Pressable>
+        <Pressable onPress={() => pickAvatar(undefined)}><Text style={{ color: t.ink3, fontWeight: "700", marginTop: 10, textDecorationLine: "underline" }}>Remove photo</Text></Pressable>
       )}
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 12 }}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
         <Btn label="Cancel" kind="soft" onPress={onClose} style={{ flex: 1 }} />
         <Btn label="Save profile" onPress={save} style={{ flex: 1 }} />
       </View>
-      <Btn label={child.shared ? "🔗 Sharing settings" : "👨‍👩‍👧 Share with the other parent"} kind="line" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginTop: 14 }} />
+      <Btn label="Share with the other parent" icon="user-plus" kind="line" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginTop: 14 }} />
     </Sheet>
   );
 }
 
-function AddChildSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/** Girl, Boy or Prefer not to say: sets the growth comparison's default. */
+function GenderPicker({ value, onChange }: { value: Gender; onChange: (g: Gender) => void }) {
+  return <Seg options={[{ id: "girl" as Gender, label: "Girl" }, { id: "boy" as Gender, label: "Boy" }, { id: "unspecified" as Gender, label: "Prefer not to say" }]} value={value} onChange={onChange} />;
+}
+
+export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const t = useTheme();
   const addChild = useStore((s) => s.addChild);
   const updateChild = useStore((s) => s.updateChild);
@@ -286,12 +318,13 @@ function AddChildSheet({ visible, onClose }: { visible: boolean; onClose: () => 
   const [birth, setBirth] = useState(todayISO());
   const [theme, setTheme] = useState<KidTheme>("green");
   const [emoji, setEmoji] = useState("🐣");
+  const [gender, setGender] = useState<Gender>("unspecified");
   const [showEmoji, setShowEmoji] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [crop, setCrop] = useState<AvatarCrop | undefined>();
   const [err, setErr] = useState("");
 
-  const reset = () => { setName(""); setBirth(todayISO()); setTheme("green"); setEmoji("🐣"); setShowEmoji(false); setPhotoUri(null); setCrop(undefined); setErr(""); };
+  const reset = () => { setName(""); setBirth(todayISO()); setTheme("green"); setEmoji("🐣"); setGender("unspecified"); setShowEmoji(false); setPhotoUri(null); setCrop(undefined); setErr(""); };
 
   const choose = async () => {
     const picked = await pickMedia({ videos: false, multiple: false });
@@ -304,7 +337,7 @@ function AddChildSheet({ visible, onClose }: { visible: boolean; onClose: () => 
   const create = () => {
     if (!name.trim()) return setErr("Please add a name — even a nickname works.");
     if (birth > todayISO()) return setErr("Birth date can't be in the future.");
-    const child = { id: uid("kid"), name: name.trim(), birth, theme, emoji };
+    const child = { id: uid("kid"), name: name.trim(), birth, theme, emoji, gender };
     addChild(child);
     if (photoUri) {
       const [p] = toMemories(child, [{ uri: photoUri, kind: "photo", date: birth }], "Profile");
@@ -318,13 +351,18 @@ function AddChildSheet({ visible, onClose }: { visible: boolean; onClose: () => 
   return (
     <Sheet visible={visible} onClose={onClose} title="Add your little one">
       <Label>Name</Label>
-      <Input value={name} onChangeText={setName} placeholder="e.g. Noa" />
+      <Input value={name} onChangeText={setName} placeholder="Their name or nickname" />
       <Label>Birth date</Label>
       <DateField value={birth} onChange={setBirth} max={todayISO()} />
+      <Label>Gender</Label>
+      <GenderPicker value={gender} onChange={setGender} />
       <Label>Color mode for their pages</Label>
       <ThemePicker value={theme} onChange={setTheme} order={THEME_ORDER} themes={THEMES} />
       <Label>Profile photo (optional)</Label>
-      <Btn label={photoUri ? "✓ Photo chosen — tap to change" : "⬆️ Choose a photo"} kind="line" onPress={choose} />
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {photoUri ? <Btn label="Remove" kind="soft" onPress={() => { setPhotoUri(null); setCrop(undefined); }} style={{ flex: 0.6 }} /> : null}
+        <Btn label={photoUri ? "Change photo" : "Choose a photo"} icon="image" kind="line" onPress={choose} style={{ flex: 1 }} />
+      </View>
       {photoUri ? <View style={{ marginTop: 14 }}><AvatarCropper uri={photoUri} value={crop} onChange={setCrop} /></View> : null}
       {!photoUri ? (
         <>
@@ -338,25 +376,6 @@ function AddChildSheet({ visible, onClose }: { visible: boolean; onClose: () => 
   );
 }
 
-function Welcome({ onAdd }: { onAdd: () => void }) {
-  const t = useTheme();
-  const loadSample = useStore((s) => s.loadSample);
-  const setShareOpen = useStore((s) => s.setShareOpen);
-  return (
-    <View style={{ padding: 28, alignItems: "center" }}>
-      <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ width: 300, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
-      <Text style={[TYPE.headlineSmall, { color: t.ink, textAlign: "center", marginTop: 6 }]}>{TAGLINE}</Text>
-      <Text style={{ color: t.ink3, textAlign: "center", fontSize: 15, lineHeight: 22, marginTop: 8 }}>
-        Add your little one, pick the photos you love, and watch their story build itself — with milestones, family and a keepsake book you can export.
-      </Text>
-      <Btn label="Add your little one" onPress={onAdd} style={{ marginTop: 24, alignSelf: "stretch" }} />
-      <Btn label="👨‍👩‍👧 Join my partner's baby book" kind="soft" onPress={() => setShareOpen(true)} style={{ marginTop: 10, alignSelf: "stretch" }} />
-      <Btn label="Explore with a sample family" kind="line" onPress={loadSample} style={{ marginTop: 10, alignSelf: "stretch" }} />
-      <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 16 }}>Your photos stay on this phone. You choose every one — nothing is scanned.</Text>
-    </View>
-  );
-}
-
 const statNum = (c: string) => ({ ...TYPE.titleLarge, color: c });
 const statLbl = (c: string) => ({ fontSize: 10.5, fontWeight: "700" as const, color: c });
 
@@ -366,4 +385,7 @@ const st = StyleSheet.create({
   pen: { position: "absolute", right: -2, bottom: -2, width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   stat: { flex: 1, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 12 },
   tile: { width: 64, height: 64, borderRadius: 14 },
+  menuBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  menuCard: { position: "absolute", left: 12, minWidth: 200, borderRadius: 16, paddingVertical: 8, elevation: 8, shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  menuItem: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 18, paddingVertical: 14 },
 });

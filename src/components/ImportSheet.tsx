@@ -1,39 +1,25 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, ToastAndroid, View } from "react-native";
 import { router } from "expo-router";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { APP_NAME } from "../brand";
 import { uid, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { Child, MILESTONE_CATALOG, Memory, SharedItem } from "../lib/types";
-import { memoryForDef } from "../lib/development";
-import { milestonesLogged } from "../lib/selectors";
-import { KIND_META } from "../lib/entries";
-import { uniqueIds } from "../lib/tags";
-import { ageBetween, formatDate, todayISO } from "../lib/date";
+import { Child, Memory, SharedItem } from "../lib/types";
+import { formatDate, parseISO, toISO, todayISO } from "../lib/date";
 import { deleteFile } from "../lib/media";
 import { defaultThumb, deleteThumb } from "../lib/videoThumbs";
 import { summarize } from "../lib/sharedMedia";
-import { logMilestone } from "../lib/saveMilestone";
-import { FIRST_IDEAS, LAST_IDEAS, openIdeas } from "../lib/suggestions";
-import { byAgeFit } from "../lib/milestones";
-import { Avatar, Btn, DateField, Input, Label, PhotoView, Sheet, TimeField } from "./ui";
-import { TagPicker } from "./TagPicker";
+import { buildNewPosts, PostShape } from "../lib/newPosts";
+import { TYPE } from "../theme";
+import { Avatar, Btn, DateField, Input, Label, PhotoView, Sheet } from "./ui";
 import { ThumbPicker } from "./ThumbPicker";
 import { Icon } from "./Icon";
 
-type ImportType = "photos" | "story" | "milestone" | "first" | "last";
-const TYPES: { id: ImportType; label: string; hint: string }[] = [
-  { id: "photos", label: "📷 Photos", hint: "Each one goes on the timeline on the day it was taken." },
-  { id: "story", label: "📖 Story", hint: "Everything together as one memory." },
-  { id: "milestone", label: "⭐ Milestone", hint: "A developmental milestone, with these as its pictures." },
-  { id: "first", label: "🥇 First", hint: "Something they did for the first time." },
-  { id: "last", label: "🏁 Last", hint: "A last time worth remembering." },
-];
-const PALETTE = ["peach", "sage", "butter", "rose", "sky", "lav"];
-
 /**
- * Opens when photos or videos are shared to the app from Google Photos, the Gallery or any other app.
- * Confirm the media, add a note and tags, pick what it is — the original dates are kept.
+ * A new post from photos and videos: picked with the + button, or shared in from Google Photos, the Gallery or any other app.
+ * With several: one post, or a post each? The dates come from the files (and can be changed), a description is optional, and OK saves.
+ * People, places and the rest are added afterwards with the post's Edit.
  */
 export function ImportSheet() {
   const t = useTheme();
@@ -43,7 +29,7 @@ export function ImportSheet() {
   if (!incoming) return null;
 
   const discard = () => {
-    incoming.items.forEach((i) => deleteFile(i.uri));
+    incoming.items.forEach((i) => { deleteFile(i.uri); if (i.thumb) deleteThumb(i.thumb); });
     setIncoming(null);
   };
 
@@ -60,39 +46,32 @@ export function ImportSheet() {
   if (!kids.length) {
     return (
       <Sheet visible onClose={discard} title="Add your little one first">
-        <Text style={{ color: t.ink2, lineHeight: 21 }}>{APP_NAME} needs to know whose memories these are. Close this, add your child on the welcome screen, then share the photos again.</Text>
+        <Text style={{ color: t.ink2, lineHeight: 21 }}>{APP_NAME} needs to know whose memories these are. Close this, add your child, then share the photos again.</Text>
         <Btn label="Close" onPress={discard} style={{ marginTop: 18 }} />
       </Sheet>
     );
   }
-  return <ImportForm items={incoming.items} onDiscard={discard} />;
+  return <NewPostForm items={incoming.items} fromShare={incoming.source !== "picker"} onDiscard={discard} />;
 }
 
-function ImportForm({ items, onDiscard }: { items: SharedItem[]; onDiscard: () => void }) {
+function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fromShare: boolean; onDiscard: () => void }) {
   const t = useTheme();
   const kids = useStore((s) => s.kids);
   const active = useStore((s) => s.kids.find((k) => k.id === s.activeId) ?? s.kids[0]);
-  const memories = useStore((s) => s.memories);
-  const custom = useStore((s) => s.customDefs);
   const setIncoming = useStore((s) => s.setIncoming);
   const setActive = useStore((s) => s.setActive);
   const addMemories = useStore((s) => s.addMemories);
-  const saveMemory = useStore((s) => s.saveMemory);
 
   const [childId, setChildId] = useState(active.id);
   const child: Child = kids.find((k) => k.id === childId) ?? active;
-  const [type, setType] = useState<ImportType>("photos");
-  const [title, setTitle] = useState("");
-  const [emoji, setEmoji] = useState("");
+  const several = items.length > 1;
+  const [shape, setShape] = useState<PostShape | null>(several ? null : "one"); // with several, the parent chooses
   const [note, setNote] = useState("");
-  const [location, setLocation] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [date, setDate] = useState<string | null>(null); // null = use the date from the photos
-  const [time, setTime] = useState<string | undefined | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [oneDate, setOneDate] = useState<string | null>(null); // null = from the files
+  const [dates, setDates] = useState<Record<string, string>>({}); // a date changed by hand, per file
   const [err, setErr] = useState("");
-  // a picture for each shared video: made automatically, and you can choose another frame
-  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  // a picture for each video: made automatically (or already made when it was picked), and you can choose another frame
+  const [thumbs, setThumbs] = useState<Record<string, string>>(() => Object.fromEntries(items.filter((i) => i.thumb).map((i) => [i.uri, i.thumb as string])));
   const [coverFor, setCoverFor] = useState<string | null>(null);
   useEffect(() => {
     items.filter((i) => i.kind === "video" && !thumbs[i.uri]).forEach((i) => {
@@ -101,120 +80,93 @@ function ImportForm({ items, onDiscard }: { items: SharedItem[]; onDiscard: () =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  const dated = items.filter((i) => i.date);
-  const earliest = dated.map((i) => i.date as string).sort()[0];
-  const entryDate = date ?? earliest ?? todayISO();
-  const entryTime = time === null ? items.find((i) => i.time)?.time : time;
-  const beforeBirth = items.filter((i) => i.date && i.date < child.birth).length;
-  const missing = items.length - dated.length;
-
-  const age = ageBetween(child.birth, todayISO());
-  const ageMonths = age.years * 12 + age.months;
-  const ideas = useMemo(() => {
-    if (type === "first" || type === "last") {
-      const used = memories.filter((p) => p.childId === child.id && p.type === type).map((p) => p.title);
-      return openIdeas(type === "first" ? FIRST_IDEAS : LAST_IDEAS, used).slice(0, 8).map((i) => ({ label: i.title, emoji: i.emoji }));
-    }
-    if (type === "milestone") {
-      const done = milestonesLogged(memories, child.id);
-      const defs = [...MILESTONE_CATALOG, ...(custom[child.id] || [])].filter((d) => !memoryForDef(d, done));
-      return byAgeFit(defs, ageMonths).slice(0, 8).map((d) => ({ label: d.label, emoji: d.emoji }));
-    }
-    return [];
-  }, [type, memories, custom, child.id, ageMonths]);
+  const today = todayISO();
+  const fileDate = (it: SharedItem) => dates[it.uri] ?? it.date;
+  const earliest = items.map(fileDate).filter((d): d is string => !!d).sort()[0];
+  const postDate = oneDate ?? earliest ?? today;
+  const undated = items.filter((i) => !fileDate(i)).length;
 
   const removeItem = (uri: string) => {
     deleteFile(uri);
     if (thumbs[uri]) deleteThumb(thumbs[uri]);
     const left = items.filter((i) => i.uri !== uri);
-    setIncoming(left.length ? { items: left } : null);
+    setIncoming(left.length ? { items: left, source: fromShare ? "share" : "picker" } : null);
   };
 
   const confirmDiscard = () =>
-    Alert.alert("Discard these photos?", `Nothing will be added to ${APP_NAME}. The originals stay where they are.`, [
+    Alert.alert(fromShare ? "Discard these photos?" : "Don't add these?", `Nothing will be added to ${APP_NAME}. The originals stay where they are.`, [
       { text: "Keep editing", style: "cancel" },
       { text: "Discard", style: "destructive", onPress: () => { Object.values(thumbs).forEach(deleteThumb); onDiscard(); } },
     ]);
 
-  const finish = (count: number, what: string) => {
-    setActive(child.id);
-    setIncoming(null);
-    ToastAndroid.show(`Added ${what} to ${child.name}'s timeline`, ToastAndroid.LONG);
-    router.navigate("/");
-    return count;
-  };
+  const changeDate = (uri: string, current: string) =>
+    DateTimePickerAndroid.open({
+      value: parseISO(current),
+      mode: "date",
+      minimumDate: parseISO(child.birth),
+      maximumDate: new Date(),
+      onChange: (e, d) => { if (e.type === "set" && d) setDates((cur) => ({ ...cur, [uri]: toISO(d) })); },
+    });
 
   const save = () => {
-    setErr("");
-    setBusy(true);
-    try {
-      const finalTags = uniqueIds(tags);
-      const place = location.trim() || undefined;
-
-      if (type === "photos") {
-        const now = Date.now();
-        const list: Memory[] = items.map((it, i) => ({
-          id: uid("im"),
-          childId: child.id,
-          type: "photo" as const,
-          date: it.date && it.date >= child.birth ? it.date : it.date ? child.birth : todayISO(), // each keeps its own date
-          time: it.time,
-          description: note.trim() || (it.kind === "video" ? "A little moment on video." : "A new memory."),
-          media: [{ id: uid("mi"), uri: it.uri, kind: it.kind, ...(thumbs[it.uri] ? { thumb: thumbs[it.uri] } : {}) }],
-          emoji: it.kind === "video" ? "🎬" : "📷",
-          palette: PALETTE[i % PALETTE.length],
-          tagIds: finalTags,
-          location: place,
-          source: "Shared",
-          createdAt: now,
-          updatedAt: now,
-        }));
-        addMemories(list);
-        return finish(list.length, `${list.length} ${list.length === 1 ? "photo" : "photos"}`);
-      }
-
-      if (entryDate < child.birth) return setErr(`That date is before ${child.name}'s birth date.`);
-      const media = items.map((it) => ({ id: uid("mi"), uri: it.uri, kind: it.kind, ...(thumbs[it.uri] ? { thumb: thumbs[it.uri] } : {}) }));
-      if (type === "milestone") {
-        const problem = logMilestone({ childId: child.id, title, emoji: emoji || KIND_META.milestone.emoji, category: "Other", date: entryDate, time: entryTime, location: place, tagIds: finalTags, note, media });
-        if (problem) return setErr(problem);
-        return finish(1, "a milestone");
-      }
-      if ((type === "first" || type === "last") && !title.trim()) return setErr(type === "first" ? "What was the first? e.g. “First bath”." : "What was the last? e.g. “Last bottle”.");
-      saveMemory({ childId: child.id, type, title, description: note, date: entryDate, time: entryTime, location: place, tagIds: finalTags, media, emoji: emoji || KIND_META[type].emoji });
-      return finish(1, type === "story" ? "a story" : type === "first" ? "a first" : "a last");
-    } finally {
-      setBusy(false);
-    }
+    if (!shape) return setErr("Choose one post or separate posts.");
+    if (shape === "one" && postDate < child.birth) return setErr(`That date is before ${child.name}'s birth date.`);
+    const posts: Memory[] = buildNewPosts({
+      child, shape, note,
+      items: items.map((it) => ({ uri: it.uri, kind: it.kind, thumb: thumbs[it.uri], date: fileDate(it), time: dates[it.uri] ? undefined : it.time })),
+      oneDate: postDate, today, newId: uid, now: Date.now(),
+    });
+    addMemories(posts);
+    setActive(child.id);
+    setIncoming(null);
+    ToastAndroid.show(`Added ${posts.length === 1 ? "a post" : `${posts.length} posts`} to ${child.name}'s story. Tap the pencil on a post to tag people.`, ToastAndroid.LONG);
+    router.navigate("/");
   };
 
-  const chip = (on: boolean) => ({ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: on ? t.chipOn : t.card, borderWidth: 1, borderColor: on ? t.chipOn : t.line } as const);
-  const current = TYPES.find((x) => x.id === type)!;
+  const choice = (value: PostShape, title: string, sub: string) => {
+    const on = shape === value;
+    return (
+      <Pressable onPress={() => { setShape(value); setErr(""); }} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ flex: 1, padding: 12, borderRadius: 16, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.outline, backgroundColor: t.card }}>
+        <Text style={[TYPE.titleSmall, { color: t.ink }]}>{title}</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 2 }]}>{sub}</Text>
+      </Pressable>
+    );
+  };
 
   return (
-    <Sheet visible onClose={confirmDiscard} title={`Add to ${APP_NAME}`}>
-      <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>{summarize(items, formatDate)}</Text>
+    <Sheet visible onClose={confirmDiscard} title={several ? `New post${shape === "separate" ? "s" : ""} from ${items.length} files` : "New post"}>
+      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13.5 }}>{summarize(items, formatDate)}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-        {items.map((it) => (
-          <View key={it.uri} style={{ width: "31.5%" }}>
-            <View style={{ aspectRatio: 1, borderRadius: 12, overflow: "hidden" }}>
-              <PhotoView photo={{ media: [{ id: it.uri, uri: it.uri, kind: it.kind, thumb: thumbs[it.uri] }], emoji: "📷", palette: "peach" }} fit="contain" style={{ width: "100%", height: "100%" }} emojiSize={24} />
-              <Pressable onPress={() => removeItem(it.uri)} hitSlop={6} style={{ position: "absolute", right: 4, top: 4, width: 24, height: 24, borderRadius: 12, backgroundColor: "#000a", alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>✕</Text>
-              </Pressable>
-              {it.kind === "video" ? (
-                <Pressable onPress={() => setCoverFor(it.uri)} hitSlop={6} accessibilityLabel="Choose the cover frame" style={{ position: "absolute", left: 4, bottom: 4, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#000b", borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 }}>
-                  <Icon name="film" size={11} color="#fff" />
-                  <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Cover</Text>
+        {items.map((it) => {
+          const d = fileDate(it);
+          return (
+            <View key={it.uri} style={{ width: "31.5%" }}>
+              <View style={{ aspectRatio: 1, borderRadius: 12, overflow: "hidden" }}>
+                <PhotoView photo={{ media: [{ id: it.uri, uri: it.uri, kind: it.kind, thumb: thumbs[it.uri] }], emoji: "", palette: "peach" }} fit="contain" style={{ width: "100%", height: "100%" }} emojiSize={24} />
+                <Pressable onPress={() => removeItem(it.uri)} hitSlop={6} accessibilityLabel="Leave this one out" style={{ position: "absolute", right: 4, top: 4, width: 26, height: 26, borderRadius: 13, backgroundColor: "#000a", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="x" size={15} color="#fff" />
                 </Pressable>
-              ) : null}
+                {it.kind === "video" ? (
+                  <Pressable onPress={() => setCoverFor(it.uri)} hitSlop={6} accessibilityLabel="Choose the cover frame" style={{ position: "absolute", left: 4, bottom: 4, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#000b", borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 }}>
+                    <Icon name="film" size={11} color="#fff" />
+                    <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Cover</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+              {/* each post keeps its own file's date; tap it to change it */}
+              {shape === "separate" ? (
+                <Pressable onPress={() => changeDate(it.uri, d ?? today)} hitSlop={4} accessibilityLabel="Change this date">
+                  <Text style={{ color: d ? t.accentDeep : t.danger, fontSize: 11, fontWeight: "700", marginTop: 3, textDecorationLine: "underline" }} numberOfLines={1}>{d ? formatDate(d) : "No date: today"}</Text>
+                </Pressable>
+              ) : (
+                <Text style={{ color: d ? t.ink3 : t.danger, fontSize: 10.5, fontWeight: "700", marginTop: 3 }} numberOfLines={1}>{d ? formatDate(d) : "no date found"}</Text>
+              )}
             </View>
-            <Text style={{ color: it.date ? t.ink3 : t.danger, fontSize: 10.5, fontWeight: "700", marginTop: 3 }} numberOfLines={1}>{it.date ? formatDate(it.date) : "no date found"}</Text>
-          </View>
-        ))}
+          );
+        })}
       </View>
 
-      {kids.length > 1 ? (
+      {fromShare && kids.length > 1 ? (
         <>
           <Label>Whose memories?</Label>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -228,59 +180,36 @@ function ImportForm({ items, onDiscard }: { items: SharedItem[]; onDiscard: () =
         </>
       ) : null}
 
-      <Label>What is this?</Label>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-        {TYPES.map((x) => (
-          <Pressable key={x.id} onPress={() => { setType(x.id); setErr(""); }} style={chip(type === x.id)}>
-            <Text style={{ color: type === x.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12.5 }}>{x.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Text style={{ color: t.ink4, fontSize: 12, marginTop: 6 }}>{current.hint}</Text>
-
-      {type !== "photos" ? (
+      {several ? (
         <>
-          <Label>{type === "milestone" ? "Milestone" : type === "first" ? "What was the first?" : type === "last" ? "What was the last?" : "Title (optional)"}</Label>
-          <Input value={title} onChangeText={setTitle} placeholder={type === "milestone" ? "e.g. Rolls over" : type === "first" ? "e.g. First snow" : type === "last" ? "e.g. Last bottle" : "e.g. A day at the lake"} maxLength={60} />
-          {ideas.length ? (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-              {ideas.map((i) => (
-                <Pressable key={i.label} onPress={() => { setTitle(i.label); setEmoji(i.emoji); }} style={chip(title === i.label)}>
-                  <Text style={{ color: title === i.label ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{i.emoji} {i.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
+          <Label>How should they be added?</Label>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {choice("one", "One post", "All of them together, on one date.")}
+            {choice("separate", "Separate posts", "One post each, on the day it was taken.")}
+          </View>
         </>
       ) : null}
 
-      <Label>{type === "photos" ? "Caption for every photo (optional)" : "Notes"}</Label>
-      <Input value={note} onChangeText={setNote} multiline placeholder={type === "story" ? "What happened? Who was there?" : "Anything you want to remember"} />
-
-      {type === "photos" ? (
-        <View style={{ backgroundColor: t.bg2, borderRadius: 14, padding: 12, marginTop: 14 }}>
-          <Text style={{ color: t.ink2, fontSize: 12.5, lineHeight: 18 }}>
-            📅 Each photo keeps the date it was taken{dated.length ? "" : " — none of these carry one, so they'll be dated today. Fix any date later with ✎."}
-            {missing && dated.length ? ` ${missing} ${missing === 1 ? "has" : "have"} no date and will be dated today.` : ""}
-            {beforeBirth ? ` ${beforeBirth} ${beforeBirth === 1 ? "is" : "are"} from before ${child.name} was born, so will sit on the birth date.` : ""}
-          </Text>
-        </View>
-      ) : (
+      {shape === "one" ? (
         <>
           <Label>Date</Label>
-          <DateField value={entryDate} onChange={setDate} min={child.birth} max={todayISO()} />
+          <DateField value={postDate} onChange={setOneDate} min={child.birth} max={today} />
           <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 5 }}>
-            {date === null && earliest ? `From your photos — ${items.length > 1 && dated.length > 1 ? "the earliest one" : "when it was taken"}.` : date === null ? "No date in the files, so today's date is used." : "Chosen by you."}
+            {oneDate !== null ? "Chosen by you." : earliest ? `From the ${several ? "earliest file" : "file"}. Tap to change it.` : "No date in the files, so today's date is used. Tap to change it."}
           </Text>
-          <TimeField value={entryTime} onChange={setTime} />
         </>
-      )}
+      ) : shape === "separate" ? (
+        <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>
+          Each post keeps the date its file was taken. Tap a date above to change it.{undated ? ` ${undated} ${undated === 1 ? "has" : "have"} no date and will be dated today.` : ""}
+        </Text>
+      ) : null}
 
-      <Label>Location</Label>
-      <Input value={location} onChangeText={setLocation} placeholder="📍 Where was this? (optional)" maxLength={80} />
-
-      <Label>Tags — people, events, places</Label>
-      <TagPicker value={tags} onChange={setTags} location={location} />
+      {shape ? (
+        <>
+          <Label>Description (optional)</Label>
+          <Input value={note} onChangeText={setNote} multiline placeholder={shape === "separate" ? "Added to each post" : "What happened?"} accessibilityLabel="Description" />
+        </>
+      ) : null}
 
       {coverFor ? (
         <ThumbPicker videoUri={coverFor} current={thumbs[coverFor]} onChoose={(th) => setThumbs((cur) => { if (cur[coverFor]) deleteThumb(cur[coverFor]); return { ...cur, [coverFor]: th }; })} onClose={() => setCoverFor(null)} />
@@ -288,7 +217,7 @@ function ImportForm({ items, onDiscard }: { items: SharedItem[]; onDiscard: () =
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 16, lineHeight: 19 }}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 22 }}>
         <Btn label="Cancel" kind="soft" onPress={confirmDiscard} />
-        <Btn label={busy ? "Saving…" : type === "photos" ? `Add ${items.length} ${items.length === 1 ? "photo" : "photos"}` : "Save"} onPress={save} disabled={busy} style={{ flex: 1 }} />
+        <Btn label="OK" onPress={save} disabled={!shape} style={{ flex: 1 }} />
       </View>
     </Sheet>
   );

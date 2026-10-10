@@ -72,12 +72,14 @@ try {
   const tables = ["children", "child_members", "invites", "memories", "custom_defs", "relatives"];
   const t = await client.query("select table_name from information_schema.tables where table_schema='public' and table_name = any($1)", [tables]);
   const rls = await client.query("select relname from pg_class where relnamespace='public'::regnamespace and relrowsecurity and relname = any($1)", [tables]);
-  const fns = await client.query("select proname from pg_proc where pronamespace='public'::regnamespace and proname in ('is_member','create_invite','join_child')");
+  const fns = await client.query("select proname from pg_proc where pronamespace='public'::regnamespace and proname in ('is_member','create_invite','join_child','delete_my_account')");
+  const cols = await client.query("select table_name || '.' || column_name as c from information_schema.columns where table_schema='public' and (table_name, column_name) in (('children','gender'),('relatives','nickname'),('relatives','description'))");
   const b = await client.query("select public from storage.buckets where id='media'");
   const checks = [
     [`all ${tables.length} tables exist`, t.rowCount === tables.length],
     ["privacy rules (row-level security) are ON for every table", rls.rowCount === tables.length],
-    ["the sharing functions exist (is_member, create_invite, join_child)", fns.rowCount === 3],
+    ["the sharing functions exist (is_member, create_invite, join_child, delete_my_account)", fns.rowCount === 4],
+    ["the newer columns exist (a child's gender; a family member's nickname and description)", cols.rowCount === 3],
     ["the private “media” bucket exists and is NOT public", b.rowCount === 1 && b.rows[0].public === false],
   ];
   for (const [label, okay] of checks) say(`${okay ? "✓" : "✗"} ${label}`);
@@ -90,6 +92,7 @@ try {
 
 // 6. what's left
 const hasKey = Object.values(env).some((v) => /^sb_publishable_/i.test(v));
-say("\nDone. Two things only you can do in the Supabase dashboard:");
+say("\nDone. Three things only you can do in the Supabase dashboard:");
 say(`  1. ${hasKey ? "✓ publishable key found in .env" : "Copy the PUBLISHABLE key (Project Settings → API Keys) into .env as EXPO_PUBLIC_SUPABASE_ANON_KEY"}`);
-say("  2. Authentication → Sign In / Providers → Email → turn OFF “Confirm email”");
+say("  2. Authentication → Sign In / Providers → Email → keep “Confirm email” ON (new accounts verify their email)");
+say("  3. Authentication → URL Configuration → Redirect URLs → add  fourdages://auth-callback  (the email's button opens the app)");

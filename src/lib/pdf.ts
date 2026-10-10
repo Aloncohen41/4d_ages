@@ -1,173 +1,135 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { File } from "expo-file-system";
-import { Child, HeightEntry, Memory, MilestoneDef, Relative, Tag } from "./types";
+import { Child, Memory, MilestoneDef, Relative, Tag } from "./types";
 import { indexTags, labelOfTag } from "./tags";
 import { ageLong, ageShort, formatDate, formatTime, smartAge, todayISO } from "./date";
-import { blurb, byMoment, coverOf } from "./display";
+import { coverOf } from "./display";
 import { APP_NAME } from "../brand";
 import { albumFileName } from "./fileNames";
 import { withFriendlyName } from "./exportFiles";
-import { HeightUnit, formatHeight, funReference, heightAt } from "./growth";
+import { shrunkBase64 } from "./resize";
+import { BookPage, BookStyle, BookSizeId, STYLE_LOOK, bookMetrics, planBook, sizeById } from "./bookPages";
+import { TYPE_META } from "./entries";
 
-export type BookStyle = "classic" | "minimal" | "storybook";
-export type BookSize = "square" | "a4";
-
-export const BOOK_STYLES: { id: BookStyle; label: string; desc: string }[] = [
-  { id: "classic", label: "Classic", desc: "Warm cream pages, serif titles" },
-  { id: "minimal", label: "Minimal", desc: "Clean white, lots of space" },
-  { id: "storybook", label: "Storybook", desc: "Soft pastel, rounded photos" },
-];
-export const BOOK_SIZES: { id: BookSize; label: string; w: number; h: number }[] = [
-  { id: "square", label: "Square 8×8 in", w: 576, h: 576 },
-  { id: "a4", label: "A4 portrait", w: 595, h: 842 },
-];
+export { BOOK_SIZES, BOOK_STYLES } from "./bookPages";
+export type { BookStyle, BookSizeId as BookSize } from "./bookPages";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-async function dataUri(uri: string): Promise<string | null> {
-  try {
-    const f = new File(uri) as unknown as { base64: () => Promise<string> | string };
-    const b64 = await Promise.resolve(f.base64());
-    return `data:image/jpeg;base64,${b64}`;
-  } catch {
-    return null;
-  }
-}
-
-const RULER_CSS = `.moment{position:relative;padding-right:46px;min-height:40px}.ruler{position:absolute;right:30px;top:0;bottom:6px;width:5px;border-radius:3px;background:#00000014}.rdot{position:absolute;left:-6px;width:17px;height:4px;border-radius:2px;background:#d16a92}.rlab{position:absolute;right:0;width:30px;font-size:6.5pt;text-align:center;color:#8a6a6a;line-height:1}`;
-
-const CSS: Record<BookStyle, string> = {
-  classic: `body{font-family:Georgia,serif;color:#3d2a1f}.page{background:#fffaf0}h1,h2{color:#8a4b2d}.tag{color:#b5651d}.img{border-radius:6px}`,
-  minimal: `body{font-family:Helvetica,Arial,sans-serif;color:#222}.page{background:#fff}h1,h2{font-weight:300;letter-spacing:.04em}.tag{color:#888}.img{border-radius:0}`,
-  storybook: `body{font-family:'Trebuchet MS',Verdana,sans-serif;color:#3a3358}.page{background:#f4f1ff}h1,h2{color:#6a5acd}.tag{color:#e17aa0}.img{border-radius:22px;border:6px solid #fff}`,
-};
+/** Pictures are embedded at most this many pixels on their longest side: sharp in print at these sizes, small enough to keep the PDF light. */
+const PRINT_PX = 1400;
 
 export interface BookInput {
   child: Child;
   defs: MilestoneDef[]; // the milestone catalogue (for names)
   memories: Memory[]; // the child's memories, every type
   style: BookStyle;
-  size: BookSize;
-  heights?: HeightEntry[];
-  unit?: HeightUnit;
+  size: BookSizeId;
   relatives?: Relative[]; // so person tags print as names
   tags?: Tag[]; // the central tag list
   title?: string;
   subtitle?: string;
 }
 
-/** Photos are embedded in the PDF, so keep the total modest. */
-const IMAGE_BUDGET = 24;
+/** The heading for a memory on its page: the milestone's name, the title, or what kind of memory it is. */
+export function memoryHeading(m: Memory, defs: MilestoneDef[]): string {
+  if (m.type === "milestone") return defs.find((d) => d.id === m.milestoneId)?.label ?? m.title ?? "Milestone";
+  return m.title?.trim() || (m.type === "photo" ? "" : TYPE_META[m.type].label);
+}
 
-export async function buildBookHtml(i: BookInput): Promise<string> {
-  const { child, defs, memories, style } = i;
-  const heights = i.heights || [];
+export async function buildBookHtml(i: BookInput): Promise<{ html: string; pages: number }> {
+  const { child, defs, style } = i;
+  const size = sizeById(i.size);
+  const plan = planBook(child, i.memories, size);
+  const M = bookMetrics(size);
+  const look = STYLE_LOOK[style];
   const rels = i.relatives || [];
   const tagIndex = indexTags(i.tags || []);
-  const unit: HeightUnit = i.unit || "cm";
-  const maxCm = heights.length ? Math.max(70, ...heights.map((h) => h.cm)) * 1.08 : 0;
-  const imgMax = i.size === "a4" ? 300 : 200;
+  const pt = (n: number) => `${n.toFixed(2)}pt`;
 
-  /** A little ruler on the page's side with a marker at how tall they were at that time */
-  const ruler = (date: string) => {
-    const h = heightAt(heights, date);
-    if (!h || !maxCm) return "";
-    const pct = Math.min(96, Math.max(2, (h.cm / maxCm) * 100));
-    return `<div class="ruler"><div class="rdot" style="bottom:${pct}%"></div></div><div class="rlab" style="bottom:calc(${pct}% - 1pt)">${formatHeight(h.cm, unit).replace(" ", "<br/>")}</div>`;
-  };
-
-  const sm = smartAge(child.birth);
-  const milestones = memories.filter((m) => m.type === "milestone").sort(byMoment);
-  const firsts = memories.filter((m) => m.type === "first").sort(byMoment);
-  const lasts = memories.filter((m) => m.type === "last").sort(byMoment);
-  const ownPage = (m: Memory) => m.type === "milestone" || m.type === "first" || m.type === "last";
-  const photoOf = (m: Memory) => {
-    const c = coverOf(m.media);
+  // load every picture the plan uses, scaled down for print
+  const pictureOf = (m?: Memory) => {
+    const c = m ? coverOf(m.media) : null;
     return c && c.kind === "photo" ? c.uri : undefined;
   };
-  const moments = memories.filter((m) => !ownPage(m) && photoOf(m)).sort(byMoment);
-
-  // choose which pictures go in (milestones, firsts and lasts first), then load them
-  let budget = IMAGE_BUDGET;
-  const take = (list: Memory[], max: number): Set<Memory> => {
-    const out = new Set<Memory>();
-    for (const m of list) if (out.size < max && budget > 0 && photoOf(m)) { out.add(m); budget--; }
-    return out;
-  };
-  const msPick = take(milestones, 5);
-  const firstPick = take(firsts, 6);
-  const lastPick = take(lasts, 3);
-  const momentPick = take([...moments].reverse(), 12);
-  const load = async (m: Memory, picked: Set<Memory>) => (picked.has(m) ? dataUri(photoOf(m) as string) : null);
-  const [msImgs, firstImgs, lastImgs, momentImgs] = await Promise.all([
-    Promise.all(milestones.map((m) => load(m, msPick))),
-    Promise.all(firsts.map((m) => load(m, firstPick))),
-    Promise.all(lasts.map((m) => load(m, lastPick))),
-    Promise.all(moments.map((m) => load(m, momentPick))),
-  ]);
-
-  let avatar = "";
-  const am = memories.find((m) => m.id === child.avatarPhotoId);
-  const au = am ? photoOf(am) : undefined;
-  if (au) {
-    const u = await dataUri(au);
-    if (u) avatar = `<img class="img" src="${u}" style="width:150px;height:150px;object-fit:cover;border-radius:75px;margin-top:18px"/>`;
+  const uris = new Set<string>();
+  for (const p of plan.pages) {
+    if (p.kind === "picture") uris.add(pictureOf(p.memory) as string);
+    if (p.kind === "birth") [pictureOf(p.photo), pictureOf(p.story)].forEach((u) => u && uris.add(u));
   }
-  if (!avatar) avatar = `<div style="font-size:70px;margin-top:14px">${child.emoji}</div>`;
+  const avatarMemory = i.memories.find((m) => m.id === child.avatarPhotoId);
+  const avatarUri = pictureOf(avatarMemory);
+  if (avatarUri) uris.add(avatarUri);
+  const loaded = new Map<string, string | null>();
+  for (const u of uris) loaded.set(u, await shrunkBase64(u, PRINT_PX)); // one at a time, so memory stays low
+  const src = (m?: Memory) => {
+    const u = pictureOf(m);
+    return u ? loaded.get(u) ?? null : null;
+  };
 
-  const img = (src: string | null) => (src ? `<img class="img" src="${src}" style="max-width:100%;max-height:${imgMax}px;display:block;margin:0 0 6px"/>` : "");
   const tagLine = (ids?: string[]) => {
     const labels = (ids || []).map((x) => labelOfTag(tagIndex.get(x), rels)).filter(Boolean);
-    return labels.length ? `<p class="tag" style="margin:3px 0 0;font-size:8.5pt">${labels.map(esc).join(" · ")}</p>` : "";
+    return labels.length ? `<p class="meta">${labels.map(esc).join(" · ")}</p>` : "";
   };
-  const meta = (m: Memory) =>
-    `<span class="tag" style="font-size:9pt">${formatDate(m.date)}${m.time ? ` · ${formatTime(m.time)}` : ""} · ${ageShort(child.birth, m.date)}${m.location ? ` · ${esc(m.location)}` : ""}</span>`;
-  const block = (m: Memory, src: string | null, head: string) =>
-    `<div class="moment" style="break-inside:avoid;margin:12px 0;padding-bottom:10px;border-bottom:1px solid #0001">${ruler(m.date)}${img(src)}<b>${head}</b> ${meta(m)}${m.description ? `<p style="margin:4px 0 0;font-size:10pt">${esc(m.description)}</p>` : ""}${tagLine(m.tagIds)}</div>`;
+  const meta = (m: Memory) => `${formatDate(m.date)}${m.time ? ` · ${formatTime(m.time)}` : ""} · ${ageShort(child.birth, m.date)}${m.location ? ` · ${esc(m.location)}` : ""}`;
+  const entry = (m: Memory, clamp: number) => {
+    const head = memoryHeading(m, defs);
+    return `<div class="entry">${head ? `<p class="label">${esc(head)}</p>` : ""}<p class="meta">${meta(m)}</p>${m.description ? `<p class="body" style="-webkit-line-clamp:${clamp}">${esc(m.description)}</p>` : ""}${tagLine(m.tagIds)}</div>`;
+  };
+  const picture = (s: string | null) => (s ? `<div class="pic"><img src="${s}"/></div>` : `<div class="pic"></div>`);
 
-  const cover = `<div class="page" style="text-align:center;padding-top:70px"><p class="tag" style="font-size:11pt">${esc(APP_NAME)}</p><h1 style="font-size:30pt;margin:10px 0">${esc(i.title || `${child.name}'s First Years`)}</h1><p class="tag">${esc(i.subtitle || `Born ${formatDate(child.birth)}`)}</p>${avatar}</div>`;
+  const page = (p: BookPage): string => {
+    switch (p.kind) {
+      case "cover": {
+        const avatar = avatarUri && loaded.get(avatarUri)
+          ? `<img class="avatar" src="${loaded.get(avatarUri)}"/>`
+          : `<div class="avatar emoji">${esc(child.emoji)}</div>`;
+        return `<div class="page center"><p class="meta">${esc(APP_NAME)}</p><h1>${esc(i.title || `${child.name}'s First Years`)}</h1><p class="meta">${esc(i.subtitle || `Born ${formatDate(child.birth)}`)}</p>${avatar}</div>`;
+      }
+      case "birth": {
+        const img = src(p.photo) ?? src(p.story);
+        return `<div class="page${img ? "" : " center"}">${img ? picture(img) : ""}<div class="entry"><p class="meta">The day ${esc(child.name)} was born</p><p class="label big">${formatDate(p.date)}</p>${p.story?.title ? `<p class="label">${esc(p.story.title)}</p>` : ""}${p.story?.description ? `<p class="body" style="-webkit-line-clamp:${img ? 4 : 14}">${esc(p.story.description)}</p>` : ""}</div></div>`;
+      }
+      case "picture":
+        return `<div class="page">${picture(src(p.memory))}${entry(p.memory, 3)}</div>`;
+      case "notes":
+        return `<div class="page notes">${p.memories.map((m) => entry(m, 5)).join("")}</div>`;
+      case "end": {
+        const sm = smartAge(child.birth);
+        return `<div class="page center"><h2>${esc(child.name)} today</h2><p class="label big">${sm.value}</p><p class="meta">${sm.unit} · ${esc(ageLong(child.birth, todayISO()))}</p></div>`;
+      }
+    }
+  };
 
-  const section = (title: string, body: string) => (body ? `<div class="page"><h2 style="text-align:center">${title}</h2>${body}</div>` : "");
-  const milestoneName = (m: Memory) => defs.find((d) => d.id === m.milestoneId)?.label ?? m.title ?? "Milestone";
-
-  const milestonesPage = section("Milestones", milestones.map((m, k) => block(m, msImgs[k], `${m.emoji} ${esc(milestoneName(m))}`)).join(""));
-  const entryPage = (title: string, list: Memory[], imgs: (string | null)[]) => section(title, list.map((m, k) => block(m, imgs[k], `${m.emoji} ${esc(m.title || "")}`)).join(""));
-  const firstsPage = entryPage("Firsts", firsts, firstImgs);
-  const lastsPage = entryPage("Lasts", lasts, lastImgs);
-
-  const pics: string[] = [];
-  moments.forEach((m, k) => {
-    const u = momentImgs[k];
-    if (!u) return;
-    pics.push(`<div class="moment" style="break-inside:avoid;margin-bottom:14px;text-align:center">${ruler(m.date)}<img class="img" src="${u}" style="max-width:100%;max-height:${imgMax + 10}px"/><p style="margin:5px 0 0;font-size:10pt">${esc(blurb(m))}</p><p class="tag" style="margin:0;font-size:9pt">${formatDate(m.date)}${m.time ? ` · ${formatTime(m.time)}` : ""} · ${ageShort(child.birth, m.date)}${m.location ? ` · ${esc(m.location)}` : ""}</p>${tagLine(m.tagIds)}</div>`);
-  });
-  const momentsPage = pics.length ? `<div class="page"><h2 style="text-align:center">Moments in between</h2>${pics.join("")}</div>` : "";
-
-  // stories without a picture of their own still belong in the book
-  const textStories = memories.filter((m) => m.type === "story" && !photoOf(m)).sort(byMoment);
-  const storiesPage = section("Stories", textStories.map((m) => block(m, null, `${m.emoji} ${esc(m.title || "")}`)).join(""));
-
-  const growthPage = heights.length
-    ? `<div class="page"><h2 style="text-align:center">Growing up</h2>${[...heights]
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map((h) => {
-          const f = funReference(h.cm);
-          return `<p style="margin:7px 0;font-size:11pt;break-inside:avoid"><b>${formatHeight(h.cm, unit)}</b> <span class="tag" style="font-size:9pt">${formatDate(h.date)} · ${ageShort(child.birth, h.date)}</span>${f ? ` <span style="font-size:9pt">${f.emoji} like ${f.name}</span>` : ""}</p>`;
-        })
-        .join("")}</div>`
-    : "";
-
-  const counts = [`${milestones.length} milestones`, `${firsts.length} firsts`, `${lasts.length} lasts`].join(" · ");
-  const end = `<div class="page" style="text-align:center;padding-top:90px"><h2>${esc(child.name)} today</h2><p style="font-size:26pt;margin:8px 0">${sm.value}</p><p class="tag">${sm.unit} · ${esc(ageLong(child.birth, todayISO()))}</p><p style="margin-top:30px;font-size:10pt">${counts}</p></div>`;
-
-  return `<html><head><meta charset="utf-8"/><style>@page{margin:28px}body{margin:0}.page{padding:6px;page-break-after:always}${RULER_CSS}${CSS[style]}</style></head><body>${cover}${milestonesPage}${firstsPage}${lastsPage}${storiesPage}${momentsPage}${growthPage}${end}</body></html>`;
+  const css = `
+@page{size:${pt(M.w)} ${pt(M.h)};margin:0}
+html,body{margin:0;padding:0;background:${look.paper}}
+body{font-family:${look.fontCss};color:${look.ink}}
+.page{width:${pt(M.w)};height:${pt(M.h)};box-sizing:border-box;padding:${pt(M.margin)};overflow:hidden;display:flex;flex-direction:column;page-break-after:always;break-after:page;background:${look.paper}}
+.page:last-child{page-break-after:auto;break-after:auto}
+.center{align-items:center;justify-content:center;text-align:center}
+.notes{justify-content:flex-start;gap:${pt(3 * M.u)}}
+h1{font-size:${pt(M.title)};margin:${pt(2 * M.u)} 0;color:${look.accent};font-weight:600}
+h2{font-size:${pt(M.title * 0.8)};margin:0 0 ${pt(2 * M.u)};color:${look.accent};font-weight:600}
+.pic{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;margin-bottom:${pt(2.4 * M.u)}}
+.pic img{max-width:100%;max-height:100%;object-fit:contain;border-radius:${pt(look.radius * M.u)};${look.frame ? `border:${pt(look.frame * M.u)} solid #fff;` : ""}}
+.entry{flex:none}
+.label{font-size:${pt(M.label)};font-weight:700;margin:0;color:${look.ink}}
+.label.big{font-size:${pt(M.label * 1.6)};margin:${pt(M.u)} 0}
+.meta{font-size:${pt(M.meta)};margin:${pt(0.6 * M.u)} 0 0;color:${look.sub}}
+.body{font-size:${pt(M.body)};line-height:1.35;margin:${pt(1.2 * M.u)} 0 0;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+.avatar{width:${pt(34 * M.u)};height:${pt(34 * M.u)};border-radius:50%;object-fit:cover;margin-top:${pt(4 * M.u)}}
+.avatar.emoji{display:flex;align-items:center;justify-content:center;font-size:${pt(18 * M.u)};width:auto;height:auto}
+`;
+  return { html: `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>${plan.pages.map(page).join("")}</body></html>`, pages: plan.pages.length };
 }
 
 export async function exportBook(i: BookInput): Promise<void> {
-  const html = await buildBookHtml(i);
-  const dims = BOOK_SIZES.find((s) => s.id === i.size) || BOOK_SIZES[0];
-  const { uri } = await Print.printToFileAsync({ html, width: dims.w, height: dims.h });
+  const { html } = await buildBookHtml(i);
+  const size = sizeById(i.size);
+  const M = bookMetrics(size);
+  // the page size, in PDF points: exactly the chosen print size (to the nearest point, 0.35 mm)
+  const { uri } = await Print.printToFileAsync({ html, width: M.w, height: M.h });
   const fileName = albumFileName(i.child.name, i.style); // e.g. "Maya Classic Album By 4D-Ages.pdf" instead of a random temporary name
   const named = withFriendlyName(uri, fileName);
   if (await Sharing.isAvailableAsync()) {

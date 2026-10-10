@@ -13,16 +13,16 @@ export function buildSample() {
   const ts = Date.now();
 
   const kids: Child[] = [
-    { id: "maya", name: "Maya", birth: mayaBirth, theme: "pink", emoji: "🌸", avatarPhotoId: "m18", growthRef: "girl" },
-    { id: "leo", name: "Leo", birth: leoBirth, theme: "blue", emoji: "🦁", avatarPhotoId: "l8", growthRef: "boy" },
+    { id: "maya", name: "Maya", birth: mayaBirth, theme: "pink", emoji: "🌸", avatarPhotoId: "m18", gender: "girl" },
+    { id: "leo", name: "Leo", birth: leoBirth, theme: "blue", emoji: "🦁", avatarPhotoId: "l8", gender: "boy" },
   ];
   const relatives: Relative[] = [
-    { id: "rosa", name: "Rosa", relation: "Grandma", emoji: "👵" },
-    { id: "henrik", name: "Henrik", relation: "Grandpa", emoji: "👴" },
-    { id: "priya", name: "Priya", relation: "Aunt", emoji: "👩" },
-    { id: "marco", name: "Marco", relation: "Uncle", emoji: "🧔" },
-    { id: "sarah", name: "Sarah", relation: "Mom", emoji: "👩" },
-    { id: "tom", name: "Tom", relation: "Dad", emoji: "👨" },
+    { id: "rosa", name: "Rosa", relation: "Grandma", nickname: "Nana", description: "Lives by the sea and bakes on Sundays" },
+    { id: "henrik", name: "Henrik", relation: "Grandpa" },
+    { id: "priya", name: "Priya", relation: "Aunt", description: "Lives abroad and visits every summer" },
+    { id: "marco", name: "Marco", relation: "Uncle" },
+    { id: "sarah", name: "Sarah", relation: "Mummy" },
+    { id: "tom", name: "Tom", relation: "Daddy" },
   ];
 
   // tags are kept in one central list; memories only hold their ids

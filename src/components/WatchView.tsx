@@ -56,7 +56,7 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
 
   return (
     <View>
-      <Btn label="✨ Make your own video" onPress={() => setCustom({ from: addDays(today, -30), to: today })} />
+      <Btn label="Make your own video" icon="film" onPress={() => setCustom({ from: addDays(today, -30), to: today })} />
 
       {whole ? (
         <Pressable onPress={() => setOpen(whole)} style={{ marginTop: 14, backgroundColor: t.accentSoft, borderRadius: 20, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>

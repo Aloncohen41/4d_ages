@@ -9,14 +9,15 @@ import { TYPE } from "../theme";
 import { withAlpha } from "../lib/m3";
 import { Child, MediaItem, MediaKind, PALETTES, Relative } from "../lib/types";
 import { coverOf } from "../lib/display";
+import { initialsOf } from "../lib/tags";
 import { Icon, IconName } from "./Icon";
 import { AvatarCrop } from "../lib/types";
 import { cropLayout } from "../lib/crop";
 import { formatDate, formatTime, parseISO, toHHMM, toISO } from "../lib/date";
 
 /* ---------- buttons & text ---------- */
-export function Btn({ label, onPress, kind = "solid", style, disabled }: {
-  label: string; onPress: () => void; kind?: "solid" | "soft" | "line" | "danger"; style?: StyleProp<ViewStyle>; disabled?: boolean;
+export function Btn({ label, onPress, kind = "solid", style, disabled, icon }: {
+  label: string; onPress: () => void; kind?: "solid" | "soft" | "line" | "danger"; style?: StyleProp<ViewStyle>; disabled?: boolean; icon?: IconName;
 }) {
   const t = useTheme();
   // Material 3 buttons: solid = filled, soft = filled tonal, line = outlined, danger = tonal error
@@ -34,8 +35,9 @@ export function Btn({ label, onPress, kind = "solid", style, disabled }: {
       onPress={onPress}
       disabled={disabled}
       android_ripple={{ color: withAlpha(fg, 0.14) }}
-      style={[s.btn, { backgroundColor: bg, borderColor: disabled ? withAlpha(t.ink, 0.12) : t.outline, borderWidth: kind === "line" ? 1 : 0 }, style]}
+      style={[s.btn, { backgroundColor: bg, borderColor: disabled ? withAlpha(t.ink, 0.12) : t.outline, borderWidth: kind === "line" ? 1 : 0 }, icon ? { flexDirection: "row", gap: 8 } : null, style]}
     >
+      {icon ? <Icon name={icon} size={18} color={fg} /> : null}
       <Text style={[TYPE.labelLarge, { color: fg }]}>{label}</Text>
     </Pressable>
   );
@@ -259,7 +261,7 @@ export function PhotoView({ photo, style, emojiSize = 48, fit = "cover", minRati
   if (cover && cover.kind !== "video") {
     const badge = cover.video ? (
       <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
-        <View style={s.playDot}><Icon name="play" size={Math.max(12, emojiSize * 0.45)} color="#fff" /></View>
+        <View style={s.playDot}><Icon name="play" size={Math.max(12, emojiSize * 0.45)} color="#2c1f15" /></View>
       </View>
     ) : null;
     if (fit === "auto") {
@@ -274,14 +276,16 @@ export function PhotoView({ photo, style, emojiSize = 48, fit = "cover", minRati
     const img = <Image source={{ uri: cover.uri }} style={[badge ? { width: "100%", height: "100%" } : (style as object), fit === "contain" ? { backgroundColor: t.bg3 } : null]} contentFit={fit === "contain" ? "contain" : "cover"} transition={transition} />;
     return badge ? <View style={[style, { overflow: "hidden" }]}>{img}{badge}</View> : img;
   }
+  const [bg, hill] = PALETTES[photo.palette] || PALETTES.peach;
   if (cover && cover.kind === "video") {
+    // a video whose picture isn't ready yet: never a black frame — the post's soft colour with a play button (its thumbnail follows shortly)
     return (
-      <View style={[style, { backgroundColor: "#1d1618", alignItems: "center", justifyContent: "center" }]}>
-        <View style={s.playDot}><Text style={{ fontSize: emojiSize * 0.4 }}>▶</Text></View>
+      <View style={[style, { backgroundColor: bg, alignItems: "center", justifyContent: "center", overflow: "hidden" }]}>
+        <View style={{ position: "absolute", bottom: -34, left: -24, width: "95%", height: 100, borderRadius: 100, backgroundColor: hill, opacity: 0.35 }} />
+        <View style={s.playDot}><Icon name="play" size={Math.max(14, emojiSize * 0.45)} color="#2c1f15" /></View>
       </View>
     );
   }
-  const [bg, hill] = PALETTES[photo.palette] || PALETTES.peach;
   return (
     <View style={[style, { backgroundColor: bg, alignItems: "center", justifyContent: "center", overflow: "hidden" }]}>
       <View style={{ position: "absolute", bottom: -34, left: -24, width: "95%", height: 100, borderRadius: 100, backgroundColor: hill, opacity: 0.35 }} />
@@ -294,13 +298,17 @@ export function PhotoView({ photo, style, emojiSize = 48, fit = "cover", minRati
  * A round picture showing the chosen part of a photo. Pass `crop` to use the position and zoom the user set;
  * without it the photo is simply centred. The photo is never stretched.
  */
-export function CropAvatar({ uri, crop, size, emoji, ring, fallbackBg }: { uri?: string; crop?: AvatarCrop; size: number; emoji?: string; ring?: boolean; fallbackBg?: string }) {
+export function CropAvatar({ uri, crop, size, emoji, initials, ring, fallbackBg }: { uri?: string; crop?: AvatarCrop; size: number; emoji?: string; initials?: string; ring?: boolean; fallbackBg?: string }) {
   const t = useTheme();
   const frame = { width: size, height: size, borderRadius: size / 2, overflow: "hidden" as const, borderWidth: ring ? 2.5 : 0, borderColor: t.accent, backgroundColor: fallbackBg ?? t.accentSoft };
   if (!uri) {
     return (
       <View style={[frame, { alignItems: "center", justifyContent: "center" }]}>
-        <Text style={{ fontSize: size * 0.5 }}>{emoji ?? "🙂"}</Text>
+        {initials !== undefined ? (
+          <Text style={{ fontSize: size * 0.38, fontWeight: "600", color: t.onAccentSoft }} numberOfLines={1} adjustsFontSizeToFit>{initials}</Text>
+        ) : (
+          <Text style={{ fontSize: size * 0.5 }}>{emoji ?? "🙂"}</Text>
+        )}
       </View>
     );
   }
@@ -328,9 +336,9 @@ export function Avatar({ child, size = 40, ring }: { child: Child; size?: number
   );
 }
 
-/** A family member's round picture (or their emoji until they have one). */
-export function MemberAvatar({ member, size = 40, ring }: { member: Pick<Relative, "photoUri" | "crop" | "emoji">; size?: number; ring?: boolean }) {
-  return <CropAvatar uri={member.photoUri} crop={member.crop} size={size} emoji={member.emoji} ring={ring} />;
+/** A family member's round picture, or a neutral placeholder with their initials until they have one (people are never drawn as emoji). */
+export function MemberAvatar({ member, size = 40, ring }: { member: Pick<Relative, "photoUri" | "crop" | "name"> & Partial<Pick<Relative, "nickname" | "relation">>; size?: number; ring?: boolean }) {
+  return <CropAvatar uri={member.photoUri} crop={member.crop} size={size} initials={initialsOf(member.name || member.nickname || member.relation || "")} ring={ring} />;
 }
 
 function VideoBox({ uri }: { uri: string }) {
@@ -349,7 +357,7 @@ export function MediaViewer({ media, onClose }: { media: { uri: string; kind: Me
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         {media && media.kind === "video" ? <VideoBox uri={media.uri} /> : null}
         {media && media.kind === "photo" ? <Image source={{ uri: media.uri }} style={{ width: "100%", height: "80%" }} contentFit="contain" /> : null}
-        <Pressable onPress={onClose} style={s.viewerClose} hitSlop={10}><Text style={{ color: "#fff", fontWeight: "700", fontSize: 18 }}>✕</Text></Pressable>
+        <Pressable onPress={onClose} style={s.viewerClose} hitSlop={10} accessibilityLabel="Close"><Icon name="x" size={20} color="#fff" /></Pressable>
       </View>
     </Modal>
   );

@@ -42,7 +42,7 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
   return (
     <Sheet visible={visible} onClose={onClose} title="Import family">
       {!src ? (
-        <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>Everyone from the other families is already in {child.name}'s family. 🎉</Text>
+        <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>Everyone from the other families is already in {child.name}'s family.</Text>
       ) : (
         <>
           {sources.length > 1 ? (

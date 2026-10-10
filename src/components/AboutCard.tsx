@@ -14,7 +14,7 @@ export function AboutCard() {
       <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13.5, marginTop: 2 }}>{TAGLINE}</Text>
       <Text style={{ color: t.ink4, fontSize: 12, marginTop: 4 }}>Version {APP_VERSION}</Text>
       <Text style={{ color: t.ink3, fontSize: 12, lineHeight: 17, textAlign: "center", marginTop: 12 }}>
-        Your photos and notes stay on this phone unless you choose to share them. Milestone ages follow ZERO TO THREE's “Developmental Milestones by Age”.
+        Your photos and notes are private to your account and the people you invite. Milestone ages follow ZERO TO THREE's “Developmental Milestones by Age”.
       </Text>
     </View>
   );

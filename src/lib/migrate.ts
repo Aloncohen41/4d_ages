@@ -10,6 +10,7 @@ import { makeTag, personLabel, upsertTagIn, uniqueIds } from "./tags";
  *   v3  "people in this photo" become person tags; tags stored as "<kind>:<value>"
  *   v4  tags move to one central list; memories hold tag ids
  *   v5  one list of memories: photos, milestone records and standalone heights/weights all become memories
+ *   v6  family relationships become free text (a preset plus "your own wording" → one text)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Loose = Record<string, any>;
@@ -227,11 +228,27 @@ export function migrateMemoriesV5<S extends Loose>(s: S): S {
 }
 
 /** Bring saved data from any older version up to date. */
+/* ---------------- v6 ---------------- */
+/**
+ * Relationships become free text. A person's relationship is now whatever the family calls it, so what each person was SHOWN as
+ * before is kept: their own wording ("Nana") if they had one, else the preset ("Grandma"); the old catch-all "Other" becomes "Family".
+ */
+export function migrateRelativesV6<S extends Loose>(s: S): S {
+  const relatives = ((s.relatives || []) as Loose[]).map((r) => {
+    if (r.customLabel === undefined && r.relation !== "Other") return r;
+    const { customLabel, ...rest } = r;
+    const own = typeof customLabel === "string" ? customLabel.trim() : "";
+    return { ...rest, relation: own || (r.relation === "Other" ? "Family" : r.relation) };
+  });
+  return { ...s, relatives };
+}
+
 export function migrateStored<S extends Loose>(persisted: S, fromVersion: number): S {
   let s: Loose = persisted;
   if (fromVersion < 2) s = migrateLegacyFirsts(s);
   if (fromVersion < 3) s = migrateTagsV3(s);
   if (fromVersion < 4) s = migrateTagsV4(s);
   if (fromVersion < 5) s = migrateMemoriesV5(s);
+  if (fromVersion < 6) s = migrateRelativesV6(s);
   return s as S;
 }

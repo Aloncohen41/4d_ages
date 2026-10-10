@@ -98,8 +98,8 @@ ok("pushing for a child sends only that child's family (never the other child's 
 ok("…and only what the cloud doesn't have yet or has older", relativesToPush(all, "maya", new Map([["a", 0], ["c", 0], ["d2", 5]])).map((r: any) => r.id).join() === "d2" && relativesToPush(all, "maya", new Map([["a", 0], ["c", 0], ["d2", 9]])).length === 0);
 
 // ---------- the wiring
-const fam = read("app/(tabs)/family.tsx"), sheet = read("src/components/FamilyImportSheet.tsx"), member = read("src/components/MemberSheet.tsx"), picker = read("src/components/TagPicker.tsx"), store = read("src/lib/store.ts"), sync = read("src/lib/sync.ts");
-ok("the Family tab shows only the selected child's family", /familyOf\(relatives, child\.id\)/.test(fam) && /family\.map\(\(r\) =>/.test(fam) && !/relatives\.map/.test(fam));
+const fam = read("app/family.tsx"), sheet = read("src/components/FamilyImportSheet.tsx"), member = read("src/components/MemberSheet.tsx"), picker = read("src/components/TagPicker.tsx"), store = read("src/lib/store.ts"), sync = read("src/lib/sync.ts");
+ok("the Family page shows only the selected child's family", /familyOf\(relatives, child\.id\)/.test(fam) && /shown\.map\(\(r\) =>/.test(fam) && !/relatives\.map/.test(fam));
 ok("the Family tab offers “Import family from …” whenever another child has people to bring, and opens the window", /Import family from \{importFrom\}/.test(fam) && /<FamilyImportSheet visible=\{importing\}/.test(fam) && /sources\.length \? \(/.test(fam));
 ok("the import window marks everyone to begin with, toggles one person per tap, and approves with a button", /setMarked\(defaultSelection\(src\)\)/.test(sheet) && /toggleSelection\(m, p\.id\)/.test(sheet) && /importFamily\(child\.id, marked\)/.test(sheet) && /accessibilityRole="checkbox"/.test(sheet) && /Mark everyone/.test(sheet) && /Clear all/.test(sheet));
 ok("with several other children it lets you choose which child to import from", /sources\.length > 1/.test(sheet) && /setChosen\(x\.child\.id\)/.test(sheet));
@@ -107,6 +107,6 @@ ok("new people join the child you are looking at; “In the family of” appears
 ok("the tag picker lists only this child's family, and new people it creates join it", /family\.map\(\(r\) =>/.test(picker) && /childIds: active \? \[active\.id\] : undefined/.test(picker));
 ok("adding a child pins the old family to the existing children (only when there are some), then adds the siblings", /s\.kids\.length \? pinToExistingChildren\(/.test(store) && /addSiblingsForNewChild\(pinned, s\.kids, child/.test(store));
 ok("renaming or recolouring a child updates their sibling record", /followChild\(s\.relatives, before, after/.test(store));
-ok("the Family tab offers a one-tap “Set up siblings” only when there are several children and none set up", /needsSiblingSetup\(relatives, kids\)/.test(fam) && /Set up siblings/.test(fam));
+ok("the “Set up siblings” section is gone from Family (siblings are still added automatically when a child is added)", !/Set up siblings|needsSiblingSetup|setupSiblings/.test(fam));
 ok("cloud sharing pulls into, and pushes from, the right child's family", /mergeRelatives\(s\.relatives, rRows, childId\)/.test(sync) && /relativesToPush\(s\.relatives, childId, known\)/.test(sync));
 console.log(fails ? `${fails} FAILED` : "all family-flow tests passed");

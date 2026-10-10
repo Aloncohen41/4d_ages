@@ -10,6 +10,7 @@ import { Slide, slideView } from "../lib/slides";
 import { ageShort, formatDate } from "../lib/date";
 import { Btn, PhotoView, Seg } from "./ui";
 import { VideoExportSheet } from "./VideoExportSheet";
+import { Icon } from "./Icon";
 
 const BASE_MS = 2400; // time per memory at 1×
 
@@ -147,7 +148,7 @@ export function GrowPlayer({ slides, child, title, subtitle, fileLabel }: { slid
           onPress={() => { if (!playing && posRef.current >= max) seek(0); setPlaying(!playing); }}
           style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ color: t.onAccent, fontSize: 20 }}>{playing ? "❚❚" : "▶"}</Text>
+          <Icon name={playing ? "pause" : "play"} size={26} color={t.onAccent} />
         </Pressable>
         <View style={{ flex: 1 }} onTouchStart={holdSwipe} onTouchEnd={releaseSwipe} onTouchCancel={releaseSwipe}>
           {max > 0 ? (
@@ -175,9 +176,9 @@ export function GrowPlayer({ slides, child, title, subtitle, fileLabel }: { slid
           <Seg options={GROW_SPEEDS.map((v) => ({ id: v, label: `${v}×` }))} value={speed} onChange={setSpeed} />
         </View>
         <Pressable onPress={() => setLoop((l) => !l)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: loop ? t.accent : t.line, backgroundColor: loop ? t.accentSoft : t.card }}>
-          <Text style={{ color: loop ? t.accentDeep : t.ink3, fontWeight: "700", fontSize: 12 }}>🔁 Loop</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}><Icon name="loop" size={14} color={loop ? t.accentDeep : t.ink3} /><Text style={{ color: loop ? t.accentDeep : t.ink3, fontWeight: "700", fontSize: 12 }}>Loop</Text></View>
         </Pressable>
-        <Btn label="🎬 Save as video" onPress={() => { setPlaying(false); setExporting(true); }} style={{ alignSelf: "stretch", marginTop: 4 }} />
+        <Btn label="Save as video" icon="film" onPress={() => { setPlaying(false); setExporting(true); }} style={{ alignSelf: "stretch", marginTop: 4 }} />
       </View>
       <VideoExportSheet visible={exporting} onClose={() => setExporting(false)} slides={slides} child={child} initialSpeed={speed} title={title} subtitle={subtitle} fileLabel={fileLabel} />
     </View>

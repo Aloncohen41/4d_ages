@@ -13,6 +13,14 @@ const MAP = {
   film: "movie-outline", play: "play", "arrow-down": "arrow-down", "arrow-up": "arrow-up", "arrow-up-right": "arrow-top-right", calendar: "calendar-blank-outline",
   image: "image-outline", clock: "clock-outline", "user-plus": "account-plus-outline", download: "download", square: "checkbox-blank-outline", "check-square": "checkbox-marked",
   "help-circle": "help-circle-outline", bell: "bell-outline",
+  pause: "pause", loop: "repeat", place: "map-marker-outline", scale: "scale-bathroom", birthday: "cake-variant-outline", reorder: "swap-vertical",
+  menu: "menu", family: "account-group-outline", settings: "cog-outline", logout: "logout", "delete-account": "delete-forever-outline",
+  mail: "email-outline", lock: "lock-outline", eye: "eye-outline", "eye-off": "eye-off-outline", google: "google", info: "information-outline",
+  select: "checkbox-multiple-marked-outline", images: "image-multiple-outline", pdf: "file-pdf-box", "play-circle": "play-circle-outline",
+  // the door frame's reference objects: simple outlined pictures instead of emoji
+  "ref-bottle": "baby-bottle-outline", "ref-ruler": "ruler", "ref-teddy": "teddy-bear", "ref-dog": "dog-side", "ref-chair": "seat-outline",
+  "ref-table": "table-furniture", "ref-counter": "countertop-outline", "ref-door": "door", "ref-bike": "bicycle", "ref-fridge": "fridge-outline",
+  "ref-hoop": "basketball-hoop-outline", "ref-adult": "human-male-height", "ref-kid": "human-child",
   // meanings
   star: "star", heart: "heart", home: "home-outline", smile: "emoticon-happy-outline", "message-circle": "message-outline", zap: "lightbulb-outline", activity: "run",
   // the bottom navigation: outlined, and filled when selected

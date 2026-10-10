@@ -12,21 +12,30 @@ export interface AreaMeta {
   label: string;
   phrase: string; // for sentences: "really good at ___"
   emoji: string;
-  icon: string; // a Feather icon name
+  icon: string; // an icon name (see Icon.tsx)
+  /** the softer-but-deeper accent of the pair: ticked circles, area discs, the "Yes!" button */
   color: string;
+  /** the very light tint of the pair: the area's header and quiet grounds */
   soft: string;
+  /** a dark ink of the same hue, for text and icons on `soft` and on `color` (at least 4.5:1 on both) */
+  ink: string;
 }
-/** Area colours follow the chart: orange, blue, green and coral. */
+/**
+ * Soft, paired pastels in the same spirit as the children's colours: peach, blue, green and yellow for the four areas, lavender for your own.
+ * Each pair is a very light tint and a slightly deeper (still soft) accent of one hue; text and icons on them use the area's dark ink.
+ */
 export const AREA_META: Record<Area, AreaMeta> = {
-  "Social & Emotional": { label: "Social & Emotional", phrase: "social and emotional skills", emoji: "💗", icon: "heart", color: "#F28C28", soft: "#FBE3CF" },
-  Language: { label: "Language", phrase: "language", emoji: "💬", icon: "message-circle", color: "#2B8FD6", soft: "#D6EBF8" },
-  Cognitive: { label: "Cognitive", phrase: "thinking and problem-solving", emoji: "🧩", icon: "zap", color: "#2FA05A", soft: "#D5ECDD" },
-  Movement: { label: "Movement", phrase: "movement", emoji: "🏃", icon: "activity", color: "#E9604A", soft: "#F9DAD5" },
-  Other: { label: "Your own", phrase: "their own milestones", emoji: "⭐", icon: "star", color: "#8A7A80", soft: "#EFE6E9" },
+  "Social & Emotional": { label: "Social & Emotional", phrase: "social and emotional skills", emoji: "💗", icon: "heart", color: "#F2BC9C", soft: "#FDEEE5", ink: "#6E3517" },
+  Language: { label: "Language", phrase: "language", emoji: "💬", icon: "message-circle", color: "#A9C9E9", soft: "#E8F1FA", ink: "#1D4870" },
+  Cognitive: { label: "Cognitive", phrase: "thinking and problem-solving", emoji: "🧩", icon: "zap", color: "#AFD6B3", soft: "#E8F4E9", ink: "#285530" },
+  Movement: { label: "Movement", phrase: "movement", emoji: "🏃", icon: "activity", color: "#EDD083", soft: "#FCF4DA", ink: "#5E470C" },
+  Other: { label: "Your own", phrase: "their own milestones", emoji: "⭐", icon: "star", color: "#C9BCE2", soft: "#F1ECF7", ink: "#463868" },
 };
 
 /** An area's soft ground: its pastel in the light theme, its own colour at 24% in the dark one (a pastel there would glare and hide the text). */
 export const areaSoft = (meta: { color: string; soft: string }, theme: { dark: boolean }) => (theme.dark ? withAlpha(meta.color, 0.24) : meta.soft);
+/** Text and icons in an area's colour, on the page or its soft ground: the dark ink in the light theme, the pastel itself in the dark one. */
+export const areaInk = (meta: { color: string; ink: string }, theme: { dark: boolean }) => (theme.dark ? meta.color : meta.ink);
 
 const AREA_ALIASES: Record<string, Area> = {
   "Social & Emotional": "Social & Emotional", "Social & emotional": "Social & Emotional", Language: "Language", Cognitive: "Cognitive",

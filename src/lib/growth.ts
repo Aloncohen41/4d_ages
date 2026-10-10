@@ -23,12 +23,46 @@ function interp(rows: Row[], m: number): [number, number] | null {
   return null;
 }
 
-/** Typical range (about ±2 SD) in cm, or null when there's no reference for that age/choice */
+/** Typical range (about ±2 SD) in cm, or null when there's no reference for that age/choice. "all" is girls and boys together (their average). */
 export function typicalRange(ref: GrowthRef | undefined, months: number): [number, number] | null {
   if (!ref || ref === "none") return null;
-  const r = interp(ref === "boy" ? BOYS : GIRLS, months);
+  const r = ref === "all" ? both(months) : interp(ref === "boy" ? BOYS : GIRLS, months);
   return r ? [r[0] - 2 * r[1], r[0] + 2 * r[1]] : null;
 }
+function both(months: number): [number, number] | null {
+  const g = interp(GIRLS, months), b = interp(BOYS, months);
+  return g && b ? [(g[0] + b[0]) / 2, (g[1] + b[1]) / 2] : null;
+}
+
+/**
+ * Which range a child is compared with: the parent's own choice (Girls / Boys / All) if they made one, otherwise their gender —
+ * Girl → Girls, Boy → Boys, Prefer not to say (or not set) → All. "none" (off, from earlier versions) counts as no choice.
+ */
+export function effectiveRef(child: { growthRef?: GrowthRef; gender?: "girl" | "boy" | "unspecified" }): "girl" | "boy" | "all" {
+  if (child.growthRef === "girl" || child.growthRef === "boy" || child.growthRef === "all") return child.growthRef;
+  return child.gender === "girl" ? "girl" : child.gender === "boy" ? "boy" : "all";
+}
+
+/** The door frame's scale: 0 to 2 metres, so a child is never drawn at the top of the frame (65 cm sits about a third of the way up). */
+export const DOOR_MAX_CM = 200;
+export interface DoorRef {
+  cm: number;
+  name: string;
+  icon: "ref-bottle" | "ref-ruler" | "ref-chair" | "ref-dog" | "ref-table" | "ref-counter" | "ref-door" | "ref-kid" | "ref-adult" | "ref-fridge";
+}
+/** Everyday things at their real height, spread over the whole frame. Approximate. */
+export const DOOR_REFS: DoorRef[] = [
+  { cm: 18, name: "Baby bottle", icon: "ref-bottle" },
+  { cm: 30, name: "School ruler", icon: "ref-ruler" },
+  { cm: 46, name: "Chair seat", icon: "ref-chair" },
+  { cm: 60, name: "Labrador", icon: "ref-dog" },
+  { cm: 75, name: "Table", icon: "ref-table" },
+  { cm: 91, name: "Kitchen counter", icon: "ref-counter" },
+  { cm: 104, name: "Door handle", icon: "ref-door" },
+  { cm: 138, name: "A ten-year-old", icon: "ref-kid" },
+  { cm: 170, name: "An adult", icon: "ref-adult" },
+  { cm: 185, name: "Fridge", icon: "ref-fridge" },
+];
 
 export function rangeStatus(ref: GrowthRef | undefined, months: number, cm: number): "below" | "within" | "above" | null {
   const r = typicalRange(ref, months);
@@ -130,6 +164,28 @@ export function funComparisons(cm: number, count = 3, offset = 0): Comparison[] 
 export function nextUp(cm: number): { ref: FunRef; gap: number } | null {
   const next = FUN_REFS.find((x) => x.cm > cm);
   return next ? { ref: next, gap: next.cm - cm } : null;
+}
+
+/**
+ * Where to put labels that each want to sit at a height (`wanted`, in px from the top, in the order given) without overlapping: each keeps its
+ * place unless it would touch the one above, then it moves down just enough. Labels that would fall past `max` are pulled back up. Pure, for tests.
+ */
+export function placeLabels(wanted: number[], gap: number, min = 0, max = Infinity): number[] {
+  const order = wanted.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  const out = new Array<number>(wanted.length);
+  let last = -Infinity;
+  for (const { y, i } of order) {
+    const top = Math.max(y, min, last + gap);
+    out[i] = top;
+    last = top;
+  }
+  // anything pushed below the bottom is moved back up, keeping the gaps
+  let floor = max;
+  for (const { i } of [...order].reverse()) {
+    if (out[i] > floor) out[i] = floor;
+    floor = out[i] - gap;
+  }
+  return out;
 }
 
 /** Objects to draw beside the door frame, thinned out so they don't overlap */

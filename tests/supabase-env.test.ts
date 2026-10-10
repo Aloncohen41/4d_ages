@@ -81,7 +81,7 @@ const appConfig = require("../app.config.js");
 const google = (v?: string) => { const before = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; if (v === undefined) delete process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; else process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = v; try { return appConfig({ config: { name: "4D Ages", extra: {} } }).extra.googleWebClientId; } finally { if (before === undefined) delete process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; else process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = before; } };
 ok("a Google web client ID from .env reaches the app's settings", google(" 374884084370-abc123def.apps.googleusercontent.com ") === "374884084370-abc123def.apps.googleusercontent.com");
 ok("no ID, or something that isn't a Google client ID (a client secret, a URL), leaves Google sign-in off", [undefined, "", "GOCSPX-secretvalue", "https://example.com"].every((v) => google(v) === undefined));
-ok("the Google button only shows when the ID is set, and the client secret file can't be committed", /googleReady \? \(/.test(sheet) && /googleReady = isConfigured && GOOGLE_WEB_CLIENT_ID\.length > 0/.test(sb) && /^client_secret\*\.json$/m.test(read(".gitignore")));
+ok("the Google button (on the login page) only shows when the ID is set, and the client secret file can't be committed", /googleReady \? \(/.test(read("app/login.tsx")) && /googleReady = isConfigured && GOOGLE_WEB_CLIENT_ID\.length > 0/.test(sb) && /^client_secret\*\.json$/m.test(read(".gitignore")));
 
 console.log(fails ? `${fails} FAILED` : "all Supabase environment tests passed");
 

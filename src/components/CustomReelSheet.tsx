@@ -169,7 +169,7 @@ export function CustomReelSheet({ child, memories, initial, onClose }: { child: 
           {previewing && chosen.length ? <View style={{ marginTop: 16 }}><GrowPlayer slides={chosen} child={child} title={titles.title} subtitle={titles.subtitle} fileLabel={span.file} /></View> : null}
           <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
             <Btn label={previewing ? "Hide preview" : "▶ Preview"} kind="line" onPress={() => setPreviewing((p) => !p)} disabled={!chosen.length} style={{ flex: 1 }} />
-            <Btn label="🎬 Create video" onPress={() => { setPreviewing(false); setExporting(true); }} disabled={!chosen.length} style={{ flex: 1.2 }} />
+            <Btn label="Create video" icon="film" onPress={() => { setPreviewing(false); setExporting(true); }} disabled={!chosen.length} style={{ flex: 1.2 }} />
           </View>
           <Text style={{ color: t.ink4, fontSize: 11.5, textAlign: "center", marginTop: 8 }}>You'll choose the cover picture when you create it. Videos you ticked appear in the movie as their cover frame.</Text>
         </>

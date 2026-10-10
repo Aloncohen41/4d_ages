@@ -9,6 +9,8 @@ import { defaultThumb, deleteThumb, isVideoFramesAvailable } from "../lib/videoT
  */
 export function ThumbBackfill() {
   const hydrated = useStore((s) => s.hydrated);
+  // runs again whenever a video without a picture appears (added, shared in, or downloaded from the other parent's phone)
+  const waiting = useStore((s) => videosNeedingThumbs(s.memories).length);
   useEffect(() => {
     if (!hydrated || !isVideoFramesAvailable()) return;
     let alive = true;
@@ -31,6 +33,6 @@ export function ThumbBackfill() {
     return () => {
       alive = false;
     };
-  }, [hydrated]);
+  }, [hydrated, waiting > 0]);
   return null;
 }

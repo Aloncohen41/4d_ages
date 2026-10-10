@@ -1,5 +1,8 @@
 import { requireNativeModule } from "expo";
 import { File } from "expo-file-system";
+import { pickThumb } from "./thumbChoice";
+
+export { pickThumb };
 
 interface NativeFrames {
   videoFrames(uri: string, count: number): Promise<string[]>;
@@ -37,11 +40,23 @@ export async function videoFrames(uri: string, count = 3): Promise<string[]> {
   }
 }
 
-/** The frame from the middle of a video: a sensible thumbnail until you pick another. The spare frames are deleted. */
+const sizeOf = (uri: string) => {
+  try {
+    return new File(uri).size ?? 0;
+  } catch {
+    return 0;
+  }
+};
+
+/**
+ * A frame worth showing for a video, until you pick another. Five frames are read (17%…83% through it) and the one with the most detail is
+ * kept: a black or blank frame (a fade, a covered lens) compresses to a tiny file, so the largest JPEG is almost never one. Ties go to the
+ * middle. The spare frames are deleted.
+ */
 export async function defaultThumb(uri: string): Promise<string | undefined> {
-  const frames = await videoFrames(uri, 3);
+  const frames = await videoFrames(uri, 5);
   if (!frames.length) return undefined;
-  const keep = frames[Math.floor(frames.length / 2)];
+  const keep = pickThumb(frames, frames.map(sizeOf));
   frames.filter((f) => f !== keep).forEach(remove);
   return keep;
 }

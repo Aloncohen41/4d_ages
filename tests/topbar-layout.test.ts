@@ -24,7 +24,7 @@ ok("the status bar is set once, in the layout, not per page", /<StatusBar /.test
 
 // ---- the profile card is Home-only
 ok("the profile card (name, picture, counts) is drawn only when a page asks for it (`hero`)", /\{hero \? <Hero \/> : null\}/.test(screenFn) && (screen.match(/<Hero \/>/g) || []).length === 1);
-const tabs = ["index", "milestones", "growth", "family", "book", "add"];
+const tabs = ["index", "milestones", "growth", "book"];
 const withHero = tabs.filter((t) => /<Screen hero>/.test(read(`app/(tabs)/${t}.tsx`)));
 ok("only Home asks for it (" + withHero.join(",") + ")", withHero.length === 1 && withHero[0] === "index");
 ok("every tab still uses the shared page (so scrolling, padding and the welcome screen are consistent)", tabs.every((t) => /<Screen( hero)?>/.test(read(`app/(tabs)/${t}.tsx`))));
@@ -42,7 +42,7 @@ ok("the title finder really sees the titles (so a pass means something)", others
 const withName = others.flatMap((t) => titlesOf(t).filter((x) => /child\.name|\$\{child/.test(x)).map((x) => `${t}: ${x}`));
 ok("no other tab puts the child's name in its title" + (withName.length ? " — found " + withName[0] : ""), withName.length === 0);
 ok("Home keeps “<Name>'s Story” as its title", /\{child\.name\}'s Story/.test(read("app/(tabs)/index.tsx")));
-const want: Record<string, RegExp> = { milestones: /title: "Milestones"/, growth: /<Heading title="Growth"/, family: /<Heading title="Family"/, book: /<Heading title="Keepsake book"/, add: /<Heading title="Bring their moments in"/ };
-ok("each other tab has a plain title of its own (Milestones, Growth, Family, Keepsake book, Bring their moments in)", Object.entries(want).every(([t, re]) => re.test(read(`app/(tabs)/${t}.tsx`))));
+const want: Record<string, RegExp> = { milestones: /title: "Milestones"/, growth: /<Heading title="Growth"/, book: /<Heading title="Keepsake book"/ };
+ok("each other tab has a plain title of its own (Milestones, Growth, Keepsake book)", Object.entries(want).every(([t, re]) => re.test(read(`app/(tabs)/${t}.tsx`))));
 ok("Firsts and Lasts (inside the Milestones tab) are titled plainly too", /firsts: \{ title: "Firsts"/.test(read("app/(tabs)/milestones.tsx")) && /lasts: \{ title: "Lasts"/.test(read("app/(tabs)/milestones.tsx")));
 console.log(fails ? `${fails} FAILED` : "all top-bar layout tests passed");

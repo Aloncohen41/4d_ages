@@ -1,4 +1,4 @@
-import { migrateStored, migrateTagsV4, migrateTagsV3 } from "../src/lib/migrate";
+import { migrateStored, migrateTagsV4, migrateTagsV3, migrateRelativesV6 } from "../src/lib/migrate";
 import { backupIfOlder } from "../src/lib/backup";
 import { itemsWithTags, tagStats, searchTags, makeTag, personTag, tagIdFor, slugify, resolveTags, labelOfTag, personIdsOf, upsertTagIn, effectiveTagIds, TAG_CATEGORIES } from "../src/lib/tags";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
@@ -61,7 +61,7 @@ const full: any = migrateStored(JSON.parse(before), 3);
 ok("v3 → v5 end to end: every memory survives (3 photos/story + 2 milestones + 1 measurement from the old height/weight)", full.memories.length === 6 && full.photos === undefined && full.milestones === undefined && full.heights === undefined && full.weights === undefined);
 ok("v3 → v5: the story keeps everything, now with tag ids", (() => { const s = full.memories.find((x: any) => x.id === "s1"); return s.type === "story" && s.description === "A lake day" && s.title === "Lake" && s.media.length === 2 && s.time === "16:20" && s.location === "Lake Tahoe" && s.tagIds.includes("tag-person-mom1") && s.tagIds.includes("tag-event-family-trip"); })());
 ok("v3 → v5: milestones keep notes, photos, place, time and tags", (() => { const c = full.memories.find((x: any) => x.id === "ms-maya-crawls"); return c.type === "milestone" && c.milestoneId === "crawls" && c.description === "crawling!" && c.media[0].uri === "file:///c.jpg" && c.time === "09:30" && c.location === "Kitchen" && c.tagIds.includes("tag-person-mom2") && c.tagIds.includes("tag-other-home"); })());
-ok("v3 → v5: the old height/weight entry became a measurement; family, kids, custom milestones untouched", full.memories.some((x: any) => x.type === "measure" && x.heightCm === 70 && x.weightKg === 8.1 && x.date === "2025-01-01") && JSON.stringify(full.relatives) === JSON.stringify(v3.relatives) && JSON.stringify(full.kids) === JSON.stringify(v3.kids) && JSON.stringify(full.customDefs) === JSON.stringify(v3.customDefs));
+ok("v3 → v5: the old height/weight entry became a measurement; family, kids, custom milestones untouched", full.memories.some((x: any) => x.type === "measure" && x.heightCm === 70 && x.weightKg === 8.1 && x.date === "2025-01-01") && JSON.stringify(full.relatives) === JSON.stringify(migrateRelativesV6({ relatives: v3.relatives }).relatives) && JSON.stringify(full.kids) === JSON.stringify(v3.kids) && JSON.stringify(full.customDefs) === JSON.stringify(v3.customDefs));
 
 // ===== tag helpers work on the central list =====
 const items = m.photos;

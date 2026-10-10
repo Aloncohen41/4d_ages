@@ -3,8 +3,8 @@ import { Pressable, Text, View } from "react-native";
 import { uid, useActiveChild, useStore } from "../lib/store";
 import { familyOf } from "../lib/family";
 import { useTheme } from "../lib/useTheme";
-import { TAG_CATEGORIES, implicitPlace, indexTags, personTag, tagStats, tagsFromText, uniqueIds } from "../lib/tags";
-import { RELATION_EMOJI, RELATION_PRESETS, Tag, TagCategory } from "../lib/types";
+import { TAG_CATEGORIES, displayName, implicitPlace, indexTags, personTag, relationLabel, tagStats, tagsFromText, uniqueIds } from "../lib/tags";
+import { Tag, TagCategory } from "../lib/types";
 import { Btn, Input, MemberAvatar, Seg } from "./ui";
 import { TagChip } from "./TagChip";
 import { Icon } from "./Icon";
@@ -24,7 +24,7 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
   const addRelative = useStore((s) => s.addRelative);
   const [newPerson, setNewPerson] = useState(false);
   const [personName, setPersonName] = useState("");
-  const [personRel, setPersonRel] = useState<string>("Mom");
+  const [personRel, setPersonRel] = useState("");
   const [category, setCategory] = useState<TagCategory>(family.length ? "person" : "event");
   const [draft, setDraft] = useState("");
 
@@ -49,13 +49,14 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
   /** Add someone to the family right here and tag them in this post. */
   const addPerson = () => {
     const name = personName.trim();
-    if (!name) return;
-    const member = { id: uid("rel"), name, relation: personRel, emoji: RELATION_EMOJI[personRel] ?? "🙂", childIds: active ? [active.id] : undefined };
+    if (!name || !personRel.trim()) return;
+    const member = { id: uid("rel"), name, relation: personRel.trim(), childIds: active ? [active.id] : undefined };
     addRelative(member);
     const tag = personTag(member);
     upsertTags([tag]);
     onChange(uniqueIds([...value, tag.id]));
     setPersonName("");
+    setPersonRel("");
     setNewPerson(false);
   };
   const chosen = value.map((id) => index.get(id) ?? (stats.find((s) => s.id === id)?.tag)).filter((x): x is Tag => !!x);
@@ -71,7 +72,7 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
         </View>
       ) : null}
 
-      <Seg options={TAG_CATEGORIES.map((k) => ({ id: k.id, label: `${k.emoji} ${k.short}` }))} value={category} onChange={setCategory} />
+      <Seg options={TAG_CATEGORIES.map((k) => ({ id: k.id, label: k.short }))} value={category} onChange={setCategory} />
 
       {category === "person" ? (
         <View style={{ marginTop: 10 }}>
@@ -82,7 +83,7 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
               return (
                 <Pressable key={r.id} onPress={() => toggle(tag)} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 4, paddingLeft: 4, paddingRight: 12, borderRadius: 12, backgroundColor: on ? t.chipOn : t.card, borderWidth: 1, borderColor: on ? t.chipOn : t.line }}>
                   <MemberAvatar member={r} size={26} />
-                  <Text style={{ color: on ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12.5 }}>{r.name || "Unnamed"}{"  "}<Text style={{ fontWeight: "600", opacity: 0.8 }}>{r.customLabel?.trim() || r.relation}</Text></Text>
+                  <Text style={{ color: on ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12.5 }}>{displayName(r)}{"  "}<Text style={{ fontWeight: "600", opacity: 0.8 }}>{relationLabel(r)}</Text></Text>
                 </Pressable>
               );
             })}
@@ -94,14 +95,8 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
           {newPerson ? (
             <View style={{ marginTop: 10, backgroundColor: t.bg2, borderRadius: 14, padding: 12, gap: 8 }}>
               <Input value={personName} onChangeText={setPersonName} placeholder="Their name" maxLength={40} returnKeyType="done" onSubmitEditing={addPerson} />
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                {RELATION_PRESETS.map((r) => (
-                  <Pressable key={r} onPress={() => setPersonRel(r)} style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12, backgroundColor: personRel === r ? t.chipOn : t.card, borderWidth: 1, borderColor: personRel === r ? t.chipOn : t.line }}>
-                    <Text style={{ color: personRel === r ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{RELATION_EMOJI[r]} {r}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              <Btn label="Add to the family & tag them" onPress={addPerson} disabled={!personName.trim()} style={{ paddingVertical: 11 }} />
+              <Input value={personRel} onChangeText={setPersonRel} placeholder="Relationship. Example: Mummy" maxLength={30} returnKeyType="done" onSubmitEditing={addPerson} />
+              <Btn label="Add to the family and tag them" onPress={addPerson} disabled={!personName.trim() || !personRel.trim()} style={{ paddingVertical: 11 }} />
             </View>
           ) : null}
         </View>
@@ -113,7 +108,7 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
                 value={draft}
                 onChangeText={(v) => (/[,\n]$/.test(v) ? add(v) : setDraft(v))}
                 onSubmitEditing={() => add(draft)}
-                placeholder={category === "event" ? "e.g. First birthday party" : category === "place" ? "e.g. Grandma's house" : "e.g. beach"}
+                placeholder={category === "event" ? "Example: First birthday party" : category === "place" ? "Example: Grandma's house" : "Example: Beach"}
                 returnKeyType="done"
                 blurOnSubmit={false}
               />

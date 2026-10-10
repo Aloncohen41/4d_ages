@@ -3,7 +3,8 @@ import { Text, View } from "react-native";
 import { useTheme } from "../lib/useTheme";
 import { Child, HeightEntry } from "../lib/types";
 import { ageShort, formatDate } from "../lib/date";
-import { HeightUnit, WeightUnit, formatHeight, frameRefs, fromCm, fromKg, monthsOld, typicalRange } from "../lib/growth";
+import { DOOR_MAX_CM, DOOR_REFS, HeightUnit, WeightUnit, effectiveRef, formatHeight, fromCm, fromKg, monthsOld, placeLabels, typicalRange } from "../lib/growth";
+import { Icon } from "./Icon";
 
 /** Growth curve: your measurements as a line, with the approximate typical range shaded behind. */
 export function LineChart({ child, entries, unit, mode = "height", weightUnit = "kg" }: {
@@ -22,7 +23,7 @@ export function LineChart({ child, entries, unit, mode = "height", weightUnit = 
   const maxX = Math.max(12, Math.ceil(Math.max(...pts.map((p) => p.x)) / 6) * 6);
   const band: { x: number; lo: number; hi: number }[] = [];
   for (let m = 0; m <= Math.min(maxX, 60); m++) {
-    const r = mode === "height" ? typicalRange(child.growthRef, m) : null;
+    const r = mode === "height" ? typicalRange(effectiveRef(child), m) : null;
     if (r) band.push({ x: m, lo: r[0], hi: r[1] });
   }
   const stepY = mode === "weight" ? 2 : 10;
@@ -73,46 +74,55 @@ export function LineChart({ child, entries, unit, mode = "height", weightUnit = 
   );
 }
 
-/** Pencil marks on a door frame: each measurement is a line at its height, with familiar objects for scale. */
+/**
+ * Pencil marks on a door frame. Everyday things at their real height on the left, the frame in the middle (0 to 2 metres, so a child is never
+ * drawn at the top), and the child's marks on the right: name on the newest, then height and age.
+ */
 export function DoorFrame({ child, entries, unit }: { child: Child; entries: HeightEntry[]; unit: HeightUnit }) {
   const t = useTheme();
-  const H = 380;
-  const maxCm = Math.max(70, ...entries.map((e) => e.cm)) * 1.1;
-  const Y = (cm: number) => H - (cm / maxCm) * H;
+  const H = 460; // px for the full 2 m
+  const PAD = 12;
+  const Y = (cm: number) => PAD + H - (Math.min(cm, DOOR_MAX_CM) / DOOR_MAX_CM) * H;
   const ticks: number[] = [];
-  for (let c = 0; c <= maxCm; c += 10) ticks.push(c);
-  const objs = frameRefs(maxCm, H, 30); // thinned out so labels never overlap
-  const marks = [...entries].sort((a, b) => b.cm - a.cm);
-  let lastLabelTop = -100;
+  for (let c = 0; c <= DOOR_MAX_CM; c += 10) ticks.push(c);
+  const marks = [...entries].sort((a, b) => b.cm - a.cm || b.date.localeCompare(a.date));
+  const newest = [...entries].sort((a, b) => b.date.localeCompare(a.date))[0];
+  const labelTops = placeLabels(marks.map((e) => Y(e.cm) - 8), 17, PAD, PAD + H - 4);
+  const frameW = 64;
 
   return (
-    <View style={{ height: H + 20, backgroundColor: t.bg2, borderRadius: 18, borderWidth: 1, borderColor: t.line, overflow: "hidden", paddingTop: 10 }}>
-      <View style={{ height: H }}>
-        <View style={{ position: "absolute", left: 46, top: 0, bottom: 0, width: 3, backgroundColor: t.ink3, opacity: 0.4, borderRadius: 2 }} />
+    <View style={{ height: H + PAD * 2, backgroundColor: t.bg2, borderRadius: 18, borderWidth: 1, borderColor: t.line, overflow: "hidden", flexDirection: "row" }}>
+      {/* reference objects, at their real height */}
+      <View style={{ flex: 1 }}>
+        {DOOR_REFS.map((o) => (
+          <View key={o.name} style={{ position: "absolute", right: 6, top: Y(o.cm) - 11, flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text style={{ color: t.ink3, fontSize: 10.5, fontWeight: "700" }} numberOfLines={1}>{o.name}</Text>
+            <Icon name={o.icon} size={20} color={t.ink2} />
+          </View>
+        ))}
+      </View>
+
+      {/* the frame, with a scale every 10 cm (numbers every 50) */}
+      <View style={{ width: frameW }}>
+        <View style={{ position: "absolute", left: 0, top: PAD - 4, bottom: PAD, width: 6, borderRadius: 3, backgroundColor: t.outline, opacity: 0.55 }} />
+        <View style={{ position: "absolute", right: 0, top: PAD - 4, bottom: PAD, width: 6, borderRadius: 3, backgroundColor: t.outline, opacity: 0.55 }} />
         {ticks.map((c) => (
-          <View key={c} style={{ position: "absolute", left: c % 20 === 0 ? 34 : 40, width: c % 20 === 0 ? 14 : 8, top: Y(c), height: 1.5, backgroundColor: t.ink3, opacity: 0.6 }}>
-            {c % 20 === 0 ? <Text style={{ position: "absolute", left: -30, top: -7, width: 28, textAlign: "right", fontSize: 10, color: t.ink3, fontWeight: "700" }}>{Math.round(fromCm(c, unit))}</Text> : null}
+          <View key={c} style={{ position: "absolute", left: 6, width: c % 50 === 0 ? 16 : 8, top: Y(c) - 0.75, height: 1.5, backgroundColor: t.ink3, opacity: 0.55 }}>
+            {c % 50 === 0 ? <Text style={{ position: "absolute", left: 18, top: -7, width: 34, fontSize: 10, color: t.ink3, fontWeight: "700" }}>{Math.round(fromCm(c, unit))}</Text> : null}
           </View>
         ))}
-        {objs.map((o) => (
-          <View key={o.name} style={{ position: "absolute", right: 10, top: Y(o.cm) - 14, flexDirection: "row", alignItems: "center", gap: 6, opacity: 0.85 }}>
-            <Text style={{ color: t.ink4, fontSize: 10, fontWeight: "700" }}>{o.name}</Text>
-            <Text style={{ fontSize: 24 }}>{o.emoji}</Text>
-          </View>
+        {marks.map((e) => (
+          <View key={e.id} style={{ position: "absolute", left: 0, right: 0, top: Y(e.cm) - 1.5, height: 3, borderRadius: 2, backgroundColor: e.id === newest?.id ? t.accentDeep : t.accent }} />
         ))}
-        {marks.map((e, idx) => {
-          const y = Y(e.cm);
-          const labelTop = y - lastLabelTop < 18 && y - lastLabelTop >= 0 ? y + 2 : y - 17;
-          if (labelTop === y - 17) lastLabelTop = y;
-          return (
-            <View key={e.id} style={{ position: "absolute", left: 46, top: y - 1.5, width: "46%" }}>
-              <View style={{ height: 3, backgroundColor: idx === 0 ? t.accentDeep : t.accent, borderRadius: 2 }} />
-              <Text style={{ position: "absolute", left: 6, top: labelTop - y + 1.5, color: t.ink, fontSize: 11, fontWeight: "700" }}>
-                {idx === 0 ? `${child.emoji} ` : ""}{formatHeight(e.cm, unit)} · {ageShort(child.birth, e.date).replace(" old", "")}
-              </Text>
-            </View>
-          );
-        })}
+      </View>
+
+      {/* the child's marks */}
+      <View style={{ flex: 1 }}>
+        {marks.map((e, i) => (
+          <Text key={e.id} numberOfLines={1} style={{ position: "absolute", left: 8, right: 4, top: labelTops[i], color: e.id === newest?.id ? t.ink : t.ink2, fontSize: 11, fontWeight: e.id === newest?.id ? "800" : "700" }}>
+            {e.id === newest?.id ? `${child.name} · ` : ""}{formatHeight(e.cm, unit)} · {ageShort(child.birth, e.date).replace(" old", "")}
+          </Text>
+        ))}
       </View>
     </View>
   );

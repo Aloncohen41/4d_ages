@@ -24,7 +24,10 @@ export type MemoryType = "photo" | "story" | "milestone" | "first" | "last" | "m
 /** The types you can create from the "+" menu (a plain photo is added through the photo picker). */
 export type EntryKind = Exclude<MemoryType, "photo">;
 
-export type GrowthRef = "girl" | "boy" | "none";
+/** Which typical-range band growth is compared with. "all" averages girls and boys; "none" is from earlier versions (off) and now means "all". */
+export type GrowthRef = "girl" | "boy" | "all" | "none";
+/** A child's gender, set on their profile. Used to pick the growth comparison; children from before it existed count as "unspecified". */
+export type Gender = "girl" | "boy" | "unspecified";
 
 /** A weight point for charts, read from the measurements (not stored separately). */
 export interface WeightEntry {
@@ -56,8 +59,9 @@ export interface Child extends SyncFields {
   theme: KidTheme;
   emoji: string;
   avatarPhotoId?: string;
-  growthRef?: GrowthRef; // which WHO reference range to compare against
+  growthRef?: GrowthRef; // which WHO reference range to compare against (unset: follows the gender)
   avatarCrop?: AvatarCrop;
+  gender?: Gender; // missing = "unspecified" ("Prefer not to say")
 }
 
 export interface MediaItem {
@@ -94,11 +98,16 @@ export interface Memory extends SyncFields {
 export interface Relative extends SyncFields {
   id: string;
   name: string;
-  relation: string; // one of RELATION_PRESETS, or "Other"
-  customLabel?: string; // optional wording of your own, e.g. "Nana", "Opa", "Auntie"
-  emoji: string; // used until the member has a profile picture
+  relation: string; // free text, in the family's own words: "Mummy", "Stepmum", "Nana"
+  nickname?: string; // what the child calls them, if not their name
+  description?: string; // a line about who they are, for the child to read when they're older
+  /** @deprecated earlier versions' own wording beside a preset relation; folded into `relation` by the v6 migration */
+  customLabel?: string;
+  /** @deprecated people are no longer drawn as emoji (a placeholder with their initials is used); kept so older data still reads */
+  emoji?: string;
   photoUri?: string; // their own profile picture
   crop?: AvatarCrop;
+  photoSized?: boolean; // the picture has been scaled down for lists (see resize.ts); earlier ones are shrunk once, in the background
   /**
    * Whose family this person is in. A person is ONE record shared by the children whose families they are in (so their name, picture and tags
    * stay the same for each). Missing = from before families were per child: they belong to every child that existed then (see family.ts).
@@ -108,10 +117,6 @@ export interface Relative extends SyncFields {
   childRef?: string;
 }
 
-export const RELATION_PRESETS = ["Mom", "Dad", "Guardian", "Grandma", "Grandpa", "Sister", "Brother", "Sibling", "Aunt", "Uncle", "Cousin", "Family friend", "Other"] as const;
-export const RELATION_EMOJI: Record<string, string> = {
-  Mom: "👩", Dad: "👨", Guardian: "🧑", Grandma: "👵", Grandpa: "👴", Sister: "👧", Brother: "👦", Sibling: "🧒", Aunt: "👩‍🦰", Uncle: "🧔", Cousin: "🧒", "Family friend": "🙂", Other: "💛",
-};
 
 export interface MilestoneDef extends SyncFields {
   id: string;
@@ -286,6 +291,7 @@ export interface SharedItem {
   size: number;
   date?: string; // when it was taken (YYYY-MM-DD), if the file says so
   time?: string; // HH:MM
+  thumb?: string; // for a video: a picture already made for it
 }
 
 /** A deletion that still has to be sent to the cloud for a shared child. */

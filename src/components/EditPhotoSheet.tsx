@@ -65,12 +65,12 @@ function PhotoForm({ photoId, onClose }: { photoId: string; onClose: () => void 
       <Label>Caption</Label>
       <Input value={caption} onChangeText={setCaption} multiline />
       <Label>Location</Label>
-      <Input value={location} onChangeText={setLocation} placeholder="📍 Where was this? (optional)" maxLength={80} />
+      <Input value={location} onChangeText={setLocation} placeholder="Where was this? (optional)" maxLength={80} />
       <Label>Tags</Label>
       <TagPicker value={tags} onChange={setTags} location={location} />
 
       {canAvatar ? (
-        <Btn kind="soft" disabled={isAvatar} label={isAvatar ? "✓ This is the profile picture" : `Use as ${child.name}'s profile picture`} onPress={() => { updateChild(child.id, { avatarPhotoId: photo.id, avatarCrop: undefined }); Alert.alert("Profile picture set", "Tap the picture at the top of the screen to move and zoom it."); }} style={{ marginTop: 16 }} />
+        <Btn kind="soft" disabled={isAvatar} icon={isAvatar ? "check" : undefined} label={isAvatar ? "This is the profile picture" : `Use as ${child.name}'s profile picture`} onPress={() => { updateChild(child.id, { avatarPhotoId: photo.id, avatarCrop: undefined }); Alert.alert("Profile picture set", "Tap the picture at the top of the screen to move and zoom it."); }} style={{ marginTop: 16 }} />
       ) : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
         <DeleteButton onPress={remove} />

@@ -1,35 +1,32 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Screen, useNearEnd, useScrollControls } from "../../src/components/Screen";
-import { IconButton, MediaGallery, PhotoView, Seg } from "../../src/components/ui";
+import { IconButton, MediaGallery, Seg } from "../../src/components/ui";
 import { Icon } from "../../src/components/Icon";
 import { HScroll } from "../../src/components/HScroll";
 import { WatchView } from "../../src/components/WatchView";
 import { Memories } from "../../src/components/Memories";
-import { MediaCarousel } from "../../src/components/MediaCarousel";
 import { SearchSheet } from "../../src/components/SearchSheet";
-import { TagRow } from "../../src/components/TagChip";
+import { PostCard, PostViewer, useEditMemory } from "../../src/components/PostCard";
 import { useShownChild, useStore } from "../../src/lib/store";
 import { byMoment } from "../../src/lib/display";
 import { FeedWindow, PAGE, growWindow, hasMore as hasMoreOf, showAllWindow, windowKey, windowSize } from "../../src/lib/feedWindow";
-import { TYPE_META } from "../../src/lib/entries";
 import { Period, inPeriod, periodLabel } from "../../src/lib/dates";
 import { useTheme } from "../../src/lib/useTheme";
-import { MILESTONE_DEFS, MediaItem, Memory, MemoryType } from "../../src/lib/types";
-import { ageBucket, ageShort, formatDate, formatTime } from "../../src/lib/date";
-import { formatHeight, formatWeight } from "../../src/lib/growth";
+import { MediaItem, Memory, MemoryType } from "../../src/lib/types";
+import { ageBucket } from "../../src/lib/date";
 import { TYPE } from "../../src/theme";
 
 type TypeFilter = "all" | MemoryType;
 // the categories a post can have
 const CATEGORIES: { id: TypeFilter; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "story", label: "📖 Stories" },
-  { id: "photo", label: "📷 Pictures" },
-  { id: "first", label: "🥇 Firsts" },
-  { id: "last", label: "🏁 Lasts" },
-  { id: "milestone", label: "⭐ Milestones" },
-  { id: "measure", label: "📏 Growth" },
+  { id: "story", label: "Stories" },
+  { id: "photo", label: "Pictures" },
+  { id: "first", label: "Firsts" },
+  { id: "last", label: "Lasts" },
+  { id: "milestone", label: "Milestones" },
+  { id: "measure", label: "Growth" },
 ];
 
 export default function HomeTab() {
@@ -44,12 +41,9 @@ function Home() {
   const t = useTheme();
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
-  const defs = useStore((s) => s.customDefs);
-  const heightUnit = useStore((s) => s.heightUnit);
-  const weightUnit = useStore((s) => s.weightUnit);
-  const setEntrySheet = useStore((s) => s.setEntrySheet);
-  const setPhotoEdit = useStore((s) => s.setPhotoEdit);
   const setTagSheet = useStore((s) => s.setTagSheet);
+  const edit = useEditMemory();
+  const [viewing, setViewing] = useState<Memory | null>(null);
   const scroll = useScrollControls();
   const [view, setView] = useState<"story" | "grow">("story");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -88,21 +82,9 @@ function Home() {
     return out;
   }, [shown, child]);
   if (!child) return null;
-  const milestoneLabel = (id?: string) => (id ? [...MILESTONE_DEFS, ...(defs[child.id] || [])].find((d) => d.id === id)?.label ?? null : null);
-
-  const edit = (p: Memory) => {
-    if (p.type === "milestone" && p.milestoneId) setEntrySheet({ kind: "milestone", editId: p.milestoneId });
-    else if (p.type !== "photo") setEntrySheet({ kind: p.type, editId: p.id });
-    else setPhotoEdit(p.id);
-  };
-  const badge = (p: Memory) => {
-    const ms = milestoneLabel(p.milestoneId);
-    if (ms) return `★ ${ms}`;
-    return p.type === "photo" ? "📷 Picture" : `${TYPE_META[p.type].emoji} ${TYPE_META[p.type].label}`;
-  };
   const open = (p: Memory, index = 0) => {
     const items = p.media.filter((m) => m.uri);
-    if (items.length) setGallery({ items, index });
+    if (items.length) setGallery({ items, index: Math.min(index, items.length - 1) });
   };
   const pill = (on: boolean) => ({ paddingHorizontal: 13, paddingVertical: 7, borderRadius: 12, backgroundColor: on ? t.chipOn : t.card, borderWidth: 1, borderColor: on ? t.chipOn : t.line } as const);
 
@@ -156,7 +138,7 @@ function Home() {
 
           {list.length === 0 ? (
             <View style={{ alignItems: "center", padding: 30 }}>
-              <Text style={{ fontSize: 44 }}>{typeFilter !== "all" || period ? "🔍" : "🌱"}</Text>
+              <Icon name={typeFilter !== "all" || period ? "search" : "images"} size={40} color={t.ink3} />
               <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{typeFilter !== "all" || period ? "Nothing here" : "No stories yet"}</Text>
               <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{typeFilter !== "all" || period ? "Try another category or date." : "Tap + to add the first one."}</Text>
             </View>
@@ -166,42 +148,9 @@ function Home() {
                 <View style={{ alignItems: "center", marginVertical: 14 }}>
                   <Text style={{ backgroundColor: t.chipOn, color: t.onChipOn, fontWeight: "600", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, overflow: "hidden" }}>{g.label}</Text>
                 </View>
-                {g.items.map((p) => {
-                  const details = [p.time ? `🕒 ${formatTime(p.time)}` : "", p.location ? `📍 ${p.location}` : ""].filter(Boolean).join("   ");
-                  return (
-                    <View key={p.id} style={{ backgroundColor: t.card, borderRadius: 22, padding: 9, paddingBottom: 14, marginBottom: 16, borderWidth: 1, borderColor: t.line }}>
-                      {p.media.length > 1 ? (
-                        <MediaCarousel media={p.media} emoji={p.emoji} palette={p.palette} onOpen={(i) => open(p, i)} />
-                      ) : (
-                        <Pressable onPress={() => open(p)}>
-                          {/* the whole picture, at its own shape — nothing is cropped */}
-                          <PhotoView photo={p} fit="auto" style={{ width: "100%", borderRadius: 16, overflow: "hidden", aspectRatio: 4 / 3 }} emojiSize={64} />
-                        </Pressable>
-                      )}
-                      <Text style={{ position: "absolute", left: 18, top: 18, backgroundColor: p.type === "milestone" ? t.gold : t.card, color: "#2c1f15", fontWeight: "700", fontSize: 11, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, overflow: "hidden" }}>{badge(p)}</Text>
-                      <View style={{ paddingHorizontal: 6, paddingTop: 10 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>📅 {formatDate(p.date)}</Text>
-                          <Text style={{ backgroundColor: t.accentSoft, color: t.accentDeep, fontWeight: "700", fontSize: 11, paddingHorizontal: 9, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>{ageShort(child.birth, p.date)}</Text>
-                          <View style={{ flex: 1 }} />
-                          <Pressable onPress={() => edit(p)} hitSlop={10} accessibilityLabel="Edit" style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.bg2, alignItems: "center", justifyContent: "center" }}>
-                            <Icon name="edit-2" size={14} color={t.ink3} />
-                          </Pressable>
-                        </View>
-                        {details ? <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12, marginTop: 4 }}>{details}</Text> : null}
-                        {p.title ? <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 6 }}>{p.title}</Text> : null}
-                        {p.heightCm != null || p.weightKg != null ? (
-                          <View style={{ flexDirection: "row", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                            {p.heightCm != null ? <Text style={{ backgroundColor: t.bg2, color: t.ink, fontWeight: "700", paddingHorizontal: 11, paddingVertical: 5, borderRadius: 99, overflow: "hidden" }}>📏 {formatHeight(p.heightCm, heightUnit)}</Text> : null}
-                            {p.weightKg != null ? <Text style={{ backgroundColor: t.bg2, color: t.ink, fontWeight: "700", paddingHorizontal: 11, paddingVertical: 5, borderRadius: 99, overflow: "hidden" }}>⚖️ {formatWeight(p.weightKg, weightUnit)}</Text> : null}
-                          </View>
-                        ) : null}
-                        {p.description ? <Text style={{ color: t.ink, fontSize: 15.5, lineHeight: 21, marginTop: 6 }}>{p.description}</Text> : null}
-                        <View style={{ marginTop: 8 }}><TagRow item={p} small skipPlace /></View>
-                      </View>
-                    </View>
-                  );
-                })}
+                {g.items.map((p) => (
+                  <PostCard key={p.id} p={p} child={child} onView={() => setViewing(p)} onOpenMedia={(i) => open(p, i)} onEdit={() => edit(p)} />
+                ))}
               </View>
             ))
           )}
@@ -222,6 +171,9 @@ function Home() {
       )}
 
       {searching ? <SearchSheet memories={everything} period={period} onPeriod={setPeriod} onClose={() => setSearching(false)} /> : null}
+      {viewing ? (
+        <PostViewer p={viewing} child={child} onClose={() => setViewing(null)} onOpenMedia={(items, index) => setGallery({ items: items.filter((m) => m.uri), index })} onEdit={() => { const p = viewing; setViewing(null); edit(p); }} />
+      ) : null}
       <MediaGallery items={gallery?.items ?? null} index={gallery?.index ?? 0} onClose={() => setGallery(null)} />
     </View>
   );

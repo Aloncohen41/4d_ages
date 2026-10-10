@@ -14,6 +14,7 @@ import { byMoment, coverOf } from "../../src/lib/display";
 import { FIRST_IDEAS, LAST_IDEAS, openIdeas } from "../../src/lib/suggestions";
 import { MediaKind } from "../../src/lib/types";
 import { TYPE } from "../../src/theme";
+import { Icon } from "../../src/components/Icon";
 import { formatDate, formatTime } from "../../src/lib/date";
 
 export default function MilestonesTab() {
@@ -67,7 +68,7 @@ function MemoryCard({ cover, emoji, title, subtitle, note, tags, count, onPress 
           <Text style={{ fontSize: 34 }}>{emoji}</Text>
         </View>
       )}
-      {count && count > 1 ? <Text style={{ position: "absolute", right: 8, top: 8, backgroundColor: "#0009", color: "#fff", fontWeight: "700", fontSize: 11, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, overflow: "hidden" }}>📷 {count}</Text> : null}
+      {count && count > 1 ? <View style={{ position: "absolute", right: 8, top: 8, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#0009", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 }}><Icon name="images" size={12} color="#fff" /><Text style={{ color: "#fff", fontWeight: "700", fontSize: 11 }}>{count}</Text></View> : null}
       <View style={{ padding: 11 }}>
         <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14.5, lineHeight: 19 }} numberOfLines={2}>{title}</Text>
         <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11, marginTop: 3 }}>{subtitle}</Text>
@@ -98,7 +99,7 @@ function EntryList({ kind }: { kind: "first" | "last" }) {
 
   return (
     <View>
-      <Btn label={`＋ Add a ${word}`} onPress={() => setEntrySheet({ kind })} />
+      <Btn label={`Add a ${word}`} icon="plus" onPress={() => setEntrySheet({ kind })} />
 
       {ideas.length ? (
         <View style={{ marginTop: 14 }}>
@@ -106,7 +107,6 @@ function EntryList({ kind }: { kind: "first" | "last" }) {
           <HScroll contentContainerStyle={{ gap: 8 }}>
             {ideas.map((i) => (
               <Pressable key={i.title} onPress={() => setEntrySheet({ kind, title: i.title, emoji: i.emoji })} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 99, backgroundColor: t.accentSoft }}>
-                <Text style={{ fontSize: 16 }}>{i.emoji}</Text>
                 <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{i.title}</Text>
               </Pressable>
             ))}
@@ -132,7 +132,7 @@ function EntryList({ kind }: { kind: "first" | "last" }) {
         </View>
       ) : (
         <View style={{ alignItems: "center", padding: 28 }}>
-          <Text style={{ fontSize: 42 }}>{kind === "first" ? "🥇" : "🏁"}</Text>
+          <Icon name={kind === "first" ? "add-first" : "add-last"} size={40} color={t.ink3} />
           <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>No {word}s logged yet</Text>
           <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>Tap an idea above, or “Add a {word}”, to log {child.name}'s first one.</Text>
         </View>

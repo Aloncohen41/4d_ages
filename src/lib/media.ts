@@ -11,6 +11,7 @@ export interface Picked {
   uri: string; // permanent copy inside the app's own storage
   kind: MediaKind;
   date: string;
+  dated?: boolean; // the date came from the file itself (its EXIF or name), not today's date as a stand-in
   thumb?: string; // for videos: a frame to show for it
 }
 
@@ -80,14 +81,14 @@ export async function pickMedia(opts: { videos: boolean; multiple: boolean }): P
   return Promise.all(res.assets.map(async (a) => {
     const kind: MediaKind = a.type === "video" ? "video" : "photo";
     const ex = (a.exif || {}) as Record<string, unknown>;
-    const date =
+    const found =
       exifToISO(String(ex.DateTimeOriginal ?? "")) ||
       exifToISO(String(ex.DateTime ?? "")) ||
-      dateFromFileName(a.fileName) ||
-      todayISO();
+      dateFromFileName(a.fileName);
+    const date = found || todayISO();
     const uri = persistFile(a.uri, extOf(a.fileName, a.uri, kind));
     const thumb = kind === "video" ? await defaultThumb(uri) : undefined; // videos get a thumbnail straight away
-    return { uri, kind, date, thumb };
+    return { uri, kind, date, dated: !!found, thumb };
   }));
 }
 

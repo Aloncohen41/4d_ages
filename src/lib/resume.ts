@@ -3,7 +3,7 @@
  * It is deliberately separate from the big saved-data file: a few bytes written the moment you switch, so closing the app straight
  * afterwards can't lose it. Pure logic here (testable); the phone's storage is plugged in by resumeStorage.ts.
  */
-export const TAB_NAMES = ["index", "milestones", "growth", "family", "book", "add"] as const;
+export const TAB_NAMES = ["index", "milestones", "growth", "book"] as const;
 export type TabName = (typeof TAB_NAMES)[number];
 export const isTab = (x: unknown): x is TabName => typeof x === "string" && (TAB_NAMES as readonly string[]).includes(x);
 export const tabPath = (t: TabName) => (t === "index" ? "/" : `/${t}`);

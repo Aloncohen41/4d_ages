@@ -24,7 +24,7 @@ ok("the offer is worded for a parent: what happened, that restarting fixes it, a
 
 // ---------- the recovery is wired into the one place pictures are picked
 const media = read("src/lib/media.ts"), share = read("src/lib/shareIntake.ts"), kt = read("modules/share-intake/android/src/main/java/expo/modules/shareintake/ShareIntakeModule.kt");
-ok("every picker in the app goes through pickMedia (so one fix covers adding photos, avatars, family pictures, import…)", !/launchImageLibraryAsync|launchCameraAsync/.test(["app/(tabs)/add.tsx", "src/components/Screen.tsx", "src/components/MemberSheet.tsx", "src/components/MediaEditor.tsx", "src/lib/addPhotos.ts"].map(read).join("\n")));
+ok("every picker in the app goes through pickMedia (so one fix covers adding photos, avatars, family pictures, import…)", !/launchImageLibraryAsync|launchCameraAsync/.test(["src/components/Screen.tsx", "src/components/MemberSheet.tsx", "src/components/MediaEditor.tsx", "src/lib/addPhotos.ts"].map(read).join("\n")));
 ok("pickMedia catches the failure, offers the restart, and returns nothing chosen (callers carry on as if the picker was closed)", /catch \(e\) \{\s*if \(isPickerRegistrationError\(e\)\) \{\s*offerRestart\(\);\s*return \[\];/.test(media) && /throw e;/.test(media));
 ok("any OTHER picker error is still thrown, not swallowed", /throw e;/.test(media));
 ok("the offer has Not now / Restart, and if this build can't restart it says to close and reopen the app", /text: "Not now", style: "cancel"/.test(media) && /text: "Restart"/.test(media) && /restartManualMessage\(APP_NAME\)/.test(media));
