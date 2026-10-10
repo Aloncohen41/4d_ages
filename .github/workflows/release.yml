@@ -81,6 +81,9 @@ jobs:
             exit 1
           fi
           echo "KEY_FINGERPRINT=$fingerprint" >> "$GITHUB_ENV"
+          # The SHA-1 as Google Cloud wants it (AA:BB:…), for the release Android OAuth client that "Continue with Google" needs. Public, like the SHA-256.
+          sha1=$(keytool -list -v -keystore "$KEYSTORE_FILE" -storepass:env ANDROID_KEYSTORE_PASSWORD -alias "$ANDROID_KEY_ALIAS" | sed -n 's/^.*SHA1: //p' | head -n 1)
+          echo "KEY_SHA1=$sha1" >> "$GITHUB_ENV"
           # A PKCS12 keystore (what 'npm run signing:key' makes) has one password for the store and the key, so ANDROID_KEY_PASSWORD is not
           # used for it. Only an older JKS keystore can have a separate key password, and that one is tried here.
           type=$(keytool -list -keystore "$KEYSTORE_FILE" -storepass:env ANDROID_KEYSTORE_PASSWORD | sed -n 's/^Keystore type: //p')
@@ -96,6 +99,9 @@ jobs:
           fi
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
             echo "::warning::EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY are not set: this APK is built with sharing between parents turned off."
+          fi
+          if [ -z "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" ]; then
+            echo "::warning::EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID is not set: this APK has no 'Continue with Google' button."
           fi
 
       - uses: actions/setup-node@v7
@@ -150,6 +156,7 @@ jobs:
             echo "- APK: \`$apk\`, $(du -h "dist/$apk" | cut -f1)"
             echo "- SHA-256 of the file: \`$(cut -d ' ' -f1 "dist/$apk.sha256")\`"
             echo "- Signing certificate (SHA-256): \`$KEY_FINGERPRINT\`"
+            echo "- Signing certificate (SHA-1, for the release Android OAuth client in Google Cloud): \`$KEY_SHA1\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove the release key from the runner

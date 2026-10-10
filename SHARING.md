@@ -73,7 +73,8 @@ Parents can sign in with their Google account instead of an email and password. 
 1. **An Android OAuth client** (done): package name `com.alonc.fourdages` and the SHA-1 of the key that signs the app. Its client ID is
    `374884084370-5k2g584ndqcp09kbig9mm4af1thg6am2.apps.googleusercontent.com`. The app doesn't use this ID; Google uses the client to
    recognise the app. Debug builds use the debug key's SHA-1 (`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`);
-   **release builds need a second Android client with the release key's SHA-1** (`keytool -list -v -keystore release.keystore`).
+   **release builds need a second Android client with the release key's SHA-1**. Every run of the Release workflow shows it on the run's
+   summary page ("Signing certificate (SHA-1 …)"); or run `keytool -list -v -keystore release.keystore` where you keep the key.
 2. **A Web application OAuth client** (Create credentials → OAuth client ID → Web application; no URLs needed). Copy its **client ID**
    and **client secret**.
 3. **Supabase → Authentication → Sign In / Providers → Google**: turn it on, paste the **web** client ID and secret, and save.
