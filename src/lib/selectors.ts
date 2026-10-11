@@ -14,15 +14,23 @@ export function milestonesLogged(memories: Memory[], childId: string): Record<st
 /** Height points for charts, oldest first. */
 export function heightSeries(memories: Memory[], childId: string): HeightEntry[] {
   return memories
-    .filter((m) => m.childId === childId && m.heightCm != null)
+    .filter((m) => m.childId === childId && m.heightCm != null && m.source !== "Scan") // a scan's estimate before birth isn't a measurement
     .sort(byMoment)
     .map((m) => ({ id: m.id, date: m.date, cm: m.heightCm as number }));
+}
+
+/** Head circumference points, oldest first. */
+export function headSeries(memories: Memory[], childId: string): HeightEntry[] {
+  return memories
+    .filter((m) => m.childId === childId && m.headCm != null && m.source !== "Scan")
+    .sort(byMoment)
+    .map((m) => ({ id: m.id, date: m.date, cm: m.headCm as number }));
 }
 
 /** Weight points for charts, oldest first. */
 export function weightSeries(memories: Memory[], childId: string): WeightEntry[] {
   return memories
-    .filter((m) => m.childId === childId && m.weightKg != null)
+    .filter((m) => m.childId === childId && m.weightKg != null && m.source !== "Scan")
     .sort(byMoment)
     .map((m) => ({ id: m.id, date: m.date, kg: m.weightKg as number }));
 }

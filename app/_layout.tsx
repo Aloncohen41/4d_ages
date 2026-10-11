@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Appearance } from "react-native";
 import { Stack, router } from "expo-router";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
@@ -10,6 +11,8 @@ import { SyncManager } from "../src/components/SyncManager";
 import { ShareIntakeListener } from "../src/components/ShareIntakeListener";
 import { ImportSheet } from "../src/components/ImportSheet";
 import { ShareSheet } from "../src/components/ShareSheet";
+import { NewPasswordAfterReset } from "../src/components/AccountSheets";
+import { AppLock } from "../src/components/AppLock";
 import { EntrySheet } from "../src/components/EntrySheet";
 import { EditPhotoSheet } from "../src/components/EditPhotoSheet";
 import { TagBrowserSheet } from "../src/components/TagBrowser";
@@ -44,6 +47,11 @@ function useAuthLinks() {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ ...ICON_FONT, Fraunces_600SemiBold_Italic });
   const hydrated = useStore((s) => s.hydrated);
+  const appearance = useStore((s) => s.appearance);
+  // the phone's own parts (date and time pickers, the status bar) follow the choice in Settings too
+  useEffect(() => {
+    Appearance.setColorScheme(appearance === "system" ? "unspecified" : appearance);
+  }, [appearance]);
   const kids = useStore((s) => s.kids);
   const notif = useStore((s) => s.notif);
   const memories = useStore((s) => s.memories);
@@ -111,6 +119,9 @@ export default function RootLayout() {
     } else if (d.kind === "milestone-age" || d.kind === "milestone-ask") {
       st.setActive(d.childId);
       router.navigate("/milestones");
+    } else if (d.kind === "monthly-photo") {
+      st.setActive(d.childId);
+      router.navigate({ pathname: "/classic/[id]", params: { id: "grid" } });
     }
   }, [response, ready, signedIn]);
 
@@ -126,6 +137,10 @@ export default function RootLayout() {
           <Stack.Screen name="family" />
           <Stack.Screen name="person/[id]" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="classics" />
+          <Stack.Screen name="classic/[id]" />
+          <Stack.Screen name="health" />
+          <Stack.Screen name="access" />
         </Stack.Protected>
         <Stack.Protected guard={signedIn && !hasKids}>
           <Stack.Screen name="welcome" />
@@ -134,9 +149,12 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
         </Stack.Protected>
         <Stack.Screen name="auth-callback" />
+        <Stack.Screen name="join" />
       </Stack>
       {signedIn ? <ImportSheet /> : null}
       {signedIn ? <ShareSheet /> : null}
+      <NewPasswordAfterReset />
+      <AppLock />
       {/* the forms that edit memories: shared by the tabs and the pages opened from the menu */}
       {signedIn && hasKids ? <EntrySheet /> : null}
       {signedIn && hasKids ? <EditPhotoSheet /> : null}

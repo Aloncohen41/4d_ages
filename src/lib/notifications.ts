@@ -4,6 +4,7 @@ import { NotifPrefs } from "./types";
 import { THEMES } from "../theme";
 import { planBirthdayNotifications } from "./birthdayPlan";
 import { planMilestoneNotifications, sampleMilestoneNotification } from "./milestonePlan";
+import { planMonthlyPhotoNotifications } from "./remember";
 
 export /** The app's brand colour on notifications (the tint behind the small icon, the LED), kept in step with the theme. */
 const BRAND = THEMES.pink.accent;
@@ -39,10 +40,12 @@ export async function requestNotificationPermission(): Promise<boolean> {
  * "Is this happening?" questions. `reached` lists the milestones already ticked, so we only ask about the rest.
  * Run on launch and whenever the children, settings or ticked milestones change, so the next stretch is always scheduled.
  */
-export async function scheduleNotifications(kids: { id: string; name: string; birth: string }[], prefs: NotifPrefs, reached: Record<string, Set<string>>): Promise<number> {
+export async function scheduleNotifications(kids: { id: string; name: string; birth: string; theme?: string; emoji?: string; expecting?: boolean }[], prefs: NotifPrefs, reached: Record<string, Set<string>>): Promise<number> {
+  // a baby who isn't born yet gets no birthday or monthly reminders until they arrive
+  const born = kids.filter((k) => !k.expecting);
   await Notifications.cancelAllScheduledNotificationsAsync();
   const now = new Date();
-  const plan = [...planBirthdayNotifications(kids, prefs, now), ...planMilestoneNotifications(kids, prefs, now, reached)]
+  const plan = [...planBirthdayNotifications(born, prefs, now), ...planMilestoneNotifications(born, prefs, now, reached), ...planMonthlyPhotoNotifications(born, prefs, now)]
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 64);
   if (!plan.length) return 0;

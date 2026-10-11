@@ -5,10 +5,12 @@ import { Btn, Heading, Label, PhotoView, Seg } from "../../src/components/ui";
 import { TagRow } from "../../src/components/TagChip";
 import { Icon } from "../../src/components/Icon";
 import { DoorFrame, LineChart } from "../../src/components/GrowthChart";
+import { GrowthSummary } from "../../src/components/GrowthSummary";
+import { PregnancyGrowth } from "../../src/components/Pregnancy";
 import { useShownChild, useStore } from "../../src/lib/store";
 import { useTheme } from "../../src/lib/useTheme";
 import { coverOf } from "../../src/lib/display";
-import { heightSeries, weightSeries } from "../../src/lib/selectors";
+import { headSeries, heightSeries, weightSeries } from "../../src/lib/selectors";
 import { GrowthRef } from "../../src/lib/types";
 import { ageShort, formatDate } from "../../src/lib/date";
 import { HeightUnit, WeightUnit, effectiveRef, formatHeight, formatWeight, funComparisons, monthsOld, nextUp, rangeStatus } from "../../src/lib/growth";
@@ -54,18 +56,26 @@ function Growth() {
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
   const unit = useStore((s) => s.heightUnit);
-  const setUnit = useStore((s) => s.setHeightUnit);
   const wUnit = useStore((s) => s.weightUnit);
-  const setWUnit = useStore((s) => s.setWeightUnit);
   const removeMemory = useStore((s) => s.removeMemory);
   const updateChild = useStore((s) => s.updateChild);
   const setEntrySheet = useStore((s) => s.setEntrySheet);
-  const [mode, setMode] = useState<"height" | "weight">("height");
+  const [mode, setMode] = useState<"height" | "weight" | "head">("height");
 
   // heights and weights are read from the measurement memories — there is no separate copy
   const heights = useMemo(() => (child ? heightSeries(memories, child.id) : []), [memories, child]);
   const weights = useMemo(() => (child ? weightSeries(memories, child.id) : []), [memories, child]);
+  const heads = useMemo(() => (child ? headSeries(memories, child.id) : []), [memories, child]);
   if (!child) return null;
+  // before the birth: the week, the baby's size as a fruit, ultrasound pictures and scan measurements
+  if (child.expecting) {
+    return (
+      <View>
+        <Heading title="Growth" />
+        <PregnancyGrowth child={child} />
+      </View>
+    );
+  }
 
   const latest = heights[heights.length - 1];
   const prev = heights[heights.length - 2];
@@ -78,8 +88,8 @@ function Growth() {
 
   const confirmDelete = (id: string, label: string) => {
     const m = memories.find((x) => x.id === id);
-    const both = m?.heightCm != null && m?.weightKg != null;
-    Alert.alert("Remove this measurement?", `${label}${both ? " — this removes the height and the weight logged together." : ""}`, [
+    const both = [m?.heightCm, m?.weightKg, m?.headCm].filter((x) => x != null).length > 1;
+    Alert.alert("Remove this measurement?", `${label}${both ? ". This removes everything measured together that day." : ""}`, [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => removeMemory(id) },
     ]);
@@ -102,24 +112,23 @@ function Growth() {
     );
   };
 
-  const empty = mode === "height" ? !latest : !latestW;
+  const empty = mode === "height" ? !latest : mode === "weight" ? !latestW : !heads.length;
 
   return (
     <View>
       <Heading title="Growth" />
-      <Btn label="Add height / weight" icon="add-measure" onPress={() => setEntrySheet({ kind: "measure" })} />
+      <Btn label="Add a measurement" icon="add-measure" onPress={() => setEntrySheet({ kind: "measure" })} />
+      <GrowthSummary child={child} memories={memories} />
       <View style={{ marginTop: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
-        <View style={{ flex: 1.4 }}><Seg options={[{ id: "height" as const, label: "Height" }, { id: "weight" as const, label: "Weight" }]} value={mode} onChange={setMode} /></View>
-        <View style={{ flex: 1 }}>
-          {mode === "height" ? <Seg options={[{ id: "cm" as HeightUnit, label: "cm" }, { id: "in" as HeightUnit, label: "in" }]} value={unit} onChange={setUnit} /> : <Seg options={[{ id: "kg" as WeightUnit, label: "kg" }, { id: "lb" as WeightUnit, label: "lb" }]} value={wUnit} onChange={setWUnit} />}
-        </View>
+        {/* units (cm or in, kg or lb) are chosen in Settings */}
+        <View style={{ flex: 1 }}><Seg options={[{ id: "height" as const, label: "Height" }, { id: "weight" as const, label: "Weight" }, { id: "head" as const, label: "Head" }]} value={mode} onChange={setMode} /></View>
       </View>
 
       {empty ? (
         <View style={{ alignItems: "center", padding: 30 }}>
-          <Icon name={mode === "height" ? "add-measure" : "scale"} size={44} color={t.ink3} />
-          <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>No {mode} logged yet</Text>
-          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{mode === "height" ? `Measure ${child.name} lying down (before 2) or standing, then tap “Add height / weight”.` : "Tap “Add height / weight” after the next weigh-in."}</Text>
+          <Icon name={mode === "weight" ? "scale" : "add-measure"} size={44} color={t.ink3} />
+          <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>No {mode === "head" ? "head measurement" : mode} logged yet</Text>
+          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{mode === "height" ? `Measure ${child.name} lying down (before 2) or standing, then tap “Add a measurement”.` : mode === "head" ? "Measure around the widest part of the head, then tap “Add a measurement”." : "Tap “Add a measurement” after the next weigh-in."}</Text>
         </View>
       ) : mode === "height" && latest ? (
         <>
@@ -135,11 +144,16 @@ function Growth() {
           <Seg options={[{ id: "girl" as GrowthRef, label: "Girls" }, { id: "boy" as GrowthRef, label: "Boys" }, { id: "all" as GrowthRef, label: "All" }]} value={ref} onChange={(v) => updateChild(child.id, { growthRef: v })} />
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>Height curve</Text>
           <LineChart child={child} entries={heights} unit={unit} />
-          <Text style={{ color: t.ink4, fontSize: 11, marginTop: 6 }}>Shaded band: approximate typical range, simplified from the WHO growth standards (0–5 years). For information only. Ask your pediatrician about growth.</Text>
+          <Text style={{ color: t.ink4, fontSize: 11, marginTop: 6 }}>Lines: the 3rd, 50th and 97th percentiles for their age and sex, from the charts chosen in Settings. For information only. Ask your doctor or health visitor about growth.</Text>
           <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22, marginBottom: 8 }]}>The door frame</Text>
           <DoorFrame child={child} entries={heights} unit={unit} />
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>History</Text>
           {[...heights].reverse().map((e) => row(e.id, formatHeight(e.cm, unit), e.date))}
+        </>
+      ) : mode === "head" ? (
+        <>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>History</Text>
+          {[...heads].reverse().map((e) => row(e.id, formatHeight(e.cm, unit), e.date))}
         </>
       ) : latestW ? (
         <>

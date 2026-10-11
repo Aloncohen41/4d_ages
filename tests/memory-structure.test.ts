@@ -4,7 +4,7 @@ import { milestonesLogged, heightSeries, weightSeries, memoriesOf } from "../src
 import { formatTime } from "../src/lib/date";
 import { toKg, fromKg, formatWeight } from "../src/lib/growth";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-ok("times", formatTime("00:05") === "12:05 AM" && formatTime("12:00") === "12:00 PM" && formatTime("14:30") === "2:30 PM");
+ok("times, on the 24-hour clock", formatTime("00:05") === "00:05" && formatTime("12:00") === "12:00" && formatTime("14:30") === "14:30" && formatTime("9:05") === "09:05");
 ok("numbers", parseNumber("74,5") === 74.5 && parseNumber("abc") === null);
 ok("weight units", Math.abs(toKg(20, "lb") - 9.0718) < 0.001 && formatWeight(9.2, "kg") === "9.2 kg" && formatWeight(4.5359237, "lb") === "10 lb");
 
@@ -22,7 +22,7 @@ const edited = buildMemory({ childId: "c", type: "story", title: "t", descriptio
 ok("editing keeps createdAt, source and sync bookkeeping; bumps updatedAt", edited.createdAt === 5 && edited.syncedTs === 3 && edited.updatedAt === 99 && edited.source === "Shared" && edited.media.length === 0);
 const plain = buildMemory({ childId: "c", type: "photo", description: "snow", date: "2025-01-01", media: [media[0]], tagIds: [], emoji: "" }, "p-1", undefined, 1);
 ok("a plain photo is just a memory of type 'photo'", plain.type === "photo" && plain.emoji === "📷" && plain.source === "Added");
-ok("six types, all with labels", Object.keys(TYPE_META).sort().join() === "first,last,measure,milestone,photo,story");
+ok("seven types, all with labels (health notes are kept apart from the story and the book)", Object.keys(TYPE_META).sort().join() === "first,health,last,measure,milestone,photo,story");
 
 ok("cover: a photo beats a video; nothing → null", coverOf(media)!.uri === "file:///a.jpg" && coverOf([media[1]])!.kind === "video" && coverOf([]) === null && coverOf(undefined) === null);
 ok("blurb + sort", blurb({ title: "A", description: "b" }) === "A — b" && [{ date: "2025-01-02", time: "09:00" }, { date: "2025-01-01" }, { date: "2025-01-02", time: "08:00" }].sort(byMoment).map((x: any) => x.time ?? "-").join() === "-,08:00,09:00");

@@ -1,3 +1,4 @@
+import { PREGNANCY_MILESTONES } from "./pregnancy";
 /** One central list of tags. Memories carry tag ids; the name, category and (for people) the family member live here. */
 export type TagCategory = "person" | "event" | "place" | "other";
 export interface Tag {
@@ -14,18 +15,21 @@ export interface SyncFields {
 }
 
 export type KidTheme = "pink" | "blue" | "green";
-export type MediaKind = "photo" | "video";
+export type MediaKind = "photo" | "video" | "audio"; // audio: a voice note
 
 /**
  * Every memory is the same kind of record — a photo, a story, a milestone, a first, a last, or a measurement.
  * The `type` says which; the common fields are shared and only a few fields belong to one type.
  */
-export type MemoryType = "photo" | "story" | "milestone" | "first" | "last" | "measure";
+export type MemoryType = "photo" | "story" | "milestone" | "first" | "last" | "measure" | "health";
 /** The types you can create from the "+" menu (a plain photo is added through the photo picker). */
 export type EntryKind = Exclude<MemoryType, "photo">;
 
 /** Which typical-range band growth is compared with. "all" averages girls and boys; "none" is from earlier versions (off) and now means "all". */
 export type GrowthRef = "girl" | "boy" | "all" | "none";
+/** A health log entry: a check-up, a vaccination, an illness, a medicine, or anything else. Kept apart from the book and the timeline. */
+export type HealthKind = "checkup" | "vaccination" | "illness" | "medicine" | "other";
+
 /** A child's gender, set on their profile. Used to pick the growth comparison; children from before it existed count as "unspecified". */
 export type Gender = "girl" | "boy" | "unspecified";
 
@@ -62,6 +66,11 @@ export interface Child extends SyncFields {
   growthRef?: GrowthRef; // which WHO reference range to compare against (unset: follows the gender)
   avatarCrop?: AvatarCrop;
   gender?: Gender; // missing = "unspecified" ("Prefer not to say")
+  /** This phone's access, from the cloud: an owner or editor sees and changes everything; a viewer only sees the posts with viewPeople. */
+  role?: "owner" | "editor" | "viewer";
+  /** Not born yet: `birth` is the due date until the baby arrives (then the real birth date is set and this is cleared). */
+  expecting?: boolean;
+  viewPeople?: string[]; // a viewer's people (family member ids)
 }
 
 export interface MediaItem {
@@ -89,6 +98,8 @@ export interface Memory extends SyncFields {
   milestoneId?: string; // milestone: which milestone in the catalogue
   heightCm?: number; // measure
   weightKg?: number; // measure
+  headCm?: number; // measure: head circumference
+  healthKind?: HealthKind; // health: what kind of entry
   // how it is drawn until there is a real photo, and where it came from
   emoji: string;
   palette: string;
@@ -270,7 +281,8 @@ export const MILESTONE_CATALOG: MilestoneDef[] = [
 ];
 
 /** Every milestone that can be named — the catalogue plus the earlier list. Use this to look a milestone up by id. */
-export const MILESTONE_DEFS: MilestoneDef[] = [...MILESTONE_CATALOG, ...LEGACY_MILESTONE_DEFS];
+/** Every milestone the app knows (for names): the chart, older ones, and the pregnancy milestones (see pregnancy.ts). */
+export const MILESTONE_DEFS: MilestoneDef[] = [...MILESTONE_CATALOG, ...LEGACY_MILESTONE_DEFS, ...PREGNANCY_MILESTONES];
 /** [background, hill] colours for illustrated placeholder cards */
 export const PALETTES: Record<string, [string, string]> = {
   peach: ["#fbe4d4", "#e9a27a"],
@@ -296,7 +308,7 @@ export interface SharedItem {
 
 /** A deletion that still has to be sent to the cloud for a shared child. */
 export interface Tombstone {
-  table: "memories" | "custom_defs";
+  table: "memories" | "custom_defs" | "classics";
   childId: string;
   id: string;
   ts: number;
@@ -309,4 +321,5 @@ export interface NotifPrefs {
   hour: number; // local hour of day, 0-23
   milestoneAges?: boolean; // "Wow — they're 6 months old today!" (on unless turned off)
   milestoneAsks?: boolean; // "Is she starting any of these?" (on unless turned off)
+  monthlyPhoto?: boolean; // "Time for her 4-month photo" in the first year (on unless turned off)
 }

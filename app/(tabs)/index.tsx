@@ -8,8 +8,11 @@ import { WatchView } from "../../src/components/WatchView";
 import { Memories } from "../../src/components/Memories";
 import { SearchSheet } from "../../src/components/SearchSheet";
 import { PostCard, PostViewer, useEditMemory } from "../../src/components/PostCard";
+import { TagChip } from "../../src/components/TagChip";
+import { HomeCards } from "../../src/components/HomeCards";
+import { itemsWithTags, tagFromId } from "../../src/lib/tags";
 import { useShownChild, useStore } from "../../src/lib/store";
-import { byMoment } from "../../src/lib/display";
+import { byMoment, visualMedia } from "../../src/lib/display";
 import { FeedWindow, PAGE, growWindow, hasMore as hasMoreOf, showAllWindow, windowKey, windowSize } from "../../src/lib/feedWindow";
 import { Period, inPeriod, periodLabel } from "../../src/lib/dates";
 import { useTheme } from "../../src/lib/useTheme";
@@ -42,6 +45,10 @@ function Home() {
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
   const setTagSheet = useStore((s) => s.setTagSheet);
+  const homeTags = useStore((s) => s.homeTags);
+  const setHomeTags = useStore((s) => s.setHomeTags);
+  const tagList = useStore((s) => s.tags);
+  const relatives = useStore((s) => s.relatives);
   const edit = useEditMemory();
   const [viewing, setViewing] = useState<Memory | null>(null);
   const scroll = useScrollControls();
@@ -52,13 +59,15 @@ function Home() {
   const [gallery, setGallery] = useState<{ items: MediaItem[]; index: number } | null>(null);
 
   // the whole story, NEWEST FIRST
-  const everything = useMemo(() => (child ? memories.filter((p) => p.childId === child.id).sort((a, b) => byMoment(b, a)) : []), [memories, child]);
-  const list = useMemo(
-    () => everything.filter((p) => (typeFilter === "all" || p.type === typeFilter) && (!period || inPeriod(p.date, period))),
-    [everything, typeFilter, period]
-  );
+  // health notes have their own page (menu, Health), so they're not in the story
+  const everything = useMemo(() => (child ? memories.filter((p) => p.childId === child.id && p.type !== "health").sort((a, b) => byMoment(b, a)) : []), [memories, child]);
+  // filtered by kind, by date, and by tags (a post with any of the chosen tags)
+  const list = useMemo(() => {
+    const byKind = everything.filter((p) => (typeFilter === "all" || p.type === typeFilter) && (!period || inPeriod(p.date, period)));
+    return homeTags.length ? itemsWithTags(byKind, homeTags) : byKind;
+  }, [everything, typeFilter, period, homeTags]);
   // only the newest page is built at first; older posts are added as you scroll toward them (or all at once for "Jump to the beginning")
-  const key = windowKey(child?.id, typeFilter, period ? periodLabel(period) : "");
+  const key = windowKey(child?.id, typeFilter, (period ? periodLabel(period) : "") + homeTags.join("|"));
   const [win, setWin] = useState<FeedWindow>({ key, n: PAGE });
   const n = windowSize(win, key);
   const shown = useMemo(() => list.slice(0, n), [list, n]);
@@ -83,7 +92,7 @@ function Home() {
   }, [shown, child]);
   if (!child) return null;
   const open = (p: Memory, index = 0) => {
-    const items = p.media.filter((m) => m.uri);
+    const items = visualMedia(p.media).filter((m) => m.uri); // the pictures, in the order the post shows them (voice notes play on the post)
     if (items.length) setGallery({ items, index: Math.min(index, items.length - 1) });
   };
   const pill = (on: boolean) => ({ paddingHorizontal: 13, paddingVertical: 7, borderRadius: 12, backgroundColor: on ? t.chipOn : t.card, borderWidth: 1, borderColor: on ? t.chipOn : t.line } as const);
@@ -95,11 +104,19 @@ function Home() {
         <Text style={[TYPE.headlineSmall, { color: t.ink, flex: 1 }]} numberOfLines={1}>{child.name}'s Story</Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <IconButton name="search" label="Search" onPress={() => setSearching(true)} active={!!period} />
-          <IconButton name="tag" label="Tags" onPress={() => setTagSheet({ keys: [] })} />
+          <IconButton name="tag" label="Filter by tags" onPress={() => setTagSheet({ keys: homeTags, forHome: true })} active={homeTags.length > 0} />
         </View>
       </View>
 
+      {child.role === "viewer" ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, backgroundColor: t.bg2, marginBottom: 12 }}>
+          <Icon name="eye" size={20} color={t.ink2} />
+          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>View only: you see the posts {child.name}'s family shared with you.</Text>
+        </View>
+      ) : null}
+
       <Memories part="banner" />
+      <HomeCards child={child} onView={setViewing} />
 
       <View style={{ marginBottom: 12 }}>
         <Seg options={[{ id: "story", label: "Stories" }, { id: "grow", label: "Watch them grow" }]} value={view} onChange={setView} />
@@ -121,6 +138,10 @@ function Home() {
           </HScroll>
 
           <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            {homeTags.map((id) => {
+              const tag = tagFromId(id, tagList, relatives);
+              return tag ? <TagChip key={id} tag={tag} onRemove={() => setHomeTags(homeTags.filter((x) => x !== id))} /> : null;
+            })}
             {period ? (
               <Pressable onPress={() => setPeriod(null)} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: t.accentSoft, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 }}>
                 <Icon name="calendar" size={13} color={t.accentDeep} />
@@ -138,9 +159,9 @@ function Home() {
 
           {list.length === 0 ? (
             <View style={{ alignItems: "center", padding: 30 }}>
-              <Icon name={typeFilter !== "all" || period ? "search" : "images"} size={40} color={t.ink3} />
-              <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{typeFilter !== "all" || period ? "Nothing here" : "No stories yet"}</Text>
-              <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{typeFilter !== "all" || period ? "Try another category or date." : "Tap + to add the first one."}</Text>
+              <Icon name={typeFilter !== "all" || period || homeTags.length ? "search" : "images"} size={40} color={t.ink3} />
+              <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{typeFilter !== "all" || period || homeTags.length ? "Nothing here" : "No stories yet"}</Text>
+              <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{typeFilter !== "all" || period || homeTags.length ? "Try another category, date or tag." : "Tap + to add the first one."}</Text>
             </View>
           ) : (
             groups.map((g) => (

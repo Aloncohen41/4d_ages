@@ -8,12 +8,12 @@ import { useTheme } from "../src/lib/useTheme";
 import { WORDMARKS } from "../src/lib/wordmark";
 import { APP_NAME, LOGIN_TAGLINE, WORDMARK_ASPECT } from "../src/brand";
 import { DISPLAY_FONT, TYPE } from "../src/theme";
-import { googleReady, resendVerification, signIn, signInWithGoogle, signUp } from "../src/lib/supabase";
+import { googleReady, resendVerification, signIn, signInWithGoogle, signUp, sendPasswordReset } from "../src/lib/supabase";
 import { useAuthLinkError } from "../src/lib/authLinkState";
 import { Btn, Input } from "../src/components/ui";
 import { Icon } from "../src/components/Icon";
 
-type Mode = "in" | "up" | "verify";
+type Mode = "in" | "up" | "verify" | "reset";
 
 /**
  * The login page: the only thing there is before signing in. One screen, no scrolling — the logo, one line, sign-in or account creation,
@@ -66,11 +66,21 @@ export default function Login() {
       <StatusBar style={t.dark ? "light" : "dark"} />
       <KeyboardAvoidingView behavior="height" style={{ flex: 1, paddingHorizontal: 24 }}>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", minHeight: compact ? 150 : 200 }}>
-          <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ width: logoW, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
+          <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: logoW, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
           <Text style={{ fontFamily: DISPLAY_FONT, fontSize: compact ? 22 : 26, lineHeight: compact ? 28 : 34, color: t.ink, textAlign: "center", marginTop: compact ? 4 : 10 }}>{LOGIN_TAGLINE}</Text>
         </View>
 
-        {mode === "verify" ? (
+        {mode === "reset" ? (
+          <View style={{ gap: compact ? 8 : 10 }}>
+            <Text style={[TYPE.titleMedium, { color: t.ink, textAlign: "center" }]}>Forgot your password?</Text>
+            <Text style={[TYPE.bodyMedium, { color: t.ink2, textAlign: "center" }]}>Enter your email. We'll send a link that opens {APP_NAME}, where you choose a new password.</Text>
+            <Input value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" placeholder="Email" accessibilityLabel="Email" style={field} />
+            <Btn label={busy ? "Sending…" : "Send the link"} icon="mail" disabled={busy} onPress={() => run(async () => { await sendPasswordReset(email); setMsg("Sent. Check your email, it can take a minute to arrive."); })} />
+            <Pressable onPress={() => { setMode("in"); setErr(""); setMsg(""); }} hitSlop={8} style={{ alignItems: "center", paddingVertical: 2 }}>
+              <Text style={{ color: t.accentDeep, fontWeight: "700" }}>Back to sign in</Text>
+            </Pressable>
+          </View>
+        ) : mode === "verify" ? (
           <View style={{ gap: 12 }}>
             <View style={{ alignItems: "center", gap: 6 }}>
               <Icon name="mail" size={34} color={t.accent} />
@@ -92,6 +102,11 @@ export default function Login() {
                 <Icon name={showPw ? "eye-off" : "eye"} size={22} color={t.ink2} />
               </Pressable>
             </View>
+            {mode === "in" ? (
+              <Pressable onPress={() => { setMode("reset"); setErr(""); setMsg(""); }} hitSlop={6} style={{ alignSelf: "flex-end" }} accessibilityRole="link">
+                <Text style={[TYPE.bodySmall, { color: t.accentDeep, fontWeight: "700" }]}>Forgot password?</Text>
+              </Pressable>
+            ) : null}
             <Btn label={busy ? "One moment…" : mode === "in" ? "Sign in" : "Create account"} onPress={submit} disabled={busy} />
             <Pressable onPress={() => { setMode(mode === "in" ? "up" : "in"); setErr(""); setMsg(""); }} hitSlop={6} style={{ alignItems: "center", paddingVertical: 2 }}>
               <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{mode === "in" ? "New here? Create an account" : "Already have an account? Sign in"}</Text>

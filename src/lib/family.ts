@@ -69,6 +69,23 @@ export function moveInOrder(ids: string[], id: string, by: -1 | 1): string[] {
   return out;
 }
 
+/** Moves one person to a new place in the list (dragging); returns the full new order. */
+export function moveTo(ids: string[], id: string, to: number): string[] {
+  const i = ids.indexOf(id);
+  if (i < 0) return ids;
+  const out = ids.filter((x) => x !== id);
+  out.splice(Math.max(0, Math.min(out.length, to)), 0, id);
+  return out;
+}
+
+/** Where a dragged row lands: the place whose rows' middles it has passed. `mids` are the middles of the rows in order, `y` the dragged row's middle. */
+export function dropIndex(mids: number[], from: number, y: number): number {
+  let to = from;
+  while (to < mids.length - 1 && y > mids[to + 1]) to++;
+  while (to > 0 && y < mids[to - 1]) to--;
+  return to;
+}
+
 /** People whose name, nickname or relationship contains the search text. */
 export function searchFamily(family: Relative[], query: string): Relative[] {
   const q = query.trim().toLowerCase();

@@ -3,6 +3,7 @@
  * `code` (in the query) or the tokens themselves (in the #fragment), or an error. Pure parsing, so it can be tested without a phone.
  */
 export interface AuthCallback {
+  recovery?: boolean; // a password-reset link
   code?: string;
   accessToken?: string;
   refreshToken?: string;
@@ -26,6 +27,7 @@ export function parseAuthCallback(url: string | null | undefined): AuthCallback 
   }
   const error = params.get("error_description") || params.get("error");
   return {
+    ...(params.get("type") === "recovery" ? { recovery: true } : {}),
     ...(params.get("code") ? { code: params.get("code") } : {}),
     ...(params.get("access_token") ? { accessToken: params.get("access_token") } : {}),
     ...(params.get("refresh_token") ? { refreshToken: params.get("refresh_token") } : {}),

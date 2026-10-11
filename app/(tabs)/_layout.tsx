@@ -124,7 +124,7 @@ export default function TabsLayout() {
       </Tabs>
 
       {/* shared by every tab, so it exists once instead of once per tab (the forms it opens live in the root layout) */}
-      {active ? <Fab bottom={TAB_BAR_HEIGHT + insets.bottom + FAB_GAP} /> : null}
+      {active && active.role !== "viewer" ? <Fab bottom={TAB_BAR_HEIGHT + insets.bottom + FAB_GAP} /> : null}
       {restoring ? <View style={StyleSheet.absoluteFill}><BrandScreen /></View> : null}
     </View>
   );

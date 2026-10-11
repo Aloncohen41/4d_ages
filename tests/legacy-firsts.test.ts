@@ -20,7 +20,7 @@ ok("real milestones and other photos are left alone", !!r.milestones.c["slept-th
 const r2 = migrateLegacyFirsts(r);
 ok("running it twice changes nothing", r2.photos.length === r.photos.length && Object.keys(r2.milestones.c).length === 1);
 ok("no built-in milestone shares an id with an old First", MILESTONE_DEFS.every((d) => !(d.id in LEGACY_FIRSTS)));
-ok("every milestone belongs to an area and has an age window", MILESTONE_DEFS.every((d) => (MILESTONE_CATEGORIES as readonly string[]).includes(areaOf(d)) && d.months![0] < d.months![1]));
+ok("every milestone belongs to an area and has an age window (pregnancy milestones are by week, not age)", MILESTONE_DEFS.filter((d) => d.category !== "Pregnancy").every((d) => (MILESTONE_CATEGORIES as readonly string[]).includes(areaOf(d)) && d.months![0] < d.months![1]));
 ok("unique milestone ids", new Set(MILESTONE_DEFS.map((d) => d.id)).size === MILESTONE_DEFS.length);
 ok("ideas already used are hidden", openIdeas(FIRST_IDEAS, ["first steps", "First Word"]).every((i) => !["first steps", "first word"].includes(i.title.toLowerCase())) && openIdeas(FIRST_IDEAS, []).length === FIRST_IDEAS.length);
 console.log(fails ? `${fails} FAILED` : "all migration tests passed");

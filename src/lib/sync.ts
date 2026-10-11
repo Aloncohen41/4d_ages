@@ -4,7 +4,9 @@ import { State, useStore } from "./store";
 import { personTag, relationLabel, upsertTagIn } from "./tags";
 import { deleteFile } from "./media";
 import { Child, MediaItem } from "./types";
-import { isDirty, memoryToRow, mergeChild, mergeDefs, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow } from "./syncMerge";
+import { classicToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow } from "./syncMerge";
+import { classicMedia } from "./classics";
+import { loadReactions } from "./reactions";
 
 const BUCKET = "media";
 const MAX_UPLOAD_BYTES = 45 * 1024 * 1024; // Supabase's default per-file limit is 50 MB
@@ -36,7 +38,7 @@ async function me() {
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e));
 
-const MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", gif: "image/gif", mp4: "video/mp4", mov: "video/quicktime", "3gp": "video/3gpp", webm: "video/webm" };
+const MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", gif: "image/gif", mp4: "video/mp4", mov: "video/quicktime", "3gp": "video/3gpp", webm: "video/webm", m4a: "audio/mp4", aac: "audio/aac", mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", opus: "audio/ogg", amr: "audio/amr" };
 const extOf = (uri: string) => (uri.split("?")[0].split(".").pop() || "bin").toLowerCase().slice(0, 5);
 
 /** Upload a local file; returns its cloud path, or null if it's missing / too big. */
@@ -80,18 +82,26 @@ export async function shareChild(childId: string): Promise<void> {
   const ts = child.updatedAt ?? Date.now();
   const { error: e1 } = await sb.from("children").upsert({
     id: child.id, name: child.name, birth: child.birth, theme: child.theme, emoji: child.emoji,
-    avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, owner_id: user.id, client_ts: ts,
+    avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, owner_id: user.id, client_ts: ts,
   });
   if (e1) throw new Error(e1.message);
-  const { error: e2 } = await sb.from("child_members").upsert({ child_id: child.id, user_id: user.id, role: "owner", email: user.email ?? null });
+  // already a member (a first try that stopped half way, or sharing again): nothing to change
+  const { error: e2 } = await sb.from("child_members").upsert({ child_id: child.id, user_id: user.id, role: "owner", email: user.email ?? null }, { onConflict: "child_id,user_id", ignoreDuplicates: true });
   if (e2) throw new Error(e2.message);
 
   apply((s) => ({ kids: s.kids.map((k) => (k.id === childId ? { ...k, shared: true, updatedAt: ts, syncedTs: ts } : k)) }));
   await syncChild(childId);
 }
 
-export async function createInvite(childId: string): Promise<string> {
-  const { data, error } = await client().rpc("create_invite", { p_child: childId });
+/**
+ * A code for someone to join with. Without `people` they get full access (they see and change everything, like a parent); with it they can
+ * only look, and only at the posts with those family members (Grandma sees the posts with Grandma and Grandpa).
+ */
+export async function createInvite(childId: string, people?: string[], email?: string): Promise<string> {
+  const args: Record<string, unknown> = { p_child: childId };
+  if (people) args.p_people = people;
+  if (email?.trim()) args.p_email = email.trim().toLowerCase(); // only this email can use the code
+  const { data, error } = await client().rpc("create_invite", args);
   if (error) throw new Error(error.message);
   return String(data);
 }
@@ -100,10 +110,10 @@ export async function createInvite(childId: string): Promise<string> {
 export async function joinWithCode(code: string): Promise<Child> {
   const { data, error } = await client().rpc("join_child", { p_code: code.trim() });
   if (error) throw new Error(error.message);
-  const child = childFromRow(data as ChildRow);
+  const child = { ...childFromRow(data as ChildRow), ...(await myAccess((data as ChildRow).id)) };
   const existing = useStore.getState().kids.find((k) => k.id === child.id);
   apply((s) => ({
-    kids: existing ? s.kids.map((k) => (k.id === child.id ? { ...k, shared: true } : k)) : [...s.kids, child],
+    kids: existing ? s.kids.map((k) => (k.id === child.id ? { ...k, shared: true, role: child.role, viewPeople: child.viewPeople } : k)) : [...s.kids, child],
     activeId: child.id,
   }));
   await syncChild(child.id);
@@ -121,10 +131,85 @@ export async function leaveChild(childId: string): Promise<void> {
   }));
 }
 
-export async function listMembers(childId: string): Promise<{ email: string; role: string }[]> {
-  const { data, error } = await client().from("child_members").select("email, role").eq("child_id", childId);
+export interface Member {
+  userId: string;
+  email: string;
+  role: "owner" | "editor" | "viewer";
+  people: string[]; // a viewer's people
+  me: boolean;
+}
+
+export async function listMembers(childId: string): Promise<Member[]> {
+  const user = await me();
+  const { data, error } = await client().from("child_members").select("user_id, email, role, people").eq("child_id", childId);
   if (error) throw new Error(error.message);
-  return (data ?? []).map((m: { email: string | null; role: string }) => ({ email: m.email || "(unknown)", role: m.role }));
+  return (data ?? []).map((m: { user_id: string; email: string | null; role: string; people?: string[] | null }) => ({
+    userId: m.user_id, email: m.email || "(unknown)", role: (m.role === "owner" || m.role === "viewer" ? m.role : "editor") as Member["role"], people: m.people ?? [], me: m.user_id === user.id,
+  }));
+}
+
+/** A book has at most two parents; family members who can only view don't count. */
+export const MAX_PARENTS = 2;
+export const parentsOf = (members: Member[]) => members.filter((m) => m.role !== "viewer");
+
+/**
+ * Take someone out of a child's book (the owner may remove anyone; the other parent may remove viewers). They lose access at once. With
+ * `block`, they can't join again with any code, until they're unblocked.
+ */
+export async function removeMember(childId: string, userId: string, block = false): Promise<void> {
+  const { error } = await client().rpc("remove_member", block ? { p_child: childId, p_user: userId, p_block: true } : { p_child: childId, p_user: userId });
+  if (error) throw new Error(error.message);
+}
+
+/** The emails blocked from a child's book. */
+export async function listBlocked(childId: string): Promise<{ email: string; at: string }[]> {
+  const { data, error } = await client().from("child_blocks").select("email, blocked_at").eq("child_id", childId).order("blocked_at", { ascending: false });
+  if (error) return []; // a database not yet updated has no blocks
+  return (data ?? []).map((r: { email: string; blocked_at: string }) => ({ email: r.email, at: r.blocked_at }));
+}
+
+/** Block an email from a child's book (even before they've joined), or let them in again. */
+export async function blockEmail(childId: string, email: string): Promise<void> {
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error("Enter an email address.");
+  const { error } = await client().rpc("block_email", { p_child: childId, p_email: email.trim() });
+  if (error) throw new Error(error.message);
+}
+export async function unblockEmail(childId: string, email: string): Promise<void> {
+  const { error } = await client().rpc("unblock_email", { p_child: childId, p_email: email });
+  if (error) throw new Error(error.message);
+}
+
+/** Change whose posts a view-only family member sees. */
+export async function setMemberPeople(childId: string, userId: string, people: string[]): Promise<void> {
+  const { error } = await client().rpc("set_member_people", { p_child: childId, p_user: userId, p_people: people });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * The code to show for a child: a still-valid code this account already made (so the same code shows each time the screen opens), or a new one.
+ * Full access codes only (view-only invites are made on request).
+ */
+export async function currentInvite(childId: string): Promise<{ code: string; expires: string }> {
+  const user = await me();
+  const { data } = await client().from("invites").select("code, expires_at").eq("child_id", childId).eq("created_by", user.id).eq("role", "editor")
+    .gt("expires_at", new Date(Date.now() + 86400000).toISOString()).order("expires_at", { ascending: false }).limit(1);
+  const found = (data ?? [])[0] as { code: string; expires_at: string } | undefined;
+  if (found) return { code: found.code, expires: found.expires_at };
+  const code = await createInvite(childId);
+  return { code, expires: new Date(Date.now() + 7 * 86400000).toISOString() };
+}
+
+/** The link that opens the app (or offers it) and joins the book: tapped in WhatsApp, email or any other app. */
+export const JOIN_PAGE = "https://aloncohen41.github.io/4d_ages/join/";
+export const joinLink = (code: string) => `${JOIN_PAGE}?code=${encodeURIComponent(code)}`;
+
+/** This account's access to a child: its role, and for a viewer the people whose posts they see. */
+async function myAccess(childId: string): Promise<Pick<Child, "role" | "viewPeople">> {
+  const user = await me();
+  const { data, error } = await client().from("child_members").select("role, people").eq("child_id", childId).eq("user_id", user.id).maybeSingle();
+  if (error || !data) return {};
+  const role = data.role === "viewer" ? "viewer" : data.role === "owner" ? "owner" : "editor";
+  return { role, viewPeople: role === "viewer" ? ((data.people as string[] | null) ?? []) : undefined };
 }
 
 /* ---------- the sync itself ---------- */
@@ -139,16 +224,27 @@ export async function syncChild(childId: string): Promise<void> {
   progress("Checking for new memories…");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const since = (q: any) => (cursor ? q.gte("updated_at", cursor) : q);
-  const [cRes, mRes, dRes, rRes] = await Promise.all([
+  const access = await myAccess(childId);
+  const viewer = access.role === "viewer";
+  const [cRes, mRes, dRes, rRes, kRes] = await Promise.all([
     sb.from("children").select("*").eq("id", childId).maybeSingle(),
     since(sb.from("memories").select("*").eq("child_id", childId)),
     since(sb.from("custom_defs").select("*").eq("child_id", childId)),
     sb.from("relatives").select("*").eq("child_id", childId),
+    viewer ? Promise.resolve({ data: [], error: null }) : since(sb.from("classics").select("*").eq("child_id", childId)),
   ]);
-  check(cRes, mRes, dRes, rRes);
-  if (!cRes.data) throw new Error("This child isn't shared with you any more.");
+  // a database not yet updated for Classics (npm run db:setup) has no classics table: everything else still syncs
+  const noClassics = !!kRes.error && /classics/i.test(kRes.error.message) && /exist|schema cache/i.test(kRes.error.message);
+  check(cRes, mRes, dRes, rRes, noClassics ? { error: null } : kRes);
+  if (!cRes.data) {
+    // removed from the book on the other phone (or the book was deleted): it leaves this phone too
+    const name = useStore.getState().kids.find((k) => k.id === childId)?.name ?? "This child";
+    useStore.getState().forgetChild(childId);
+    useStore.getState().setSync({ notice: `${name}'s book isn't shared with you any more, so it was taken off this phone.` });
+    return;
+  }
 
-  const mRows = mRes.data ?? [], dRows = dRes.data ?? [], rRows = rRes.data ?? [];
+  const mRows = mRes.data ?? [], dRows = dRes.data ?? [], rRows = rRes.data ?? [], kRows = (noClassics ? [] : kRes.data ?? []) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   const removedFiles: string[] = [];
   apply((s) => {
     const relatives = mergeRelatives(s.relatives, rRows, childId);
@@ -156,26 +252,28 @@ export async function syncChild(childId: string): Promise<void> {
     for (const r of mRows) for (const t of tagsInRow(r)) tags = upsertTagIn(tags, t);
     for (const r of relatives) if (tags.some((t) => t.relatedFamilyMemberId === r.id)) tags = upsertTagIn(tags, personTag(r)); // show their current name
     return {
-      kids: s.kids.map((k) => (k.id === childId ? mergeChild(k, cRes.data) : k)),
+      kids: s.kids.map((k) => (k.id === childId ? { ...mergeChild(k, cRes.data), ...access } : k)),
       memories: mergeMemories(s.memories, mRows, (m) => m.media.forEach((x) => x.uri && removedFiles.push(x.uri))),
+      classics: mergeClassics(s.classics, kRows, (e) => classicMedia(e).forEach((x) => x.uri && removedFiles.push(x.uri))),
       customDefs: { ...s.customDefs, [childId]: mergeDefs(s.customDefs[childId] || [], dRows) },
       relatives,
       tags,
     };
   });
   removedFiles.forEach(deleteFile);
-  const newCursor = newestCursor(cursor, [cRes.data], mRows, dRows);
+  const newCursor = newestCursor(cursor, [cRes.data], mRows, dRows, kRows);
 
-  /* 2 ── PUSH: what changed on this phone */
-  await pushChild(childId, rRows);
+  /* 2 ── PUSH: what changed on this phone (a viewer only looks, so nothing is sent) */
+  if (!viewer) await pushChild(childId, rRows, !noClassics);
 
-  /* 3 ── DOWNLOAD: pictures and videos we don't have yet */
+  /* 3 ── DOWNLOAD: pictures and videos we don't have yet, and the hearts and comments */
+  await loadReactions(childId);
   await downloadMissing(childId);
 
   apply((s) => ({ syncMeta: { ...s.syncMeta, [childId]: { cursor: newCursor, lastSync: new Date().toISOString() } } }));
 }
 
-async function pushChild(childId: string, remoteRelatives: { id: string; client_ts?: number }[]) {
+async function pushChild(childId: string, remoteRelatives: { id: string; client_ts?: number }[], classicsReady = true) {
   const sb = client();
   let s = useStore.getState();
 
@@ -185,7 +283,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
     const ts = child.updatedAt ?? Date.now();
     const { error } = await sb.from("children").update({
       name: child.name, birth: child.birth, theme: child.theme, emoji: child.emoji,
-      avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, client_ts: ts,
+      avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, client_ts: ts,
     }).eq("id", childId);
     if (error) throw new Error(error.message);
     apply((st) => ({ kids: st.kids.map((k) => (k.id === childId ? { ...k, updatedAt: ts, syncedTs: ts } : k)) }));
@@ -244,12 +342,37 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
     if (error) throw new Error(error.message);
   }
 
+  // the fill-in pages, with their pictures
+  s = useStore.getState();
+  for (const e of classicsReady ? s.classics.filter((c) => c.childId === childId && isDirty(c)) : []) {
+    const photos: typeof e.photos = {};
+    for (const [field, list] of Object.entries(e.photos)) {
+      photos[field] = [];
+      for (const x of list) {
+        let path = x.path;
+        if (!path && x.uri) {
+          progress("Uploading pictures…");
+          path = (await upload(childId, `classic-${e.id}-${x.id}`, x.uri)) ?? undefined;
+        }
+        photos[field].push({ ...x, path });
+      }
+    }
+    const ts = e.updatedAt ?? Date.now();
+    const { error } = await sb.from("classics").upsert(classicToRow({ ...e, photos }, ts), { onConflict: "child_id,id" });
+    if (error) throw new Error(error.message);
+    apply((st) => ({
+      classics: st.classics.map((c) => (c.childId === childId && c.id === e.id && (c.updatedAt ?? 0) === ts
+        ? { ...c, photos: Object.fromEntries(Object.entries(c.photos).map(([k, l]) => [k, l.map((x) => ({ ...x, path: photos[k]?.find((y) => y.id === x.id)?.path ?? x.path }))])), syncedTs: ts }
+        : c)),
+    }));
+  }
+
   // things deleted on this phone
   s = useStore.getState();
   const tombs = s.tombstones.filter((t) => t.childId === childId);
   for (const t of tombs) {
     const q = sb.from(t.table).update({ deleted: true, client_ts: t.ts });
-    const { error } = t.table === "custom_defs" ? await q.eq("child_id", childId).eq("id", t.id) : await q.eq("id", t.id).eq("child_id", childId);
+    const { error } = t.table === "memories" ? await q.eq("id", t.id).eq("child_id", childId) : await q.eq("child_id", childId).eq("id", t.id);
     if (error) throw new Error(error.message);
     if (t.paths?.length) await sb.storage.from(BUCKET).remove(t.paths);
   }
@@ -262,6 +385,23 @@ async function downloadMissing(childId: string) {
   for (const m of s.memories) {
     if (m.childId !== childId) continue;
     for (const x of m.media) if (x.path && !(x.uri && new File(x.uri).exists)) jobs.push({ memoryId: m.id, mediaId: x.id, path: x.path });
+  }
+  const classicJobs: { id: string; field: string; mediaId: string; path: string }[] = [];
+  for (const e of s.classics) {
+    if (e.childId !== childId) continue;
+    for (const [field, list] of Object.entries(e.photos)) for (const x of list) if (x.path && !(x.uri && new File(x.uri).exists)) classicJobs.push({ id: e.id, field, mediaId: x.id, path: x.path });
+  }
+  for (const j of classicJobs) {
+    try {
+      const uri = await download(j.path, `classic-${j.id}-${j.mediaId}`);
+      apply((st) => ({
+        classics: st.classics.map((c) => (c.childId === childId && c.id === j.id
+          ? { ...c, photos: { ...c.photos, [j.field]: (c.photos[j.field] || []).map((x) => (x.id === j.mediaId ? { ...x, uri } : x)) } }
+          : c)),
+      }));
+    } catch {
+      /* retried next time */
+    }
   }
   let n = 0;
   for (const j of jobs) {
@@ -277,7 +417,7 @@ async function downloadMissing(childId: string) {
 
 /* ---------- the account: every child is kept in it ---------- */
 
-interface ChildRow { id: string; name: string; birth: string; theme: string; emoji: string; avatar_photo_id?: string | null; growth_ref?: string | null; gender?: string | null; client_ts?: number }
+interface ChildRow { id: string; name: string; birth: string; theme: string; emoji: string; avatar_photo_id?: string | null; growth_ref?: string | null; gender?: string | null; expecting?: boolean | null; client_ts?: number }
 
 /** A child as the cloud sends it. */
 function childFromRow(row: ChildRow): Child {
@@ -285,6 +425,7 @@ function childFromRow(row: ChildRow): Child {
     id: row.id, name: row.name, birth: String(row.birth), theme: (row.theme as Child["theme"]) || "pink", emoji: row.emoji || "🐣",
     avatarPhotoId: row.avatar_photo_id ?? undefined, growthRef: (row.growth_ref as Child["growthRef"]) ?? undefined,
     gender: (row.gender as Child["gender"]) ?? undefined,
+    ...(row.expecting ? { expecting: true } : {}),
     shared: true, updatedAt: Number(row.client_ts) || 0, syncedTs: Number(row.client_ts) || 0,
   };
 }
@@ -294,7 +435,8 @@ export function everythingSynced(s: State = useStore.getState()): boolean {
   const kids = s.kids;
   if (kids.some((k) => !k.shared || isDirty(k))) return false;
   const shared = new Set(kids.map((k) => k.id));
-  return !s.memories.some((m) => shared.has(m.childId) && isDirty(m)) && !s.tombstones.length;
+  const mine = (childId: string) => shared.has(childId) && s.kids.find((k) => k.id === childId)?.role !== "viewer";
+  return !s.memories.some((m) => mine(m.childId) && isDirty(m)) && !s.classics.some((c) => mine(c.childId) && isDirty(c)) && !s.tombstones.length;
 }
 
 /**
@@ -310,7 +452,8 @@ export async function attachAndRestore(): Promise<void> {
   const { data, error } = await sb.from("children").select("*");
   if (error) throw new Error(error.message);
   const have = new Set(useStore.getState().kids.map((k) => k.id));
-  const missing = ((data ?? []) as ChildRow[]).filter((r) => !have.has(r.id)).map(childFromRow);
+  const missing: Child[] = [];
+  for (const r of ((data ?? []) as ChildRow[]).filter((x) => !have.has(x.id))) missing.push({ ...childFromRow(r), ...(await myAccess(r.id)) });
   if (missing.length) {
     apply((s) => ({ kids: [...s.kids, ...missing], activeId: s.activeId || missing[0].id }));
     for (const k of missing) await syncChild(k.id);

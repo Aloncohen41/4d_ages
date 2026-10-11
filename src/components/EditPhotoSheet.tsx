@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { earliestDate } from "./EntrySheet";
 import { Alert, Text, View } from "react-native";
 import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -59,7 +60,7 @@ function PhotoForm({ photoId, onClose }: { photoId: string; onClose: () => void 
       <Text style={{ color: t.ink3, fontSize: 12, lineHeight: 17 }}>Photo dates are often wrong. Fix it here and the timeline re-orders itself.</Text>
 
       <Label>Date taken</Label>
-      <DateField value={date} onChange={setDate} min={child.birth} />
+      <DateField value={date} onChange={setDate} min={earliestDate(child.birth)} />
       <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{child.name} was {ageShort(child.birth, date).replace(" old", "")} on {formatDate(date)}</Text>
       <TimeField value={time} onChange={setTime} />
       <Label>Caption</Label>

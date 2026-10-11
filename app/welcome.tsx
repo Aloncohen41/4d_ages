@@ -28,7 +28,7 @@ export default function Welcome() {
     <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
       <StatusBar style={t.dark ? "light" : "dark"} />
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ width: 280, maxWidth: "100%", aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
+        <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: 280, maxWidth: "100%", aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
         <Text style={[TYPE.headlineSmall, { color: t.ink, textAlign: "center", marginTop: 16 }]}>Welcome</Text>
         <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center", marginTop: 6 }]}>Start a book for your little one, or join the one your partner started.</Text>
         {sync.busy ? (

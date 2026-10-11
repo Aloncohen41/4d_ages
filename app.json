@@ -3,7 +3,7 @@
     "name": "4D Ages",
     "slug": "4d-ages",
     "scheme": "fourdages",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,8 +16,7 @@
         "monochromeImage": "./assets/adaptive-icon-monochrome.png"
       },
       "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.CAMERA"
       ],
       "intentFilters": [
         {
@@ -74,7 +73,13 @@
           "color": "#974164"
         }
       ],
-      "./plugins/withKeepScreenAlive"
+      "./plugins/withKeepScreenAlive",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow 4D Ages to record voice notes for your child's book."
+        }
+      ]
     ]
   }
 }

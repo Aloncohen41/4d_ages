@@ -4,6 +4,7 @@ import { HScroll } from "../../src/components/HScroll";
 import { Screen } from "../../src/components/Screen";
 import { Btn, PhotoView, Seg } from "../../src/components/ui";
 import { MilestoneChecklist } from "../../src/components/MilestoneChecklist";
+import { PregnancyMilestones } from "../../src/components/Pregnancy";
 import { ReinforceButton, ReinforceSheet } from "../../src/components/ReinforceSheet";
 import { TagChip } from "../../src/components/TagChip";
 import { resolveTags } from "../../src/lib/tags";
@@ -33,6 +34,15 @@ function Milestones() {
   const [section, setSection] = useState<Section>("milestones");
   const [reinforce, setReinforce] = useState(false);
   if (!child) return null;
+  // before the birth: the pregnancy milestones, and symptoms and cravings
+  if (child.expecting) {
+    return (
+      <View>
+        <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>Pregnancy milestones</Text>
+        <PregnancyMilestones child={child} />
+      </View>
+    );
+  }
   const copy: Record<Section, { title: string; desc?: string }> = {
     milestones: { title: "Milestones" },
     firsts: { title: "Firsts", desc: "Things they did for the very first time. Add a photo and a few words while you still remember it." },

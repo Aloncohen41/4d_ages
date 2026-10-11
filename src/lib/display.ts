@@ -30,5 +30,10 @@ export function coverOf(media?: MediaItem[]): Cover | null {
   return v ? { uri: v.uri, kind: "video" } : null;
 }
 
+/** The pictures and videos of a memory (what is shown as its picture); voice notes are played, not shown. */
+export const visualMedia = (media: MediaItem[] = []) => media.filter((m) => m.kind !== "audio");
+/** A memory's voice notes. */
+export const audioMedia = (media: MediaItem[] = []) => media.filter((m) => m.kind === "audio");
+
 /** Every file a memory's media keeps on the phone (pictures, videos and chosen video thumbnails). */
 export const filesOf = (media: MediaItem[]) => media.flatMap((m) => [m.uri, m.thumb]).filter((x): x is string => !!x);

@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
-import { useStore } from "../lib/store";
+import { isViewOnly, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { Child, MILESTONE_DEFS, MediaItem, Memory } from "../lib/types";
 import { TYPE_META } from "../lib/entries";
@@ -8,6 +8,9 @@ import { ageShort, formatDate, formatTime } from "../lib/date";
 import { formatHeight, formatWeight } from "../lib/growth";
 import { Btn, PhotoView, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
+import { VoicePlayer } from "./Voice";
+import { ReactionSummary, Reactions } from "./Reactions";
+import { audioMedia, visualMedia } from "../lib/display";
 import { MediaCarousel } from "./MediaCarousel";
 import { TagRow } from "./TagChip";
 
@@ -15,7 +18,9 @@ import { TagRow } from "./TagChip";
 export function useEditMemory() {
   const setEntrySheet = useStore((s) => s.setEntrySheet);
   const setPhotoEdit = useStore((s) => s.setPhotoEdit);
+  // a child shared with this phone view-only can't be edited (the store refuses it too)
   return (p: Memory) => {
+    if (isViewOnly(useStore.getState(), p.childId)) return;
     if (p.type === "milestone" && p.milestoneId) setEntrySheet({ kind: "milestone", editId: p.milestoneId });
     else if (p.type !== "photo") setEntrySheet({ kind: p.type, editId: p.id });
     else setPhotoEdit(p.id);
@@ -32,7 +37,7 @@ export function usePostBadge(child: Child) {
   };
 }
 
-const hasPicture = (p: Memory) => p.media.some((m) => m.uri || m.thumb);
+const hasPicture = (p: Memory) => p.media.some((m) => m.kind !== "audio" && (m.uri || m.thumb));
 
 /**
  * One memory, the way the Home timeline shows it. A post with photos leads with them, whole and uncropped; a post without any is a compact card
@@ -65,8 +70,8 @@ export function PostCard({ p, child, onView, onOpenMedia, onEdit }: {
     <Pressable onPress={onView} accessibilityRole="button" accessibilityLabel={`${badge}, ${formatDate(p.date)}`} style={{ backgroundColor: t.card, borderRadius: 22, padding: media ? 9 : 14, paddingBottom: 14, marginBottom: 16, borderWidth: 1, borderColor: t.line }}>
       {media ? (
         <>
-          {p.media.length > 1 ? (
-            <MediaCarousel media={p.media} emoji={p.emoji} palette={p.palette} onOpen={onOpenMedia} />
+          {visualMedia(p.media).length > 1 ? (
+            <MediaCarousel media={visualMedia(p.media)} emoji={p.emoji} palette={p.palette} onOpen={onOpenMedia} />
           ) : (
             <Pressable onPress={() => onOpenMedia(0)}>
               {/* the whole picture, at its own shape — nothing is cropped */}
@@ -83,9 +88,11 @@ export function PostCard({ p, child, onView, onOpenMedia, onEdit }: {
           {meta("calendar", formatDate(p.date))}
           <Text style={{ backgroundColor: t.accentSoft, color: t.onAccentSoft, fontWeight: "700", fontSize: 11, paddingHorizontal: 9, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>{ageShort(child.birth, p.date)}</Text>
           <View style={{ flex: 1 }} />
-          <Pressable onPress={onEdit} hitSlop={10} accessibilityLabel="Edit" style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.bg2, alignItems: "center", justifyContent: "center" }}>
-            <Icon name="edit-2" size={14} color={t.ink3} />
-          </Pressable>
+          {child.role !== "viewer" ? (
+            <Pressable onPress={onEdit} hitSlop={10} accessibilityLabel="Edit" style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.bg2, alignItems: "center", justifyContent: "center" }}>
+              <Icon name="edit-2" size={14} color={t.ink3} />
+            </Pressable>
+          ) : null}
         </View>
         {p.time || p.location ? (
           <View style={{ flexDirection: "row", gap: 14, marginTop: 4, flexWrap: "wrap" }}>
@@ -94,14 +101,17 @@ export function PostCard({ p, child, onView, onOpenMedia, onEdit }: {
           </View>
         ) : null}
         {p.title ? <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 6 }}>{p.title}</Text> : null}
-        {p.heightCm != null || p.weightKg != null ? (
+        {p.heightCm != null || p.weightKg != null || p.headCm != null ? (
           <View style={{ flexDirection: "row", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
             {p.heightCm != null ? measure("add-measure", formatHeight(p.heightCm, heightUnit)) : null}
             {p.weightKg != null ? measure("scale", formatWeight(p.weightKg, weightUnit)) : null}
+            {p.headCm != null ? measure("smile", `Head ${formatHeight(p.headCm, heightUnit)}`) : null}
           </View>
         ) : null}
         {p.description ? <Text style={{ color: t.ink, fontSize: 15.5, lineHeight: 21, marginTop: 6 }}>{p.description}</Text> : null}
+        {audioMedia(p.media).map((a) => <VoicePlayer key={a.id} item={a} />)}
         <View style={{ marginTop: 8 }}><TagRow item={p} small skipPlace /></View>
+        <ReactionSummary memoryId={p.id} onPress={onView} />
       </View>
     </Pressable>
   );
@@ -113,7 +123,7 @@ export function PostViewer({ p, child, onClose, onOpenMedia, onEdit }: {
 }) {
   const t = useTheme();
   const badge = usePostBadge(child)(p);
-  const items = p.media.filter((m) => m.uri || m.thumb);
+  const items = visualMedia(p.media).filter((m) => m.uri || m.thumb);
   return (
     <Sheet visible onClose={onClose} title={p.title || badge}>
       <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{badge} · {formatDate(p.date)}{p.time ? ` · ${formatTime(p.time)}` : ""} · {ageShort(child.birth, p.date)}</Text>
@@ -126,10 +136,12 @@ export function PostViewer({ p, child, onClose, onOpenMedia, onEdit }: {
         ))}
       </View>
       {p.description ? <Text style={{ color: t.ink, fontSize: 16, lineHeight: 23, marginTop: 14 }}>{p.description}</Text> : null}
+      {audioMedia(p.media).map((a) => <VoicePlayer key={a.id} item={a} />)}
       <View style={{ marginTop: 12 }}><TagRow item={p} skipPlace /></View>
+      <Reactions memory={p} child={child} />
       <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
         <Btn label="Close" kind="soft" onPress={onClose} style={{ flex: 1 }} />
-        <Btn label="Edit" icon="edit-2" kind="line" onPress={onEdit} style={{ flex: 1 }} />
+        {child.role !== "viewer" ? <Btn label="Edit" icon="edit-2" kind="line" onPress={onEdit} style={{ flex: 1 }} /> : null}
       </View>
     </Sheet>
   );

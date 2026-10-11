@@ -5,9 +5,10 @@ export const TYPE_META: Record<MemoryType, { label: string; emoji: string; palet
   photo: { label: "Photo", emoji: "📷", palette: "peach", source: "Added" },
   story: { label: "Story", emoji: "📖", palette: "sky", source: "Story" },
   milestone: { label: "Milestone", emoji: "⭐", palette: "butter", source: "Milestone" },
-  measure: { label: "Height / Weight", emoji: "📏", palette: "sage", source: "Measurement" },
+  measure: { label: "Measurement", emoji: "📏", palette: "sage", source: "Measurement" },
   first: { label: "First", emoji: "🥇", palette: "peach", source: "First" },
   last: { label: "Last", emoji: "🏁", palette: "lav", source: "Last" },
+  health: { label: "Health", emoji: "🩺", palette: "sky", source: "Health" },
 };
 /** Older name for the same table, kept so existing imports keep working. */
 export const KIND_META = TYPE_META;
@@ -28,6 +29,8 @@ export interface MemoryInput {
   milestoneId?: string; // milestone
   heightCm?: number; // measure
   weightKg?: number; // measure
+  headCm?: number; // measure: head circumference
+  healthKind?: import("./types").HealthKind; // health
   source?: string;
 }
 
@@ -53,6 +56,8 @@ export function buildMemory(i: MemoryInput, id: string, old: Memory | undefined,
     milestoneId: i.type === "milestone" ? i.milestoneId : undefined,
     heightCm: i.type === "measure" ? i.heightCm : undefined,
     weightKg: i.type === "measure" ? i.weightKg : undefined,
+    headCm: i.type === "measure" ? i.headCm : undefined,
+    healthKind: i.type === "health" ? i.healthKind ?? "other" : undefined,
     emoji: i.emoji || meta.emoji,
     palette: meta.palette,
     source: i.source ?? old?.source ?? meta.source,

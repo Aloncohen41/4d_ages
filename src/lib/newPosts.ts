@@ -1,4 +1,5 @@
 import { Child, MediaKind, Memory } from "./types";
+import { addMonths } from "./date";
 
 export type PostShape = "one" | "separate";
 
@@ -20,7 +21,9 @@ export function buildNewPosts(i: {
   child: Child; shape: PostShape; note: string; items: NewPostFile[]; oneDate: string; today: string; newId: (prefix: string) => string; now: number;
 }): Memory[] {
   const { child, note, today, now } = i;
-  const onOrAfterBirth = (d: string) => (d < child.birth ? child.birth : d);
+  // pregnancy photos can be up to ten months before the birth; anything older is put on that day
+  const earliest = addMonths(child.birth, -10);
+  const onOrAfterBirth = (d: string) => (d < earliest ? earliest : d);
   const media = (f: NewPostFile) => ({ id: i.newId("mi"), uri: f.uri, kind: f.kind, ...(f.thumb ? { thumb: f.thumb } : {}) });
   const base = (date: string, time: string | undefined, files: NewPostFile[], k: number): Memory => ({
     id: i.newId("post"),

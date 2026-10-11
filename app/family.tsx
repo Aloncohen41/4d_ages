@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, PanResponder, Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Page } from "../src/components/Page";
 import { Btn, Input, MemberAvatar } from "../src/components/ui";
 import { Icon } from "../src/components/Icon";
 import { FamilyImportSheet } from "../src/components/FamilyImportSheet";
 import { MemberSheet } from "../src/components/MemberSheet";
-import { familyOf, importSources, moveInOrder, orderedFamily, searchFamily } from "../src/lib/family";
+import { dropIndex, familyOf, importSources, moveInOrder, moveTo, orderedFamily, searchFamily } from "../src/lib/family";
 import { useShownChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { displayName, itemsWithTags, personTag, relationLine } from "../src/lib/tags";
@@ -16,8 +16,8 @@ import { withAlpha } from "../src/lib/m3";
 import { TYPE } from "../src/theme";
 
 /**
- * Everyone in the child's family as one compact list: search at the top, one "Add someone" button, rows you can reorder and remove.
- * Tapping a person opens their page, with everything they're in.
+ * Everyone in the child's family as one compact list: search at the top, one "Add someone" button, rows you can reorder (drag the handle, or
+ * use the arrows) and remove. Tapping a person opens their page, with everything they're in.
  */
 export default function FamilyPage() {
   const t = useTheme();
@@ -34,6 +34,11 @@ export default function FamilyPage() {
   const [sheet, setSheet] = useState<{ memberId?: string } | null>(null);
   const [importing, setImporting] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  // dragging a row: which one, how far it has moved, and where every row sits (to work out where it lands)
+  const [drag, setDrag] = useState<{ id: string; dy: number } | null>(null);
+  const rows = useRef(new Map<string, { y: number; h: number }>());
+  const handles = useRef(new Map<string, ReturnType<typeof PanResponder.create>>());
+  const latest = useRef<{ landing: (id: string, dy: number) => number; ids: string[]; childId: string } | null>(null);
 
   // each child has their own family; people can be in several children's families
   const family = useMemo(() => (child ? orderedFamily(familyOf(relatives, child.id), order) : []), [relatives, child, order]);
@@ -58,6 +63,34 @@ export default function FamilyPage() {
 
   if (!child) return null;
   const move = (id: string, by: -1 | 1) => setFamilyOrder(child.id, moveInOrder(family.map((r) => r.id), id, by));
+  const ids = family.map((r) => r.id);
+  const mids = ids.map((id) => { const r = rows.current.get(id); return r ? r.y + r.h / 2 : 0; });
+  const landing = (id: string, dy: number) => dropIndex(mids, ids.indexOf(id), mids[ids.indexOf(id)] + dy);
+  latest.current = { landing, ids, childId: child.id };
+  // one gesture handler per row, made once (a new one mid-drag would lose track of the finger); it reads the current list through `latest`
+  const handle = (id: string) => {
+    let h = handles.current.get(id);
+    if (!h) {
+      h = PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false, // the page doesn't scroll while a row is held
+        onPanResponderGrant: () => setDrag({ id, dy: 0 }),
+        onPanResponderMove: (_e, g) => setDrag({ id, dy: g.dy }),
+        onPanResponderRelease: (_e, g) => {
+          setDrag(null);
+          const cur = latest.current;
+          if (!cur) return;
+          const to = cur.landing(id, g.dy);
+          if (to !== cur.ids.indexOf(id)) setFamilyOrder(cur.childId, moveTo(cur.ids, id, to));
+        },
+        onPanResponderTerminate: () => setDrag(null),
+      });
+      handles.current.set(id, h);
+    }
+    return h;
+  };
+  const dropAt = drag ? landing(drag.id, drag.dy) : -1;
   const remove = (id: string) => {
     const r = family.find((x) => x.id === id);
     if (!r) return;
@@ -110,10 +143,18 @@ export default function FamilyPage() {
           {shown.map((r) => {
             const on = r.id === selected;
             const i = family.findIndex((x) => x.id === r.id);
+            const held = drag?.id === r.id;
+            const canDrag = editing && !query.trim() && family.length > 1;
+            const from = drag ? ids.indexOf(drag.id) : -1;
+            // a line where the held row will land
+            const lineAbove = drag && !held && i === dropAt && dropAt < from;
+            const lineBelow = drag && !held && i === dropAt && dropAt > from;
             return (
-              // selection is an outline: the row's colours (and so its contrast) never change
+              <View key={r.id} onLayout={(e) => rows.current.set(r.id, { y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height })}
+                style={{ zIndex: held ? 2 : 0, transform: held ? [{ translateY: drag.dy }] : undefined, elevation: held ? 6 : 0 }}>
+              {lineAbove ? <View style={{ height: 3, borderRadius: 2, backgroundColor: t.accent, marginBottom: 4 }} /> : null}
+              {/* selection is an outline: the row's colours (and so its contrast) never change */}
               <Pressable
-                key={r.id}
                 onPress={() => (editing ? setSheet({ memberId: r.id }) : open(r.id))}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
@@ -128,6 +169,11 @@ export default function FamilyPage() {
                 </View>
                 {editing ? (
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    {canDrag ? (
+                      <View {...handle(r.id).panHandlers} accessibilityLabel={`Drag to move ${displayName(r)}`} hitSlop={8} style={{ padding: 6 }}>
+                        <Icon name="drag" size={22} color={held ? t.accent : t.ink2} />
+                      </View>
+                    ) : null}
                     {!query.trim() ? (
                       <>
                         <Pressable onPress={() => move(r.id, -1)} disabled={i === 0} accessibilityLabel={`Move ${displayName(r)} up`} hitSlop={4} style={{ padding: 6, opacity: i === 0 ? 0.3 : 1 }}><Icon name="arrow-up" size={20} color={t.ink2} /></Pressable>
@@ -140,9 +186,11 @@ export default function FamilyPage() {
                   <Icon name="chevron-right" size={20} color={t.ink3} />
                 )}
               </Pressable>
+              {lineBelow ? <View style={{ height: 3, borderRadius: 2, backgroundColor: t.accent, marginTop: 4 }} /> : null}
+              </View>
             );
           })}
-          {editing ? <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 4 }]}>Use the arrows to change the order. Tap someone to edit them.</Text> : null}
+          {editing ? <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 4 }]}>Drag a handle (or use the arrows) to change the order. Tap someone to edit them.</Text> : null}
         </View>
       )}
 

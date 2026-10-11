@@ -1,5 +1,6 @@
 import { Child, MediaItem, Memory, MilestoneDef, Relative, SyncFields, Tag } from "./types";
 import { inFamily } from "./family";
+import type { ClassicEntry } from "./classics";
 
 /*
  * Merge rules for a shared child (two phones, one cloud copy):
@@ -16,7 +17,7 @@ export function memoryToRow(m: Memory, tagList: Tag[], ts: number) {
   const byId = new Map(tagList.map((t) => [t.id, t]));
   return {
     id: m.id, child_id: m.childId, type: m.type, title: m.title ?? null, description: m.description, date: m.date, time: m.time ?? null, location: m.location ?? null,
-    milestone_id: m.milestoneId ?? null, height_cm: m.heightCm ?? null, weight_kg: m.weightKg ?? null,
+    milestone_id: m.milestoneId ?? null, height_cm: m.heightCm ?? null, weight_kg: m.weightKg ?? null, head_cm: m.headCm ?? null, health_kind: m.healthKind ?? null,
     emoji: m.emoji, palette: m.palette, source: m.source, created_at_ts: m.createdAt,
     tags: m.tagIds.map((id) => byId.get(id)).filter((t): t is Tag => !!t).map((t) => ({ id: t.id, name: t.name, category: t.category, member: t.relatedFamilyMemberId ?? null })),
     media: m.media.filter((x) => x.path).map((x) => ({ id: x.id, path: x.path, kind: x.kind })),
@@ -32,7 +33,7 @@ export function tagsInRow(r: { tags?: { id: string; name: string; category: Tag[
 function rowToMemory(r: any, cur: Memory | undefined, ts: number): Memory {
   const media: MediaItem[] = (Array.isArray(r.media) ? r.media : []).map((m: any) => {
     const mine = cur?.media.find((x) => x.id === m.id);
-    return { id: m.id, kind: m.kind === "video" ? "video" : "photo", path: m.path, uri: mine && mine.path === m.path ? mine.uri : "" } as MediaItem;
+    return { id: m.id, kind: m.kind === "video" || m.kind === "audio" ? m.kind : "photo", path: m.path, uri: mine && mine.path === m.path ? mine.uri : "" } as MediaItem;
   });
   return {
     ...(cur || {}),
@@ -40,7 +41,7 @@ function rowToMemory(r: any, cur: Memory | undefined, ts: number): Memory {
     time: r.time ?? undefined, location: r.location ?? undefined, media,
     tagIds: (Array.isArray(r.tags) ? r.tags : []).map((t: any) => t.id),
     createdAt: Number(r.created_at_ts) || cur?.createdAt || ts,
-    milestoneId: r.milestone_id ?? undefined, heightCm: r.height_cm != null ? Number(r.height_cm) : undefined, weightKg: r.weight_kg != null ? Number(r.weight_kg) : undefined,
+    milestoneId: r.milestone_id ?? undefined, heightCm: r.height_cm != null ? Number(r.height_cm) : undefined, weightKg: r.weight_kg != null ? Number(r.weight_kg) : undefined, headCm: r.head_cm != null ? Number(r.head_cm) : undefined, healthKind: r.health_kind ?? undefined,
     emoji: r.emoji ?? "📷", palette: r.palette ?? "peach", source: r.source ?? "Added", updatedAt: ts, syncedTs: ts,
   };
 }
@@ -123,6 +124,7 @@ export function mergeChild(cur: Child, row: any): Child {
       avatarPhotoId: row.avatar_photo_id ?? undefined,
       growthRef: row.growth_ref ?? undefined,
       gender: row.gender ?? cur.gender,
+      expecting: row.expecting === true ? true : undefined,
       updatedAt: ts,
       syncedTs: ts,
     };
@@ -136,4 +138,48 @@ export function newestCursor(prev: string | undefined, ...sets: any[][]): string
   let best = prev;
   for (const rows of sets) for (const r of rows) if (r.updated_at && (!best || String(r.updated_at) > best)) best = String(r.updated_at);
   return best;
+}
+
+/** A fill-in page as one cloud row: its words, and its pictures that are already uploaded. */
+export function classicToRow(e: ClassicEntry, ts: number) {
+  const media: Record<string, { id: string; path: string; kind: string }[]> = {};
+  for (const [field, list] of Object.entries(e.photos)) {
+    const up = list.filter((x) => x.path).map((x) => ({ id: x.id, path: x.path as string, kind: x.kind }));
+    if (up.length) media[field] = up;
+  }
+  return { child_id: e.childId, id: e.id, data: e.values, media, client_ts: ts, deleted: false };
+}
+
+function rowToClassic(r: any, cur: ClassicEntry | undefined, ts: number): ClassicEntry {
+  const photos: Record<string, MediaItem[]> = {};
+  for (const [field, list] of Object.entries((r.media && typeof r.media === "object" ? r.media : {}) as Record<string, any[]>)) {
+    photos[field] = (Array.isArray(list) ? list : []).map((m) => {
+      const mine = cur?.photos[field]?.find((x) => x.id === m.id);
+      return { id: m.id, kind: m.kind === "video" || m.kind === "audio" ? m.kind : "photo", path: m.path, uri: mine && mine.path === m.path ? mine.uri : "" } as MediaItem;
+    });
+  }
+  const values: Record<string, string> = {};
+  for (const [k, v] of Object.entries((r.data && typeof r.data === "object" ? r.data : {}) as Record<string, unknown>)) if (typeof v === "string") values[k] = v;
+  return { id: r.id, childId: r.child_id, values, photos, updatedAt: ts, syncedTs: ts };
+}
+
+/** Fill-in pages: the newer side wins, as for memories. `onRemove` hears about pages deleted on the other phone (to delete their pictures). */
+export function mergeClassics(all: ClassicEntry[], rows: any[], onRemove?: (e: ClassicEntry) => void): ClassicEntry[] {
+  const out = all.slice();
+  for (const r of rows) {
+    const i = out.findIndex((e) => e.childId === r.child_id && e.id === r.id);
+    const cur = i >= 0 ? out[i] : undefined;
+    const ts = tsOf(r);
+    if (r.deleted) {
+      if (cur && (cur.updatedAt ?? 0) <= ts) {
+        onRemove?.(cur);
+        out.splice(i, 1);
+      }
+      continue;
+    }
+    if (!cur) out.push(rowToClassic(r, undefined, ts));
+    else if (ts > (cur.updatedAt ?? 0)) out[i] = rowToClassic(r, cur, ts);
+    else if (ts === (cur.updatedAt ?? 0)) out[i] = { ...cur, syncedTs: ts };
+  }
+  return out;
 }

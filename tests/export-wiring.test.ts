@@ -40,7 +40,7 @@ ok("the pictures go through in order with their ages", withCover.items.length ==
 
 // ---------- wiring
 const pdf = read("src/lib/pdf.ts"), sheet = read("src/components/VideoExportSheet.tsx"), kt = read("modules/video-export/android/src/main/java/expo/modules/videoexport/SlideshowEncoder.kt");
-ok("the album is shared as “[Name] [Style] Album By 4D-Ages.pdf”", /albumFileName\(i\.child\.name, i\.style\)/.test(pdf) && /withFriendlyName\(uri, fileName\)/.test(pdf) && /Sharing\.shareAsync\(named/.test(pdf));
+ok("the album is shared as “[Name] [Style] Album By 4D-Ages.pdf”", /albumFileName\(\[i\.child, \.\.\.\(i\.siblings \?\? \[\]\)\]\.map\(\(k\) => k\.name\)\.join\(" & "\), i\.style\)/.test(pdf) && /withFriendlyName\(uri, fileName\)/.test(pdf) && /Sharing\.shareAsync\(uri/.test(pdf));
 ok("videos are made, shared and saved under “[Name] [what it shows] Video By 4D-Ages.mp4”", /videoFileName\(child\.name, fileLabel \|\| "Story"\)/.test(sheet) && /withFriendlyName\(out, fileName\)/.test(sheet) && /saveVideoToGallery\(uri, fileName\)/.test(sheet) && /dialogTitle: fileName/.test(sheet));
 ok("the name is shown before you create the video", /Saved as “\{fileName\}”/.test(sheet));
 ok("the export sheet offers the cover picture (only with a title card), spread across the video, with the chosen one marked", /Cover — the picture the video starts with/.test(sheet) && /intro && usable\.length > 1/.test(sheet) && /evenly\(usable, 30\)/.test(sheet) && /COVER/.test(sheet) && /cover: intro \? cover\?\.uri \?\? undefined : undefined/.test(sheet));

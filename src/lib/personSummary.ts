@@ -9,7 +9,7 @@ export interface SummaryItem {
 
 const NOUN: Record<MemoryType, [string, string]> = {
   photo: ["photo", "photos"], story: ["story", "stories"], milestone: ["milestone", "milestones"],
-  first: ["first", "firsts"], last: ["last", "lasts"], measure: ["measurement", "measurements"],
+  first: ["first", "firsts"], last: ["last", "lasts"], measure: ["measurement", "measurements"], health: ["health note", "health notes"],
 };
 const plural = (n: number, [one, many]: [string, string]) => `${n} ${n === 1 ? one : many}`;
 
@@ -20,8 +20,9 @@ const plural = (n: number, [one, many]: [string, string]) => `${n} ${n === 1 ? o
 export function personSummary(posts: Memory[]): SummaryItem[] {
   if (!posts.length) return [];
   const out: SummaryItem[] = [{ key: "all", label: plural(posts.length, ["memory", "memories"]), firstId: posts[0].id }];
-  const withMedia = posts.filter((p) => p.media.length);
-  const pictures = withMedia.reduce((n, p) => n + p.media.length, 0);
+  const pics = (p: Memory) => p.media.filter((m) => m.kind !== "audio").length; // voice notes aren't photos
+  const withMedia = posts.filter((p) => pics(p));
+  const pictures = withMedia.reduce((n, p) => n + pics(p), 0);
   if (pictures) out.push({ key: "media", label: plural(pictures, NOUN.photo), firstId: withMedia[0].id });
   for (const type of ["first", "story", "milestone", "last", "measure"] as MemoryType[]) {
     const list = posts.filter((p) => p.type === type);

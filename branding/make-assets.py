@@ -13,7 +13,7 @@ Writes into assets/:
   adaptive-icon-monochrome.png  Android 13 themed icon (a white silhouette taken from the artwork)
   splash-icon.png               splash: the artwork centred, on the same cream as the splash background
   notification-icon.png         status-bar icon: a white silhouette taken from the artwork
-  4d-ages-wordmark.png          the in-app logo with a transparent background (top-left of every screen, welcome screen, About card)
+The in-app logo (assets/4d-ages-wordmark*.png) is made from branding/4d-ages-wordmark.png by make-wordmarks.mjs.
 Prints the measurements the tests and src/brand.ts rely on.
 """
 import os
@@ -136,17 +136,6 @@ THEMED_R = 0.24   # themed glyphs need breathing room: the launcher shows them i
 save(white(sil, 96, frac=0.92), "notification-icon.png")
 save(white(sil, 1024, radius_frac=THEMED_R), "adaptive-icon-monochrome.png")
 
-# ============================================================== the in-app logo (artwork + "4D Ages")
-wm = np.array(Image.open(os.path.join(HERE, "4d-ages-wordmark.png")).convert("RGB")).astype(np.float64)
-rgba_wm, wdist = unmix(wm, backdrop(wm))
-ys, xs = np.where(rgba_wm[..., 3] > 12)
-pd = 24
-cropped = Image.fromarray(rgba_wm).crop((max(0, xs.min() - pd), max(0, ys.min() - pd), min(wm.shape[1], xs.max() + pd), min(wm.shape[0], ys.max() + pd)))
-if cropped.width > 1300:
-    cropped = cropped.resize((1300, int(round(cropped.height * 1300 / cropped.width))), Image.LANCZOS)
-save(cropped, "4d-ages-wordmark.png")
-
 print("backdrop colour (splash background): %s" % BG_HEX)
 print("artwork (outlines included, glow excluded): x %d–%d, y %d–%d of a %dx%d picture; box centre (%.0f,%.0f), visual mass (%.0f,%.0f), placed on (%.0f,%.0f), reaches %.0f px from there" % (art_x0, art_x1, art_y0, art_y1, W, H, box_c[0], box_c[1], mass_c[0], mass_c[1], acx, acy, R))
 print("safe zone: the artwork reaches %.2f of the canvas from the middle in the adaptive icon and splash (strict safe circle 0.306, visible mask 0.333); %.2f in icon.png" % (SAFE, 0.42))
-print("in-app logo: %dx%d  aspect %.4f" % (cropped.width, cropped.height, cropped.width / cropped.height))

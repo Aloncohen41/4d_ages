@@ -77,8 +77,10 @@ Parents can sign in with their Google account instead of an email and password. 
 1. **An Android OAuth client** (done): package name `com.alonc.fourdages` and the SHA-1 of the key that signs the app. Its client ID is
    `374884084370-5k2g584ndqcp09kbig9mm4af1thg6am2.apps.googleusercontent.com`. The app doesn't use this ID; Google uses the client to
    recognise the app. Debug builds use the debug key's SHA-1 (`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`);
-   **release builds need a second Android client with the release key's SHA-1**. Every run of the Release workflow shows it on the run's
-   summary page ("Signing certificate (SHA-1 …)"); or run `keytool -list -v -keystore release.keystore` where you keep the key.
+   **release builds need a second Android client with the release key's SHA-1** (done: SHA-1
+   `32:2F:EE:CD:2A:16:26:F3:2C:00:F5:66:E2:1B:68:3C:19:A9:C9:8C`, client ID `374884084370-qvpufmj2au2f4tu7eh2fm42c7kjltjf8.apps.googleusercontent.com`).
+   Every run of the Release workflow shows the SHA-1 on the run's summary page ("Signing certificate (SHA-1 …)"); or run
+   `keytool -list -v -keystore release.keystore` where you keep the key. Without this client, Google sign-in in the release app fails with DEVELOPER_ERROR.
 2. **A Web application OAuth client** (Create credentials → OAuth client ID → Web application; no URLs needed). Copy its **client ID**
    and **client secret**.
 3. **Supabase → Authentication → Sign In / Providers → Google**: turn it on, paste the **web** client ID and secret, and save.
@@ -104,21 +106,51 @@ npm run android    # rebuilds the app on your phone
 Everyone signs in first (email and password, or Google). Every child is saved to the account automatically, so signing in on a new
 phone brings the books back.
 
-**Parent 1:** a child's profile (tap their picture) → **Share with the other parent** → **Invite the other parent** → send the code.
+**Parent 1:** a child's profile (tap their picture) → **Share the book**. The child's code is shown first. Tap **Share link** and
+send it in WhatsApp, email or any app (or **Copy code**).
 
-**Parent 2:** install the app → sign in with *their own* account → **Join a partner's baby book** → enter the code.
-The child appears on their phone and everything downloads. From then on both phones sync by themselves: when you open the
-app, when you come back to it, every 2 minutes, and a few seconds after any change.
+**Parent 2:** taps the link. It opens the app (or offers the download), and after signing in with *their own* account the child is
+added with everything already in it. (Or: open the app → **Join a partner's baby book** → type the code.)
+From then on both phones stay in step: a change on one shows on the other within a second or two (live updates), and the app also
+syncs on opening, on returning to it and every 2 minutes as a safety net.
+
+**At most two parents per child.** Once both are in, the share screen says so. To share with someone else, the parent who created the
+book removes the other first (**Share the book → Who has access → Remove**). The other parent can **Leave**.
+
+**Managing who can see a child:** Settings → **Who can see your children**. For each child: everyone with access, by email; invites
+for **the other parent** or **a family member**, each made for one email address (only that email can use the code); **Remove**, and
+**Remove and block** (a blocked email can't join again with any code until it's unblocked); **Block someone by email** before they join;
+and **Change** what a family member sees.
+
+**Grandparents and others (view only):** **Share the book → Invite family to view**, tick the people whose posts they may see
+(Grandma sees the posts with Grandma and Grandpa) and send that code. They can look, and leave one heart and one comment per post,
+but not change anything. They only ever receive the posts tagged with those people (the database enforces it, not just the app).
+
+## 7. The website (share links, deleting an account, privacy policy)
+
+The `docs/` folder is a small website: the page a share link opens, the account-deletion page Google Play asks for, the privacy policy and
+the terms. It's published free with GitHub Pages:
+
+1. GitHub → the repository → **Settings → Pages** → *Source*: **Deploy from a branch** → branch **main**, folder **/docs** → Save.
+2. After a minute it's at `https://aloncohen41.github.io/4d_ages/`.
+3. Supabase → **Authentication → URL Configuration → Redirect URLs** → add `https://aloncohen41.github.io/4d_ages/delete-account/`
+   (so people who signed up with Google can sign in on the deletion page).
+4. In the Play Console, use `…/privacy/` as the privacy policy and `…/delete-account/` as the account-deletion link.
+
+The pages use only the publishable key, like the app.
 
 ## Good to know
 
 - **Free plan limits:** about 1 GB of storage and 50 MB per file (videos over 45 MB stay on the phone that took them).
   A free project **pauses after a week with no activity** — if that ever happens, press *Restore* in the Supabase dashboard.
-- **Who can see what:** only people you invite. Pictures are in a private bucket (not public links). Each invite code works
-  once and expires after 7 days.
+- **Who can see what:** only people you invite: with full access (they see and add to everything) or view-only access to the posts
+  with chosen people. Classics (teeth, birth story…) are for full members only. Pictures are in a private bucket (not public links).
+  Each invite code works once and expires after 7 days.
+- **After an app update that changes the database** (this one adds Classics, head circumference and view-only sharing), run
+  `npm run db:setup` again before installing the new app. Running it twice is harmless.
 - **Both edit at once?** The newest change wins, per item (per photo, per milestone…). Deleting something on one phone
   removes it on the other.
-- **Forgot a password?** Reset it from Supabase → Authentication → Users.
+- **Forgot a password?** Tap **Forgot password?** on the login page: the email's link opens the app to choose a new one.
 
 ## If something goes wrong
 

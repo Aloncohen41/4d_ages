@@ -186,6 +186,7 @@ export function TimeField({ value, onChange }: { value?: string; onChange: (v?: 
     DateTimePickerAndroid.open({
       value: base,
       mode: "time",
+      is24Hour: true,
       onChange: (e, d) => {
         if (e.type === "set" && d) {
           onChange(toHHMM(d));

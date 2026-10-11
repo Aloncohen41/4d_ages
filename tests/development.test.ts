@@ -15,7 +15,7 @@ ok("the number of milestones in each chart cell matches the chart", [[3, 1, 1, 2
 ok("catalogue ids are unique and don't clash with the earlier list", new Set(MILESTONE_CATALOG.map((d) => d.id)).size === MILESTONE_CATALOG.length && MILESTONE_CATALOG.every((d) => !LEGACY_MILESTONE_DEFS.some((l) => l.id === d.id)));
 const aliased = MILESTONE_CATALOG.flatMap((d) => d.aliases || []);
 ok("every alias is a real earlier milestone, claimed by only one new one", aliased.every((a) => LEGACY_MILESTONE_DEFS.some((l) => l.id === a)) && new Set(aliased).size === aliased.length);
-ok("everything can still be looked up by id (nothing already logged can lose its name)", LEGACY_MILESTONE_DEFS.every((l) => MILESTONE_DEFS.some((d) => d.id === l.id)) && MILESTONE_DEFS.length === MILESTONE_CATALOG.length + LEGACY_MILESTONE_DEFS.length);
+ok("everything can still be looked up by id (nothing already logged can lose its name)", LEGACY_MILESTONE_DEFS.every((l) => MILESTONE_DEFS.some((d) => d.id === l.id)) && MILESTONE_DEFS.length === MILESTONE_CATALOG.length + LEGACY_MILESTONE_DEFS.length + MILESTONE_DEFS.filter((d) => d.category === "Pregnancy").length);
 ok("every earlier category maps to an area", LEGACY_MILESTONE_DEFS.every((l) => (MILESTONE_CATEGORIES as readonly string[]).includes(areaOf(l))) && areaOf({ category: "Thinking & play" }) === "Cognitive" && areaOf({ category: "Social & emotional" }) === "Social & Emotional" && areaOf({ category: "Feeding & self-care" }) === "Other" && areaOf({}) === "Other");
 ok("each area has display details", [...AREAS, "Other" as const].every((a) => AREA_META[a].icon && AREA_META[a].color.startsWith("#") && AREA_META[a].phrase));
 

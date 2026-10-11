@@ -9,7 +9,7 @@ import { personSummary } from "../src/lib/personSummary";
 import { buildNewPosts } from "../src/lib/newPosts";
 import { BOOK_SIZES, BOOK_PHOTO_LIMIT, cmToPt, pagePoints, planBook, sizeById, spread } from "../src/lib/bookPages";
 import { DOOR_MAX_CM, DOOR_REFS, effectiveRef, placeLabels, typicalRange } from "../src/lib/growth";
-import { pickThumb } from "../src/lib/thumbChoice";
+import { looksBlank, pickThumb } from "../src/lib/thumbChoice";
 import { moveInOrder, orderedFamily, searchFamily, siblingRelationOf } from "../src/lib/family";
 import { migrateRelativesV6 } from "../src/lib/migrate";
 import { displayName, initialsOf, relationLine } from "../src/lib/tags";
@@ -83,18 +83,20 @@ const pic = photo("2024-04-01");
 const last = mem("last", "2024-05-01", { title: "Last bottle" });
 const height = mem("measure", "2024-02-01", { heightCm: 60 });
 const plan = planBook(child, [ms, pic, last, first, b2, b1, height], sizeById("square-20"));
-const order = plan.pages.map((p) => p.kind === "picture" ? p.memory.id : p.kind === "notes" ? p.memories.map((m) => m.id).join("+") : p.kind);
-ok("[BOOK-01] the book starts with the birth (story and first photo of that day), then runs in date order, mixing kinds — no sections", order.join(",") === `cover,birth,${first.id},${pic.id},${last.id}+${ms.id},end` && (plan.pages[1] as { story?: Memory }).story === b1);
+const order = plan.pages.map((p) => p.kind === "picture" ? [p.memory.id, ...(p.notes ?? []).map((m) => m.id)].join("+") : p.kind === "notes" ? p.memories.map((m) => m.id).join("+") : p.kind);
+const chapterDates = plan.pages.filter((p) => p.chapter).map((p) => p.chapter!.key);
+ok("[BOOK-01] the book starts with the birth (story and first photo of that day), then runs in date order by chapter, mixing kinds — no sections (a short note shares a picture's page in its chapter)", order.join(",") === `cover,birth,${pic.id}+${first.id},${last.id}+${ms.id},end` && (plan.pages[1] as { story?: Memory }).story === b1 && chapterDates.join() === "cq0,cq3");
 ok("[BOOK-01] measurements are left out of the book (they have the Growth page)", !JSON.stringify(plan.pages).includes(height.id));
 ok("[BOOK-02] five print sizes, each with full measurements, and the PDF page is that size", BOOK_SIZES.length === 5 && BOOK_SIZES.every((s) => /\d+(\.\d+)? × \d+(\.\d+)? cm \(/.test(s.label)) &&
   pagePoints(sizeById("square-20")).w === 567 && pagePoints(sizeById("a4-portrait")).w === 595 && pagePoints(sizeById("a4-portrait")).h === 842 && Math.abs(cmToPt(29.7) - 841.89) < 0.01);
-ok("[BOOK-02] the export uses the plan's page size (in points) and the same layout", /printToFileAsync\(\{ html, width: M\.w, height: M\.h \}\)/.test(read("src/lib/pdf.ts")) && /@page\{size:/.test(read("src/lib/pdf.ts")));
+ok("[BOOK-02] the export uses the plan's page size (in points) and the same layout", /printToFileAsync\(\{ html, width: M\.w, height: M\.h \}\)/.test(read("src/lib/pdf.ts")) && /@page\{size:/.test(read("src/lib/bookHtml.ts")));
 const many = Array.from({ length: 250 }, (_, i) => photo(`2024-${String(2 + Math.floor(i / 28)).padStart(2, "0")}-${String(1 + (i % 28)).padStart(2, "0")}`));
 const big = planBook(child, many, sizeById("square-20"));
-ok(`[BOOK-03] at most ${BOOK_PHOTO_LIMIT} pictures, chosen evenly across time (first and last kept); the rest stay in as words`, big.pictures === BOOK_PHOTO_LIMIT && big.available === 250 && spread([1, 2, 3, 4, 5], 3).join() === "1,3,5" && big.pages.filter((p) => p.kind === "picture").length === BOOK_PHOTO_LIMIT);
+const pictured = big.pages.flatMap((p) => (p.kind === "picture" ? [p.memory] : p.kind === "pictures" ? p.items.map((x) => x.memory) : []));
+ok(`[BOOK-03] at most ${BOOK_PHOTO_LIMIT} pictures, chosen evenly across time (first and last kept); the rest stay in as words`, big.pictures === BOOK_PHOTO_LIMIT && big.available === 250 && spread([1, 2, 3, 4, 5], 3).join() === "1,3,5" && pictured.length === BOOK_PHOTO_LIMIT && pictured[0] === many[0] && pictured[pictured.length - 1] === many[many.length - 1]);
 const notesOnly = Array.from({ length: 12 }, (_, i) => mem("first", `2024-03-${String(i + 1).padStart(2, "0")}`, { title: `First ${i}` }));
 ok("[BOOK-04] the page count follows the size (more memories per page on a bigger page)", planBook(child, notesOnly, sizeById("square-15")).pages.length > planBook(child, notesOnly, sizeById("square-30")).pages.length);
-ok("[BOOK-04] the Book page shows the page count and a page-by-page preview", /\{plan\.pages\.length\} pages/.test(read("app/(tabs)/book.tsx")) && /<BookPreviewModal/.test(read("app/(tabs)/book.tsx")) && /Page \{index \+ 1\} of \{pages\.length\}/.test(read("src/components/BookPreview.tsx")));
+ok("[BOOK-04] the Book page shows the page count and a page-by-page preview", /\{plan\.pages\.length\} pages/.test(read("app/(tabs)/book.tsx")) && /<BookPreviewModal/.test(read("app/(tabs)/book.tsx")) && /Page \{index \+ 1\} of \{pages\}/.test(read("src/components/BookPreview.tsx")));
 
 /* ---------------- family (FAM-01 … 10) ---------------- */
 const member = read("src/components/MemberSheet.tsx");
@@ -121,7 +123,7 @@ ok("[FAM-10] no “Tags and search” in Family; the tags themselves are kept", 
 
 /* ---------------- growth (GROWTH-01 … 03) ---------------- */
 const growth = read("app/(tabs)/growth.tsx");
-ok("[GROWTH-01] no explanation under the title; the title and Add button stay", /<Heading title="Growth" \/>/.test(growth) && /label="Add height \/ weight"/.test(growth));
+ok("[GROWTH-01] no explanation under the title; the title and Add button stay", /<Heading title="Growth" \/>/.test(growth) && /label="Add a measurement"/.test(growth));
 ok("[GROWTH-02] the comparison follows the gender (Prefer not to say → All), and can still be changed", effectiveRef({ gender: "girl" }) === "girl" && effectiveRef({ gender: "boy" }) === "boy" && effectiveRef({ gender: "unspecified" }) === "all" && effectiveRef({}) === "all" && effectiveRef({ gender: "girl", growthRef: "boy" }) === "boy" && effectiveRef({ gender: "boy", growthRef: "none" }) === "boy" && /label: "All"/.test(growth));
 const all12 = typicalRange("all", 12)!, g12 = typicalRange("girl", 12)!, b12 = typicalRange("boy", 12)!;
 ok("[GROWTH-02] “All” sits between the girls' and boys' ranges", all12[0] > g12[0] && all12[0] < b12[0] && all12[1] > g12[1] && all12[1] < b12[1]);
@@ -139,11 +141,11 @@ ok("[MILE-03] several milestones can be selected and given one date together", /
 /* ---------------- home (HOME-01 … 03) ---------------- */
 const card = read("src/components/PostCard.tsx");
 ok("[HOME-01] a post without pictures is a compact card (no empty picture area)", /const media = hasPicture\(p\)/.test(card) && /\{media \? \(/.test(card) && /padding: media \? 9 : 14/.test(card));
-ok("[HOME-02] a video's thumbnail is the most detailed of five frames, never a black one", pickThumb(["a", "b", "c", "d", "e"], [900, 40000, 38000, 41000, 1000]) === "d" && pickThumb(["a", "b", "c"], [5, 5, 5]) === "b" && /videoFrames\(uri, 5\)/.test(read("src/lib/videoThumbs.ts")));
+ok("[HOME-02] a video's thumbnail is the most detailed of five frames (nine more if all five are blank), never a black one", pickThumb(["a", "b", "c", "d", "e"], [900, 40000, 38000, 41000, 1000]) === "d" && pickThumb(["a", "b", "c"], [5, 5, 5]) === "b" && looksBlank(900) && !looksBlank(40000) && /for \(const count of \[5, 9\]\)/.test(read("src/lib/videoThumbs.ts")) && /if \(!blank\) return keep;\s*\}\s*return undefined;/.test(read("src/lib/videoThumbs.ts")));
 ok("[HOME-02] a video without its picture yet shows its soft colour and a play button, not black", !/#1d1618/.test(read("src/components/ui.tsx")));
 const posts = buildNewPosts({ child, shape: "separate", note: " Beach ", items: [{ uri: "a", kind: "photo", date: "2024-05-01" }, { uri: "b", kind: "video", thumb: "t" }, { uri: "c", kind: "photo", date: "2023-01-01" }], oneDate: "x", today: "2024-09-09", newId: (p) => `${p}-${++n}`, now: 1 });
 const one = buildNewPosts({ child, shape: "one", note: "", items: [{ uri: "a", kind: "photo", date: "2024-05-01" }, { uri: "b", kind: "photo" }], oneDate: "2024-05-01", today: "2024-09-09", newId: (p) => `${p}-${++n}`, now: 1 });
-ok("[HOME-03] several files: separate posts keep each file's date (unknown → today, before birth → birth); one post holds them all", posts.length === 3 && posts.map((p) => p.date).join() === "2024-05-01,2024-09-09,2024-01-10" && posts[0].description === "Beach" && posts[1].media[0].thumb === "t" && one.length === 1 && one[0].media.length === 2 && one[0].date === "2024-05-01");
+ok("[HOME-03] several files: separate posts keep each file's date (unknown → today; pregnancy photos up to ten months before the birth, older ones → that day); one post holds them all", posts.length === 3 && posts.map((p) => p.date).join() === "2024-05-01,2024-09-09,2023-03-10" && posts[0].description === "Beach" && posts[1].media[0].thumb === "t" && one.length === 1 && one[0].media.length === 2 && one[0].date === "2024-05-01");
 ok("[HOME-03] the form asks one post or separate posts, has an optional description and an OK button; the + button uses it", /"One post"/.test(read("src/components/ImportSheet.tsx")) && /"Separate posts"/.test(read("src/components/ImportSheet.tsx")) && /label="OK"/.test(read("src/components/ImportSheet.tsx")) && /source: "picker"/.test(read("src/lib/addPhotos.ts")));
 
 /* ---------------- copy (COPY-01, and the no-emoji rule) ---------------- */

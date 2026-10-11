@@ -55,11 +55,12 @@ export function TagBrowserSheet() {
   const setTagSheet = useStore((s) => s.setTagSheet);
   const child = useActiveChild();
   if (!sheet || !child) return null;
-  return <Browser key={sheet.keys.join("|")} initial={sheet.keys} childId={child.id} childName={child.name} onClose={() => setTagSheet(null)} />;
+  return <Browser key={sheet.keys.join("|")} initial={sheet.keys} forHome={!!sheet.forHome} childId={child.id} childName={child.name} onClose={() => setTagSheet(null)} />;
 }
 
-function Browser({ initial, childId, childName, onClose }: { initial: string[]; childId: string; childName: string; onClose: () => void }) {
+function Browser({ initial, forHome, childId, childName, onClose }: { initial: string[]; forHome: boolean; childId: string; childName: string; onClose: () => void }) {
   const t = useTheme();
+  const setHomeTags = useStore((s) => s.setHomeTags);
   const relatives = useStore((s) => s.relatives);
   const list = useStore((s) => s.tags);
   const all = useMemories(childId);
@@ -84,7 +85,8 @@ function Browser({ initial, childId, childName, onClose }: { initial: string[]; 
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
             {selectedTags.map((tg) => <TagChip key={tg.id} tag={tg} onRemove={() => setSelected((c) => c.filter((x) => x !== tg.id))} />)}
           </View>
-          <Btn label="← All tags" kind="soft" onPress={() => setSelected([])} style={{ paddingVertical: 9, marginBottom: 14 }} />
+          {forHome ? <Btn label="Show these on the timeline" icon="check" onPress={() => { setHomeTags(selected); onClose(); }} style={{ marginBottom: 8 }} /> : null}
+          <Btn label="All tags" icon="chevron-left" kind="soft" onPress={() => setSelected([])} style={{ paddingVertical: 9, marginBottom: 14 }} />
           <TagResults keys={selected} childId={childId} />
         </>
       ) : (
@@ -100,7 +102,7 @@ function Browser({ initial, childId, childName, onClose }: { initial: string[]; 
 
           <View style={{ marginTop: 14, gap: 8 }}>
             {shown.map((s) => (
-              <Pressable key={s.id} onPress={() => setSelected([s.id])} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: t.card, borderRadius: 14, borderWidth: 1, borderColor: t.line, padding: 10 }}>
+              <Pressable key={s.id} onPress={() => setSelected((c) => (forHome && c.length ? [...new Set([...c, s.id])] : [s.id]))} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: t.card, borderRadius: 14, borderWidth: 1, borderColor: t.line, padding: 10 }}>
                 <TagChip tag={s.tag} />
                 <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{s.count} {s.count === 1 ? "memory" : "memories"}  ›</Text>
               </Pressable>

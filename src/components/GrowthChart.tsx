@@ -5,8 +5,10 @@ import { Child, HeightEntry } from "../lib/types";
 import { ageShort, formatDate } from "../lib/date";
 import { DOOR_MAX_CM, DOOR_REFS, HeightUnit, WeightUnit, effectiveRef, formatHeight, fromCm, fromKg, monthsOld, placeLabels, typicalRange } from "../lib/growth";
 import { Icon } from "./Icon";
+import { useStore } from "../lib/store";
+import { CENTILE_LINES, centileCurve } from "../lib/percentiles";
 
-/** Growth curve: your measurements as a line, with the approximate typical range shaded behind. */
+/** Growth curve: your measurements as a line, over the 3rd, 50th and 97th percentile lines for their age and sex (WHO or CDC charts). */
 export function LineChart({ child, entries, unit, mode = "height", weightUnit = "kg" }: {
   child: Child;
   entries: { date: string; cm?: number; kg?: number }[];
@@ -18,17 +20,16 @@ export function LineChart({ child, entries, unit, mode = "height", weightUnit = 
   const [w, setW] = useState(0);
   const H = 230, L = 40, R = 14, T = 12, B = 26;
 
+  const source = useStore((s) => s.growthChart);
   const pts = entries.map((e) => ({ x: monthsOld(child.birth, e.date), y: (mode === "weight" ? e.kg : e.cm) as number }));
   if (!pts.length) return null;
   const maxX = Math.max(12, Math.ceil(Math.max(...pts.map((p) => p.x)) / 6) * 6);
-  const band: { x: number; lo: number; hi: number }[] = [];
-  for (let m = 0; m <= Math.min(maxX, 60); m++) {
-    const r = mode === "height" ? typicalRange(effectiveRef(child), m) : null;
-    if (r) band.push({ x: m, lo: r[0], hi: r[1] });
-  }
-  const stepY = mode === "weight" ? 2 : 10;
-  const minY = Math.floor(Math.min(...pts.map((p) => p.y), ...band.map((b) => b.lo)) / stepY) * stepY;
-  let maxY = Math.ceil(Math.max(...pts.map((p) => p.y), ...band.map((b) => b.hi)) / stepY) * stepY;
+  // the 3rd, 50th and 97th percentile lines for their age and sex, from the chosen charts (WHO or CDC)
+  const lines = CENTILE_LINES.map((c) => ({ label: c.label, pts: centileCurve(source, mode, effectiveRef(child), c.z, maxX) })).filter((c) => c.pts.length > 1);
+  const all = lines.flatMap((c) => c.pts.map((p) => p[1]));
+  const stepY = mode === "weight" ? (maxX > 72 ? 5 : 2) : 10;
+  const minY = Math.floor(Math.min(...pts.map((p) => p.y), ...all) / stepY) * stepY;
+  let maxY = Math.ceil(Math.max(...pts.map((p) => p.y), ...all) / stepY) * stepY;
   if (maxY === minY) maxY += stepY;
   const pw = Math.max(1, w - L - R);
   const ph = H - T - B;
@@ -51,8 +52,22 @@ export function LineChart({ child, entries, unit, mode = "height", weightUnit = 
               <Text style={{ position: "absolute", left: -36, top: -8, width: 32, textAlign: "right", fontSize: 10, color: t.ink4, fontWeight: "700" }}>{Math.round(mode === "weight" ? fromKg(v, weightUnit) : fromCm(v, unit))}</Text>
             </View>
           ))}
-          {band.slice(0, -1).map((b, i) => (
-            <View key={b.x} style={{ position: "absolute", left: X(b.x), width: X(band[i + 1].x) - X(b.x) + 0.6, top: Y(b.hi), height: Math.max(0, Y(b.lo) - Y(b.hi)), backgroundColor: t.accent, opacity: 0.13 }} />
+          {/* the shaded space between the 3rd and 97th percentiles, then the three lines, labelled at their end */}
+          {lines.length === 3 ? lines[0].pts.slice(0, -1).map(([x, hi], i) => {
+            const lo = lines[2].pts[i]?.[1];
+            const nx = lines[0].pts[i + 1][0];
+            return lo == null ? null : <View key={x} style={{ position: "absolute", left: X(x), width: X(nx) - X(x) + 0.6, top: Y(hi), height: Math.max(0, Y(lo) - Y(hi)), backgroundColor: t.accent, opacity: 0.08 }} />;
+          }) : null}
+          {lines.map((c) => (
+            <React.Fragment key={c.label}>
+              {c.pts.slice(1).map((p, i) => {
+                const a = c.pts[i];
+                const x1 = X(a[0]), y1 = Y(a[1]), x2 = X(p[0]), y2 = Y(p[1]);
+                const len = Math.hypot(x2 - x1, y2 - y1);
+                return <View key={i} style={{ position: "absolute", left: (x1 + x2) / 2 - len / 2, top: (y1 + y2) / 2 - 0.5, width: len, height: c.label === "50th" ? 1.5 : 1, backgroundColor: t.ink3, opacity: c.label === "50th" ? 0.55 : 0.35, transform: [{ rotate: `${Math.atan2(y2 - y1, x2 - x1)}rad` }] }} />;
+              })}
+              <Text style={{ position: "absolute", left: X(c.pts[c.pts.length - 1][0]) - 30, top: Y(c.pts[c.pts.length - 1][1]) - 14, width: 30, textAlign: "right", fontSize: 9, color: t.ink3, fontWeight: "700" }}>{c.label}</Text>
+            </React.Fragment>
           ))}
           {ticks.map((m) => (
             <Text key={m} style={{ position: "absolute", left: X(m) - 14, width: 28, textAlign: "center", top: H - B + 6, fontSize: 10, color: t.ink4, fontWeight: "700" }}>{tickLabel(m)}</Text>

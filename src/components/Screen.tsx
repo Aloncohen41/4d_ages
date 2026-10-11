@@ -9,7 +9,10 @@ import { WORDMARKS } from "../lib/wordmark";
 import { THEMES, THEME_ORDER, TYPE } from "../theme";
 import { withAlpha } from "../lib/m3";
 import { AvatarCrop, Gender, KidTheme } from "../lib/types";
-import { ageLong, ageTotals, formatDate, smartAge, todayISO } from "../lib/date";
+import { addMonths, ageLong, ageTotals, formatDate, pregnancy, shortDate, smartAge, todayISO } from "../lib/date";
+
+/** What a pregnancy profile is called until the name is chosen. */
+export const PREGNANCY_NAME = "Bump";
 import { pickMedia, toMemories } from "../lib/media";
 import { coverOf } from "../lib/display";
 import { Avatar, Btn, DateField, Input, Label, PhotoView, Seg, Sheet, ThemePicker } from "./ui";
@@ -62,7 +65,7 @@ export function TopBar() {
               <Avatar child={k} size={32} />
               <View>
                 <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}</Text>
-                <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{a.value} {a.unit}</Text>
+                <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? `Due ${shortDate(k.birth)}` : `${a.value} ${a.unit}`}</Text>
               </View>
             </Pressable>
           );
@@ -81,8 +84,9 @@ export function TopBar() {
 function AppMenu({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const go = (path: "/family" | "/settings") => { onClose(); router.push(path); };
-  const item = (icon: IconName, label: string, path: "/family" | "/settings") => (
+  type MenuPath = "/family" | "/classics" | "/health" | "/settings";
+  const go = (path: MenuPath) => { onClose(); router.push(path); };
+  const item = (icon: IconName, label: string, path: MenuPath) => (
     <Pressable key={path} onPress={() => go(path)} accessibilityRole="menuitem" android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={st.menuItem}>
       <Icon name={icon} size={22} color={t.ink2} />
       <Text style={[TYPE.labelLarge, { color: t.ink, fontSize: 15 }]}>{label}</Text>
@@ -93,6 +97,8 @@ function AppMenu({ visible, onClose }: { visible: boolean; onClose: () => void }
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
       <View style={[st.menuCard, { top: insets.top + 54, backgroundColor: t.surfaceHigh, shadowColor: "#000" }]}>
         {item("family", "Family", "/family")}
+        {item("classics", "Classics", "/classics")}
+        {item("health", "Health", "/health")}
         {item("settings", "Settings", "/settings")}
       </View>
     </Modal>
@@ -171,9 +177,13 @@ function Hero() {
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.headlineLarge, { color: t.onAccentSoft }]} numberOfLines={1}>{child.name}</Text>
-          <Pressable onPress={() => setAgeOpen(true)} hitSlop={6}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{ageLong(child.birth, todayISO())} old</Text></View>
-          </Pressable>
+          {child.expecting ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Due {formatDate(child.birth)} · {pregnancy(child.birth).weeksToGo} weeks to go</Text></View>
+          ) : (
+            <Pressable onPress={() => setAgeOpen(true)} hitSlop={6}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{ageLong(child.birth, todayISO())} old</Text></View>
+            </Pressable>
+          )}
         </View>
       </View>
       <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
@@ -227,9 +237,11 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
   const [gender, setGender] = useState<Gender>("unspecified");
   const [showEmoji, setShowEmoji] = useState(false);
   const [err, setErr] = useState("");
+  const [arrived, setArrived] = useState(false); // "The baby is here!": the real birth date replaces the due date
 
   React.useEffect(() => {
     if (visible && child) {
+      setArrived(false);
       setName(child.name); setBirth(child.birth); setTheme(child.theme); setAvatarId(child.avatarPhotoId); setCrop(child.avatarCrop); setEmoji(child.emoji); setGender(child.gender ?? "unspecified"); setShowEmoji(false); setErr("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,19 +264,29 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
     pickAvatar(p.id);
   };
 
+  // a date still to come is a due date; "The baby is here!" sets the real birth date
+  const expecting = arrived ? false : birth > todayISO() || (!!child.expecting && birth >= todayISO());
   const save = () => {
     if (!name.trim()) return setErr("Please keep a name — even a nickname works.");
-    if (birth > todayISO()) return setErr("Birth date can't be in the future.");
-    updateChild(child.id, { name: name.trim(), birth, theme, avatarPhotoId: avatarId, avatarCrop: avatarId ? crop : undefined, emoji, gender });
+    if (!expecting && birth > todayISO()) return setErr("Birth date can't be in the future.");
+    if (expecting && birth > addMonths(todayISO(), 10)) return setErr("That due date is too far away.");
+    updateChild(child.id, { name: name.trim(), birth, theme, avatarPhotoId: avatarId, avatarCrop: avatarId ? crop : undefined, emoji, gender, expecting: expecting ? true : undefined });
     onClose();
   };
 
   return (
     <Sheet visible={visible} onClose={onClose} title={`Edit ${child.name}'s profile`}>
+      {child.expecting && !arrived ? (
+        <View style={{ backgroundColor: t.accentSoft, borderRadius: 16, padding: 14, marginBottom: 6 }}>
+          <Text style={[TYPE.titleSmall, { color: t.onAccentSoft }]}>Has {child.name === PREGNANCY_NAME ? "the baby" : child.name} arrived?</Text>
+          <Text style={[TYPE.bodySmall, { color: t.onAccentSoft, marginTop: 2 }]}>Set the real birth date, and the name if it's decided. The pregnancy posts stay in the book, before the birth.</Text>
+          <Btn label="The baby is here!" icon="birthday" onPress={() => { setArrived(true); setBirth(todayISO()); }} style={{ marginTop: 10 }} />
+        </View>
+      ) : null}
       <Label>Name</Label>
-      <Input value={name} onChangeText={setName} />
-      <Label>Birth date</Label>
-      <DateField value={birth} onChange={setBirth} max={todayISO()} />
+      <Input value={name} onChangeText={setName} placeholder={expecting ? "You can change it any time" : undefined} />
+      <Label>{expecting ? "Due date" : "Birth date"}</Label>
+      <DateField value={birth} onChange={setBirth} max={arrived ? todayISO() : addMonths(todayISO(), 10)} />
       <Label>Gender</Label>
       <GenderPicker value={gender} onChange={setGender} />
       <Label>Color mode</Label>
@@ -299,7 +321,7 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
         <Btn label="Cancel" kind="soft" onPress={onClose} style={{ flex: 1 }} />
         <Btn label="Save profile" onPress={save} style={{ flex: 1 }} />
       </View>
-      <Btn label="Share with the other parent" icon="user-plus" kind="line" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginTop: 14 }} />
+      <Btn label="Share the book" icon="user-plus" kind="line" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginTop: 14 }} />
     </Sheet>
   );
 }
@@ -323,6 +345,8 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [crop, setCrop] = useState<AvatarCrop | undefined>();
   const [err, setErr] = useState("");
+  // a date still to come is a due date: the profile is a pregnancy (the name can wait)
+  const expecting = birth > todayISO();
 
   const reset = () => { setName(""); setBirth(todayISO()); setTheme("green"); setEmoji("🐣"); setGender("unspecified"); setShowEmoji(false); setPhotoUri(null); setCrop(undefined); setErr(""); };
 
@@ -335,9 +359,9 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
   };
 
   const create = () => {
-    if (!name.trim()) return setErr("Please add a name — even a nickname works.");
-    if (birth > todayISO()) return setErr("Birth date can't be in the future.");
-    const child = { id: uid("kid"), name: name.trim(), birth, theme, emoji, gender };
+    if (!name.trim() && !expecting) return setErr("Please add a name — even a nickname works.");
+    if (birth > addMonths(todayISO(), 10)) return setErr("That date is too far away. A due date can be up to ten months from now.");
+    const child = { id: uid("kid"), name: name.trim() || PREGNANCY_NAME, birth, theme, emoji: expecting ? "🤰" : emoji, gender, ...(expecting ? { expecting: true } : {}) };
     addChild(child);
     if (photoUri) {
       const [p] = toMemories(child, [{ uri: photoUri, kind: "photo", date: birth }], "Profile");
@@ -350,10 +374,16 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
 
   return (
     <Sheet visible={visible} onClose={onClose} title="Add your little one">
-      <Label>Name</Label>
-      <Input value={name} onChangeText={setName} placeholder="Their name or nickname" />
-      <Label>Birth date</Label>
-      <DateField value={birth} onChange={setBirth} max={todayISO()} />
+      <Label>Birth date, or due date</Label>
+      <DateField value={birth} onChange={setBirth} max={addMonths(todayISO(), 10)} />
+      {expecting ? (
+        <View style={{ backgroundColor: t.accentSoft, borderRadius: 14, padding: 12, marginTop: 8 }}>
+          <Text style={[TYPE.titleSmall, { color: t.onAccentSoft }]}>A pregnancy profile: due {formatDate(birth)}, week {pregnancy(birth).week}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.onAccentSoft, marginTop: 2 }]}>Keep the scans, the bump, the first kick and the cravings. Growth shows the baby's size each week. When the baby arrives, open the profile and tap “The baby is here!”.</Text>
+        </View>
+      ) : null}
+      <Label>{expecting ? "Name (optional)" : "Name"}</Label>
+      <Input value={name} onChangeText={setName} placeholder={expecting ? `Not decided yet? It will say “${PREGNANCY_NAME}” until you choose` : "Their name or nickname"} />
       <Label>Gender</Label>
       <GenderPicker value={gender} onChange={setGender} />
       <Label>Color mode for their pages</Label>

@@ -26,7 +26,8 @@ export function CollectionSheet({ kind, onClose }: { kind: CollectionKind | null
   const tiles = useMemo(() => {
     const out: { memory: Memory; media?: MediaItem }[] = [];
     for (const m of mine) if (m.type === "photo") {
-      if (m.media.length) m.media.forEach((x) => out.push({ memory: m, media: x }));
+      const pics = m.media.filter((x) => x.kind !== "audio"); // voice notes aren't photos
+      if (pics.length) pics.forEach((x) => out.push({ memory: m, media: x }));
       else out.push({ memory: m });
     }
     return out;

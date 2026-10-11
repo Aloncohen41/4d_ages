@@ -1,6 +1,6 @@
 import { requireNativeModule } from "expo";
 import { File } from "expo-file-system";
-import { pickThumb } from "./thumbChoice";
+import { looksBlank, pickThumb } from "./thumbChoice";
 
 export { pickThumb };
 
@@ -51,14 +51,20 @@ const sizeOf = (uri: string) => {
 /**
  * A frame worth showing for a video, until you pick another. Five frames are read (17%…83% through it) and the one with the most detail is
  * kept: a black or blank frame (a fade, a covered lens) compresses to a tiny file, so the largest JPEG is almost never one. Ties go to the
- * middle. The spare frames are deleted.
+ * middle. If all five are blank, nine more are read at other moments; if every one is blank, there is no thumbnail and the post shows its
+ * soft colour with a play button instead (never a black frame), until you choose a frame. The spare frames are deleted.
  */
 export async function defaultThumb(uri: string): Promise<string | undefined> {
-  const frames = await videoFrames(uri, 5);
-  if (!frames.length) return undefined;
-  const keep = pickThumb(frames, frames.map(sizeOf));
-  frames.filter((f) => f !== keep).forEach(remove);
-  return keep;
+  for (const count of [5, 9]) {
+    const frames = await videoFrames(uri, count);
+    if (!frames.length) return undefined;
+    const sizes = frames.map(sizeOf);
+    const keep = pickThumb(frames, sizes);
+    const blank = looksBlank(sizes[frames.indexOf(keep)]);
+    frames.filter((f) => f !== keep || blank).forEach(remove);
+    if (!blank) return keep;
+  }
+  return undefined;
 }
 
 export const deleteThumb = remove;

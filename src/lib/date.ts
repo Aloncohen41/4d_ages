@@ -58,7 +58,8 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 /** Short label for a photo: "3 weeks old", "7 months old", "2y 1m old" */
 export function ageShort(birth: string, date: string): string {
   const a = ageBetween(birth, date);
-  if (a.totalDays <= 0) return "birth day";
+  if (a.totalDays < 0) return "before birth";
+  if (a.totalDays === 0) return "birth day";
   if (a.totalDays < 14) return `${plural(a.totalDays, "day")} old`;
   if (a.totalDays < 56) return `${plural(Math.floor(a.totalDays / 7), "week")} old`;
   if (a.years < 1) return `${plural(a.months, "month")} old`;
@@ -96,15 +97,17 @@ export function ageTotals(birth: string, on: string = todayISO()) {
 
 export function ageBucket(birth: string, date: string): string {
   const a = ageBetween(birth, date);
+  if (a.totalDays < 0) return "Before birth";
   if (a.totalDays <= 28) return "Newborn";
   const totalMonths = a.years * 12 + a.months;
   if (totalMonths < 12) return plural(totalMonths, "month");
   return a.months ? `${plural(a.years, "year")}, ${a.months} mo` : plural(a.years, "year");
 }
 
+/** "5 March 2025": the day first, as in Europe (never the US "March 5, 2025"). */
 export function formatDate(s: string): string {
   const d = parseISO(s);
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 /** "2023:05:17 10:11:12" → "2023-05-17" */
@@ -126,11 +129,23 @@ export function dateFromFileName(name?: string | null): string | null {
   return `${m[1]}-${m[2]}-${m[3]}`;
 }
 
-/** "14:05" → "2:05 PM" */
+/** "9:05" → "09:05": the 24-hour clock, as in Europe. */
 export function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(":").map(Number);
   if (isNaN(h) || isNaN(m)) return hhmm;
-  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export const toHHMM = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+/** For a baby who isn't born yet: how far along the pregnancy is (40 weeks at the due date) and how long to go. */
+export function pregnancy(due: string, today: string = todayISO()): { week: number; weeksToGo: number; daysToGo: number } {
+  const daysToGo = Math.max(0, daysBetween(today, due));
+  return { week: Math.max(1, Math.min(42, 40 - Math.ceil(daysToGo / 7))), weeksToGo: Math.ceil(daysToGo / 7), daysToGo };
+}
+
+/** "5 Mar": a short date, day first. */
+export function shortDate(s: string): string {
+  const d = parseISO(s);
+  return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+}

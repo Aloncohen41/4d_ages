@@ -1,0 +1,81 @@
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, Modal, Text, View } from "react-native";
+import * as LocalAuthentication from "expo-local-authentication";
+import { Image } from "expo-image";
+import { useStore } from "../lib/store";
+import { useTheme } from "../lib/useTheme";
+import { WORDMARKS } from "../lib/wordmark";
+import { APP_NAME, WORDMARK_ASPECT } from "../brand";
+import { TYPE } from "../theme";
+import { Btn } from "./ui";
+
+/** After this long away from the app, it asks again. */
+export const RELOCK_AFTER_MS = 60 * 1000;
+
+/** Whether this phone can lock the app: it has a fingerprint, face or screen lock set up. */
+export async function canLock(): Promise<boolean> {
+  try {
+    const level = await LocalAuthentication.getEnrolledLevelAsync();
+    return level !== LocalAuthentication.SecurityLevel.NONE;
+  } catch {
+    return false;
+  }
+}
+
+/** Ask for the fingerprint, face or the phone's PIN. True when it's you. */
+export async function unlock(reason = `Unlock ${APP_NAME}`): Promise<boolean> {
+  try {
+    const r = await LocalAuthentication.authenticateAsync({ promptMessage: reason, disableDeviceFallback: false, cancelLabel: "Cancel" });
+    return r.success;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * App lock (Settings → Privacy): with it on, the app is covered until you unlock it with your fingerprint, face or the phone's PIN, when it opens
+ * and when you come back to it after a minute away. Nothing of the book is shown behind the cover.
+ */
+export function AppLock() {
+  const t = useTheme();
+  const enabled = useStore((s) => s.appLock);
+  const hydrated = useStore((s) => s.hydrated);
+  const [locked, setLocked] = useState(true);
+  const awayAt = useRef<number | null>(null);
+
+  const tryUnlock = useCallback(async () => {
+    if (await unlock()) setLocked(false);
+  }, []);
+
+  // on opening (once the saved setting is known)
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!enabled) { setLocked(false); return; }
+    tryUnlock();
+  }, [hydrated, enabled, tryUnlock]);
+
+  // coming back after a while
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (!useStore.getState().appLock) return;
+      if (state === "background") awayAt.current = Date.now();
+      if (state === "active" && awayAt.current && Date.now() - awayAt.current > RELOCK_AFTER_MS) {
+        awayAt.current = null;
+        setLocked(true);
+        tryUnlock();
+      }
+    });
+    return () => sub.remove();
+  }, [tryUnlock]);
+
+  if (!hydrated || !enabled || !locked) return null;
+  return (
+    <Modal visible animationType="fade" statusBarTranslucent onRequestClose={() => undefined}>
+      <View style={{ flex: 1, backgroundColor: t.bg, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 }}>
+        <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: 240, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
+        <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center" }]}>{APP_NAME} is locked.</Text>
+        <Btn label="Unlock" icon="lock" onPress={tryUnlock} style={{ alignSelf: "stretch" }} />
+      </View>
+    </Modal>
+  );
+}

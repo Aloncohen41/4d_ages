@@ -8,18 +8,20 @@ import { addPhotosFlow } from "../lib/addPhotos";
 import { withAlpha } from "../lib/m3";
 import { TYPE } from "../theme";
 import { Icon, IconName } from "./Icon";
+import { VoiceRecorderSheet } from "./Voice";
 
 export const FAB_GAP = 16;
-type Action = EntryKind | "photo";
-const ACTIONS: Action[] = ["story", "milestone", "measure", "first", "last", "photo"]; // photo / video sits nearest the button
-const ICON: Record<Action, IconName> = { story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", photo: "add-photo" };
-const LABEL = (a: Action) => (a === "photo" ? "Photo or video" : KIND_META[a].label);
+type Action = EntryKind | "photo" | "voice";
+const ACTIONS: Action[] = ["story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
+const ICON: Record<Action, IconName> = { story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", health: "health", photo: "add-photo", voice: "voice" };
+const LABEL = (a: Action) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : KIND_META[a].label);
 
 /** Floating "+" in the bottom-right corner. Tap to fan out the quick-add options upward. */
 export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
   const t = useTheme();
   const setEntrySheet = useStore((s) => s.setEntrySheet);
   const [open, setOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
   const choose = (kind: Action) => {
     setOpen(false);
     if (kind === "photo") addPhotosFlow();
+    else if (kind === "voice") setRecording(true); // record (or choose a file), then it becomes a story you can add words to
     else setEntrySheet({ kind });
   };
 
@@ -58,6 +61,9 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
           <Animated.View style={{ transform: [{ rotate: anim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "45deg"] }) }] }}><Icon name="plus" size={28} color={t.onAccent} /></Animated.View>
         </Pressable>
       </View>
+      {recording ? (
+        <VoiceRecorderSheet onClose={() => setRecording(false)} onDone={(item) => { setRecording(false); setTimeout(() => setEntrySheet({ kind: "story", title: "Voice note", media: [item] }), 250); }} />
+      ) : null}
     </>
   );
 }

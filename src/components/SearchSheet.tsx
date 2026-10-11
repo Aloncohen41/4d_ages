@@ -25,7 +25,8 @@ export function SearchSheet({ memories, period, onPeriod, onClose }: { memories:
   const [month, setMonth] = useState<number | null>(period?.month ?? null);
 
   const index = useMemo(() => dateIndex(memories), [memories]);
-  const results = useMemo(() => searchMemories(memories, query, tags, relatives), [memories, query, tags, relatives]);
+  const child = useStore((s) => s.kids.find((k) => k.id === memories[0]?.childId));
+  const results = useMemo(() => searchMemories(memories, query, tags, relatives, 40, { birth: child?.birth }), [memories, query, tags, relatives, child]);
   const y = index.find((x) => x.year === year);
   const m = y?.months.find((x) => x.month === month);
 
@@ -44,7 +45,7 @@ export function SearchSheet({ memories, period, onPeriod, onClose }: { memories:
           {results.length ? (
             results.map((r) => (
               <Pressable key={r.id} onPress={() => { onClose(); setTimeout(() => openMemory(r), 250); }} style={{ backgroundColor: t.card, borderRadius: 12, borderWidth: 1, borderColor: t.line, padding: 10, marginBottom: 8 }}>
-                <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11 }}>{TYPE_META[r.type].emoji} {TYPE_META[r.type].label} · {formatDate(r.date)}</Text>
+                <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11 }}>{TYPE_META[r.type].label} · {formatDate(r.date)}</Text>
                 <Text style={{ color: t.ink, fontWeight: "700" }} numberOfLines={2}>{blurb(r) || TYPE_META[r.type].label}</Text>
               </Pressable>
             ))

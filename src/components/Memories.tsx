@@ -9,7 +9,7 @@ import { ageShort, formatDate, todayISO } from "../lib/date";
 import { birthdayBanner, buildRecap, currentYear, onThisDay, yearWindow } from "../lib/recap";
 import { formatHeight } from "../lib/growth";
 import { blurb } from "../lib/display";
-import { BOOK_STYLES, BookSize, BookStyle, exportBook } from "../lib/pdf";
+import { BOOK_STYLES, BookDestination, BookSize, BookStyle, exportBook } from "../lib/pdf";
 import { Btn, PhotoView, Seg, Sheet } from "./ui";
 import { GrowPlayer } from "./Grow";
 import { slidesOf } from "../lib/slides";
@@ -92,9 +92,9 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
   const tagList = useStore((s) => s.tags);
   const [year, setYear] = useState(initialYear);
   const [playing, setPlaying] = useState(false);
-  const [style, setStyle] = useState<BookStyle>("storybook");
+  const [style, setStyle] = useState<BookStyle>("playful");
   const [size] = useState<BookSize>("square-20");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<BookDestination | null>(null);
   const [msg, setMsg] = useState("");
 
   const today = todayISO();
@@ -110,19 +110,19 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
   const inProgress = recap.win.end > today;
   const grew = recap.startCm !== undefined && recap.endCm !== undefined && recap.endCm > recap.startCm ? recap.endCm - recap.startCm : null;
 
-  const doExport = async () => {
-    setBusy(true);
+  const doExport = async (to: BookDestination) => {
+    setBusy(to);
     setMsg("");
     try {
-      await exportBook({
+      const done = await exportBook({
         child, defs, memories: recap.highlights, relatives, tags: tagList, style, size,
-        title: `${child.name}'s Year ${year}`, subtitle: `${formatDate(recap.win.start)} – ${formatDate(recap.win.end)}`,
-      });
-      setMsg("Your recap is ready. Pick where to save or send it.");
+        title: `${child.name}'s Year ${year}`, subtitle: `${formatDate(recap.win.start)} – ${formatDate(recap.win.end)}`, intro: false,
+      }, to);
+      if (done === "saved") setMsg("Saved. You'll find the PDF in the folder you picked.");
     } catch {
       setMsg("Couldn't build the PDF. Try again.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
@@ -176,7 +176,8 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
 
           <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 20, marginBottom: 6 }}>PDF style</Text>
           <Seg options={BOOK_STYLES.map((s) => ({ id: s.id, label: s.label }))} value={style} onChange={setStyle} />
-          <Btn icon={busy ? undefined : "pdf"} label={busy ? "Building your PDF…" : "Export this year as PDF"} onPress={doExport} disabled={busy} style={{ marginTop: 14 }} />
+          <Btn icon={busy ? undefined : "download"} label={busy === "save" ? "Saving your PDF…" : "Save this year as PDF"} onPress={() => doExport("save")} disabled={!!busy} style={{ marginTop: 14 }} />
+          <Btn icon={busy ? undefined : "share"} kind="line" label={busy === "share" ? "Building your PDF…" : "Share this year as PDF"} onPress={() => doExport("share")} disabled={!!busy} style={{ marginTop: 8 }} />
           {msg ? <Text style={{ color: t.accentDeep, fontWeight: "700", textAlign: "center", marginTop: 8 }}>{msg}</Text> : null}
         </>
       )}

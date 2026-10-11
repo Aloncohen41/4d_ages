@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { earliestDate } from "./EntrySheet";
 import { ActivityIndicator, Alert, Pressable, Text, ToastAndroid, View } from "react-native";
 import { router } from "expo-router";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
@@ -103,14 +104,14 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
     DateTimePickerAndroid.open({
       value: parseISO(current),
       mode: "date",
-      minimumDate: parseISO(child.birth),
+      minimumDate: parseISO(earliestDate(child.birth)),
       maximumDate: new Date(),
       onChange: (e, d) => { if (e.type === "set" && d) setDates((cur) => ({ ...cur, [uri]: toISO(d) })); },
     });
 
   const save = () => {
     if (!shape) return setErr("Choose one post or separate posts.");
-    if (shape === "one" && postDate < child.birth) return setErr(`That date is before ${child.name}'s birth date.`);
+    if (shape === "one" && postDate < earliestDate(child.birth)) return setErr("That date is too long before the birth.");
     const posts: Memory[] = buildNewPosts({
       child, shape, note,
       items: items.map((it) => ({ uri: it.uri, kind: it.kind, thumb: thumbs[it.uri], date: fileDate(it), time: dates[it.uri] ? undefined : it.time })),
@@ -193,7 +194,7 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
       {shape === "one" ? (
         <>
           <Label>Date</Label>
-          <DateField value={postDate} onChange={setOneDate} min={child.birth} max={today} />
+          <DateField value={postDate} onChange={setOneDate} min={earliestDate(child.birth)} max={today} />
           <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 5 }}>
             {oneDate !== null ? "Chosen by you." : earliest ? `From the ${several ? "earliest file" : "file"}. Tap to change it.` : "No date in the files, so today's date is used. Tap to change it."}
           </Text>

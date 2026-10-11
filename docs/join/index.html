@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Join a baby book</title>
+<meta name="description" content="Open this link on your Android phone to add a shared baby book to 4D Ages.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<main>
+  <img class="logo" src="../img/wordmark.png" alt="4D Ages">
+  <h1>You're invited to a baby book</h1>
+  <p>Open it in the 4D Ages app and the book is added to your phone, with everything already in it. Sign in or create an account first if the app asks.</p>
+  <div class="card">
+    <p class="muted" style="text-align:center;margin:0">Your code</p>
+    <div class="code" id="code">--------</div>
+    <a class="btn solid" id="open" href="#">Open in 4D Ages</a>
+    <a class="btn line" href="https://github.com/Aloncohen41/4d_ages/releases/latest">Don't have the app? Download it</a>
+    <p class="muted" id="hint">After installing, tap "Open in 4D Ages" again, or open the app, choose "Join a partner's baby book" and type the code.</p>
+  </div>
+</main>
+<footer><a href="../privacy/">Privacy policy</a> · <a href="../terms/">Terms</a></footer>
+<script>
+  // the code from the link (letters and numbers only), shown so it can also be typed in by hand
+  var code = (new URLSearchParams(location.search).get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  var codeEl = document.getElementById("code");
+  var open = document.getElementById("open");
+  if (code) {
+    codeEl.textContent = code;
+    var page = location.origin + location.pathname + "?code=" + code;
+    // Android: an intent link opens the app if it's installed, and comes back to this page if it isn't
+    var android = /Android/i.test(navigator.userAgent);
+    open.href = android
+      ? "intent://join?code=" + code + "#Intent;scheme=fourdages;package=com.alonc.fourdages;S.browser_fallback_url=" + encodeURIComponent(page + "&noapp=1") + ";end"
+      : "fourdages://join?code=" + code;
+    if (/noapp=1/.test(location.search)) document.getElementById("hint").textContent = "The app isn't on this phone yet. Download it, then come back to this link and tap \"Open in 4D Ages\".";
+  } else {
+    codeEl.textContent = "No code";
+    open.setAttribute("aria-disabled", "true");
+    open.style.opacity = ".5";
+    open.addEventListener("click", function (e) { e.preventDefault(); });
+  }
+</script>
+</body>
+</html>

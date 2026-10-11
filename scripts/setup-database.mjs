@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /*
- * One-time database setup for sharing between parents:  npm run db:setup   (or  npm run db:setup -- --dry-run  to check without connecting)
+ * One-time database setup for sharing between parents:  npm run db:setup
+ *   npm run db:setup -- --dry-run   checks your .env without connecting
+ *   npm run db:setup -- --try       applies the schema and runs every check inside a transaction, then undoes it (nothing is changed)
  *
  * Reads the database connection string from your .env (any variable whose value starts with postgresql://), applies supabase/schema.sql
  * (safe to run again), then checks that the tables, the privacy rules, the functions and the private "media" bucket are all in place.
@@ -14,6 +16,7 @@ import { describeConnection, findConnectionString, friendlyError, parseConnectio
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dry = process.argv.includes("--dry-run");
+const trial = process.argv.includes("--try");
 const say = (s = "") => console.log(s);
 const fail = (msg) => { console.error(`\n✗ ${msg}\n`); process.exit(1); };
 
@@ -66,23 +69,28 @@ try {
 
 // 5. apply, then check
 try {
-  say("\nApplying the schema…");
+  say(trial ? "\nTrying the schema (in a transaction that is undone at the end)…" : "\nApplying the schema…");
+  if (trial) await client.query("begin");
   await client.query(sql);
-  say("✓ Applied.\n");
-  const tables = ["children", "child_members", "invites", "memories", "custom_defs", "relatives"];
+  say(trial ? "✓ It applies cleanly.\n" : "✓ Applied.\n");
+  const tables = ["children", "child_members", "invites", "memories", "custom_defs", "relatives", "classics", "reactions", "child_blocks"];
   const t = await client.query("select table_name from information_schema.tables where table_schema='public' and table_name = any($1)", [tables]);
   const rls = await client.query("select relname from pg_class where relnamespace='public'::regnamespace and relrowsecurity and relname = any($1)", [tables]);
-  const fns = await client.query("select proname from pg_proc where pronamespace='public'::regnamespace and proname in ('is_member','create_invite','join_child','delete_my_account')");
-  const cols = await client.query("select table_name || '.' || column_name as c from information_schema.columns where table_schema='public' and (table_name, column_name) in (('children','gender'),('relatives','nickname'),('relatives','description'))");
+  const fns = await client.query("select proname from pg_proc where pronamespace='public'::regnamespace and proname in ('is_member','is_editor','can_see_memory','create_invite','join_child','delete_my_account','parent_count','remove_member','set_member_people','can_see_post','block_email','unblock_email')");
+  const cols = await client.query("select table_name || '.' || column_name as c from information_schema.columns where table_schema='public' and (table_name, column_name) in (('children','gender'),('relatives','nickname'),('relatives','description'),('memories','head_cm'),('child_members','people'),('invites','role'),('invites','people'),('memories','health_kind'),('children','expecting'),('invites','email'))");
   const b = await client.query("select public from storage.buckets where id='media'");
   const checks = [
     [`all ${tables.length} tables exist`, t.rowCount === tables.length],
     ["privacy rules (row-level security) are ON for every table", rls.rowCount === tables.length],
-    ["the sharing functions exist (is_member, create_invite, join_child, delete_my_account)", fns.rowCount === 4],
-    ["the newer columns exist (a child's gender; a family member's nickname and description)", cols.rowCount === 3],
+    ["the sharing functions exist (membership, invites, the two-parent limit, removing someone, reactions, deleting an account)", fns.rowCount === 12],
+    ["the newer columns exist (gender; nickname and description; head circumference; who sees what; health log; expecting; invites for one email)", cols.rowCount === 10],
     ["the private “media” bucket exists and is NOT public", b.rowCount === 1 && b.rows[0].public === false],
   ];
   for (const [label, okay] of checks) say(`${okay ? "✓" : "✗"} ${label}`);
+  if (trial) {
+    await client.query("rollback");
+    say("\nTrial only: everything was undone, nothing changed. Run `npm run db:setup` to apply it.");
+  }
   if (checks.some(([, okay]) => !okay)) fail("The schema ran, but something it should have created isn't there. Paste supabase/schema.sql into Supabase's SQL Editor to see the exact error.");
 } catch (e) {
   fail(`The schema didn't apply: ${friendlyError(e)}`);

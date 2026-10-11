@@ -7,6 +7,7 @@ import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@
 import { GOOGLE_WEB_CLIENT_ID, SUPABASE_ANON_KEY, SUPABASE_URL } from "../config";
 import { classifyKey } from "../../plugins/supabaseEnv";
 import { parseAuthCallback } from "./authLink";
+import { usePasswordReset } from "./authLinkState";
 
 /** True if the key in the app is a SECRET key. It must never be inside an app (it bypasses every privacy rule), so sign-in refuses to start with it. */
 export const keyIsSecret = classifyKey(SUPABASE_ANON_KEY) === "secret";
@@ -91,6 +92,8 @@ export async function completeAuthLink(url: string): Promise<boolean> {
   const link = parseAuthCallback(url);
   if (!link || !supabase) return false;
   if (link.error) throw new Error(link.error);
+  // a password-reset link (marked as one, or arriving within the hour after "Forgot password?" on this phone): ask for a new password next
+  if (link.recovery || Date.now() - usePasswordReset.getState().resetAskedAt < 3600000) usePasswordReset.setState({ needed: true });
   if (link.code) {
     const { error } = await supabase.auth.exchangeCodeForSession(link.code);
     if (error) throw new Error(friendly(error.message));
@@ -139,6 +142,44 @@ export async function signInWithGoogle(): Promise<boolean> {
   const { error } = await need().auth.signInWithIdToken({ provider: "google", token });
   if (error) throw new Error(friendly(error.message));
   return true;
+}
+
+/* ---------- forgotten and changed passwords, email and name ---------- */
+
+/** "Forgot password?": sends an email whose button opens the app, signed in, to choose a new password. */
+export async function sendPasswordReset(email: string): Promise<void> {
+  const clean = email.trim();
+  if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("Enter the email you signed up with.");
+  usePasswordReset.setState({ resetAskedAt: Date.now() });
+  const { error } = await need().auth.resetPasswordForEmail(clean, { redirectTo: AUTH_REDIRECT });
+  if (error) throw new Error(friendly(error.message));
+}
+
+/** Sets a new password for the signed-in account (after a reset link, or with the current password checked first). */
+export async function setNewPassword(password: string, current?: string): Promise<void> {
+  if (password.length < 6) throw new Error("Choose a password of at least 6 characters.");
+  if (current !== undefined) await reauthenticate(current);
+  const { error } = await need().auth.updateUser({ password });
+  if (error) throw new Error(/different from the old/i.test(error.message) ? "Choose a password that's different from the one you have." : friendly(error.message));
+  usePasswordReset.setState({ needed: false, resetAskedAt: 0 });
+}
+
+/** Changes the account's email. Supabase sends a confirmation to the new address (and the old one); it changes once confirmed. */
+export async function changeEmail(email: string): Promise<void> {
+  const clean = email.trim();
+  if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("Enter a valid email address.");
+  const { error } = await need().auth.updateUser({ email: clean }, { emailRedirectTo: AUTH_REDIRECT });
+  if (error) throw new Error(friendly(error.message));
+}
+
+/** The name shown beside your comments and hearts. Kept with the account, so it's the same on every phone. */
+export const accountName = (session: Session | null): string =>
+  String(session?.user.user_metadata?.display_name || session?.user.user_metadata?.full_name || session?.user.user_metadata?.name || "").trim() ||
+  (session?.user.email ?? "").split("@")[0];
+
+export async function setAccountName(name: string): Promise<void> {
+  const { error } = await need().auth.updateUser({ data: { display_name: name.trim() } });
+  if (error) throw new Error(friendly(error.message));
 }
 
 /* ---------- proving it's really you (before deleting the account) ---------- */

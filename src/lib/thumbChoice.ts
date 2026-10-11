@@ -9,3 +9,10 @@ export function pickThumb<T>(frames: T[], sizes: number[]): T {
   }
   return frames[best];
 }
+
+/**
+ * A frame this small can only be (nearly) one flat colour: black from a covered lens, a fade, or the dark first frame of many phones. A real
+ * picture, even a dim one, compresses to far more. Such a frame is never used as a thumbnail.
+ */
+export const BLANK_FRAME_BYTES = 6000;
+export const looksBlank = (bytes: number) => bytes < BLANK_FRAME_BYTES;
