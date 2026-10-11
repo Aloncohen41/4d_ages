@@ -283,6 +283,9 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
           <Btn label="The baby is here!" icon="birthday" onPress={() => { setArrived(true); setBirth(todayISO()); }} style={{ marginTop: 10 }} />
         </View>
       ) : null}
+      {child.role !== "viewer" ? (
+        <Btn label={`Share ${child.name}'s book`} icon="user-plus" kind="soft" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginBottom: 6 }} />
+      ) : null}
       <Label>Name</Label>
       <Input value={name} onChangeText={setName} placeholder={expecting ? "You can change it any time" : undefined} />
       <Label>{expecting ? "Due date" : "Birth date"}</Label>
@@ -321,7 +324,6 @@ function ProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => v
         <Btn label="Cancel" kind="soft" onPress={onClose} style={{ flex: 1 }} />
         <Btn label="Save profile" onPress={save} style={{ flex: 1 }} />
       </View>
-      <Btn label="Share the book" icon="user-plus" kind="line" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginTop: 14 }} />
     </Sheet>
   );
 }

@@ -72,8 +72,12 @@ function check(...results: { error: { message: string } | null }[]) {
 
 /* ---------- sharing a child ---------- */
 
+/** The app's sample family (for exploring before signing in) is never put in an account. */
+export const isSampleChild = (id: string) => id === "maya" || id === "leo";
+
 /** Put a child in the cloud and make this phone its first member. */
 export async function shareChild(childId: string): Promise<void> {
+  if (isSampleChild(childId)) throw new Error("The sample family can't be shared. Add your own child to share their book.");
   const sb = client();
   const user = await me();
   const child = useStore.getState().kids.find((k) => k.id === childId);
@@ -197,6 +201,50 @@ export async function currentInvite(childId: string): Promise<{ code: string; ex
   if (found) return { code: found.code, expires: found.expires_at };
   const code = await createInvite(childId);
   return { code, expires: new Date(Date.now() + 7 * 86400000).toISOString() };
+}
+
+export interface PendingInvite {
+  code: string;
+  kind: "parent" | "family";
+  email?: string;
+  people: string[];
+  expires: string;
+}
+
+/** Invites this account made for a child that haven't been used yet (and haven't expired). */
+export async function listInvites(childId: string): Promise<PendingInvite[]> {
+  const user = await me();
+  const { data, error } = await client().from("invites").select("code, role, email, people, expires_at").eq("child_id", childId).eq("created_by", user.id)
+    .gt("expires_at", new Date().toISOString()).order("expires_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as { code: string; role: string | null; email: string | null; people: string[] | null; expires_at: string }[])
+    .map((r) => ({ code: r.code, kind: r.role === "viewer" ? "family" : "parent", email: r.email ?? undefined, people: r.people ?? [], expires: r.expires_at }));
+}
+
+/** Cancel an invite: its code stops working. */
+export async function cancelInvite(code: string): Promise<void> {
+  const { error } = await client().from("invites").delete().eq("code", code);
+  if (error) throw new Error(error.message);
+}
+
+/** Make sure a child is in the cloud and this account is a member (a first try that stopped half way is finished here). */
+export async function ensureShared(childId: string): Promise<void> {
+  const child = useStore.getState().kids.find((k) => k.id === childId);
+  if (!child) throw new Error("This child isn't on this phone any more.");
+  const list = await listMembers(childId).catch(() => [] as Member[]);
+  if (!child.shared || !list.some((m) => m.me)) await shareChild(childId);
+}
+
+/**
+ * An invite for one person: a still-valid one made earlier for the same email and kind is reused (sending twice never makes two codes);
+ * otherwise a new one.
+ */
+export async function inviteFor(childId: string, kind: "parent" | "family", email: string, people: string[] = []): Promise<PendingInvite> {
+  const clean = email.trim().toLowerCase();
+  const existing = (await listInvites(childId)).find((x) => x.kind === kind && x.email === clean && (kind === "parent" || x.people.slice().sort().join() === people.slice().sort().join()));
+  if (existing) return existing;
+  const code = await createInvite(childId, kind === "family" ? people : undefined, clean);
+  return { code, kind, email: clean, people, expires: new Date(Date.now() + 7 * 86400000).toISOString() };
 }
 
 /** The link that opens the app (or offers it) and joins the book: tapped in WhatsApp, email or any other app. */
@@ -447,7 +495,7 @@ export async function attachAndRestore(): Promise<void> {
   const sb = client();
   await me();
   const local = useStore.getState().kids;
-  for (const k of local.filter((x) => !x.shared)) await shareChild(k.id);
+  for (const k of local.filter((x) => !x.shared && !isSampleChild(x.id))) await shareChild(k.id);
 
   const { data, error } = await sb.from("children").select("*");
   if (error) throw new Error(error.message);
@@ -509,7 +557,7 @@ export function syncAll(): Promise<void> {
     useStore.getState().setSync({ busy: true, error: undefined, progress: undefined });
     try {
       // a child added since the last run (or while offline) is saved to the account first
-      for (const k of useStore.getState().kids.filter((x) => !x.shared)) await shareChild(k.id);
+      for (const k of useStore.getState().kids.filter((x) => !x.shared && !isSampleChild(x.id))) await shareChild(k.id);
       for (const k of useStore.getState().kids.filter((x) => x.shared)) await syncChild(k.id);
       useStore.getState().setSync({ busy: false, error: undefined, at: Date.now(), progress: undefined });
     } catch (e) {

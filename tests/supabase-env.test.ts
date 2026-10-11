@@ -54,7 +54,7 @@ const quiet: string[] = []; build({}, everything, (m: string) => quiet.push(m));
 ok("a correct setup is silent", quiet2.length === 0);
 
 // ---------- the wiring
-const cfg = read("src/config.ts"), sb = read("src/lib/supabase.ts"), sheet = read("src/components/ShareSheet.tsx");
+const cfg = read("src/config.ts"), sb = read("src/lib/supabase.ts"), sheet = read("app/share.tsx");
 ok("Expo hands app.json to app.config.js, which adds only the two public values", /require\("\.\/plugins\/supabaseEnv"\)/.test(read("app.config.js")) && /build\(config, process\.env\)/.test(read("app.config.js")));
 ok("the app reads the two values from its settings; nothing is pasted into code, and no secret-key variable is referenced", /Constants\.expoConfig\?\.extra/.test(cfg) && /supabaseUrl/.test(cfg) && /supabaseAnonKey/.test(cfg) && !/(SECRET|service_role|CONNECTION_STRING|process\.env)/i.test(cfg.replace(/\/\*[\s\S]*?\*\//g, "")));
 ok("the app refuses a secret key even if one got in: sharing is off and the screen says why", /classifyKey\(SUPABASE_ANON_KEY\) === "secret"/.test(sb) && /&& !keyIsSecret/.test(sb) && /keyIsSecret/.test(sheet) && /SECRET key/.test(sheet));

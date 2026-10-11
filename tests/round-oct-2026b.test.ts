@@ -23,7 +23,7 @@ import { ClassicEntry } from "../src/lib/classics";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
 const read = (f: string) => readFileSync(join(root, f), "utf8");
-const schema = read("supabase/schema.sql"), sync = read("src/lib/sync.ts"), share = read("src/components/ShareSheet.tsx"), settings = read("app/settings.tsx");
+const schema = read("supabase/schema.sql"), sync = read("src/lib/sync.ts"), share = read("app/share.tsx"), settings = read("app/settings.tsx");
 
 const child: Child = { id: "c", name: "Maya", birth: "2024-01-10", theme: "pink", emoji: "🌸" };
 let n = 0;
@@ -36,10 +36,10 @@ const photo = (date: string, extra: Partial<Memory> = {}) => mem("photo", date, 
 ok("the share bug: the owner can always finish putting their own child in the cloud (a half-done first try no longer blocks it)", /children_update on public\.children for update to authenticated\s+using \(public\.is_editor\(id\) or owner_id = auth\.uid\(\)\)/.test(schema));
 ok("sharing again never fails on an existing membership", /onConflict: "child_id,user_id", ignoreDuplicates: true/.test(sync));
 ok("a book has at most two parents: no new parent invite or join once two are in", /p_people is null and public\.parent_count\(p_child\) >= 2/.test(schema) && /public\.parent_count\(v_inv\.child_id\) >= 2/.test(schema) && /MAX_PARENTS = 2/.test(sync));
-ok("one parent removes the other (the owner can't be removed; the other parent can remove family viewers and leave)", /create or replace function public\.remove_member/.test(schema) && /The parent who created the book can''t be removed/.test(schema) && /removeMember\(child\.id, m\.userId\)/.test(share));
+ok("one parent removes the other (the owner can't be removed; the other parent can remove family viewers and leave)", /create or replace function public\.remove_member/.test(schema) && /The parent who created the book can''t be removed/.test(schema) && /removeMember\(child\.id, m\.userId\)/.test(share) && /"Remove and block"/.test(share) && /text: "Leave"/.test(share));
 ok("someone removed loses the book on their phone too", /forgetChild\(childId\)/.test(sync) && /isn't shared with you any more, so it was taken off this phone/.test(sync));
-ok("the share screen shows this child's code first, then Share link and Copy code", share.indexOf("{child.name}'s code") > 0 && share.indexOf("{child.name}'s code") < share.indexOf("Who has access") && /label="Share link"/.test(share) && /label="Copy code"/.test(share) && /currentInvite\(child\.id\)/.test(share));
-ok("when two parents share it, the screen says so instead of a code", /Shared by two parents/.test(share) && /one of you has to remove the other first/.test(share));
+ok("the share screen: who can see the book, then a choice of the other parent or a family member, then steps, then sending (WhatsApp, email, other apps, copy)", share.indexOf("Who can see {child.name}'s book") < share.indexOf("Invite someone") && /title="The other parent"/.test(share) && /title="A family member"/.test(share) && /Send on WhatsApp/.test(share) && /Send by email/.test(share) && /Copy link/.test(share) && /Copy code/.test(share) && /Step \{shown\} of \{total\}/.test(share));
+ok("when two parents share it, inviting another parent is turned off and the screen says why", /disabled=\{parentsFull \|\| !!busy\}/.test(share) && /This book already has two parents/.test(share));
 ok("the share link opens a web page that opens the app (or offers it) with the code", /JOIN_PAGE = "https:\/\/aloncohen41\.github\.io\/4d_ages\/join\/"/.test(sync) && /intent:\/\/join\?code=/.test(read("docs/join/index.html")) && /package=com\.alonc\.fourdages/.test(read("docs/join/index.html")));
 ok("the app takes the code from the link: straight away when signed in, or right after signing in", existsSync(join(root, "app/join.tsx")) && /setPendingJoin\(clean\)/.test(read("app/join.tsx")) && /pendingJoin: s\.pendingJoin/.test(read("src/lib/store.ts")) && /joinPending\(\)/.test(read("src/components/SyncManager.tsx")) && /name="join"/.test(read("app/_layout.tsx")));
 ok("live updates: a change on one phone reaches the other at once (Supabase Realtime), plus a quick sync after any change here", /alter publication supabase_realtime add table/.test(schema) && /postgres_changes/.test(read("src/lib/realtime.ts")) && /useRealtime\(userId, kidIds\)/.test(read("src/components/SyncManager.tsx")) && /1500\); \/\/ soon after a change/.test(read("src/components/SyncManager.tsx")));
@@ -109,7 +109,7 @@ ok("[22] the microphone is allowed for recording (and only for that)", !JSON.str
   const bad = [...walk("app"), ...walk("src")].flatMap((file) =>
     (read(file).match(/use(Store|Reactions)\(\(s\) => [^;\n]*?\.(filter|map|slice|concat)\([^;\n]*\)\);/g) || []).filter((m) => !/\.join\(/.test(m) && !/\.length/.test(m)).map((m) => `${file}: ${m}`));
   ok("no store selector returns a new list on every render (it would crash the screen)" + (bad.length ? " — " + bad.join(" | ") : ""), bad.length === 0);
-  ok("Who can see your children always lists you, as the parent, even before anyone else has joined", read("app/access.tsx").includes("members.some((m) => m.me) ? members") && /Only you can see/.test(read("app/access.tsx")));
+  ok("the share screen always lists you, as the parent, even before anyone else has joined; Settings opens it for each child", share.includes("members.some((m) => m.me) ? members") && /Only you can see it so far/.test(share) && /pathname: "\/share", params: \{ child: k\.id \}/.test(read("app/access.tsx")));
 }
 
 console.log(fails ? `${fails} FAILED` : "all round-two tests passed");

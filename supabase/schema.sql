@@ -199,7 +199,10 @@ create policy children_delete on public.children for delete to authenticated usi
 drop policy if exists cm_select on public.child_members;
 drop policy if exists cm_insert on public.child_members;
 drop policy if exists cm_delete on public.child_members;
-create policy cm_select on public.child_members for select to authenticated using (public.is_member(child_id));
+-- you always see your own membership (and the other members of a child you're in). Seeing your own row matters: adding yourself as the
+-- first member with "insert, or skip if it's there" makes the database check the new row is visible to you, and before this rule it
+-- wasn't (you weren't a member yet), so the first membership could never be added and sharing a child failed every time.
+create policy cm_select on public.child_members for select to authenticated using (user_id = auth.uid() or public.is_member(child_id));
 create policy cm_insert on public.child_members for insert to authenticated
   with check (user_id = auth.uid() and exists (select 1 from public.children c where c.id = child_id and c.owner_id = auth.uid()));
 create policy cm_delete on public.child_members for delete to authenticated
@@ -209,6 +212,8 @@ drop policy if exists invites_select on public.invites;
 drop policy if exists invites_insert on public.invites;
 create policy invites_select on public.invites for select to authenticated using (public.is_member(child_id));
 create policy invites_insert on public.invites for insert to authenticated with check (public.is_editor(child_id) and created_by = auth.uid());
+drop policy if exists invites_delete on public.invites;
+create policy invites_delete on public.invites for delete to authenticated using (created_by = auth.uid() or public.is_editor(child_id));   -- cancel an invite
 
 -- every member may read the custom milestones and the family; only editors may change anything. Memories are read as can_see_memory
 -- allows; the fill-in pages (classics) are for editors only.
@@ -244,6 +249,30 @@ create policy reactions_read on public.reactions for select to authenticated usi
 create policy reactions_insert on public.reactions for insert to authenticated with check (user_id = auth.uid() and public.is_member(child_id) and public.can_see_post(memory_id));
 create policy reactions_update on public.reactions for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid() and public.can_see_post(memory_id));
 create policy reactions_delete on public.reactions for delete to authenticated using (user_id = auth.uid() or public.is_editor(child_id));
+
+-- ---------- a child always has its owner as a member ----------
+-- The owner is added the moment a child is created, whichever app version uploads it. (Before this, an upload could leave a child in the
+-- cloud with no members: no one could then share it, and sharing failed every time.)
+create or replace function public.add_owner_member() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.child_members (child_id, user_id, role, email)
+  values (new.id, new.owner_id, 'owner', (select email from auth.users where id = new.owner_id))
+  on conflict (child_id, user_id) do nothing;
+  return new;
+end $$;
+drop trigger if exists trg_owner_member on public.children;
+create trigger trg_owner_member after insert on public.children for each row execute function public.add_owner_member();
+
+-- repair: children uploaded before that, still without their owner as a member
+insert into public.child_members (child_id, user_id, role, email)
+select c.id, c.owner_id, 'owner', (select email from auth.users where id = c.owner_id)
+from public.children c
+where c.owner_id is not null and not exists (select 1 from public.child_members m where m.child_id = c.id and m.user_id = c.owner_id)
+on conflict (child_id, user_id) do nothing;
+
+-- the app's sample family (exploring before signing in) is never kept in an account: remove any that was uploaded by mistake
+delete from public.children where id in ('maya', 'leo') and not exists (select 1 from public.memories m where m.child_id = children.id);
 
 -- ---------- invite codes ----------
 -- A child's book has at most two parents (owner and editor); any number of family members may be invited to view.

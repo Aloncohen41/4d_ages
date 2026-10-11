@@ -4,7 +4,12 @@ Each release's notes on GitHub are taken from its section here (`## 1.0.5` for v
 
 ## 1.0.6
 
-- Fixed: Settings, Who can see your children closed the app. It now always lists you as the parent, even before anyone else has joined.
+**Sharing, redesigned**
+- Fixed: sharing a child failed every time (a database rule stopped the first parent being added), so no code could be made.
+- One sharing screen for each child, from the child's profile or Settings: who can see the book, then invite **the other parent** or **a family member**.
+- Short steps: who they are and whose posts they see (family), their email, a check, then send it on WhatsApp, by email, with any app, or copy it.
+- Invites waiting to be accepted can be sent again or cancelled; remove, block and unblock people; join a book with a code (pasting the whole message works).
+- Fixed: Settings, Who can see your children closed the app.
 
 ## 1.0.5
 
