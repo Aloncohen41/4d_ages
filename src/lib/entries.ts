@@ -31,6 +31,7 @@ export interface MemoryInput {
   weightKg?: number; // measure
   headCm?: number; // measure: head circumference
   healthKind?: import("./types").HealthKind; // health
+  endDate?: string; // a pregnancy symptom: the last day it lasted
   source?: string;
 }
 
@@ -58,6 +59,7 @@ export function buildMemory(i: MemoryInput, id: string, old: Memory | undefined,
     weightKg: i.type === "measure" ? i.weightKg : undefined,
     headCm: i.type === "measure" ? i.headCm : undefined,
     healthKind: i.type === "health" ? i.healthKind ?? "other" : undefined,
+    endDate: i.endDate && i.endDate > i.date ? i.endDate : undefined,
     emoji: i.emoji || meta.emoji,
     palette: meta.palette,
     source: i.source ?? old?.source ?? meta.source,

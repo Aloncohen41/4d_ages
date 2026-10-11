@@ -84,8 +84,8 @@ export function BookExportSheet({ style, colour, size, pages, onStyle, onColour,
       <ColourChoice value={colour} onChange={onColour} />
       <Btn label="Look through the pages" icon="nav-book" kind="line" onPress={onPreview} disabled={!!busy} style={{ marginTop: 18 }} />
       <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 10 }]}>{size.label} · {pages} pages</Text>
-      <Btn label={busy === "save" ? "Saving your PDF…" : "Save PDF to phone"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
-      <Btn label={busy === "share" ? "Building your PDF…" : "Share PDF"} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
+      <Btn label={busy === "save" ? "Saving your PDF…" : "Save PDF (phone or Drive)"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
+      <Btn label={busy === "share" ? "Building your PDF…" : "Share PDF (WhatsApp, email…)"} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
       {busy ? (
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
           <ActivityIndicator color={t.accent} />

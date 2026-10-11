@@ -17,7 +17,7 @@ export function memoryToRow(m: Memory, tagList: Tag[], ts: number) {
   const byId = new Map(tagList.map((t) => [t.id, t]));
   return {
     id: m.id, child_id: m.childId, type: m.type, title: m.title ?? null, description: m.description, date: m.date, time: m.time ?? null, location: m.location ?? null,
-    milestone_id: m.milestoneId ?? null, height_cm: m.heightCm ?? null, weight_kg: m.weightKg ?? null, head_cm: m.headCm ?? null, health_kind: m.healthKind ?? null,
+    milestone_id: m.milestoneId ?? null, height_cm: m.heightCm ?? null, weight_kg: m.weightKg ?? null, head_cm: m.headCm ?? null, health_kind: m.healthKind ?? null, end_date: m.endDate ?? null,
     emoji: m.emoji, palette: m.palette, source: m.source, created_at_ts: m.createdAt,
     tags: m.tagIds.map((id) => byId.get(id)).filter((t): t is Tag => !!t).map((t) => ({ id: t.id, name: t.name, category: t.category, member: t.relatedFamilyMemberId ?? null })),
     media: m.media.filter((x) => x.path).map((x) => ({ id: x.id, path: x.path, kind: x.kind })),
@@ -41,7 +41,7 @@ function rowToMemory(r: any, cur: Memory | undefined, ts: number): Memory {
     time: r.time ?? undefined, location: r.location ?? undefined, media,
     tagIds: (Array.isArray(r.tags) ? r.tags : []).map((t: any) => t.id),
     createdAt: Number(r.created_at_ts) || cur?.createdAt || ts,
-    milestoneId: r.milestone_id ?? undefined, heightCm: r.height_cm != null ? Number(r.height_cm) : undefined, weightKg: r.weight_kg != null ? Number(r.weight_kg) : undefined, headCm: r.head_cm != null ? Number(r.head_cm) : undefined, healthKind: r.health_kind ?? undefined,
+    milestoneId: r.milestone_id ?? undefined, heightCm: r.height_cm != null ? Number(r.height_cm) : undefined, weightKg: r.weight_kg != null ? Number(r.weight_kg) : undefined, headCm: r.head_cm != null ? Number(r.head_cm) : undefined, healthKind: r.health_kind ?? undefined, endDate: r.end_date ? String(r.end_date) : undefined,
     emoji: r.emoji ?? "📷", palette: r.palette ?? "peach", source: r.source ?? "Added", updatedAt: ts, syncedTs: ts,
   };
 }

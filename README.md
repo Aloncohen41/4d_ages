@@ -28,7 +28,8 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 
 **Pregnancy**
 - A due date in the future starts a pregnancy profile. Posts show the week and the baby's size, for example "Week 20 (banana)", with a photo of that fruit or vegetable.
-- Pregnancy milestones by trimester, including a gender reveal, plus notes on symptoms and cravings.
+- Pregnancy milestones by trimester, including a gender reveal.
+- Symptoms (with how long they lasted) and cravings. Common symptoms come with tips based on the NHS pregnancy pages; the tips are never saved into the book.
 - Ultrasound pictures and scan measurements.
 - A weekly bump photo with tips for consistent shots. The photos play back as a video of the bump growing.
 - "Welcome to the world" sets the birth date and turns the pregnancy into the child's own profile.
@@ -52,6 +53,7 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - App lock with fingerprint or face unlock, and light, dark or system theme.
 - Dates are always written day first.
 - More than one account can be used on the same phone; each account's books are kept separately.
+- Optional backup to the user's own Google Drive, updated after each change, with restore.
 - The app checks for a newer version when it opens.
 
 ## How it works
@@ -71,7 +73,7 @@ A build without Supabase configured still runs, but only on that phone and witho
 - Zustand for state, persisted with AsyncStorage
 - Supabase for authentication, Postgres, storage and realtime
 - Material 3 colour, shape and type, with a tonal palette generated from each child's colour
-- Two small native modules of our own in `modules/`: MP4 export and receiving shared photos from other apps
+- Three small native modules of our own in `modules/`: MP4 export, receiving shared photos from other apps, and saving or sharing finished files through Android
 - expo-print for the PDF book
 
 ## Getting started
@@ -116,7 +118,7 @@ app/                 Screens (expo-router). app/(tabs) holds Home, Milestones, G
 src/components/      UI components and sheets
 src/lib/             App logic: the store, sync, dates, growth, the book and video builders, reminders
 src/data/            Static data such as the emoji list
-modules/             Native modules: video-export and share-intake
+modules/             Native modules: video-export, share-intake and file-export
 plugins/             Expo config plugins
 supabase/schema.sql  Database tables, row-level security policies and functions
 docs/                The website on GitHub Pages: share links, privacy policy, terms, account deletion

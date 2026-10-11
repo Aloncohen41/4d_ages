@@ -1,6 +1,6 @@
 import { Child, Memory, MilestoneDef, Relative, Tag } from "./types";
 import { indexTags, initialsOf, labelOfTag, displayName, relationLine } from "./tags";
-import { ageLong, ageShort, daysBetween, formatDate, formatTime, parseISO, smartAge, todayISO } from "./date";
+import { ageLong, ageShort, daysBetween, formatDate, formatSpan, formatTime, parseISO, smartAge, todayISO } from "./date";
 import { formatHeight, formatWeight, HeightUnit, WeightUnit } from "./growth";
 import { TYPE_META } from "./entries";
 import { APP_NAME } from "../brand";
@@ -216,7 +216,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
   const kidOf = (m: Memory) => kids.find((k) => k.id === m.childId) ?? child;
   const ageOf = (m: Memory) => { const k = kidOf(m); return ageShort(k.birth, m.date); }; // before the birth: "Week 20 (banana)"
   const names = (list: Child[]) => (list.length <= 2 ? list.map((k) => k.name).join(" & ") : `${list.slice(0, -1).map((k) => k.name).join(", ")} & ${list[list.length - 1].name}`);
-  const meta = (m: Memory) => [multi ? kidOf(m).name : "", formatDate(m.date), m.time ? formatTime(m.time) : "", ageOf(m), m.location?.trim() ?? ""].filter(Boolean).map(esc).join(" · ");
+  const meta = (m: Memory) => [multi ? kidOf(m).name : "", formatSpan(m.date, m.endDate), m.time ? formatTime(m.time) : "", ageOf(m), m.location?.trim() ?? ""].filter(Boolean).map(esc).join(" · ");
   const badge = (m: Memory, color: string, birthday = 0) => {
     if (birthday) return `<span class="badge" style="background:${color}">${motif("star", "#fff")}${ordinal(birthday)} birthday</span>`;
     const b = KIND_BADGE[m.type];

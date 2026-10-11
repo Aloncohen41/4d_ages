@@ -124,6 +124,23 @@ export async function joinWithCode(code: string): Promise<Child> {
   return child;
 }
 
+/**
+ * Opens an invite: if this account can already see the book (it's yours, or you were invited before), nothing is used up and the book is
+ * simply shown; otherwise the book is joined. A database without check_invite yet just joins, as before.
+ */
+export async function openInvite(code: string): Promise<{ outcome: "already" | "joined"; childId: string; name: string }> {
+  const { data } = await client().rpc("check_invite", { p_code: code.trim() });
+  const check = data as { already?: boolean; child_id?: string; name?: string } | null;
+  if (check?.already && check.child_id) {
+    const here = useStore.getState().kids.some((k) => k.id === check.child_id);
+    if (!here) await attachAndRestore(); // on another phone of theirs: bring it down
+    if (useStore.getState().kids.some((k) => k.id === check.child_id)) useStore.getState().setActive(check.child_id);
+    return { outcome: "already", childId: check.child_id, name: check.name ?? "This" };
+  }
+  const child = await joinWithCode(code);
+  return { outcome: "joined", childId: child.id, name: child.name };
+}
+
 /** Stop syncing on this phone. Everything already on the phone stays; the other parent keeps their copy. */
 export async function leaveChild(childId: string): Promise<void> {
   const user = await me();
@@ -248,8 +265,9 @@ export async function inviteFor(childId: string, kind: "parent" | "family", emai
 }
 
 /** The link that opens the app (or offers it) and joins the book: tapped in WhatsApp, email or any other app. */
-export const JOIN_PAGE = "https://aloncohen41.github.io/4d_ages/join/";
-export const joinLink = (code: string) => `${JOIN_PAGE}?code=${encodeURIComponent(code)}`;
+/** The share link: a short page that opens the app with the code (the older …/join/?code= links still work). */
+export const JOIN_PAGE = "https://aloncohen41.github.io/4d_ages/j/";
+export const joinLink = (code: string) => `${JOIN_PAGE}?c=${encodeURIComponent(code)}`;
 
 /** This account's access to a child: its role, and for a viewer the people whose posts they see. */
 async function myAccess(childId: string): Promise<Pick<Child, "role" | "viewPeople">> {

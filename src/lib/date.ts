@@ -106,6 +106,9 @@ export function ageBucket(birth: string, date: string): string {
   return a.months ? `${plural(a.years, "year")}, ${a.months} mo` : plural(a.years, "year");
 }
 
+/** A memory's days: one date, or "5 March 2025 – 2 April 2025" for something that lasted (a pregnancy symptom). */
+export const formatSpan = (date: string, endDate?: string) => (endDate && endDate > date ? `${formatDate(date)} – ${formatDate(endDate)}` : formatDate(date));
+
 /** "5 March 2025": the day first, as in Europe (never the US "March 5, 2025"). */
 export function formatDate(s: string): string {
   const d = parseISO(s);

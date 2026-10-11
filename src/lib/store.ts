@@ -80,6 +80,10 @@ export interface State {
   // not saved
   sync: SyncStatus;
   shareOpen: boolean;
+  /** A short in-app message at the top of the screen (see Toast.tsx), instead of a system pop-up. Not saved. */
+  toast?: Toast;
+  /** Backing up to Google Drive (see driveBackup.ts): whether it runs by itself after changes, and how the last one went. Kept on this phone. */
+  driveBackup: DriveBackupPrefs;
   pendingRecap: { childId: string; year: number } | null;
   entrySheet: EntrySheetState | null;
   tagSheet: { keys: string[]; forHome?: boolean } | null; // the tag browser / results (keys empty = browse all tags); forHome: picking tags filters Home
@@ -125,6 +129,8 @@ export interface State {
   setNotif: (patch: Partial<NotifPrefs>) => void;
   setSync: (patch: Partial<SyncStatus>) => void;
   setShareOpen: (open: boolean) => void;
+  showToast: (toast: Omit<Toast, "id"> | null) => void;
+  setDriveBackup: (patch: Partial<DriveBackupPrefs>) => void;
   setPendingRecap: (v: { childId: string; year: number } | null) => void;
   setEntrySheet: (v: EntrySheetState | null) => void;
   setTagSheet: (v: { keys: string[]; forHome?: boolean } | null) => void;
@@ -144,6 +150,10 @@ export interface State {
   /** Take one child (and everything of theirs) off this phone, without touching the cloud: their book is no longer shared with this account. */
   forgetChild: (childId: string) => void;
 }
+
+export interface DriveBackupPrefs { enabled: boolean; lastAt?: number; account?: string; /** "needs-google", or what went wrong */ error?: string }
+
+export interface Toast { id: number; title: string; body?: string; tone?: "success" | "info" | "error"; icon?: string }
 
 export const uid = (p = "id") => `${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 const now = () => Date.now();
@@ -200,6 +210,7 @@ export const useStore = create<State>()(
       bookPrefs: {},
       sync: { busy: false },
       shareOpen: false,
+      driveBackup: { enabled: false },
       pendingRecap: null,
       entrySheet: null,
       tagSheet: null,
@@ -368,6 +379,8 @@ export const useStore = create<State>()(
       setNotif: (patch) => set((s) => ({ notif: { ...s.notif, ...patch } })),
       setSync: (patch) => set((s) => ({ sync: { ...s.sync, ...patch } })),
       setShareOpen: (shareOpen) => set({ shareOpen }),
+      setDriveBackup: (patch) => set((s) => ({ driveBackup: { ...s.driveBackup, ...patch } })),
+      showToast: (toast) => set({ toast: toast ? { ...toast, id: Date.now() } : undefined }),
       setPendingRecap: (pendingRecap) => set({ pendingRecap }),
 
       setFamilyOrder: (childId, ids) => set((s) => ({ familyOrder: { ...s.familyOrder, [childId]: ids } })),
@@ -474,6 +487,7 @@ export const useStore = create<State>()(
         accountUserId: s.accountUserId,
         preview: s.preview,
         bookPrefs: s.bookPrefs,
+        driveBackup: s.driveBackup,
         pendingJoin: s.pendingJoin,
       }),
       onRehydrateStorage: () => () => {

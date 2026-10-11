@@ -11,7 +11,7 @@ const MAP = {
   search: "magnify", tag: "tag-outline", "edit-2": "pencil-outline", "trash-2": "delete-outline", x: "close", plus: "plus", check: "check",
   "refresh-cw": "refresh", "chevron-left": "chevron-left", "chevron-right": "chevron-right", "chevron-down": "chevron-down", "chevron-up": "chevron-up",
   film: "movie-outline", play: "play", "arrow-down": "arrow-down", "arrow-up": "arrow-up", "arrow-up-right": "arrow-top-right", calendar: "calendar-blank-outline",
-  image: "image-outline", clock: "clock-outline", "user-plus": "account-plus-outline", download: "download", square: "checkbox-blank-outline", "check-square": "checkbox-marked",
+  image: "image-outline", clock: "clock-outline", "user-plus": "account-plus-outline", download: "download", upload: "cloud-upload-outline", square: "checkbox-blank-outline", "check-square": "checkbox-marked",
   "help-circle": "help-circle-outline", bell: "bell-outline",
   pause: "pause", loop: "repeat", place: "map-marker-outline", scale: "scale-bathroom", birthday: "cake-variant-outline", reorder: "swap-vertical", drag: "drag", "t-moon": "weather-night", "t-star": "star-four-points", "t-flower": "flower", "t-leaf": "leaf", "t-plane": "airplane", "t-cloud": "cloud", "t-rainbow": "looks", "t-balloon": "balloon", "t-kite": "kite", "t-font": "format-font", "t-sun": "weather-sunny", "t-teddy": "teddy-bear",
   health: "medical-bag", mic: "microphone", stop: "stop", voice: "microphone-plus", food: "food-apple-outline", tooth: "tooth-outline", classics: "book-heart-outline", haircut: "content-cut", hand: "hand-back-left-outline", sleep: "sleep", school: "school-outline", trip: "airplane",

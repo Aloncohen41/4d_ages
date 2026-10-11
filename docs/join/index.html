@@ -5,6 +5,15 @@
 <title>Join a baby book</title>
 <meta name="description" content="Open this link on your Android phone to add a shared baby book to 4D Ages.">
 <meta name="robots" content="noindex">
+<!-- the card WhatsApp and other apps show for the link -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="4D Ages">
+<meta property="og:title" content="You're invited to a baby book">
+<meta property="og:description" content="Tap to open it in 4D Ages.">
+<meta property="og:image" content="https://aloncohen41.github.io/4d_ages/img/share-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../site.css">
 </head>
 <body>
@@ -23,12 +32,13 @@
 <footer><a href="../privacy/">Privacy policy</a> · <a href="../terms/">Terms</a></footer>
 <script>
   // the code from the link (letters and numbers only), shown so it can also be typed in by hand
-  var code = (new URLSearchParams(location.search).get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  var params = new URLSearchParams(location.search);
+  var code = (params.get("c") || params.get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
   var codeEl = document.getElementById("code");
   var open = document.getElementById("open");
   if (code) {
     codeEl.textContent = code;
-    var page = location.origin + location.pathname + "?code=" + code;
+    var page = location.origin + location.pathname + "?c=" + code;
     // Android: an intent link opens the app if it's installed, and comes back to this page if it isn't
     var android = /Android/i.test(navigator.userAgent);
     open.href = android

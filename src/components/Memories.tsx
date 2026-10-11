@@ -118,7 +118,7 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
         child, defs, memories: recap.highlights, relatives, tags: tagList, style, size,
         title: `${child.name}'s Year ${year}`, subtitle: `${formatDate(recap.win.start)} – ${formatDate(recap.win.end)}`, intro: false,
       }, to);
-      if (done === "saved") setMsg("Saved. You'll find the PDF in the folder you picked.");
+      if (done === "saved") setMsg("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
     } catch {
       setMsg("Couldn't build the PDF. Try again.");
     } finally {

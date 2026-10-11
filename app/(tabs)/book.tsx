@@ -94,7 +94,7 @@ function Book() {
     setProgress("");
     try {
       const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
-      if (done === "saved") setMsg("Saved. You'll find the PDF in the folder you picked.");
+      if (done === "saved") setMsg("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
       if (done === "shared") setMsg("");
     } catch (e) {
       setMsg(e instanceof Error && e.message ? e.message : "Couldn't build the PDF. Try again.");

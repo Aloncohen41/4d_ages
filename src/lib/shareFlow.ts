@@ -29,14 +29,15 @@ export function friendlyShareError(e: unknown): string {
 }
 
 /**
- * The message sent with an invite, short enough to be read: what they can do (view only, or view and add), the link, and the code with who it's
- * for (in case the link can't be opened).
+ * The message sent with an invite, short enough to be read: what they can do (view only, or view and add), the link (with the code in it), and
+ * which email to sign in with when the invite is for one email.
  */
 export function inviteMessage(kind: InviteKind, childName: string, code: string, link: string, appName: string, email?: string): string {
   const intro = kind === "parent"
     ? `Join ${childName}'s baby book on ${appName}. You can view and add photos and memories.`
     : `You're invited to ${childName}'s baby book on ${appName} (view only).`;
-  return [intro, link, `Code ${code}${email ? ` · for ${email}` : ""} · valid 7 days`].join("\n");
+  // the code is inside the link (and on the share screen, to type in by hand), so the message stays short
+  return [intro, link, email ? `Sign in with ${email} to open it.` : ""].filter(Boolean).join("\n");
 }
 
 /** What the person invited will see, in one line. */

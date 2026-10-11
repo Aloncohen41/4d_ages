@@ -4,7 +4,7 @@ import { isViewOnly, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { Child, MILESTONE_DEFS, MediaItem, Memory } from "../lib/types";
 import { TYPE_META } from "../lib/entries";
-import { ageShort, formatDate, formatTime } from "../lib/date";
+import { ageShort, formatDate, formatSpan, formatTime } from "../lib/date";
 import { formatHeight, formatWeight } from "../lib/growth";
 import { Btn, PhotoView, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
@@ -85,7 +85,7 @@ export function PostCard({ p, child, onView, onOpenMedia, onEdit }: {
       )}
       <View style={{ paddingHorizontal: media ? 6 : 0, paddingTop: 10 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          {meta("calendar", formatDate(p.date))}
+          {meta("calendar", formatSpan(p.date, p.endDate))}
           <Text style={{ backgroundColor: t.accentSoft, color: t.onAccentSoft, fontWeight: "700", fontSize: 11, paddingHorizontal: 9, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>{ageShort(child.birth, p.date)}</Text>
           <View style={{ flex: 1 }} />
           {child.role !== "viewer" ? (
@@ -126,7 +126,7 @@ export function PostViewer({ p, child, onClose, onOpenMedia, onEdit }: {
   const items = visualMedia(p.media).filter((m) => m.uri || m.thumb);
   return (
     <Sheet visible onClose={onClose} title={p.title || badge}>
-      <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{badge} · {formatDate(p.date)}{p.time ? ` · ${formatTime(p.time)}` : ""} · {ageShort(child.birth, p.date)}</Text>
+      <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{badge} · {formatSpan(p.date, p.endDate)}{p.time ? ` · ${formatTime(p.time)}` : ""} · {ageShort(child.birth, p.date)}</Text>
       {p.location ? <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 2 }}>{p.location}</Text> : null}
       <View style={{ gap: 10, marginTop: 12 }}>
         {items.map((m, i) => (

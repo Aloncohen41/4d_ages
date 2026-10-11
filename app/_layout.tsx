@@ -12,6 +12,8 @@ import { ShareIntakeListener } from "../src/components/ShareIntakeListener";
 import { ImportSheet } from "../src/components/ImportSheet";
 import { ShareSheet } from "../src/components/ShareSheet";
 import { UpdatePrompt } from "../src/components/UpdatePrompt";
+import { DriveAutoBackup } from "../src/components/DriveAutoBackup";
+import { Toast } from "../src/components/Toast";
 import { NewPasswordAfterReset } from "../src/components/AccountSheets";
 import { AppLock } from "../src/components/AppLock";
 import { EntrySheet } from "../src/components/EntrySheet";
@@ -136,6 +138,7 @@ export default function RootLayout() {
       <ShareIntakeListener />
       <ThumbBackfill />
       <UpdatePrompt />
+      {signedIn && hasKids ? <DriveAutoBackup /> : null}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={signedIn && hasKids}>
           <Stack.Screen name="(tabs)" />
@@ -167,6 +170,8 @@ export default function RootLayout() {
       {signedIn && hasKids ? <EntrySheet /> : null}
       {signedIn && hasKids ? <EditPhotoSheet /> : null}
       {signedIn && hasKids ? <TagBrowserSheet /> : null}
+      {/* last, so it shows above every screen */}
+      <Toast />
     </SafeAreaProvider>
   );
 }

@@ -79,6 +79,17 @@ The Google button appears once the client ID is set and the app is rebuilt. The 
 
 If Google sign-in fails with `DEVELOPER_ERROR`, the SHA-1 of the key that signed the build doesn't match any Android client.
 
+### Backup to Google Drive
+
+The backup in Settings uses the same Google setup, plus two things in the same Google Cloud project:
+
+1. **APIs & Services → Library → Google Drive API → Enable.**
+2. **Google Auth Platform → Data access → Add or remove scopes:** add `.../auth/drive.file` and save. This scope only lets the app see the
+   files it creates (the "4D Ages backup" folder), nothing else in the user's Drive, so Google doesn't require a review for it.
+
+If the app's OAuth consent screen is still in **Testing**, only the test users listed there can connect Drive. Publish it (**Audience → Publish
+app**) to let anyone use it.
+
 ## 6. The website
 
 The `docs/` folder is a small static site, served with GitHub Pages. It has:

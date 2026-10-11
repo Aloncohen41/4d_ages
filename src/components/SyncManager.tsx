@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { Alert, AppState } from "react-native";
+import { AppState } from "react-native";
 import { useStore } from "../lib/store";
 import { useSession } from "../lib/supabase";
-import { attachAndRestore, isApplying, joinWithCode, syncAll } from "../lib/sync";
+import { attachAndRestore, isApplying, openInvite, syncAll } from "../lib/sync";
+import { friendlyShareError } from "../lib/shareFlow";
 import { useRealtime } from "../lib/realtime";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -13,19 +14,21 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  *    account's books from other phones are brought down.
  *  - Then: a moment after any change here; within a second or two of a change on the other phone (live updates, see realtime.ts); and as a
  *    safety net on open, when returning to the app, and every 2 minutes.
- * A phone holds one account's books: if someone else signs in while the last account still has changes that never reached the cloud, they are
- * signed out again (so nothing is lost); otherwise the old account's copy is cleared from the phone (it stays in that account).
+ * A phone can be used by more than one account: each account's books are kept apart on the phone (see accounts.ts).
  */
 /** A share link opened before (or after) signing in: add that book now. */
 async function joinPending() {
   const code = useStore.getState().pendingJoin;
   if (!code) return;
   useStore.getState().setPendingJoin(undefined);
+  const toast = useStore.getState().showToast;
   try {
-    const child = await joinWithCode(code);
-    Alert.alert(`${child.name}'s book is here`, "Everything in it is on its way to this phone. From now on, anything either of you adds shows up on both phones.");
+    const r = await openInvite(code);
+    toast(r.outcome === "already"
+      ? { title: `You already have ${r.name}'s book`, body: "It's here on your phone, so there was nothing to add. The invite is left for whoever it was meant for.", tone: "info" }
+      : { title: `${r.name}'s book is here`, body: "Everything in it is on its way. From now on, what either of you adds shows up on both phones." });
   } catch (e) {
-    Alert.alert("Couldn't add the book", msg(e));
+    toast({ title: "Couldn't add the book", body: friendlyShareError(e), tone: "error" });
   }
 }
 
@@ -43,7 +46,7 @@ export function SyncManager() {
   useEffect(() => {
     if (!notice) return;
     useStore.getState().setSync({ notice: undefined });
-    Alert.alert("A book was taken off this phone", notice);
+    useStore.getState().showToast({ title: "A book was taken off this phone", body: notice, tone: "info" });
   }, [notice]);
 
   // a link opened while already signed in

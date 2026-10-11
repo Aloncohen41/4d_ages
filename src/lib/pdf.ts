@@ -3,6 +3,7 @@ import * as Sharing from "expo-sharing";
 import { Child, Memory, MilestoneDef, Relative, Tag } from "./types";
 import { albumFileName } from "./fileNames";
 import { saveToFolder, withFriendlyName } from "./exportFiles";
+import { fileExport } from "./fileExport";
 import { shrunkBase64 } from "./resize";
 import { BookColour, BookStyle, BookSizeId, bookMetrics, planBook, sizeById } from "./bookPages";
 import { buildBookHtml, printSizes } from "./bookHtml";
@@ -35,7 +36,7 @@ export interface BookInput {
   heightUnit?: HeightUnit;
 }
 
-/** "save": you pick a folder on the phone (Downloads, Documents…) and the PDF is saved there. "share": the share menu (send, Drive, print…). */
+/** "save": Android's save dialog (Downloads, Google Drive, any folder) and the PDF is saved there. "share": the share menu (WhatsApp, email, Drive…). */
 export type BookDestination = "save" | "share";
 
 /** Prints the book to a PDF at exactly the chosen page size, with its proper name. Returns the file's uri. */
@@ -64,15 +65,38 @@ async function printBook(i: BookInput, onProgress?: (text: string) => void): Pro
   } finally {
     html = null;
   }
-  const fileName = albumFileName([i.child, ...(i.siblings ?? [])].map((k) => k.name).join(" & "), i.style); // e.g. "Maya Classic Album By 4D-Ages.pdf" instead of a random temporary name
+  const fileName = bookFileName(i); // e.g. "Maya Classic Album By 4D-Ages.pdf" instead of a random temporary name
   return { uri: withFriendlyName(uri, fileName), fileName };
 }
+
+const bookFileName = (i: BookInput) => albumFileName([i.child, ...(i.siblings ?? [])].map((k) => k.name).join(" & "), i.style);
 
 /**
  * Exports the book. Saving asks for the folder first (so nothing is built if you change your mind), then writes the PDF there.
  * Returns where it went: "saved", "shared", or "cancelled" when no folder was picked.
  */
 export async function exportBook(i: BookInput, to: BookDestination = "share", onProgress?: (text: string) => void): Promise<"saved" | "shared" | "cancelled"> {
+  const fx = fileExport();
+  if (fx && to === "save") {
+    // the save dialog first (so nothing is built if you change your mind), then the PDF is copied into the file you chose
+    const dest = await fx.createDocument(bookFileName(i), "application/pdf");
+    if (!dest) return "cancelled";
+    try {
+      const { uri } = await printBook(i, onProgress);
+      onProgress?.("Saving…");
+      await fx.copyInto(uri, dest);
+    } catch (e) {
+      await fx.deleteDocument(dest).catch(() => false); // no empty file left behind
+      throw e;
+    }
+    return "saved";
+  }
+  if (fx) {
+    const { uri, fileName } = await printBook(i, onProgress);
+    fx.share(uri, "application/pdf", fileName.replace(/\.pdf$/, ""));
+    return "shared";
+  }
+  // a build without the file-export module: the folder picker and expo-sharing, as before
   if (to === "save") {
     const save = await saveToFolder("application/pdf");
     if (!save) return "cancelled";

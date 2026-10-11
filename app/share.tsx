@@ -10,7 +10,7 @@ import { useActiveChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { isConfigured, keyIsSecret, useSession } from "../src/lib/supabase";
 import {
-  MAX_PARENTS, Member, PendingInvite, cancelInvite, ensureShared, inviteFor, joinLink, joinWithCode, listBlocked, listInvites, listMembers,
+  MAX_PARENTS, Member, PendingInvite, cancelInvite, ensureShared, inviteFor, joinLink, openInvite, listBlocked, listInvites, listMembers,
   parentsOf, removeMember, setMemberPeople, unblockEmail,
 } from "../src/lib/sync";
 import { InviteKind, cleanEmail, friendlyShareError, inviteMessage, isEmail, kindSummary, normalizeCode } from "../src/lib/shareFlow";
@@ -424,8 +424,10 @@ function JoinCard({ expanded }: { expanded?: boolean }) {
     if (busy) return;
     setBusy(true); setErr("");
     try {
-      const c = await joinWithCode(clean);
-      Alert.alert(`${c.name}'s book is here`, "Everything in it is on its way to this phone.");
+      const r = await openInvite(clean);
+      useStore.getState().showToast(r.outcome === "already"
+        ? { title: `You already have ${r.name}'s book`, body: "There was nothing to add, and the code is still free for whoever it was meant for.", tone: "info" }
+        : { title: `${r.name}'s book is here`, body: "Everything in it is on its way to this phone." });
       router.replace("/");
     } catch (e) {
       setErr(friendlyShareError(e));

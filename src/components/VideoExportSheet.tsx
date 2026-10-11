@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import * as Sharing from "expo-sharing";
+import { fileExport } from "../lib/fileExport";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { GROW_SPEEDS } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -87,7 +88,10 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   };
 
   const share = async () => {
-    if (uri && (await Sharing.isAvailableAsync())) await Sharing.shareAsync(uri, { mimeType: "video/mp4", dialogTitle: fileName.replace(/\.mp4$/, "") });
+    if (!uri) return;
+    const fx = fileExport(); // the share menu without waiting for an answer (see modules/file-export)
+    if (fx) return fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, ""));
+    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "video/mp4", dialogTitle: fileName.replace(/\.mp4$/, "") });
   };
   const save = async () => {
     if (!uri) return;

@@ -14,6 +14,7 @@ import { deleteAccountData, syncAll } from "../src/lib/sync";
 import { Page, Section } from "../src/components/Page";
 import { RemindersCard } from "../src/components/RemindersCard";
 import { AboutCard } from "../src/components/AboutCard";
+import { DriveBackupCard } from "../src/components/DriveBackupCard";
 import { Btn, Input, Label, Seg, Sheet } from "../src/components/ui";
 import { CHART_SOURCES } from "../src/lib/percentiles";
 
@@ -61,6 +62,10 @@ export default function Settings() {
             </View>
           ))}
         </View>
+      </Section>
+
+      <Section title="Backup">
+        <DriveBackupCard />
       </Section>
 
       <Section title="Notifications">

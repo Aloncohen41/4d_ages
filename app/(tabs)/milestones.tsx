@@ -5,6 +5,7 @@ import { Screen } from "../../src/components/Screen";
 import { Btn, PhotoView, Seg } from "../../src/components/ui";
 import { MilestoneChecklist } from "../../src/components/MilestoneChecklist";
 import { PregnancyMilestones } from "../../src/components/Pregnancy";
+import { PregnancyNotes } from "../../src/components/PregnancyNotes";
 import { ReinforceButton, ReinforceSheet } from "../../src/components/ReinforceSheet";
 import { TagChip } from "../../src/components/TagChip";
 import { resolveTags } from "../../src/lib/tags";
@@ -35,14 +36,7 @@ function Milestones() {
   const [reinforce, setReinforce] = useState(false);
   if (!child) return null;
   // before the birth: the pregnancy milestones, and symptoms and cravings
-  if (child.expecting) {
-    return (
-      <View>
-        <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>Pregnancy milestones</Text>
-        <PregnancyMilestones child={child} />
-      </View>
-    );
-  }
+  if (child.expecting) return <PregnancySections />;
   const copy: Record<Section, { title: string; desc?: string }> = {
     milestones: { title: "Milestones" },
     firsts: { title: "Firsts", desc: "Things they did for the very first time. Add a photo and a few words while you still remember it." },
@@ -60,6 +54,26 @@ function Milestones() {
       </View>
       {section === "milestones" ? <MilestoneChecklist /> : <EntryList kind={section === "firsts" ? "first" : "last"} />}
       <ReinforceSheet visible={reinforce} onClose={() => setReinforce(false)} />
+    </View>
+  );
+}
+
+type PregnancySection = "milestones" | "symptoms" | "cravings";
+
+/** Before the birth: the pregnancy milestones, and symptoms and cravings laid out like Firsts and Lasts. */
+function PregnancySections() {
+  const t = useTheme();
+  const child = useShownChild();
+  const [section, setSection] = useState<PregnancySection>("milestones");
+  if (!child) return null;
+  const titles: Record<PregnancySection, string> = { milestones: "Pregnancy milestones", symptoms: "Symptoms", cravings: "Cravings" };
+  return (
+    <View>
+      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>{titles[section]}</Text>
+      <View style={{ marginBottom: 14 }}>
+        <Seg options={[{ id: "milestones" as PregnancySection, label: "Milestones" }, { id: "symptoms" as PregnancySection, label: "Symptoms" }, { id: "cravings" as PregnancySection, label: "Cravings" }]} value={section} onChange={setSection} />
+      </View>
+      {section === "milestones" ? <PregnancyMilestones child={child} /> : <PregnancyNotes child={child} kind={section === "symptoms" ? "symptom" : "craving"} />}
     </View>
   );
 }

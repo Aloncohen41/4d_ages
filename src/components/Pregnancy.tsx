@@ -4,7 +4,7 @@ import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { Child, Memory, MILESTONE_DEFS } from "../lib/types";
 import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { BORN_ID, BUMP_SOURCE, BUMP_TIPS, FRUIT_WEEKS, GENDER_REVEAL_ID, PREGNANCY_MILESTONES, PREGNANCY_NAME, SYMPTOM_IDEAS, SYMPTOM_SOURCE, TRIMESTER_NAMES, milestonesByTrimester, pregnancyWeekOf, sizeForWeek, trimesterOf, weekOn } from "../lib/pregnancy";
+import { BORN_ID, BUMP_SOURCE, BUMP_TIPS, FRUIT_WEEKS, GENDER_REVEAL_ID, PREGNANCY_MILESTONES, PREGNANCY_NAME, TRIMESTER_NAMES, milestonesByTrimester, pregnancyWeekOf, sizeForWeek, trimesterOf, weekOn } from "../lib/pregnancy";
 import { buildBumpReel } from "../lib/reels";
 import { Gender } from "../lib/types";
 import { addDays, formatDate, parseISO, pregnancy, toISO, todayISO } from "../lib/date";
@@ -158,21 +158,19 @@ function ScanMeasureSheet({ child, onClose }: { child: Child; onClose: () => voi
 
 /**
  * Milestones before birth, by trimester: the pregnancy milestones (the first scan, the heartbeat, the gender reveal, the first kick…), ticked
- * with today's date and changed with a tap; then "Welcome to the world", which sets the birthday and starts the child's own profile; and the
- * symptoms and cravings, noted as they come (morning sickness, the odd craving, strange dreams…).
+ * with today's date and changed with a tap; then "Welcome to the world", which sets the birthday and starts the child's own profile.
+ * (Symptoms and cravings have their own sections: see PregnancyNotes.tsx.)
  */
 export function PregnancyMilestones({ child }: { child: Child }) {
   const t = useTheme();
   const memories = useStore((s) => s.memories);
   const setEntrySheet = useStore((s) => s.setEntrySheet);
   const saveMemory = useStore((s) => s.saveMemory);
-  const [noting, setNoting] = useState<string | null>(null);
   const [revealing, setRevealing] = useState(false);
   const [arriving, setArriving] = useState(false);
   const today = todayISO();
   const viewOnly = child.role === "viewer";
   const logged = useMemo(() => new Map(memories.filter((m) => m.childId === child.id && m.type === "milestone" && m.milestoneId?.startsWith("preg-")).map((m) => [m.milestoneId as string, m])), [memories, child.id]);
-  const notes = useMemo(() => memories.filter((m) => m.childId === child.id && m.source === SYMPTOM_SOURCE && m.type === "story").sort((a, b) => byMoment(b, a)), [memories, child.id]);
   const done = PREGNANCY_MILESTONES.filter((d) => logged.has(d.id)).length;
   const nowTrimester = trimesterOf(pregnancy(child.birth, today).week);
 
@@ -225,49 +223,9 @@ export function PregnancyMilestones({ child }: { child: Child }) {
         {!viewOnly ? <Btn label="The baby is here!" icon="birthday" onPress={() => setArriving(true)} style={{ marginTop: 10 }} /> : null}
       </View>
 
-      <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22 }]}>Symptoms and cravings</Text>
-      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2, marginBottom: 8 }]}>The odd, funny and hard parts, to remember (or laugh about) later.</Text>
-      {!viewOnly ? (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {SYMPTOM_IDEAS.map((s) => (
-            <Pressable key={s} onPress={() => setNoting(s)} accessibilityRole="button" style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, borderColor: t.line, backgroundColor: t.card }}>
-              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>{s}</Text>
-            </Pressable>
-          ))}
-          <Pressable onPress={() => setNoting("")} accessibilityRole="button" style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, borderColor: t.accent }}>
-            <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12 }}>Something else</Text>
-          </Pressable>
-        </View>
-      ) : null}
-      {notes.map((m) => (
-        <Pressable key={m.id} onPress={() => !viewOnly && setEntrySheet({ kind: "story", editId: m.id })} style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.line }}>
-          <Text style={[TYPE.titleSmall, { color: t.ink }]}>{m.title}</Text>
-          {m.description ? <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>{m.description}</Text> : null}
-          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Week {weekOn(child.birth, m.date)} · {formatDate(m.date)}</Text>
-        </Pressable>
-      ))}
-      {noting !== null ? <SymptomSheet child={child} start={noting} onClose={() => setNoting(null)} /> : null}
       {revealing ? <GenderRevealSheet child={child} memory={logged.get(GENDER_REVEAL_ID)} onClose={() => setRevealing(false)} /> : null}
       {arriving ? <ArrivalSheet child={child} onClose={() => setArriving(false)} /> : null}
     </View>
-  );
-}
-
-/** Note a symptom or a craving: what it was, a few words, and the day. */
-function SymptomSheet({ child, start, onClose }: { child: Child; start: string; onClose: () => void }) {
-  const t = useTheme();
-  const saveMemory = useStore((s) => s.saveMemory);
-  const [title, setTitle] = useState(start);
-  const [text, setText] = useState("");
-  const [date, setDate] = useState(todayISO());
-  return (
-    <Sheet visible onClose={onClose} title="Symptoms and cravings">
-      <Input value={title} onChangeText={setTitle} placeholder="Example: Craving pickles at midnight" />
-      <Input value={text} onChangeText={setText} placeholder="A few words (optional)" multiline style={{ marginTop: 10, minHeight: 80, textAlignVertical: "top" }} />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>When</Text>
-      <DateField value={date} onChange={setDate} max={todayISO()} />
-      <Btn label="Save" disabled={!title.trim()} onPress={() => { saveMemory({ childId: child.id, type: "story", title: title.trim(), description: text, date, media: [], tagIds: [], emoji: "🤰", source: SYMPTOM_SOURCE }); onClose(); }} style={{ marginTop: 16 }} />
-    </Sheet>
   );
 }
 

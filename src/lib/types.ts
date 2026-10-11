@@ -100,6 +100,7 @@ export interface Memory extends SyncFields {
   weightKg?: number; // measure
   headCm?: number; // measure: head circumference
   healthKind?: HealthKind; // health: what kind of entry
+  endDate?: string; // a pregnancy symptom: the last day of the time it lasted (from `date` to here); missing while it is still going
   // how it is drawn until there is a real photo, and where it came from
   emoji: string;
   palette: string;

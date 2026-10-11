@@ -157,10 +157,4 @@ export function planBumpPhotoNotifications(kids: { id: string; name: string; bir
 }
 export const pregnancyWeekOf = (d: MilestoneDef) => (d as MilestoneDef & { week?: number }).week;
 
-/** Ideas for noting how the pregnancy feels: symptoms, cravings and the odd ones nobody warns you about. */
-export const SYMPTOM_IDEAS = [
-  "Morning sickness", "Craving", "Can't stand the smell of", "Tiredness", "Heartburn", "Back ache", "Strange dreams", "Swollen feet",
-  "Hiccups (baby's)", "Nesting", "Baby brain", "Couldn't sleep",
-];
-/** The source on a symptom or craving note, so they can be listed together. */
-export const SYMPTOM_SOURCE = "Pregnancy";
+

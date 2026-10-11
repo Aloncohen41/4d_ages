@@ -135,6 +135,7 @@ create table if not exists public.child_blocks (
 alter table public.child_blocks enable row level security;
 drop policy if exists blocks_read on public.child_blocks;
 create policy blocks_read on public.child_blocks for select to authenticated using (public.is_editor(child_id));
+alter table public.memories add column if not exists end_date date;         -- a pregnancy symptom: the last day of the time it lasted
 alter table public.memories add column if not exists health_kind text;      -- health log entries: 'checkup' | 'vaccination' | 'illness' | 'medicine' | 'other'
 alter table public.children add column if not exists expecting boolean not null default false;   -- not born yet: birth is the due date
 
@@ -334,6 +335,28 @@ begin
   select * into v_child from public.children where id = v_inv.child_id;
   return row_to_json(v_child);
 end $$;
+
+-- before joining: does this person already have this access? Then the app says so and the invite is left for whoever it was meant for (opening
+-- your own invite link no longer uses it up). The child's name is only returned to someone who can already see the book.
+create or replace function public.check_invite(p_code text) returns json
+language plpgsql security definer set search_path = public as $$
+declare v_inv public.invites; v_mine public.child_members;
+begin
+  select * into v_inv from public.invites where code = upper(trim(p_code)) and expires_at > now();
+  if not found then
+    return json_build_object('already', false);
+  end if;
+  select * into v_mine from public.child_members where child_id = v_inv.child_id and user_id = auth.uid();
+  if not found then
+    return json_build_object('already', false);
+  end if;
+  if v_mine.role in ('owner', 'editor') or (v_inv.role = 'viewer' and coalesce(v_mine.people, '{}') @> coalesce(v_inv.people, '{}') and coalesce(v_inv.people, '{}') @> coalesce(v_mine.people, '{}')) then
+    return json_build_object('already', true, 'child_id', v_inv.child_id, 'name', (select name from public.children where id = v_inv.child_id), 'role', v_mine.role);
+  end if;
+  return json_build_object('already', false);
+end $$;
+revoke execute on function public.check_invite(text) from public, anon;
+grant execute on function public.check_invite(text) to authenticated;
 
 -- ---------- who has access: removing someone, and what a viewer sees ----------
 -- The owner may remove anyone; the other parent may remove viewers (and leave themselves). The owner can't be removed by someone else.

@@ -2,6 +2,26 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.0.8
+
+**Saving and sharing the book**
+- Save PDF now uses Android's own save dialog, so the book can be saved to Downloads or Google Drive. The folder picker used before couldn't choose them ("to protect your privacy, choose another folder").
+- Sharing the PDF (or a video) to WhatsApp no longer fails when Android closes the app in the background while WhatsApp is open.
+
+**Backup to Google Drive**
+- Settings, Backup: keep a copy of every book, with its photos and videos, in a "4D Ages backup" folder in your own Google Drive. When it's on, it backs up a minute after each change.
+- Restore brings a backup back onto the phone, and back into your account.
+
+**Pregnancy**
+- Symptoms and Cravings have their own sections next to the pregnancy milestones, like Firsts and Lasts after the birth.
+- 25 common symptoms from the NHS pregnancy pages. Each comes with tips that can help, when to call your midwife or GP, and when to get help straight away. The tips are general information, not medical advice, and they aren't saved with your notes, so they never appear in the book.
+- A symptom can last a stretch of days: when it started and when it stopped, or still going.
+
+**Sharing**
+- Shorter invite messages: the code is inside the link, and WhatsApp shows a 4D Ages preview card.
+- Opening an invite to a book you already have now says so, and leaves the invite unused for the person it was meant for.
+- News such as "Maya's book is here" appears as an in-app notification instead of a system pop-up.
+
 ## 1.0.7
 
 **Profiles and accounts**
