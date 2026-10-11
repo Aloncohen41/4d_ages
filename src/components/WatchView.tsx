@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useTheme } from "../lib/useTheme";
 import { Child, Memory } from "../lib/types";
-import { Reel, buildWatchSections } from "../lib/reels";
+import { Reel, buildBumpReel, buildWatchSections } from "../lib/reels";
+import { BUMP_SOURCE } from "../lib/pregnancy";
 import { slideView, slidesOf } from "../lib/slides";
 import { addDays, formatDate, todayISO } from "../lib/date";
 import { Btn, PhotoView, Sheet } from "./ui";
@@ -21,6 +22,7 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
   const mine = useMemo(() => memories.filter((m) => m.childId === child.id), [memories, child.id]);
   const sections = useMemo(() => buildWatchSections(mine, child, today), [mine, child, today]);
   const everything = useMemo(() => slidesOf(mine), [mine]);
+  const bump = useMemo(() => buildBumpReel(mine, child, BUMP_SOURCE), [mine, child]);
   const [open, setOpen] = useState<Reel | null>(null);
   const [custom, setCustom] = useState<{ from: string; to: string; title?: string } | null | undefined>(undefined);
 
@@ -68,12 +70,20 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
         </Pressable>
       ) : null}
 
+      {bump ? (
+        <View>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22 }}>Before {child.name} was born</Text>
+          <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 2, marginBottom: 10 }}>The weekly bump photos, week by week.</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>{card(bump)}</View>
+        </View>
+      ) : null}
+
       {order.map(block)}
 
       {!sections.age.length && !sections.years.length ? <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>Videos appear here automatically once a stretch of {child.name}'s life has a couple of pictures in it.</Text> : null}
 
       {open ? (
-        <Sheet visible onClose={() => setOpen(null)} title={open.kind === "all" ? `${child.name}, from day one` : `${child.name} · ${open.label}`}>
+        <Sheet visible onClose={() => setOpen(null)} title={open.kind === "all" ? `${child.name}, from day one` : open.kind === "bump" ? "The bump, week by week" : `${child.name} · ${open.label}`}>
           <GrowPlayer slides={open.slides} child={child} title={open.title} subtitle={open.subtitle} fileLabel={open.fileLabel} />
           <Btn label="Choose the pictures yourself" kind="line" onPress={() => { const r = open; setOpen(null); setTimeout(() => setCustom({ from: r.from, to: r.to < today ? r.to : today }), 250); }} style={{ marginTop: 14 }} />
         </Sheet>

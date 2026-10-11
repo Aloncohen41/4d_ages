@@ -11,7 +11,7 @@ import { ageSpan } from "./ageSpan";
  */
 export interface Reel {
   id: string;
-  kind: "age" | "year" | "all";
+  kind: "age" | "year" | "all" | "bump";
   label: string; // "0–6 months", "1–2 years", "2026", "From day one"
   title: string; // the title card of the video: "Here is Maya"
   subtitle: string; // "at 1–2 years old"
@@ -115,6 +115,16 @@ export function buildCalendarReels(memories: Memory[], child: ChildInfo, today: 
     });
   }
   return out.sort(newestFirst);
+}
+
+/** The weekly bump photos as one video, week by week (once there are two). Kept after the birth, to watch the bump grow. */
+export function buildBumpReel(memories: Memory[], child: ChildInfo, bumpSource: string): Reel | null {
+  const slides = slidesOf(memories.filter((m) => m.childId === child.id && m.source === bumpSource)).filter((s) => s.uri);
+  if (slides.length < 2) return null;
+  return {
+    id: "bump", kind: "bump", label: "The bump", title: `Waiting for ${child.name}`, subtitle: "the bump, week by week", fileLabel: "The bump",
+    from: slides[0].date, to: slides[slides.length - 1].date, inProgress: false, slides, cover: slides[slides.length - 1], newest: slides[slides.length - 1].date,
+  };
 }
 
 export interface WatchSections {

@@ -56,7 +56,7 @@ ok("[LOGIN-08] adding a child and joining a partner happen only after sign-in (t
 /* ---------------- add child (CHILD-01, CHILD-02) ---------------- */
 const screen = read("src/components/Screen.tsx");
 ok("[CHILD-01] the emoji option shows only while there is no photo", /\{!photoUri \? \(/.test(screen) && /Remove photo/.test(screen));
-ok("[CHILD-02] the child form has Girl, Boy and Prefer not to say; children without one count as Prefer not to say", /label: "Girl"[\s\S]*label: "Boy"[\s\S]*label: "Prefer not to say"/.test(screen) && /child\.gender \?\? "unspecified"/.test(screen));
+ok("[CHILD-02] the child form has Girl, Boy and Prefer not to say; children without one count as Prefer not to say", /label: "Girl"[\s\S]*label: "Boy"[\s\S]*"Prefer not to say"/.test(screen) && /child\.gender \?\? "unspecified"/.test(screen));
 
 /* ---------------- navigation (NAV-01 … 03, ADD-01) ---------------- */
 ok("[NAV-01] a menu button top-left with Family and Settings", /accessibilityLabel="Menu"/.test(screen) && /item\("family", "Family", "\/family"\)/.test(screen) && /item\("settings", "Settings", "\/settings"\)/.test(screen));

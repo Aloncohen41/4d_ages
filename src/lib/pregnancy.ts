@@ -1,5 +1,8 @@
 import type { MilestoneDef } from "./types";
 
+/** What a pregnancy profile is called until the name is chosen. */
+export const PREGNANCY_NAME = "Bump";
+
 /*
  * The pregnancy, before the baby arrives: how big the baby is this week (as a fruit, with a typical length and weight), the pregnancy
  * milestones (the first scan, the heartbeat, the first kick…), and ideas for noting symptoms and cravings. Pure, so it can be tested.
@@ -71,15 +74,20 @@ export function weekOn(due: string, date: string): number {
 
 const p = (id: string, label: string, emoji: string, week: number, hint: string): MilestoneDef => ({ id: `preg-${id}`, label, emoji, hint, category: "Pregnancy", months: undefined, aliases: undefined, ...({ week } as object) });
 
-/** The pregnancy milestones, in the order they usually happen (the week is when, roughly). */
+/** The gender reveal: the day you found out, and whether it's a girl or a boy (it sets the child's gender). The id is kept from before. */
+export const GENDER_REVEAL_ID = "preg-boy-or-girl";
+/** The last one: the baby is born. It sets the real birthday and turns the pregnancy into the child's own profile. */
+export const BORN_ID = "preg-born";
+
+/** The pregnancy milestones, in the order they usually happen (the week is when, roughly), ending with the birth. */
 export const PREGNANCY_MILESTONES: (MilestoneDef & { week?: number })[] = [
   p("positive-test", "Positive pregnancy test", "💗", 4, "The moment you found out."),
-  p("told-family", "Told the family", "📣", 12, "Who you told first, and how they reacted."),
   p("heartbeat", "Heard the heartbeat", "💓", 8, "The first time you heard it."),
+  p("told-family", "Told the family", "📣", 12, "Who you told first, and how they reacted."),
   p("first-scan", "First scan", "🩻", 12, "The first look at the baby."),
   p("bump-showing", "The bump is showing", "🤰", 16, "When others started to notice."),
+  p("boy-or-girl", "Gender reveal", "🎈", 18, "The day you found out: a girl or a boy, or keeping it a surprise."),
   p("anatomy-scan", "Anatomy scan", "🩻", 20, "The mid-pregnancy scan."),
-  p("boy-or-girl", "Found out boy or girl", "🎈", 20, "Or decided to keep it a surprise."),
   p("first-kick", "First kick", "🦶", 20, "The first flutter you felt."),
   p("partner-felt", "Partner felt the baby move", "🤲", 24, "The first kick felt from outside."),
   p("hiccups", "Baby has hiccups", "🫧", 28, "Those rhythmic little jumps."),
@@ -87,7 +95,65 @@ export const PREGNANCY_MILESTONES: (MilestoneDef & { week?: number })[] = [
   p("baby-shower", "Baby shower", "🎁", 32, "Who came, and the presents."),
   p("nursery-ready", "Nursery ready", "🧸", 34, "Their room, or their corner."),
   p("bag-packed", "Hospital bag packed", "🧳", 36, "Ready to go."),
+  p("born", "Welcome to the world", "👶", 40, "The day they arrived. It sets their birthday and starts their own profile."),
 ];
+
+/** The milestones in each trimester (the birth is shown on its own, at the end). */
+export function milestonesByTrimester(): { trimester: 1 | 2 | 3; name: string; defs: (MilestoneDef & { week?: number })[] }[] {
+  return ([1, 2, 3] as const).map((n) => ({
+    trimester: n, name: TRIMESTER_NAMES[n],
+    defs: PREGNANCY_MILESTONES.filter((d) => d.id !== BORN_ID && trimesterOf(pregnancyWeekOf(d) ?? 40) === n),
+  }));
+}
+
+/** "banana" from "a banana": the fruit on its own, for short labels. */
+export const fruitName = (fruit: string) => fruit.replace(/^(a|an) /, "");
+
+/**
+ * A date before the birth, said as the week of the pregnancy and the baby's size then: "Week 20 (banana)". Used wherever an age would be
+ * shown (posts, the feed, the book). Weeks 1 to 3 have no size yet; a date long before the pregnancy is just "Before birth".
+ */
+export function weekLabel(due: string, date: string): string {
+  const days = Math.round((new Date(due + "T00:00:00").getTime() - new Date(date + "T00:00:00").getTime()) / 86400000);
+  if (days > 42 * 7) return "Before birth";
+  const week = weekOn(due, date);
+  return week < 4 ? `Week ${week}` : `Week ${week} (${fruitName(sizeForWeek(week).fruit)})`;
+}
+
+/*
+ * The weekly bump photo: once a week, a picture of the bump from the same spot, so that after the birth they play as a video of the bump
+ * growing. The photos are kept as posts with this source (and "Bump, week 21" as the title).
+ */
+export const BUMP_SOURCE = "Bump";
+export const BUMP_TIPS = [
+  "The same spot each week, in front of a plain wall or door.",
+  "Stand side-on, in the same pose (a hand under the bump works well).",
+  "Keep the phone at the same height and distance: a strip of tape on the floor for your feet helps, and so does a shelf or tripod.",
+  "The same light: the same time of day, by the same window.",
+  "A fitted top, the same one each week if you can.",
+  "Portrait, with the whole bump and a little space around it.",
+];
+
+export interface PlannedBumpReminder { date: Date; title: string; body: string; data: { kind: "bump-photo"; childId: string; week: number } }
+
+/** "Week 21: time for the bump photo", on the first day of each pregnancy week from now until the due date (the hour you chose for reminders). */
+export function planBumpPhotoNotifications(kids: { id: string; name: string; birth: string; expecting?: boolean; role?: string }[], prefs: { enabled: boolean; hour: number; bumpPhoto?: boolean }, now: Date): PlannedBumpReminder[] {
+  if (!prefs.enabled || prefs.bumpPhoto === false) return [];
+  const out: PlannedBumpReminder[] = [];
+  for (const k of kids) {
+    if (!k.expecting || k.role === "viewer") continue;
+    for (let back = 1; back <= 36; back++) {
+      const d = new Date(k.birth + "T00:00:00");
+      d.setDate(d.getDate() - back * 7); // a new pregnancy week starts on the due date's day of the week
+      d.setHours(Math.min(20, prefs.hour + 1), 0, 0, 0);
+      if (d <= now) break;
+      const week = 40 - back;
+      if (week < 4) continue;
+      out.push({ date: d, title: `Week ${week}: time for the bump photo 📸`, body: `${k.name} is the size of ${sizeForWeek(week).fruit}. Same spot, same pose, same light, and after the birth the photos play as a video of the bump growing.`, data: { kind: "bump-photo", childId: k.id, week } });
+    }
+  }
+  return out;
+}
 export const pregnancyWeekOf = (d: MilestoneDef) => (d as MilestoneDef & { week?: number }).week;
 
 /** Ideas for noting how the pregnancy feels: symptoms, cravings and the odd ones nobody warns you about. */

@@ -1,3 +1,5 @@
+import { weekLabel } from "./pregnancy";
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -55,10 +57,10 @@ export function ageBetween(birth: string, date: string): Age {
 
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
-/** Short label for a photo: "3 weeks old", "7 months old", "2y 1m old" */
+/** Short label for a photo: "3 weeks old", "7 months old", "2y 1m old"; before the birth, the pregnancy week and size: "Week 20 (banana)" */
 export function ageShort(birth: string, date: string): string {
   const a = ageBetween(birth, date);
-  if (a.totalDays < 0) return "before birth";
+  if (a.totalDays < 0) return weekLabel(birth, date);
   if (a.totalDays === 0) return "birth day";
   if (a.totalDays < 14) return `${plural(a.totalDays, "day")} old`;
   if (a.totalDays < 56) return `${plural(Math.floor(a.totalDays / 7), "week")} old`;
@@ -97,7 +99,7 @@ export function ageTotals(birth: string, on: string = todayISO()) {
 
 export function ageBucket(birth: string, date: string): string {
   const a = ageBetween(birth, date);
-  if (a.totalDays < 0) return "Before birth";
+  if (a.totalDays < 0) return weekLabel(birth, date);
   if (a.totalDays <= 28) return "Newborn";
   const totalMonths = a.years * 12 + a.months;
   if (totalMonths < 12) return plural(totalMonths, "month");

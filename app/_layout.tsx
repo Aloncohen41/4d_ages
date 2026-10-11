@@ -90,13 +90,13 @@ export default function RootLayout() {
   const hasKids = kids.length > 0;
 
   // Keep the scheduled notifications (birthdays, monthly cheers, "is this happening?") in line with the children, settings and ticked milestones
-  const kidsKey = useMemo(() => kids.map((k) => `${k.id}|${k.name}|${k.birth}`).join(";"), [kids]);
+  const kidsKey = useMemo(() => kids.map((k) => `${k.id}|${k.name}|${k.birth}|${k.expecting ? 1 : 0}|${k.role ?? ""}`).join(";"), [kids]);
   const reachedKey = useMemo(() => kids.map((k) => `${k.id}:${memories.filter((m) => m.childId === k.id && m.type === "milestone").map((m) => m.milestoneId).sort().join(",")}`).join(";"), [kids, memories]);
   useEffect(() => {
     if (!hydrated) return;
     const reached: Record<string, Set<string>> = {};
     for (const k of kids) reached[k.id] = reachedDefIds(MILESTONE_CATALOG, milestonesLogged(memories, k.id));
-    scheduleNotifications(kids.map((k) => ({ id: k.id, name: k.name, birth: k.birth })), notif, reached).catch(() => {});
+    scheduleNotifications(kids.map((k) => ({ id: k.id, name: k.name, birth: k.birth, expecting: k.expecting, role: k.role })), notif, reached).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, kidsKey, notif, reachedKey]);
 
@@ -119,6 +119,9 @@ export default function RootLayout() {
     } else if (d.kind === "milestone-age" || d.kind === "milestone-ask") {
       st.setActive(d.childId);
       router.navigate("/milestones");
+    } else if (d.kind === "bump-photo") {
+      st.setActive(d.childId);
+      router.navigate("/growth");
     } else if (d.kind === "monthly-photo") {
       st.setActive(d.childId);
       router.navigate({ pathname: "/classic/[id]", params: { id: "grid" } });

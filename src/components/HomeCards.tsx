@@ -6,7 +6,9 @@ import { useTheme } from "../lib/useTheme";
 import { onThisDay, monthlyPhotoDue } from "../lib/remember";
 import { pickMedia, toMediaItems } from "../lib/media";
 import { blurb } from "../lib/display";
-import { todayISO } from "../lib/date";
+import { pregnancy, todayISO } from "../lib/date";
+import { BUMP_SOURCE, weekOn } from "../lib/pregnancy";
+import { BumpTips, useAddBumpPhoto } from "./Pregnancy";
 import { TYPE_META } from "../lib/entries";
 import { TYPE } from "../theme";
 import { HScroll } from "./HScroll";
@@ -14,8 +16,8 @@ import { Btn, PhotoView } from "./ui";
 import { Icon } from "./Icon";
 
 /**
- * Two cards at the top of Home, only when there's something to show: "On this day" (what happened on today's date in earlier years) and, in the
- * first year, the monthly photo that's due for the Monthly photos page.
+ * Cards at the top of Home, only when there's something to show: "On this day" (what happened on today's date in earlier years), in the
+ * first year the monthly photo that's due for the Monthly photos page, and in a pregnancy this week's bump photo (with the tips).
  */
 export function HomeCards({ child, onView }: { child: Child; onView: (m: Memory) => void }) {
   const t = useTheme();
@@ -23,9 +25,15 @@ export function HomeCards({ child, onView }: { child: Child; onView: (m: Memory)
   const classics = useStore((s) => s.classics);
   const saveClassic = useStore((s) => s.saveClassic);
   const [hidden, setHidden] = useState(false);
+  const [bumpHidden, setBumpHidden] = useState(false);
+  const [tips, setTips] = useState(false);
+  const addBump = useAddBumpPhoto(child);
   const today = todayISO();
   const past = useMemo(() => onThisDay(memories, child.id, today), [memories, child.id, today]);
   const due = useMemo(() => (child.role === "viewer" ? null : monthlyPhotoDue(child, classics, today)), [child, classics, today]);
+  // a pregnancy: this week's bump photo, until it's taken
+  const bumpWeek = child.expecting && child.role !== "viewer" ? pregnancy(child.birth, today).week : 0;
+  const bumpDone = useMemo(() => !bumpWeek || memories.some((m) => m.childId === child.id && m.source === BUMP_SOURCE && weekOn(child.birth, m.date) === bumpWeek), [memories, child.id, child.birth, bumpWeek]);
 
   const addMonthly = async () => {
     if (!due) return;
@@ -47,6 +55,22 @@ export function HomeCards({ child, onView }: { child: Child; onView: (m: Memory)
             <Btn label={`Add the ${due.month}-month photo`} icon="image" kind="soft" onPress={addMonthly} style={{ marginTop: 8, paddingVertical: 8 }} />
           </View>
           <Pressable onPress={() => setHidden(true)} accessibilityLabel="Not now" hitSlop={8} style={{ alignSelf: "flex-start" }}><Icon name="x" size={18} color={t.ink3} /></Pressable>
+        </View>
+      ) : null}
+
+      {bumpWeek && !bumpDone && !bumpHidden ? (
+        <View style={card}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 22 }}>🤰</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPE.titleSmall, { color: t.ink }]}>Week {bumpWeek}: time for the bump photo</Text>
+              <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Same spot, same pose, same light. After the birth they play as a video of the bump growing.</Text>
+            </View>
+            <Pressable onPress={() => setBumpHidden(true)} accessibilityLabel="Not now" hitSlop={8} style={{ alignSelf: "flex-start" }}><Icon name="x" size={18} color={t.ink3} /></Pressable>
+          </View>
+          <Btn label={`Add the week ${bumpWeek} photo`} icon="image" kind="soft" onPress={addBump} style={{ marginTop: 10, paddingVertical: 8 }} />
+          <Pressable onPress={() => setTips((v) => !v)} hitSlop={6} style={{ marginTop: 8 }}><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tips ? "Hide the tips" : "Tips for photos that line up"}</Text></Pressable>
+          {tips ? <BumpTips /> : null}
         </View>
       ) : null}
 

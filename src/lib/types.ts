@@ -322,4 +322,5 @@ export interface NotifPrefs {
   milestoneAges?: boolean; // "Wow — they're 6 months old today!" (on unless turned off)
   milestoneAsks?: boolean; // "Is she starting any of these?" (on unless turned off)
   monthlyPhoto?: boolean; // "Time for her 4-month photo" in the first year (on unless turned off)
+  bumpPhoto?: boolean; // "Week 21: time for the bump photo" each week of a pregnancy (on unless turned off)
 }

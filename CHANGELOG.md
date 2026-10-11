@@ -10,6 +10,16 @@ Each release's notes on GitHub are taken from its section here (`## 1.0.5` for v
 - Short steps: who they are and whose posts they see (family), their email, a check, then send it on WhatsApp, by email, with any app, or copy it.
 - Invites waiting to be accepted can be sent again or cancelled; remove, block and unblock people; join a book with a code (pasting the whole message works).
 - Fixed: Settings, Who can see your children closed the app.
+- Children added before this fix can now be shared too, from either version of the app.
+
+**Pregnancy**
+- Before the birth, posts and the profile show the week and the baby's size instead of an age: "Week 20 (banana)".
+- Milestones are grouped by trimester (first, second, third), and the current one is marked.
+- New **Gender reveal** milestone: the day you found out, and a girl, a boy or a surprise. It sets the baby's gender in the profile.
+- The last milestone, **Welcome to the world**, sets the birth date, name and gender, and turns the pregnancy into the child's own profile. The pregnancy posts stay, before the birth.
+- **Weekly bump photo**: a reminder each week, a card on Home and tips for photos that line up (same spot, side-on, same light). The photos play as a video of the bump growing, in Growth while pregnant and in Watch them grow after the birth. It can be turned off in Settings, Reminders.
+- Gender can be chosen when adding a child (Girl, Boy or Prefer not to say). For a pregnancy, it's set at the gender reveal.
+- Fixed: a pregnancy could get birthday and monthly reminders counted from its due date.
 
 ## 1.0.5
 

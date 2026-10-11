@@ -53,6 +53,7 @@ export function RemindersCard() {
 
       {notif.enabled ? (
         <View style={{ marginTop: 6 }}>
+          {row("Weekly bump photo", "In a pregnancy, a reminder each week to take the bump photo, for the video of the bump growing.", notif.bumpPhoto !== false, (v) => setNotif({ bumpPhoto: v }))}
           {row("Monthly photo", "In the first year, a reminder on each month's birthday to take the photo for the Monthly photos page.", notif.monthlyPhoto !== false, (v) => setNotif({ monthlyPhoto: v }))}
           {row("Celebrate every month", "“Wow — they're 6 months old today!” on the day, with a peek at their milestones.", notif.milestoneAges !== false, (v) => setNotif({ milestoneAges: v }))}
           {row("“Is this happening?”", "A little before each new stage begins, we ask whether they've started any of its milestones.", notif.milestoneAsks !== false, (v) => setNotif({ milestoneAsks: v }))}

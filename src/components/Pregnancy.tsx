@@ -4,15 +4,18 @@ import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { Child, Memory, MILESTONE_DEFS } from "../lib/types";
 import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { FRUIT_WEEKS, PREGNANCY_MILESTONES, SYMPTOM_IDEAS, SYMPTOM_SOURCE, TRIMESTER_NAMES, pregnancyWeekOf, sizeForWeek, trimesterOf, weekOn } from "../lib/pregnancy";
-import { formatDate, parseISO, pregnancy, toISO, todayISO } from "../lib/date";
+import { BORN_ID, BUMP_SOURCE, BUMP_TIPS, FRUIT_WEEKS, GENDER_REVEAL_ID, PREGNANCY_MILESTONES, PREGNANCY_NAME, SYMPTOM_IDEAS, SYMPTOM_SOURCE, TRIMESTER_NAMES, milestonesByTrimester, pregnancyWeekOf, sizeForWeek, trimesterOf, weekOn } from "../lib/pregnancy";
+import { buildBumpReel } from "../lib/reels";
+import { Gender } from "../lib/types";
+import { addDays, formatDate, parseISO, pregnancy, toISO, todayISO } from "../lib/date";
 import { logMilestone } from "../lib/saveMilestone";
 import { pickMedia, toMediaItems } from "../lib/media";
 import { byMoment } from "../lib/display";
 import { parseNumber } from "../lib/entries";
 import { TYPE } from "../theme";
-import { Btn, DateField, Input, PhotoView, Sheet } from "./ui";
+import { Btn, DateField, Input, PhotoView, Seg, Sheet } from "./ui";
 import { Icon } from "./Icon";
+import { GrowPlayer } from "./Grow";
 
 /** "about 25.6 cm and 300 g" */
 const sizeText = (cm: number, g?: number) => `about ${cm < 1 ? `${Math.round(cm * 10)} mm` : `${cm} cm`}${g ? ` and ${g >= 1000 ? `${(g / 1000).toFixed(1)} kg` : `${g} g`}` : ""}`;
@@ -64,6 +67,8 @@ export function PregnancyGrowth({ child }: { child: Child }) {
           <Pressable onPress={() => setShown(Math.min(40, Math.max(4, now.week)))} hitSlop={6} style={{ marginTop: 10 }}><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Back to this week</Text></Pressable>
         )}
       </View>
+
+      <BumpPhotos child={child} />
 
       {/* the scale, week by week */}
       <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 20, marginBottom: 8 }]}>Week by week</Text>
@@ -150,8 +155,9 @@ function ScanMeasureSheet({ child, onClose }: { child: Child; onClose: () => voi
 }
 
 /**
- * Milestones before birth: the pregnancy milestones (the first scan, the heartbeat, the first kick…), ticked with today's date and changed
- * with a tap; and the symptoms and cravings, noted as they come (morning sickness, the odd craving, strange dreams…).
+ * Milestones before birth, by trimester: the pregnancy milestones (the first scan, the heartbeat, the gender reveal, the first kick…), ticked
+ * with today's date and changed with a tap; then "Welcome to the world", which sets the birthday and starts the child's own profile; and the
+ * symptoms and cravings, noted as they come (morning sickness, the odd craving, strange dreams…).
  */
 export function PregnancyMilestones({ child }: { child: Child }) {
   const t = useTheme();
@@ -159,14 +165,18 @@ export function PregnancyMilestones({ child }: { child: Child }) {
   const setEntrySheet = useStore((s) => s.setEntrySheet);
   const saveMemory = useStore((s) => s.saveMemory);
   const [noting, setNoting] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
+  const [arriving, setArriving] = useState(false);
   const today = todayISO();
   const viewOnly = child.role === "viewer";
   const logged = useMemo(() => new Map(memories.filter((m) => m.childId === child.id && m.type === "milestone" && m.milestoneId?.startsWith("preg-")).map((m) => [m.milestoneId as string, m])), [memories, child.id]);
   const notes = useMemo(() => memories.filter((m) => m.childId === child.id && m.source === SYMPTOM_SOURCE && m.type === "story").sort((a, b) => byMoment(b, a)), [memories, child.id]);
   const done = PREGNANCY_MILESTONES.filter((d) => logged.has(d.id)).length;
+  const nowTrimester = trimesterOf(pregnancy(child.birth, today).week);
 
   const tick = (id: string) => {
     if (viewOnly) return;
+    if (id === GENDER_REVEAL_ID) return setRevealing(true); // the date, and girl or boy
     const m = logged.get(id);
     if (m) return setEntrySheet({ kind: "milestone", editId: id }); // change the date, add words or a picture
     const def = PREGNANCY_MILESTONES.find((d) => d.id === id)!;
@@ -177,21 +187,41 @@ export function PregnancyMilestones({ child }: { child: Child }) {
 
   return (
     <View>
-      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 10 }]}>{done} of {PREGNANCY_MILESTONES.length} · tap one to tick it with today's date, tap again to change it.</Text>
-      {PREGNANCY_MILESTONES.map((d) => {
-        const m = logged.get(d.id);
-        return (
-          <Pressable key={d.id} onPress={() => tick(d.id)} accessibilityRole="checkbox" accessibilityState={{ checked: !!m }} accessibilityLabel={d.label}
-            style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.line }}>
-            <Icon name={m ? "check-square" : "square"} size={24} color={m ? t.accent : t.ink3} />
-            <View style={{ flex: 1 }}>
-              <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{d.label}</Text>
-              <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{m ? `Week ${weekOn(child.birth, m.date)} · ${formatDate(m.date)}` : `Usually around week ${pregnancyWeekOf(d)} · ${d.hint}`}</Text>
-            </View>
-            {m && !viewOnly ? <Pressable onPress={() => pickDateFor(m)} hitSlop={8} accessibilityLabel="Change the date"><Icon name="calendar" size={20} color={t.ink2} /></Pressable> : null}
-          </Pressable>
-        );
-      })}
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 4 }]}>{done} of {PREGNANCY_MILESTONES.length} · tap one to tick it with today's date, tap again to change it.</Text>
+      {milestonesByTrimester().map((tri) => (
+        <View key={tri.trimester}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16, marginBottom: 2 }}>
+            <Text style={[TYPE.titleMedium, { color: t.ink }]}>{tri.name}</Text>
+            <Text style={[TYPE.labelMedium, { color: t.ink3 }]}>{tri.trimester === 1 ? "weeks 1 to 13" : tri.trimester === 2 ? "weeks 14 to 27" : "weeks 28 to 40"}</Text>
+            {tri.trimester === nowTrimester ? <Text style={{ backgroundColor: t.accentSoft, color: t.onAccentSoft, fontWeight: "700", fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>Now</Text> : null}
+          </View>
+          {tri.defs.map((d) => {
+            const m = logged.get(d.id);
+            const reveal = d.id === GENDER_REVEAL_ID;
+            const sub = m
+              ? `Week ${weekOn(child.birth, m.date)} · ${formatDate(m.date)}${reveal && m.description ? ` · ${m.description.split("\n")[0]}` : ""}`
+              : `Usually around week ${pregnancyWeekOf(d)} · ${d.hint}`;
+            return (
+              <Pressable key={d.id} onPress={() => tick(d.id)} accessibilityRole="checkbox" accessibilityState={{ checked: !!m }} accessibilityLabel={d.label}
+                style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.line }}>
+                <Icon name={m ? "check-square" : "square"} size={24} color={m ? t.accent : t.ink3} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{d.emoji} {d.label}</Text>
+                  <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{sub}</Text>
+                </View>
+                {m && !viewOnly && !reveal ? <Pressable onPress={() => pickDateFor(m)} hitSlop={8} accessibilityLabel="Change the date"><Icon name="calendar" size={20} color={t.ink2} /></Pressable> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+
+      {/* the last milestone: the birth */}
+      <View style={{ backgroundColor: t.accentSoft, borderRadius: 20, padding: 16, marginTop: 18 }}>
+        <Text style={[TYPE.titleMedium, { color: t.onAccentSoft }]}>👶 Welcome to the world</Text>
+        <Text style={[TYPE.bodySmall, { color: t.onAccentSoft, marginTop: 4 }]}>When {child.name === PREGNANCY_NAME ? "the baby arrives" : `${child.name} arrives`}, set the birth date and the name. This becomes their own profile, with the pregnancy kept before the birth.</Text>
+        {!viewOnly ? <Btn label="The baby is here!" icon="birthday" onPress={() => setArriving(true)} style={{ marginTop: 10 }} /> : null}
+      </View>
 
       <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22 }]}>Symptoms and cravings</Text>
       <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2, marginBottom: 8 }]}>The odd, funny and hard parts, to remember (or laugh about) later.</Text>
@@ -215,6 +245,8 @@ export function PregnancyMilestones({ child }: { child: Child }) {
         </Pressable>
       ))}
       {noting !== null ? <SymptomSheet child={child} start={noting} onClose={() => setNoting(null)} /> : null}
+      {revealing ? <GenderRevealSheet child={child} memory={logged.get(GENDER_REVEAL_ID)} onClose={() => setRevealing(false)} /> : null}
+      {arriving ? <ArrivalSheet child={child} onClose={() => setArriving(false)} /> : null}
     </View>
   );
 }
@@ -234,6 +266,157 @@ function SymptomSheet({ child, start, onClose }: { child: Child; start: string; 
       <DateField value={date} onChange={setDate} max={todayISO()} />
       <Btn label="Save" disabled={!title.trim()} onPress={() => { saveMemory({ childId: child.id, type: "story", title: title.trim(), description: text, date, media: [], tagIds: [], emoji: "🤰", source: SYMPTOM_SOURCE }); onClose(); }} style={{ marginTop: 16 }} />
     </Sheet>
+  );
+}
+
+const REVEAL_HEADLINES: Record<"girl" | "boy" | "surprise", string> = { girl: "It's a girl! 💗", boy: "It's a boy! 💙", surprise: "Keeping it a surprise 🎁" };
+
+/**
+ * The gender reveal: the day you found out, and a girl or a boy (or keeping it a surprise). It ticks the milestone and sets the child's gender
+ * (used for the growth charts after the birth, and "sister" or "brother" for their siblings).
+ */
+export function GenderRevealSheet({ child, memory, onClose }: { child: Child; memory?: Memory; onClose: () => void }) {
+  const t = useTheme();
+  const updateChild = useStore((s) => s.updateChild);
+  const removeMemory = useStore((s) => s.removeMemory);
+  const setEntrySheet = useStore((s) => s.setEntrySheet);
+  const first = memory?.description.split("\n")[0] ?? "";
+  const was = (Object.keys(REVEAL_HEADLINES) as (keyof typeof REVEAL_HEADLINES)[]).find((k) => REVEAL_HEADLINES[k] === first);
+  const [choice, setChoice] = useState<"girl" | "boy" | "surprise">(was ?? (child.gender === "boy" ? "boy" : "girl"));
+  const [date, setDate] = useState(memory?.date ?? todayISO());
+  const [note, setNote] = useState(was ? (memory?.description ?? "").split("\n").slice(1).join("\n").trim() : memory?.description ?? "");
+  const save = () => {
+    const def = PREGNANCY_MILESTONES.find((d) => d.id === GENDER_REVEAL_ID)!;
+    const description = REVEAL_HEADLINES[choice] + (note.trim() ? `\n${note.trim()}` : "");
+    logMilestone({ childId: child.id, defId: def.id, title: def.label, emoji: choice === "girl" ? "💗" : choice === "boy" ? "💙" : "🎁", date, tagIds: memory?.tagIds ?? [], note: description, media: memory?.media ?? [] });
+    updateChild(child.id, { gender: (choice === "surprise" ? "unspecified" : choice) as Gender });
+    onClose();
+  };
+  return (
+    <Sheet visible onClose={onClose} title="Gender reveal">
+      <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>The day you found out. It also sets {child.name === PREGNANCY_NAME ? "the baby's" : `${child.name}'s`} gender in the profile.</Text>
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>It's…</Text>
+      <Seg options={[{ id: "girl" as const, label: "A girl" }, { id: "boy" as const, label: "A boy" }, { id: "surprise" as const, label: "A surprise" }]} value={choice} onChange={setChoice} />
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>When you found out</Text>
+      <DateField value={date} onChange={setDate} max={todayISO()} />
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 4 }]}>Week {weekOn(child.birth, date)} of the pregnancy</Text>
+      <Input value={note} onChangeText={setNote} placeholder="How you found out: a cake, balloons, the scan… (optional)" multiline style={{ marginTop: 12, minHeight: 70, textAlignVertical: "top" }} />
+      <Btn label="Save" onPress={save} style={{ marginTop: 16 }} />
+      {memory ? (
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+          <Btn label="Add a picture" icon="image" kind="soft" onPress={() => { onClose(); setTimeout(() => setEntrySheet({ kind: "milestone", editId: GENDER_REVEAL_ID }), 250); }} style={{ flex: 1 }} />
+          <Btn label="Untick" kind="line" onPress={() => { removeMemory(memory.id); onClose(); }} style={{ flex: 1 }} />
+        </View>
+      ) : null}
+    </Sheet>
+  );
+}
+
+/**
+ * The baby is here: the birth date (it replaces the due date), the name and the gender. It ticks "Welcome to the world" on that day and turns
+ * the pregnancy into the child's own profile, with everything from the pregnancy kept before the birth.
+ */
+export function ArrivalSheet({ child, onClose }: { child: Child; onClose: () => void }) {
+  const t = useTheme();
+  const updateChild = useStore((s) => s.updateChild);
+  const today = todayISO();
+  const [date, setDate] = useState(today);
+  const [name, setName] = useState(child.name === PREGNANCY_NAME ? "" : child.name);
+  const [gender, setGender] = useState<Gender>(child.gender ?? "unspecified");
+  const [note, setNote] = useState("");
+  const [err, setErr] = useState("");
+  const earliest = addDays(child.birth, -26 * 7); // a very early arrival (from week 14), kept generous
+  const save = () => {
+    if (!name.trim()) return setErr("Add their name. You can change it any time.");
+    if (date > today) return setErr("The birth date can't be in the future.");
+    const def = PREGNANCY_MILESTONES.find((d) => d.id === BORN_ID)!;
+    logMilestone({ childId: child.id, defId: def.id, title: def.label, emoji: def.emoji, date, tagIds: [], note: note.trim(), media: [] });
+    updateChild(child.id, { name: name.trim(), birth: date, gender, expecting: undefined, emoji: child.emoji === "🤰" ? "👶" : child.emoji });
+    onClose();
+  };
+  return (
+    <Sheet visible onClose={onClose} title="Welcome to the world">
+      <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>Congratulations! Set the birth date and the name, and this becomes their own profile. The pregnancy posts stay, before the birth (the due date was {formatDate(child.birth)}).</Text>
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>Birth date</Text>
+      <DateField value={date} onChange={setDate} min={earliest} max={today} />
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>Name</Text>
+      <Input value={name} onChangeText={setName} placeholder="Their name" />
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>Gender</Text>
+      <Seg options={[{ id: "girl" as Gender, label: "Girl" }, { id: "boy" as Gender, label: "Boy" }, { id: "unspecified" as Gender, label: "Prefer not to say" }]} value={gender} onChange={setGender} />
+      <Input value={note} onChangeText={setNote} placeholder="A few words about the day (optional)" multiline style={{ marginTop: 12, minHeight: 70, textAlignVertical: "top" }} />
+      {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 10 }}>{err}</Text> : null}
+      <Btn label="Save and start their profile" icon="birthday" onPress={save} style={{ marginTop: 16 }} />
+    </Sheet>
+  );
+}
+
+/** The tips for a bump photo that lines up with the others, so they play as a video. */
+export function BumpTips() {
+  const t = useTheme();
+  return (
+    <View style={{ marginTop: 8 }}>
+      {BUMP_TIPS.map((tip) => (
+        <View key={tip} style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+          <Text style={{ color: t.accentDeep, fontWeight: "700" }}>•</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink2, flex: 1 }]}>{tip}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Add this week's bump photo (from the camera roll), titled "Bump, week 21". */
+export function useAddBumpPhoto(child: Child) {
+  const saveMemory = useStore((s) => s.saveMemory);
+  return async () => {
+    const picked = await pickMedia({ videos: false, multiple: false });
+    if (!picked.length) return;
+    const today = todayISO();
+    const date = picked[0].dated && picked[0].date <= today ? picked[0].date : today;
+    saveMemory({ childId: child.id, type: "photo", title: `Bump, week ${weekOn(child.birth, date)}`, description: "", date, media: toMediaItems(picked), tagIds: [], emoji: "🤰", source: BUMP_SOURCE });
+  };
+}
+
+/**
+ * The weekly bump photo, in Growth: this week's photo (or a button to add it), the tips for taking it the same way each time, every week's
+ * photo so far, and the video of the bump growing once there are two.
+ */
+function BumpPhotos({ child }: { child: Child }) {
+  const t = useTheme();
+  const memories = useStore((s) => s.memories);
+  const setPhotoEdit = useStore((s) => s.setPhotoEdit);
+  const add = useAddBumpPhoto(child);
+  const [tips, setTips] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const photos = useMemo(() => memories.filter((m) => m.childId === child.id && m.source === BUMP_SOURCE).sort(byMoment), [memories, child.id]);
+  const reel = useMemo(() => buildBumpReel(photos, child, BUMP_SOURCE), [photos, child]);
+  const week = pregnancy(child.birth).week;
+  const thisWeek = photos.some((m) => weekOn(child.birth, m.date) === week);
+  const viewOnly = child.role === "viewer";
+  return (
+    <View>
+      <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 20, marginBottom: 4 }]}>The bump, week by week</Text>
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 8 }]}>A photo every week from the same spot. After the birth they play as a video of the bump growing.</Text>
+      {!viewOnly ? <Btn label={thisWeek ? `Week ${week} is done · add another` : `Add the week ${week} bump photo`} icon="image" kind={thisWeek ? "line" : "solid"} onPress={add} /> : null}
+      <Pressable onPress={() => setTips((v) => !v)} hitSlop={6} style={{ marginTop: 8 }}><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tips ? "Hide the tips" : "Tips for photos that line up"}</Text></Pressable>
+      {tips ? <BumpTips /> : null}
+      {photos.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 10 }}>
+          {photos.map((m) => (
+            <Pressable key={m.id} onPress={() => !viewOnly && setPhotoEdit(m.id)} accessibilityRole="button" accessibilityLabel={m.title} style={{ width: 84 }}>
+              <PhotoView photo={m} style={{ width: 84, height: 112, borderRadius: 12 }} emojiSize={28} />
+              <Text style={[TYPE.labelMedium, { color: t.ink2, marginTop: 3 }]}>Week {weekOn(child.birth, m.date)}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      ) : null}
+      {reel ? <Btn label={`Play the bump video (${reel.slides.length} weeks)`} icon="play" kind="soft" onPress={() => setPlaying(true)} style={{ marginTop: 10 }} /> : null}
+      {playing && reel ? (
+        <Sheet visible onClose={() => setPlaying(false)} title="The bump, week by week">
+          <GrowPlayer slides={reel.slides} child={child} title={reel.title} subtitle={reel.subtitle} fileLabel={reel.fileLabel} />
+        </Sheet>
+      ) : null}
+    </View>
   );
 }
 

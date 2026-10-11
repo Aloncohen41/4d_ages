@@ -305,7 +305,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
 
       <Label>Date</Label>
       <DateField value={date} onChange={(d) => { setDate(d); setDateTouched(true); }} min={earliestDate(child.birth)} max={todayISO()} />
-      <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{child.name} was {ageShort(child.birth, date).replace(" old", "")}</Text>
+      <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{date < child.birth ? ageShort(child.birth, date) : `${child.name} was ${ageShort(child.birth, date).replace(" old", "")}`}</Text>
       {kind !== "measure" ? (
         <>
           <TimeField value={time} onChange={setTime} />

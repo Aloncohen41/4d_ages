@@ -203,7 +203,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
   const kids = [child, ...(i.siblings ?? []).filter((k) => k.id !== child.id)].sort((a, b) => a.birth.localeCompare(b.birth));
   const multi = kids.length > 1;
   const kidOf = (m: Memory) => kids.find((k) => k.id === m.childId) ?? child;
-  const ageOf = (m: Memory) => { const k = kidOf(m); return k.expecting && m.date < k.birth ? "before birth" : ageShort(k.birth, m.date); };
+  const ageOf = (m: Memory) => { const k = kidOf(m); return ageShort(k.birth, m.date); }; // before the birth: "Week 20 (banana)"
   const names = (list: Child[]) => (list.length <= 2 ? list.map((k) => k.name).join(" & ") : `${list.slice(0, -1).map((k) => k.name).join(", ")} & ${list[list.length - 1].name}`);
   const meta = (m: Memory) => [multi ? kidOf(m).name : "", formatDate(m.date), m.time ? formatTime(m.time) : "", ageOf(m), m.location?.trim() ?? ""].filter(Boolean).map(esc).join(" · ");
   const badge = (m: Memory, color: string, birthday = 0) => {
