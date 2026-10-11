@@ -101,5 +101,16 @@ ok("[22] voice notes: recorded on the spot or chosen from a file, from the + but
 ok("[22] played on the post, never shown as a picture, and synced like photos", visualMedia(media).length === 1 && audioMedia(media).length === 1 && /<VoicePlayer key=\{a\.id\} item=\{a\} \/>/.test(read("src/components/PostCard.tsx")) && /m4a: "audio\/mp4"/.test(sync) && mergeMemories([], [{ ...memoryToRow({ ...mem("story", "2024-02-01"), media: [{ id: "v", kind: "audio", uri: "", path: "c/v.m4a" }] }, [], 1) }])[0].media[0].kind === "audio");
 ok("[22] the microphone is allowed for recording (and only for that)", !JSON.stringify(JSON.parse(read("app.json")).expo.android.blockedPermissions).includes("RECORD_AUDIO") && JSON.stringify(JSON.parse(read("app.json")).expo.plugins).includes("expo-audio"));
 
+/* ---------------- no screen can crash by re-rendering without end */
+{
+  const { readdirSync, statSync } = require("node:fs") as typeof import("node:fs");
+  const walk = (d: string): string[] => readdirSync(join(root, d)).flatMap((n) => { const p = `${d}/${n}`; return statSync(join(root, p)).isDirectory() ? walk(p) : /\.tsx?$/.test(n) ? [p] : []; });
+  // a store selector that returns a new list or object every time makes React re-render forever (Zustand 5): the "Who can see your children" crash
+  const bad = [...walk("app"), ...walk("src")].flatMap((file) =>
+    (read(file).match(/use(Store|Reactions)\(\(s\) => [^;\n]*?\.(filter|map|slice|concat)\([^;\n]*\)\);/g) || []).filter((m) => !/\.join\(/.test(m) && !/\.length/.test(m)).map((m) => `${file}: ${m}`));
+  ok("no store selector returns a new list on every render (it would crash the screen)" + (bad.length ? " — " + bad.join(" | ") : ""), bad.length === 0);
+  ok("Who can see your children always lists you, as the parent, even before anyone else has joined", read("app/access.tsx").includes("members.some((m) => m.me) ? members") && /Only you can see/.test(read("app/access.tsx")));
+}
+
 console.log(fails ? `${fails} FAILED` : "all round-two tests passed");
 if (fails) process.exit(1);

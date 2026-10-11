@@ -10,6 +10,7 @@ import { familyOf, orderedFamily } from "../src/lib/family";
 import { displayName, relationLine } from "../src/lib/tags";
 import { formatDate } from "../src/lib/date";
 import { APP_NAME } from "../src/brand";
+import { useSession } from "../src/lib/supabase";
 import { Child } from "../src/lib/types";
 import { TYPE } from "../src/theme";
 
@@ -20,7 +21,9 @@ import { TYPE } from "../src/theme";
  */
 export default function AccessPage() {
   const t = useTheme();
-  const kids = useStore((s) => s.kids.filter((k) => k.role !== "viewer"));
+  // the list is filtered outside the store: a selector that returns a new list each time re-renders without end (and crashes the app)
+  const allKids = useStore((s) => s.kids);
+  const kids = useMemo(() => allKids.filter((k) => k.role !== "viewer"), [allKids]);
   return (
     <Page title="Who can see your children">
       <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 6 }]}>
@@ -57,7 +60,10 @@ function ChildAccess({ child }: { child: Child }) {
   }, [child.id, child.shared]);
   useEffect(() => { load(); }, [load]);
 
-  const me = members?.find((m) => m.me);
+  const session = useSession();
+  const shown: Member[] | null = members === null ? null : members.some((m) => m.me) ? members
+    : [{ userId: session?.user.id ?? "me", email: session?.user.email ?? "", role: "owner", people: [], me: true }, ...members];
+  const me = shown?.find((m) => m.me);
   const full = members ? parentsOf(members).length >= MAX_PARENTS : false;
   const canRemove = (m: Member) => m.role !== "owner" && (me?.role === "owner" || m.me || (me?.role === "editor" && m.role === "viewer"));
   const nameOf = (id: string) => { const r = relatives.find((x) => x.id === id); return r ? displayName(r) : null; };
@@ -81,9 +87,9 @@ function ChildAccess({ child }: { child: Child }) {
   return (
     <View style={{ backgroundColor: t.card, borderRadius: 18, borderWidth: 1, borderColor: t.line, padding: 16, marginTop: 14 }}>
       <Text style={[TYPE.titleMedium, { color: t.ink }]}>{child.name}</Text>
-      {members === null ? <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} /> : (
+      {shown === null ? <ActivityIndicator color={t.accent} style={{ marginVertical: 12 }} /> : (
         <>
-          {members.map((m) => (
+          {shown.map((m) => (
             <View key={m.userId} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: t.line }}>
               <Icon name={m.role === "viewer" ? "eye" : "family"} size={20} color={t.ink2} />
               <View style={{ flex: 1 }}>
@@ -93,11 +99,12 @@ function ChildAccess({ child }: { child: Child }) {
               {m.role === "viewer" && me?.role !== "viewer" ? (
                 <Pressable onPress={() => setEditing(m)} hitSlop={6} accessibilityRole="button" style={{ paddingHorizontal: 6 }}><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Change</Text></Pressable>
               ) : null}
-              {canRemove(m) ? (
+              {canRemove(m) && !(m.me && m.role === "owner") ? (
                 <Pressable onPress={() => remove(m)} hitSlop={6} accessibilityRole="button" style={{ paddingHorizontal: 6 }}><Text style={[TYPE.labelLarge, { color: t.danger }]}>{m.me ? "Leave" : "Remove"}</Text></Pressable>
               ) : null}
             </View>
           ))}
+          {shown.length === 1 ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 8 }]}>Only you can see {child.name}'s book. Invite the other parent or family below.</Text> : null}
           {blocked.length ? (
             <View style={{ marginTop: 10 }}>
               <Text style={[TYPE.labelLarge, { color: t.ink2 }]}>Blocked</Text>
