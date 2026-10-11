@@ -1,10 +1,10 @@
 # What's new
 
-Each release's notes on GitHub are taken from its section here (`## 1.0.6
+Each release's notes on GitHub are taken from its section here (`## 1.0.5` for v1.0.5). Add the next version's section before tagging it.
+
+## 1.0.6
 
 - Fixed: Settings, Who can see your children closed the app. It now always lists you as the parent, even before anyone else has joined.
-
-## 1.0.5` for v1.0.5). Add the next version's section before tagging it.
 
 ## 1.0.5
 
