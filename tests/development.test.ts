@@ -60,13 +60,13 @@ ok("an older milestone logged under its earlier id counts", analyze(pool, logged
 ok("the best area is the one with most reached ahead of time, then most reached", (() => { const x = analyze(pool, logged("mov-sits", "mov-rolls", "lang-babbles"), {}, 4); return x.highlight?.area === "Movement"; })());
 const rb = analyze(pool, {}, { "mov-sits": "x", "mov-runs": "x" }, 26).reinforce[0];
 ok("practice ideas come from the EARLIER skill (sits, 6–12) not just today's age", reinforceBand(rb, 26) === 1 && bandOfDef(def("mov-sits")) === 1 && bandIndex(26) === 4);
-ok("texts are positive and plain", highlightText("Chloe", analyze(pool, logged("mov-sits"), {}, 4).highlight!).includes("Wow, Chloe is really good at movement!") && highlightText("Chloe", analyze(pool, logged("mov-sits"), {}, 4).highlight!).includes("ahead of the usual timing") && reachedText(1) === "A first one reached 🎉" && reachedText(7) === "7 milestones reached" && ageLabel(18.4) === "18 months" && ageLabel(30) === "2 years 6 months" && ageLabel(1) === "1 month" && ageChip(18.4) === "18 mo" && ageChip(30) === "2y 6m" && ageChip(24) === "2y" && ageChip(0.4) === "0 mo");
+ok("texts are positive and plain", highlightText("Maya", analyze(pool, logged("mov-sits"), {}, 4).highlight!).includes("Wow, Maya is really good at movement!") && highlightText("Maya", analyze(pool, logged("mov-sits"), {}, 4).highlight!).includes("ahead of the usual timing") && reachedText(1) === "A first one reached 🎉" && reachedText(7) === "7 milestones reached" && ageLabel(18.4) === "18 months" && ageLabel(30) === "2 years 6 months" && ageLabel(1) === "1 month" && ageChip(18.4) === "18 mo" && ageChip(30) === "2y 6m" && ageChip(24) === "2y" && ageChip(0.4) === "0 mo");
 
 // ---------- small numbers are celebrated, not announced
-ok("nothing ticked yet: an invitation, not a zero", celebration(0, "Chloe").title === "Tick off what Chloe can do" && !/\b0\b/.test(celebration(0, "Chloe").title + celebration(0, "Chloe").sub));
-ok("one milestone: 'a first milestone reached', never a bare '1'", celebration(1, "Chloe").title === "A first milestone reached! 🎉" && !/\b1\b/.test(celebration(1, "Chloe").title + celebration(1, "Chloe").sub));
-ok("a few: the count comes with a warm line; plenty: a plain, proud count", celebration(3, "Chloe").sub.includes("lovely start") && celebration(12, "Chloe").title === "12 milestones reached" && !celebration(12, "Chloe").sub.includes("start"));
-ok("no celebration line ever compares or counts against anything", [0, 1, 2, 3, 4, 5, 20, 55].every((n) => !bad.test(celebration(n, "Chloe").title + " " + celebration(n, "Chloe").sub)));
+ok("nothing ticked yet: an invitation, not a zero", celebration(0, "Maya").title === "Tick off what Maya can do" && !/\b0\b/.test(celebration(0, "Maya").title + celebration(0, "Maya").sub));
+ok("one milestone: 'a first milestone reached', never a bare '1'", celebration(1, "Maya").title === "A first milestone reached! 🎉" && !/\b1\b/.test(celebration(1, "Maya").title + celebration(1, "Maya").sub));
+ok("a few: the count comes with a warm line; plenty: a plain, proud count", celebration(3, "Maya").sub.includes("lovely start") && celebration(12, "Maya").title === "12 milestones reached" && !celebration(12, "Maya").sub.includes("start"));
+ok("no celebration line ever compares or counts against anything", [0, 1, 2, 3, 4, 5, 20, 55].every((n) => !bad.test(celebration(n, "Maya").title + " " + celebration(n, "Maya").sub)));
 
 // ---------- things to try
 ok("3 ideas for every area and every age band", AREAS.every((ar) => ACTIVITIES[ar].length === 6 && ACTIVITIES[ar].every((l) => l.length === 3 && l.every((x) => x.trim().length > 20))));
@@ -74,7 +74,7 @@ ok("all ideas are different", new Set(AREAS.flatMap((ar) => ACTIVITIES[ar].flat(
 ok("ideas for a band; 'Other' has none; out-of-range bands are clamped", activitiesFor("Movement", 1)[0].includes("beyond reach") && activitiesFor("Other", 0).length === 0 && activitiesFor("Language", 99).length === 3 && activitiesFor("Language", -3).length === 3);
 
 // ---------- notifications
-const kids = [{ id: "c", name: "Chloe", birth: "2026-01-10" }];
+const kids = [{ id: "c", name: "Maya", birth: "2026-01-10" }];
 const prefs = { enabled: true, daysBefore: 3, hour: 9 };
 const now = new Date(2026, 0, 11);
 const plan = planMilestoneNotifications(kids, prefs, now);
@@ -82,7 +82,7 @@ const cheers = plan.filter((p) => p.data.kind === "milestone-age"), asks = plan.
 ok("a cheer for every month from 1 to 35 (36 is the end of the chart)", cheers.length === 35 && cheers.map((p) => p.data.months).join() === Array.from({ length: 35 }, (_, i) => i + 1).join());
 ok("12 and 24 months (also birthdays) get a cheer a few hours AFTER the birthday message, about their new stage", [12, 24].every((m) => { const c = cheers.find((p) => p.data.months === m)!; return c.date.getHours() === 12 && c.body.includes("new set of milestones"); }));
 const six = cheers.find((p) => p.data.months === 6)!;
-ok("on the day: 'Wow — Chloe is 6 months old today!', at the chosen hour", six.title === "🎉 Wow — Chloe is 6 months old today!" && six.date.getFullYear() === 2026 && six.date.getMonth() === 6 && six.date.getDate() === 10 && six.date.getHours() === 9);
+ok("on the day: 'Wow — Maya is 6 months old today!', at the chosen hour", six.title === "🎉 Wow — Maya is 6 months old today!" && six.date.getFullYear() === 2026 && six.date.getMonth() === 6 && six.date.getDate() === 10 && six.date.getHours() === 9);
 ok("new stages (6, 18, 30 months) say a new set of milestones opened", [6, 18, 30].every((m) => cheers.find((p) => p.data.months === m)!.body.includes("new set of milestones")) && !cheers.find((p) => p.data.months === 7)!.body.includes("new set"));
 ok("ages are written naturally (18 months, 2 years 6 months)", cheers.find((p) => p.data.months === 18)!.title.includes("18 months old") && cheers.find((p) => p.data.months === 30)!.title.includes("2 years 6 months old"));
 ok("'is she starting any of these?' comes 1/6 before each stage: 5, 10, 15, 20, 25 months", asks.map((p) => p.data.months).join() === "5,10,15,20,25" && asks[0].date.getMonth() === 5 && asks[0].date.getDate() === 10);

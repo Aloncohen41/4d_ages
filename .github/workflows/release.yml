@@ -177,6 +177,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@v8
         with:
           name: 4d-ages-${{ needs.build.outputs.version }}-apk
@@ -187,4 +191,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           VERSION: ${{ needs.build.outputs.version }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --title "4D Ages $VERSION" --generate-notes --verify-tag
+        # the notes are this version's section of CHANGELOG.md ("## 1.0.5"); without one, GitHub's list of changes is used
+        run: |
+          awk -v v="## $VERSION" '$0 == v {found=1; next} /^## / && found {exit} found' CHANGELOG.md > notes.md || true
+          if [ -s notes.md ]; then
+            gh release create "$GITHUB_REF_NAME" dist/* --title "4D Ages $VERSION" --notes-file notes.md --verify-tag
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --title "4D Ages $VERSION" --generate-notes --verify-tag
+          fi

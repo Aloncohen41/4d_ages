@@ -23,7 +23,7 @@ const st = () => useStore.getState();
 const def = (id: string) => MILESTONE_CATALOG.find((d: any) => d.id === id);
 const tick = (id: string, date = "2026-07-01", extra: any = {}) => logMilestone({ childId: "c", defId: id, title: def(id).label, emoji: def(id).emoji, date, tagIds: [], note: "", media: [], ...extra });
 const mine = () => st().memories.filter((m: any) => m.childId === "c" && m.type === "milestone");
-useStore.setState({ kids: [{ id: "c", name: "Chloe", birth: "2025-01-01", theme: "pink", emoji: "🌸" }], activeId: "c", memories: [], customDefs: {}, milestoneAnswers: {} });
+useStore.setState({ kids: [{ id: "c", name: "Maya", birth: "2025-01-01", theme: "pink", emoji: "🌸" }], activeId: "c", memories: [], customDefs: {}, milestoneAnswers: {} });
 
 // ---- ticking
 ok("ticking a milestone creates one milestone memory for it", tick("mov-sits") === null && mine().length === 1 && mine()[0].milestoneId === "mov-sits" && mine()[0].title === "Sits" && mine()[0].date === "2026-07-01");

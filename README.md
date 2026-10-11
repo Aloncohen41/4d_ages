@@ -124,12 +124,12 @@ milestones in all. They are a roadmap, not a test: nothing is ever shown "out of
 - **Earlier · Now · Coming up.** Switch between the stages already passed, the current one and the next two.
 - **"Is this happening?"** A short list of milestones worth looking out for right now, starting 1/6 of the way before a stage opens
   (5, 10, 15, 20 and 25 months). **Yes!** ticks it off; **Not yet** just means it's asked again in a month.
-- **Reinforce** (the button beside the title) is a page you open yourself: *"Wow, Chloe is really good at language!"* and, if there is
+- **Reinforce** (the button beside the title) is a page you open yourself: *"Wow, Maya is really good at language!"* and, if there is
   an area where a little extra play could help, three simple things to try together for the right age. It only ever uses milestones
   you've answered: an area with nothing ticked is just "to explore", and a "not yet" on something still inside its usual stage is
   treated as completely normal. Layout follows the Outstanding / On track / Reinforce cards of the reference app, in this app's colours.
 - **Notifications** (Add tab → *Reminders & cheers*, each has its own switch): on the day they reach a new month,
-  *"🎉 Wow — Chloe is 6 months old today!"*; and before each new stage, *"👀 Is Chloe starting any of these?"* naming three
+  *"🎉 Wow — Maya is 6 months old today!"*; and before each new stage, *"👀 Is Maya starting any of these?"* naming three
   milestones that aren't ticked yet. Tapping either opens the Milestones tab. Birthdays keep their own reminder. Notifications are
   scheduled when the app opens (the next ~64), so open it now and then.
 - **Nothing you logged is lost.** The earlier milestone list is kept: milestones you already logged still appear, ticked, under

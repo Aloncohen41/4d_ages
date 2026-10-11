@@ -25,9 +25,9 @@ const at = (birth: string, months: number, hour: number) => {
 
 /**
  * Two kinds of gentle, positive notifications:
- *  - on the day a child reaches a new month of age (1–36): "Wow — Chloe is 6 months old today!"
+ *  - on the day a child reaches a new month of age (1–36): "Wow — Maya is 6 months old today!"
  *    (12 and 24 months are birthdays too, so theirs is sent a few hours after the birthday message; 36 is the end of the chart)
- *  - "Is Chloe starting any of these?" when a new age band is about to open — 1/6 of the way before it
+ *  - "Is Maya starting any of these?" when a new age band is about to open — 1/6 of the way before it
  *    (5, 10, 15, 20 and 25 months). Milestones already ticked are left out, and nothing is sent if all are done.
  * `reached` holds, per child, the ids of milestones already ticked off.
  */
