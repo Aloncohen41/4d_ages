@@ -519,6 +519,48 @@ async function cloudFiles(childId: string): Promise<string[]> {
   }
 }
 
+/** What deleting a child's profile will do, so the parent is told before they confirm. */
+export type DeleteOutcome = "deleted" | "handed" | "left";
+
+/**
+ * What deleting this profile would do: delete the book for everyone (you created it and no other parent is in it), hand it to the other
+ * parent (you created it, they're in it too), or just take it off your account (someone else created it). `other` is the other parent's email.
+ */
+export async function deleteChildPlan(childId: string): Promise<{ outcome: DeleteOutcome; other?: string }> {
+  const kid = useStore.getState().kids.find((k) => k.id === childId);
+  if (!kid?.shared || !supabase) return { outcome: "deleted" }; // only on this phone
+  const members = await listMembers(childId);
+  const mine = members.find((m) => m.me);
+  const otherParent = members.find((m) => !m.me && m.role !== "viewer");
+  if (mine?.role !== "owner") return { outcome: "left", other: otherParent?.email };
+  return otherParent ? { outcome: "handed", other: otherParent.email } : { outcome: "deleted" };
+}
+
+/**
+ * Deletes a child's profile from this account (see deleteChildPlan): from the cloud as well when no other parent shares it (with its photos),
+ * otherwise only your access. Then it is taken off this phone.
+ */
+export async function deleteChild(childId: string): Promise<DeleteOutcome> {
+  const kid = useStore.getState().kids.find((k) => k.id === childId);
+  if (kid?.shared && supabase) {
+    const plan = await deleteChildPlan(childId);
+    if (plan.outcome === "deleted") {
+      // the photos first, while this account may still remove them
+      const files = await cloudFiles(childId);
+      for (let i = 0; i < files.length; i += 100) {
+        const { error } = await client().storage.from(BUCKET).remove(files.slice(i, i + 100));
+        if (error) throw new Error(error.message);
+      }
+    }
+    const { data, error } = await client().rpc("delete_child", { p_child: childId });
+    if (error) throw new Error(/function .*delete_child/i.test(error.message) ? "The database needs the latest setup (npm run db:setup) before a profile can be deleted." : error.message);
+    useStore.getState().forgetChild(childId);
+    return (data as DeleteOutcome) ?? plan.outcome;
+  }
+  useStore.getState().forgetChild(childId);
+  return "deleted";
+}
+
 /**
  * Deletes the account and its data. Children only this account can see are deleted with their photos; a child shared with another parent is
  * handed over to them instead (it is their book too). Then the account itself is removed. The caller clears the phone and signs out.

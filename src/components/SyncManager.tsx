@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { Alert, AppState } from "react-native";
 import { useStore } from "../lib/store";
-import { signOut, useSession } from "../lib/supabase";
-import { attachAndRestore, everythingSynced, isApplying, joinWithCode, syncAll } from "../lib/sync";
+import { useSession } from "../lib/supabase";
+import { attachAndRestore, isApplying, joinWithCode, syncAll } from "../lib/sync";
 import { useRealtime } from "../lib/realtime";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -63,16 +63,10 @@ export function SyncManager() {
     (async () => {
       const st = useStore.getState();
       if (st.preview) st.clearSample();
-      const previous = useStore.getState().accountUserId;
-      if (previous && previous !== userId) {
-        if (!everythingSynced()) {
-          await signOut();
-          Alert.alert("Another account's book is on this phone", "Some of its changes haven't reached that account yet. Sign in with that account first so nothing is lost, then sign out.");
-          return;
-        }
-        useStore.getState().resetAll(); // it is all in that account; this phone now holds yours
-      }
-      useStore.getState().setAccountUserId(userId);
+      // a phone can be used by more than one account: the books of whoever was signed in before are set aside on the phone (nothing is lost,
+      // even what hadn't been uploaded yet) and come back when they sign in again
+      await useStore.getState().switchAccount(userId);
+      if (!alive) return;
       useStore.getState().setSync({ busy: true, error: undefined, progress: "Looking for books already in your account…" });
       try {
         await attachAndRestore();

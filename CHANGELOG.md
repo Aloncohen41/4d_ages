@@ -1,6 +1,29 @@
-# What's new
+# Changelog
 
-Each release's notes on GitHub are taken from its section here (`## 1.0.5` for v1.0.5). Add the next version's section before tagging it.
+Notable changes in each release of 4D Ages.
+
+## 1.0.7
+
+**Profiles and accounts**
+- A phone can be used with more than one account. Each account's books are kept separately on the phone, and switching accounts no longer signs anyone out or risks losing changes that weren't uploaded yet.
+- A child's profile can be deleted. If you created it and the other parent is in it, it's handed over to them; otherwise it's deleted with its photos. If someone else created it, it's just removed from your account.
+- The profile has a clear Share button again, which opens that child's sharing screen.
+
+**Updates**
+- The app checks for a newer version when it opens and offers to download it. You can also check from Settings, About.
+
+**Photos**
+- Photos and videos keep the date they were taken, read from the file itself, instead of being dated today when the gallery doesn't pass the date on.
+
+**Pregnancy**
+- Each week's size is shown as a photo of the real fruit or vegetable instead of an emoji.
+
+**The book**
+- The book is now called "Maya's Days" until age two, then "Maya's Years", on the Book tab and the cover.
+- The family page has a title that fits each theme, such as "The stars in your sky" (Little Stars) or "The birds that make you bloom" (Blossom).
+
+**Sharing**
+- Shorter invite messages that say whether the person can only view the book or can also add to it.
 
 ## 1.0.6
 

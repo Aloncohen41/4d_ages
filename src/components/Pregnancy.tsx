@@ -16,6 +16,8 @@ import { TYPE } from "../theme";
 import { Btn, DateField, Input, PhotoView, Seg, Sheet } from "./ui";
 import { Icon } from "./Icon";
 import { GrowPlayer } from "./Grow";
+import { Image } from "expo-image";
+import { FRUIT_PICTURES } from "../lib/fruitPictures";
 
 /** "about 25.6 cm and 300 g" */
 const sizeText = (cm: number, g?: number) => `about ${cm < 1 ? `${Math.round(cm * 10)} mm` : `${cm} cm`}${g ? ` and ${g >= 1000 ? `${(g / 1000).toFixed(1)} kg` : `${g} g`}` : ""}`;
@@ -53,7 +55,7 @@ export function PregnancyGrowth({ child }: { child: Child }) {
       {/* this week */}
       <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 18, marginTop: 14, alignItems: "center" }}>
         <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{shown === now.week ? `Week ${now.week} of 40 · ${TRIMESTER_NAMES[trimesterOf(now.week)]}` : `Week ${shown}`}</Text>
-        <Text style={{ fontSize: 72, marginVertical: 6 }}>{size.emoji}</Text>
+        <Image source={FRUIT_PICTURES[size.pic]} accessibilityLabel={size.fruit} style={{ width: 132, height: 132, borderRadius: 28, marginVertical: 10 }} contentFit="cover" transition={150} />
         <Text style={[TYPE.titleLarge, { color: t.ink, textAlign: "center" }]}>The size of {size.fruit}</Text>
         <Text style={[TYPE.bodyMedium, { color: t.ink3, marginTop: 2 }]}>{sizeText(size.cm, size.g)}</Text>
         {shown === now.week ? (
@@ -80,7 +82,7 @@ export function PregnancyGrowth({ child }: { child: Child }) {
           return (
             <Pressable key={w.week} onPress={() => setShown(w.week)} accessibilityRole="button" accessibilityLabel={`Week ${w.week}: ${w.fruit}`}
               style={{ width: 64, alignItems: "center", paddingVertical: 8, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: isNow ? t.accentSoft : t.card }}>
-              <Text style={{ fontSize: 26 }}>{w.emoji}</Text>
+              <Image source={FRUIT_PICTURES[w.pic]} style={{ width: 44, height: 44, borderRadius: 10, marginBottom: 4 }} contentFit="cover" />
               <Text style={[TYPE.labelMedium, { color: isNow ? t.onAccentSoft : t.ink2 }]}>Week {w.week}</Text>
             </Pressable>
           );

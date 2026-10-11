@@ -63,6 +63,11 @@ export function bookMetrics(s: BookSize) {
  * flowers, trees, hills), Child's games (toys and games) and Modern (plain, no drawings). Each comes in several colours (BOOK_COLOURS).
  */
 export type BookStyle = "classic" | "nature" | "playful" | "modern" | "stars" | "blossom" | "explorer" | "rainbow";
+/** The book's name: "Maya's Days" until they turn two, then "Maya's Years". */
+export function bookName(child: Pick<Child, "name" | "birth" | "expecting">, on: string): string {
+  return `${child.name}'s ${!child.expecting && ageBetween(child.birth, on).years >= 2 ? "Years" : "Days"}`;
+}
+
 export const BOOK_STYLES: { id: BookStyle; label: string; desc: string }[] = [
   { id: "classic", label: "Classic", desc: "Cream pages, serif titles, a moon, clouds, sun and balloons as they grow" },
   { id: "nature", label: "Nature", desc: "Soft natural paper with leaves, flowers, trees and hills" },

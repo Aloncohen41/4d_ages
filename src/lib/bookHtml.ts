@@ -5,7 +5,7 @@ import { formatHeight, formatWeight, HeightUnit, WeightUnit } from "./growth";
 import { TYPE_META } from "./entries";
 import { APP_NAME } from "../brand";
 import { CLASSICS, ClassicEntry, TEETH, datedItems, listItems } from "./classics";
-import { AgeBand, BookColour, BookPage, BookPlan, BookSize, BookStyle, STYLE_LOOK, bookMetrics, ordinal, picturesOf, styleById, yearTitle } from "./bookPages";
+import { AgeBand, BookColour, bookName, BookPage, BookPlan, BookSize, BookStyle, STYLE_LOOK, bookMetrics, ordinal, picturesOf, styleById, yearTitle } from "./bookPages";
 
 /*
  * The book's pages as one HTML document. The PDF is printed from it, and the preview on the phone shows the very same document in a web view,
@@ -58,6 +58,18 @@ export const BAND_LOOK: Record<AgeBand, { wash: string; ink: string }> = {
   kid: { wash: "#efe9f8", ink: "#7a64ab" },
 };
 /** A single colour all through the book uses one of the age colours everywhere. */
+/** The family page's title, in the words of each theme. */
+export const FAMILY_TITLES: Record<BookStyle, string> = {
+  classic: "The people who love you most",
+  nature: "The roots that help you grow",
+  playful: "Your very best playmates",
+  modern: "Your people",
+  stars: "The stars in your sky",
+  blossom: "The birds that make you bloom",
+  explorer: "Your crew for every adventure",
+  rainbow: "All the colours of your rainbow",
+};
+
 const COLOUR_BAND: Record<Exclude<BookColour, "age">, AgeBand> = { blush: "newborn", sky: "early", sunshine: "late", sage: "toddler", lavender: "kid" };
 /** The drawing for each age in each theme (Modern has none), and the ones on the cover, a year's opener and the family page. */
 export const THEME_MOTIFS: Record<Exclude<BookStyle, "modern">, Record<AgeBand | "cover" | "cover2" | "year" | "family", string>> = {
@@ -177,7 +189,6 @@ export function buildBookHtml(i: BookHtmlInput): string {
   const tall = size.hCm / size.wCm > 1.2;
   const rels = i.relatives || [];
   const tagIndex = indexTags(i.tags || []);
-  const firstYearOnly = plan.pages.every((p) => !p.chapter || p.chapter.year === 0);
 
   // colours: each age has its own (or one colour all through, if chosen); Modern stays black on white unless a colour is chosen
   // the kids' themes have their own colour (unless one is chosen); the others change colour with age
@@ -271,7 +282,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
     const running = p.chapter ? folio(p.chapter.label) : numbered(n);
     switch (p.kind) {
       case "cover": {
-        const title = i.title || (multi ? `${names(kids)}: Our Story` : child.expecting ? `Waiting for ${child.name}` : `${child.name}'s ${firstYearOnly ? "First Year" : "First Years"}`);
+        const title = i.title || (multi ? `${names(kids)}: Our Story` : child.expecting ? `Waiting for ${child.name}` : bookName(child, todayISO()));
         const pic = p.photo ? i.image(p.photo) : null;
         return `<section class="page cover" style="background-color:${look.motifs ? fixed("newborn").wash : look.paper}">
           ${drawings ? `<div class="motif big tl">${motif(drawings.cover, fixed("newborn").ink)}</div><div class="motif tr">${motif(drawings.cover2, fixed("late").ink)}</div>` : ""}
@@ -316,7 +327,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
         return `<section class="page family">
           ${corner(p, drawings ? drawings.family : "")}
           <p class="kicker" style="color:${ink(p)}">Your family</p>
-          <h2>The people who love you</h2>
+          <h2>${esc(FAMILY_TITLES[style])}</h2>
           <div class="people">${p.people.map((r) => {
             const pic = r.photoUri ? i.image(r.photoUri) : null;
             return `<div class="person"><div class="face" style="background:${wash(p)};color:${ink(p)}">${pic ? `<img src="${esc(pic)}"/>` : esc(initialsOf(r.name || displayName(r)))}</div>

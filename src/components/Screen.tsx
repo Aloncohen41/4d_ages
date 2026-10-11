@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -24,6 +24,8 @@ import { APP_NAME, WORDMARK_ASPECT } from "../brand";
 import { Icon, IconName } from "./Icon";
 import { CollectionSheet, CollectionKind } from "./CollectionSheet";
 import { ArrivalSheet } from "./Pregnancy";
+import { deleteChild, deleteChildPlan } from "../lib/sync";
+import { friendlyShareError } from "../lib/shareFlow";
 
 interface Controls { toTop: () => void; toBottom: () => void; subscribeNearEnd: (cb: () => void) => () => void }
 const ScrollControls = React.createContext<Controls>({ toTop: () => undefined, toBottom: () => undefined, subscribeNearEnd: () => () => undefined });
@@ -231,7 +233,7 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
   const memories = useStore((s) => s.memories);
   const updateChild = useStore((s) => s.updateChild);
   const addMemories = useStore((s) => s.addMemories);
-  const setShareOpen = useStore((s) => s.setShareOpen);
+  const [deleting, setDeleting] = useState(false);
   const [name, setName] = useState("");
   const [birth, setBirth] = useState(todayISO());
   const [theme, setTheme] = useState<KidTheme>("pink");
@@ -266,6 +268,44 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
     pickAvatar(p.id);
   };
 
+  const askDelete = async () => {
+    const name = child.name;
+    setDeleting(true);
+    let plan: Awaited<ReturnType<typeof deleteChildPlan>>;
+    try {
+      plan = await deleteChildPlan(child.id);
+    } catch (e) {
+      setDeleting(false);
+      return Alert.alert("Couldn't check who shares this book", friendlyShareError(e));
+    }
+    setDeleting(false);
+    const run = async () => {
+      setDeleting(true);
+      try {
+        await deleteChild(child.id);
+        onClose();
+      } catch (e) {
+        Alert.alert(`Couldn't delete ${name}'s profile`, friendlyShareError(e));
+      } finally {
+        setDeleting(false);
+      }
+    };
+    if (plan.outcome === "deleted") {
+      Alert.alert(`Delete ${name}'s profile?`, `This deletes ${name}'s book and everything in it (photos, milestones and stories) from this phone and your account. Anyone you invited loses access. This can't be undone.`, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => Alert.alert(`Delete ${name} for good?`, "There's no way to bring it back.", [{ text: "Keep it", style: "cancel" }, { text: "Delete for good", style: "destructive", onPress: run }]) },
+      ]);
+    } else {
+      const keeper = plan.other ?? "the family who shared it with you";
+      Alert.alert(`Remove ${name}'s profile?`, plan.outcome === "handed"
+        ? `${name}'s book stays with ${keeper}, who becomes its owner. It's taken off this phone and your account, and they can invite you back.`
+        : `${name}'s book stays with ${keeper}. It's taken off this phone and your account, and they can invite you back.`, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Remove", style: "destructive", onPress: run },
+      ]);
+    }
+  };
+
   // a date still to come is a due date; "The baby is here!" (or the "Welcome to the world" milestone) sets the real birth date
   const expecting = birth > todayISO() || (!!child.expecting && birth >= todayISO());
   const save = () => {
@@ -286,7 +326,17 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
         </View>
       ) : null}
       {child.role !== "viewer" ? (
-        <Btn label={`Share ${child.name}'s book`} icon="user-plus" kind="soft" onPress={() => { onClose(); setShareOpen(true); }} style={{ marginBottom: 6 }} />
+        // the share screen opens once this sheet has closed, so it is never left behind it
+        <Pressable onPress={() => { onClose(); setTimeout(() => router.push({ pathname: "/share", params: { child: child.id } }), 300); }} accessibilityRole="button"
+          android_ripple={{ color: withAlpha(t.ink, 0.08) }}
+          style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, backgroundColor: t.accentSoft, marginBottom: 6, overflow: "hidden" }}>
+          <Icon name="user-plus" size={22} color={t.onAccentSoft} />
+          <View style={{ flex: 1 }}>
+            <Text style={[TYPE.titleSmall, { color: t.onAccentSoft }]}>Share {child.name}'s book</Text>
+            <Text style={[TYPE.bodySmall, { color: t.onAccentSoft }]}>Invite the other parent or family, and see who has access</Text>
+          </View>
+          <Icon name="chevron-right" size={22} color={t.onAccentSoft} />
+        </Pressable>
       ) : null}
       <Label>Name</Label>
       <Input value={name} onChangeText={setName} placeholder={expecting ? "You can change it any time" : undefined} />
@@ -326,6 +376,11 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
         <Btn label="Cancel" kind="soft" onPress={onClose} style={{ flex: 1 }} />
         <Btn label="Save profile" onPress={save} style={{ flex: 1 }} />
       </View>
+      <Pressable onPress={askDelete} disabled={deleting} accessibilityRole="button" hitSlop={6}
+        style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 22, paddingVertical: 10 }}>
+        {deleting ? <ActivityIndicator size="small" color={t.danger} /> : <Icon name="trash-2" size={18} color={t.danger} />}
+        <Text style={{ color: t.danger, fontWeight: "700" }}>{child.role === "viewer" ? `Remove ${child.name}'s book` : `Delete ${child.name}'s profile`}</Text>
+      </Pressable>
     </Sheet>
   );
 }

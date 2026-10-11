@@ -72,7 +72,7 @@ export default function HealthPage() {
           </Pressable>
         ))
       )}
-      <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 12 }]}>Health notes stay out of the story and the keepsake book. For information only: always follow your doctor's advice.</Text>
+      <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 12 }]}>Health notes stay out of the story and the book. For information only: always follow your doctor's advice.</Text>
     </Page>
   );
 }

@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { createDataStorage } from "./dataStorage";
 import { addSiblingsForNewChild, addToFamily, followChild, pinToExistingChildren, setFamilies, setUpSiblings } from "./family";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { swapAccounts } from "./accounts";
 import { Child, EntryKind, MilestoneDef, Memory, NotifPrefs, Relative, SharedItem, Tag, Tombstone } from "./types";
 import { personTag, upsertTagIn, uniqueIds } from "./tags";
 import type { HeightUnit, WeightUnit } from "./growth";
@@ -138,6 +139,8 @@ export interface State {
   /** Take the sample family out again (leaving the preview, or signing in). Anything of your own is left alone. */
   clearSample: () => void;
   resetAll: () => void;
+  /** Another account signed in on this phone: set aside the books of the account that was here and bring back this one's (see accounts.ts). */
+  switchAccount: (userId: string) => Promise<void>;
   /** Take one child (and everything of theirs) off this phone, without touching the cloud: their book is no longer shared with this account. */
   forgetChild: (childId: string) => void;
 }
@@ -426,6 +429,15 @@ export const useStore = create<State>()(
           };
         });
         get().pruneTags();
+      },
+
+      switchAccount: async (userId) => {
+        const st = get();
+        if (st.accountUserId === userId) return;
+        if (!st.accountUserId) { set({ accountUserId: userId }); return; } // books made before signing in become this account's
+        const { next, done } = await swapAccounts(AsyncStorage, STORE_KEY, STORE_VERSION, st as unknown as Record<string, unknown>, st.accountUserId, userId, (saved, v) => migrateStored(saved as never, v) as Record<string, unknown>);
+        set({ ...(next as Partial<State>), preview: false, accountUserId: userId });
+        await done();
       },
 
       resetAll: () => {

@@ -433,6 +433,37 @@ begin
   delete from auth.users where id = v_uid;
 end $$;
 
+-- deleting a child's profile. The parent who created it: if the other parent is in the book, it is handed over to them (it is their book too)
+-- and the creator leaves; otherwise the child is deleted with everything in it. Anyone else just leaves. Returns 'handed', 'deleted' or 'left'.
+create or replace function public.delete_child(p_child text) returns text
+language plpgsql security definer set search_path = public as $$
+declare v_uid uuid := auth.uid(); v_owner uuid; v_heir uuid;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in';
+  end if;
+  select owner_id into v_owner from public.children where id = p_child;
+  if v_owner is null then
+    return 'deleted'; -- already gone
+  end if;
+  if v_owner <> v_uid then
+    delete from public.child_members where child_id = p_child and user_id = v_uid;
+    return 'left';
+  end if;
+  select m.user_id into v_heir from public.child_members m
+    where m.child_id = p_child and m.user_id <> v_uid and m.role <> 'viewer' order by m.created_at limit 1;
+  if v_heir is not null then
+    update public.children set owner_id = v_heir where id = p_child;
+    update public.child_members set role = 'owner' where child_id = p_child and user_id = v_heir;
+    delete from public.child_members where child_id = p_child and user_id = v_uid;
+    return 'handed';
+  end if;
+  delete from public.children where id = p_child; -- memories, family, classics, invites, reactions and viewers go with it
+  return 'deleted';
+end $$;
+revoke execute on function public.delete_child(text) from public, anon;
+grant execute on function public.delete_child(text) to authenticated;
+
 grant execute on function public.create_invite(text, text[], text) to authenticated;
 grant execute on function public.join_child(text) to authenticated;
 revoke execute on function public.delete_my_account() from public, anon;

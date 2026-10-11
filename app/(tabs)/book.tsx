@@ -11,7 +11,7 @@ import { useTheme } from "../../src/lib/useTheme";
 import { TYPE } from "../../src/theme";
 import { MILESTONE_DEFS } from "../../src/lib/types";
 import {
-  BOOK_COLOURS, BOOK_PHOTO_LIMIT, BOOK_SIZES, BOOK_STYLES, BookPrefs, DEFAULT_BOOK_SIZE, colourById, inBook, planBook, selectForBook, sizeById, startsAtBirth, styleById,
+  BOOK_COLOURS, BOOK_PHOTO_LIMIT, BOOK_SIZES, BOOK_STYLES, BookPrefs, bookName, DEFAULT_BOOK_SIZE, colourById, inBook, planBook, selectForBook, sizeById, startsAtBirth, styleById,
 } from "../../src/lib/bookPages";
 import { BookDestination, exportBook } from "../../src/lib/pdf";
 import { familyOf, orderedFamily } from "../../src/lib/family";
@@ -108,7 +108,7 @@ function Book() {
 
   return (
     <View>
-      <Heading title="Keepsake book" desc="Ready made from their photos and milestones, in date order from the day they were born." />
+      <Heading title={bookName(child, todayISO())} desc="Their book, ready made from their photos and milestones, in date order from the day they were born." />
 
       {person ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: t.accent, marginBottom: 12 }}>

@@ -18,6 +18,8 @@ export const TERMS_URL = `${SITE_URL}terms/`;
 export const DELETE_ACCOUNT_URL = `${SITE_URL}delete-account/`;
 /** Where feedback and questions go. */
 export const FEEDBACK_URL = "https://github.com/Aloncohen41/4d_ages/issues";
+/** Where the app looks for a newer version when it opens (the latest GitHub release, with its APK). */
+export const LATEST_RELEASE_API = "https://api.github.com/repos/Aloncohen41/4d_ages/releases/latest";
 /** The warm cream the splash screen and the loading screen share — sampled from the icon picture's own backdrop, so the hand-over is invisible. */
 export const SPLASH_BG = "#FEFBF6";
 /** Width (dp) the splash icon is drawn at: Android 12's round splash mask is two-thirds of a 288 dp area, and the art is sized for it. */

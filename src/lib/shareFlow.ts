@@ -28,17 +28,15 @@ export function friendlyShareError(e: unknown): string {
   return msg || "Something went wrong. Try again.";
 }
 
-/** The message sent with an invite: what it is, the link, and the code (in case the link can't be opened). */
+/**
+ * The message sent with an invite, short enough to be read: what they can do (view only, or view and add), the link, and the code with who it's
+ * for (in case the link can't be opened).
+ */
 export function inviteMessage(kind: InviteKind, childName: string, code: string, link: string, appName: string, email?: string): string {
   const intro = kind === "parent"
-    ? `I'd like to share ${childName}'s baby book with you in ${appName}, so we can both add photos and memories.`
-    : `I'd like to share ${childName}'s baby book with you in ${appName}.`;
-  return [
-    intro,
-    `Open this link: ${link}`,
-    email ? `Sign in with ${email}. The invite only works for that email.` : "",
-    `Or open ${appName}, choose "Join with a code" and enter ${code}. It's valid for 7 days.`,
-  ].filter(Boolean).join("\n\n");
+    ? `Join ${childName}'s baby book on ${appName}. You can view and add photos and memories.`
+    : `You're invited to ${childName}'s baby book on ${appName} (view only).`;
+  return [intro, link, `Code ${code}${email ? ` · for ${email}` : ""} · valid 7 days`].join("\n");
 }
 
 /** What the person invited will see, in one line. */

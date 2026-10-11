@@ -44,5 +44,5 @@ ok("applied to the generated manifest, only the MAIN screen changes", acts[1].$[
 ok("an unexpected manifest shape never breaks the build", (() => { try { plugin({ modResults: { manifest: {} } }); plugin({ modResults: undefined }); plugin({ modResults: { manifest: { application: [{}] } } }); return true; } catch { return false; } })());
 const app = JSON.parse(read("app.json")).expo;
 ok("the plugin is registered in app.json and exists", app.plugins.includes("./plugins/withKeepScreenAlive") && existsSync(path.join(__dirname, "..", "plugins", "withKeepScreenAlive.js")));
-ok("the README tells the parent what to do right now and what was changed", /swipe the app away|Swipe .* away/i.test(read("README.md")) && /50386/.test(read("README.md")));
+ok("the README's troubleshooting says what to do (restart the app) and what prevents it", /swipe the app away|Swipe .* away/i.test(read("README.md")) && /withKeepScreenAlive/.test(read("README.md")));
 console.log(fails ? `${fails} FAILED` : "all picker-restart tests passed");

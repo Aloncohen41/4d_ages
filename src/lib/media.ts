@@ -2,6 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Directory, File, Paths } from "expo-file-system";
 import { Child, MediaItem, MediaKind, Memory } from "./types";
 import { dateFromFileName, exifToISO, todayISO } from "./date";
+import { readFileDate } from "./fileDate";
 import { defaultThumb } from "./videoThumbs";
 import { APP_NAME } from "../brand";
 import { RESTART_MANUAL_TITLE, RESTART_MESSAGE, RESTART_TITLE, isPickerRegistrationError, restartManualMessage } from "./pickerErrors";
@@ -85,10 +86,12 @@ export async function pickMedia(opts: { videos: boolean; multiple: boolean }): P
       exifToISO(String(ex.DateTimeOriginal ?? "")) ||
       exifToISO(String(ex.DateTime ?? "")) ||
       dateFromFileName(a.fileName);
-    const date = found || todayISO();
     const uri = persistFile(a.uri, extOf(a.fileName, a.uri, kind));
+    // the picker doesn't always pass the EXIF on, and videos have none: then the date is read from inside the file
+    const fromFile = found ? null : readFileDate(uri, kind, todayISO());
+    const date = found || fromFile || todayISO();
     const thumb = kind === "video" ? await defaultThumb(uri) : undefined; // videos get a thumbnail straight away
-    return { uri, kind, date, dated: !!found, thumb };
+    return { uri, kind, date, dated: !!(found || fromFile), thumb };
   }));
 }
 

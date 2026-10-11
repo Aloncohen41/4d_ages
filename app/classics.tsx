@@ -21,7 +21,7 @@ export default function ClassicsPage() {
   return (
     <Page title="Classics">
       <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 14 }]}>
-        {viewOnly ? `These pages are kept by ${child.name}'s parents.` : `The pages of a classic baby book, for ${child.name}. Fill in any of them, any time. The ones you fill in are added to the keepsake book.`}
+        {viewOnly ? `These pages are kept by ${child.name}'s parents.` : `The pages of a classic baby book, for ${child.name}. Fill in any of them, any time. The ones you fill in are added to ${child.name}'s book.`}
       </Text>
       {viewOnly ? null : CLASSICS.map((tpl) => {
         const entry = classics.find((c) => c.childId === child.id && c.id === tpl.id);
