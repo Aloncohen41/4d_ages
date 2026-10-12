@@ -142,12 +142,12 @@ alter table public.children add column if not exists breed text;
 alter table public.children add column if not exists dog_size text;
 alter table public.children add column if not exists birth_approx boolean not null default false;
 alter table public.children add column if not exists gotcha_day date;
-alter table public.memories add column if not exists end_date date;
+alter table public.memories add column if not exists end_date date;          -- a pregnancy symptom: the last day of the time it lasted
 -- a family member who IS one of the children or pets (a sibling, "Our dog"): which profile. Deleting that profile removes them from every family.
 alter table public.relatives add column if not exists child_ref text;
 -- (and any left over from a profile that's gone)
 update public.relatives r set deleted = true, client_ts = (extract(epoch from now()) * 1000)::bigint
-  where r.child_ref is not null and not r.deleted and not exists (select 1 from public.children c where c.id = r.child_ref);         -- a pregnancy symptom: the last day of the time it lasted
+  where r.child_ref is not null and not r.deleted and not exists (select 1 from public.children c where c.id = r.child_ref);
 alter table public.memories add column if not exists health_kind text;      -- health log entries: 'checkup' | 'vaccination' | 'illness' | 'medicine' | 'other'
 alter table public.children add column if not exists expecting boolean not null default false;   -- not born yet: birth is the due date
 
