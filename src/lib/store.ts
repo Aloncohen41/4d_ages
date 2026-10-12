@@ -75,6 +75,8 @@ export interface State {
   preview: boolean;
   /** Each child's book as you last set it up: theme, colour, size, the dates it covers, posts left out, and whose book it is. */
   bookPrefs: Record<string, BookPrefs>;
+  /** Suggested videos you named, described or put away, by "childId:eventId" (on this phone only). */
+  videoEvents: Record<string, { title?: string; subtitle?: string; dismissed?: boolean }>;
   /** A share code from a link, waiting to be used once this phone is signed in. */
   pendingJoin?: string;
   // not saved
@@ -147,6 +149,7 @@ export interface State {
   setFamilyOrder: (childId: string, ids: string[]) => void;
   setAccountUserId: (id: string | undefined) => void;
   setBookPrefs: (childId: string, patch: Partial<BookPrefs>) => void;
+  setVideoEvent: (key: string, patch: { title?: string; subtitle?: string; dismissed?: boolean }) => void;
   setPendingJoin: (code: string | undefined) => void;
   loadSample: () => void;
   /** Take the sample family out again (leaving the preview, or signing in). Anything of your own is left alone. */
@@ -215,6 +218,7 @@ export const useStore = create<State>()(
       accountUserId: undefined,
       preview: false,
       bookPrefs: {},
+      videoEvents: {},
       sync: { busy: false },
       shareOpen: false,
       driveBackup: { enabled: false },
@@ -396,6 +400,7 @@ export const useStore = create<State>()(
       setAccountUserId: (accountUserId) => set({ accountUserId }),
       setPendingJoin: (pendingJoin) => set({ pendingJoin }),
       setBookPrefs: (childId, patch) => set((s) => ({ bookPrefs: { ...s.bookPrefs, [childId]: { ...s.bookPrefs[childId], ...patch } } })),
+      setVideoEvent: (key, patch) => set((s) => ({ videoEvents: { ...s.videoEvents, [key]: { ...s.videoEvents[key], ...patch } } })),
 
       loadSample: () => {
         const d = buildSample();
@@ -466,7 +471,7 @@ export const useStore = create<State>()(
         get().memories.forEach(deleteMedia);
         get().relatives.forEach((r) => r.photoUri && deleteFile(r.photoUri));
         get().classics.forEach((c) => filesOf(classicMedia(c)).forEach(deleteFile));
-        set({ kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, classics: [], tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, bookPrefs: {}, preview: false, accountUserId: undefined });
+        set({ kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, classics: [], tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, bookPrefs: {}, videoEvents: {}, preview: false, accountUserId: undefined });
       },
     }),
     {
@@ -496,6 +501,7 @@ export const useStore = create<State>()(
         accountUserId: s.accountUserId,
         preview: s.preview,
         bookPrefs: s.bookPrefs,
+        videoEvents: s.videoEvents,
         driveBackup: s.driveBackup,
         pendingJoin: s.pendingJoin,
       }),

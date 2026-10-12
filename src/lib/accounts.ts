@@ -8,13 +8,13 @@ import type { KeyValue } from "./dataStorage";
 
 /** The parts of the saved data that belong to an account (everything else is the phone's). */
 export const ACCOUNT_FIELDS = [
-  "kids", "activeId", "memories", "relatives", "customDefs", "classics", "tags", "milestoneAnswers", "tombstones", "syncMeta", "familyOrder", "bookPrefs",
+  "kids", "activeId", "memories", "relatives", "customDefs", "classics", "tags", "milestoneAnswers", "tombstones", "syncMeta", "familyOrder", "bookPrefs", "videoEvents",
 ] as const;
 export type AccountField = (typeof ACCOUNT_FIELDS)[number];
 
 /** An account with nothing on this phone yet. */
 export const EMPTY_ACCOUNT: Record<AccountField, unknown> = {
-  kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, classics: [], tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, bookPrefs: {},
+  kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, classics: [], tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, bookPrefs: {}, videoEvents: {},
 };
 
 /** Where an account's books wait on this phone while another account is signed in. */

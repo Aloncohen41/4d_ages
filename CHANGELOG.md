@@ -2,6 +2,19 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.2
+
+**Videos, made for you**
+- Watch them grow has a new "Made for you" row. It suggests videos from what happened: a day with lots of photos ("A Saturday to remember"), a few days away ("4 days in Brighton"), a birthday ("Maya's 2nd birthday") and the busiest recent months ("September with Maya").
+- Give a suggestion a name and a few words, watch it, then make the video. "Not now" puts it away.
+
+**Videos with music, and four looks**
+- Videos now have music. There are four tracks to choose from (warm, playful, dreamy and a party tune), each one can be heard first, and you can also choose no music. Birthdays start with the party tune and days out with the playful one. Every track is in the public domain, so videos can be shared anywhere.
+- Videos you added keep their own sound, with the music going quieter while they play. This can be turned off.
+- Four looks: Classic, Story (full-screen photos that slowly drift, like a short film), Snapshots (instant photos landing on a pile) and Journal (each photo on paper with its words underneath).
+- Who's in it: everyone, only your child, or only the photos with family tagged in them.
+- Words: open the video with a line of your own, and add stories you've written as cards between the photos, at their dates.
+
 ## 1.1.1
 
 **The family tree**

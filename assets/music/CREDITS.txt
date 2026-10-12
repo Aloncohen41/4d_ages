@@ -1,0 +1,15 @@
+Music in 4D Ages videos
+
+Every track here is in the public domain (CC0 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/).
+They come from the FreePD.com collection of public domain music. The site has closed; the collection is kept
+at https://archive.org/details/freepd (a CC0 mirror is at https://archive.org/details/abook-music-freepd-cc0).
+
+No credit is required, and videos made with them can be shared anywhere. We list the original pieces anyway:
+
+  stars.m4a      "Shining Stars"        (FreePD, Romantic)
+  ukulele.m4a    "Ukulele Song"         (FreePD, Upbeat)
+  garden.m4a     "Magic in the Garden"  (FreePD, Scoring)
+  celebrate.m4a  "Celebration"          (FreePD, Misc)
+
+Each was shortened to under two minutes, levelled in loudness, given a gentle fade in and out, and saved as
+96 kbps AAC, so the app stays small. The videos loop a track when they run longer.

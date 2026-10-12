@@ -6,6 +6,8 @@ import { Child, PALETTES } from "./types";
 import { Slide } from "./slides";
 import { Theme } from "../theme";
 import { ageLong, ageShort, formatDate, todayISO } from "./date";
+import { MusicId, VideoTemplate, musicFile } from "./videoStyles";
+import { cardMs } from "./videoEvents";
 
 interface NativeVideo {
   exportSlideshow(json: string): Promise<string>;
@@ -47,6 +49,15 @@ export interface GrowVideoOptions {
   clipStarts?: Record<string, number>;
   /** Each clip's length (ms), by slide id, when known. */
   clipLengths?: Record<string, number>;
+  /** The look (see videoStyles.ts); Classic when not given. */
+  template?: VideoTemplate;
+  /** The music, and (filled in when the video is made) its file. */
+  music?: MusicId;
+  musicUri?: string;
+  /** Whether the videos in it keep their own sound (the music goes quieter under it). On unless turned off. */
+  clipSound?: boolean;
+  /** Cards of words (from stories, or written for the video), each shown at its date among the pictures. */
+  cards?: { id: string; date: string; text: string; kicker?: string }[];
 }
 
 /** The most of any one video that goes into a made video. */
@@ -86,23 +97,36 @@ export function dimensions(format: VideoFormat, quality: VideoQuality): [number,
 export function slideshowPayload(child: Child, usable: Slide[], theme: Theme, opts: GrowVideoOptions) {
   const [width, height] = dimensions(opts.format, opts.quality);
   const per = BASE_MS / opts.speed;
+  // the pictures and the cards of words, in date order (a card after the pictures of its day)
+  type Entry = { at: string; order: number; item: Record<string, unknown> };
+  const pictures: Entry[] = usable.map((p, k) => {
+    const [bg, hill] = PALETTES[p.palette] || PALETTES.peach;
+    // a video plays (30 seconds at most, from where it was chosen to start); its picture stands in if the phone can't play it
+    const start = p.clip ? clampClipStart(opts.clipStarts?.[p.id] ?? 0, opts.clipLengths?.[p.id] ?? Infinity) : 0;
+    const clip = p.clip ? { clip: p.clip, clipStartMs: start, clipMs: clipPlays(opts.clipLengths?.[p.id], start) } : {};
+    return { at: p.date, order: k, item: { uri: p.uri, emoji: p.emoji, bg, hill, age: ageShort(child.birth, p.date), date: formatDate(p.date), caption: p.caption, ...clip } };
+  });
+  const cards: Entry[] = (opts.cards ?? []).filter((c) => c.text.trim()).map((c, k) => ({
+    at: c.date, order: usable.length + k, item: { card: true, text: c.text.trim(), kicker: c.kicker ?? "", ms: cardMs(c.text.trim(), per) },
+  }));
+  const sequence = cards.length ? [...pictures, ...cards].sort((a, b) => a.at.localeCompare(b.at) || a.order - b.order) : pictures;
   return {
     width,
     height,
     fps: 30,
+    template: opts.template ?? "classic",
+    cardBg: theme.bg,
+    cardInk: theme.ink,
+    accent: theme.accent ?? theme.ink,
+    clipSound: opts.clipSound !== false,
+    ...(opts.musicUri ? { music: opts.musicUri } : {}),
     perMs: per,
     fadeMs: Math.min(1300, Math.max(250, per * 0.55)),
     driftMs: per * 1.6,
     introMs: opts.intro ? INTRO_MS : 0,
     intro: opts.intro ? { emoji: child.emoji, title: opts.title, subtitle: opts.subtitle, bg: theme.bg, ink: theme.ink, ...(opts.cover ? { cover: opts.cover } : {}) } : null,
     items: [
-      ...usable.map((p) => {
-        const [bg, hill] = PALETTES[p.palette] || PALETTES.peach;
-        // a video plays (30 seconds at most, from where it was chosen to start); its picture stands in if the phone can't play it
-        const start = p.clip ? clampClipStart(opts.clipStarts?.[p.id] ?? 0, opts.clipLengths?.[p.id] ?? Infinity) : 0;
-        const clip = p.clip ? { clip: p.clip, clipStartMs: start, clipMs: clipPlays(opts.clipLengths?.[p.id], start) } : {};
-        return { uri: p.uri, emoji: p.emoji, bg, hill, age: ageShort(child.birth, p.date), date: formatDate(p.date), caption: p.caption, ...clip };
-      }),
+      ...sequence.map((e) => e.item),
       // the ending, when chosen for a pet: "In loving memory", with a rainbow and their words
       ...(opts.memorial != null ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accent, age: "In loving memory", date: "", caption: opts.memorial || "Forever in our hearts" }] : []),
     ],
@@ -122,7 +146,8 @@ export async function createGrowVideo(
   const usable = slides.filter((s) => !!s.uri || !!s.clip);
   if (!usable.length) throw new Error("There are no photos to put in a video yet.");
 
-  const payload = slideshowPayload(child, usable, theme, opts);
+  const musicUri = opts.music ? (await musicFile(opts.music).catch(() => null)) ?? undefined : undefined; // no music rather than no video
+  const payload = slideshowPayload(child, usable, theme, { ...opts, musicUri });
 
   const sub = mod.addListener("onProgress", (e) => onProgress(e.progress));
   try {

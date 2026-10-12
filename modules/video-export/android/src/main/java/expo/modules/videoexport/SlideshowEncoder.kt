@@ -49,7 +49,9 @@ class Item(
   /** A video clip that plays on this slide, from this moment (the picture above stands in if it can't be played). */
   val clip: String? = null,
   val clipStartMs: Long = 0L,
-  val rotation: Int = 0
+  val rotation: Int = 0,
+  /** A card of words (from a story, or written for the video): `age` is its small heading, `caption` the words. */
+  val card: Boolean = false
 )
 
 /** How long a video is and which way up it was filmed; null when it can't be read. */
@@ -69,6 +71,19 @@ private fun probe(path: String): Pair<Long, Int>? {
 
 private fun pathOf(uriOrPath: String): String = Uri.parse(uriOrPath).path ?: uriOrPath.removePrefix("file://")
 
+/** Whether a video has sound at all. */
+private fun hasSound(path: String): Boolean {
+  val x = android.media.MediaExtractor()
+  return try {
+    x.setDataSource(path)
+    (0 until x.trackCount).any { x.getTrackFormat(it).getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+  } catch (e: Throwable) {
+    false
+  } finally {
+    x.release()
+  }
+}
+
 class SlideshowEncoder(
   private val ctx: Context,
   private val o: JSONObject,
@@ -81,6 +96,13 @@ class SlideshowEncoder(
   private val perMs = o.getDouble("perMs")
   private val fadeMs = o.getDouble("fadeMs")
   private val driftMs = o.optDouble("driftMs", perMs * 1.6)
+
+  /** The look: "classic" (the whole photo over a blur, the age large), "story" (full-screen photos that slowly pan, the words large),
+   *  "snapshots" (instant photos landing on a pile) or "journal" (each photo on paper, its words underneath). */
+  private val template = o.optString("template", "classic")
+  private val cardBg = Color.parseColor(o.optString("cardBg", "#FFF8F0"))
+  private val cardInk = Color.parseColor(o.optString("cardInk", "#3D2630"))
+  private val accentInk = Color.parseColor(o.optString("accent", "#C0587E"))
 
   private val items = ArrayList<Item>()
   private val durations = ArrayList<Double>()
@@ -147,6 +169,11 @@ class SlideshowEncoder(
     val arr = o.getJSONArray("items")
     for (i in 0 until arr.length()) {
       val obj = arr.getJSONObject(i)
+      if (obj.optBoolean("card", false)) {
+        items.add(Item(null, "", cardBg, accentInk, obj.optString("kicker", ""), "", obj.optString("text", ""), false, card = true))
+        durations.add(obj.optDouble("ms", perMs * 1.4))
+        continue
+      }
       // a video clip plays for as long as the part chosen (up to clipMs), at its own speed; one that can't be read is shown as its picture
       val clipUri = obj.optString("clip", "")
       val clipStart = max(0L, obj.optLong("clipStartMs", 0L))
@@ -492,10 +519,231 @@ class SlideshowEncoder(
     c.restoreToCount(save)
   }
 
-  private fun drawLayer(c: Canvas, i: Int, localMs: Double) {
+  /* ---------------- the templates ---------------- */
+
+  private val cardTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL) }
+  private val kickerPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    letterSpacing = 0.18f
+    textAlign = Paint.Align.CENTER
+  }
+  private val inkPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+  private val framePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+  private fun layout(key: Int, text: String, paint: TextPaint, width: Int, lines: Int, align: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL): StaticLayout =
+    layouts.getOrPut(key) {
+      StaticLayout.Builder.obtain(text, 0, text.length, paint, width).setAlignment(align).setMaxLines(lines).setEllipsize(TextUtils.TruncateAt.END).setLineSpacing(0f, 1.15f).build()
+    }
+
+  /** A card of words: the small heading, then the words, large and centred, rising gently into place. */
+  private fun drawTextCard(c: Canvas, i: Int, item: Item, localMs: Double) {
+    c.drawColor(cardBg)
+    val p = min(1.0, localMs / 700.0)
+    val ease = (1.0 - (1.0 - p).pow(3.0)).toFloat()
+    val tw = (w * 0.78f).toInt()
+    val long = item.caption.length
+    cardTextPaint.color = cardInk
+    cardTextPaint.textSize = w * (if (long > 220) 0.042f else if (long > 120) 0.05f else 0.062f)
+    val body = layout(100_000 + i, item.caption, cardTextPaint, tw, 9, Layout.Alignment.ALIGN_CENTER)
+    val kick = item.age.isNotBlank()
+    val total = body.height + (if (kick) w * 0.09f else 0f)
+    var y = (h - total) / 2f + (1f - ease) * h * 0.03f
+    val save = c.saveLayerAlpha(0f, 0f, w.toFloat(), h.toFloat(), (ease * 255).toInt())
+    if (kick) {
+      kickerPaint.color = accentInk
+      kickerPaint.textSize = w * 0.03f
+      c.drawText(item.age.uppercase(), w / 2f, y + kickerPaint.textSize, kickerPaint)
+      framePaint.color = accentInk
+      c.drawRect(w / 2f - w * 0.04f, y + w * 0.055f, w / 2f + w * 0.04f, y + w * 0.058f, framePaint)
+      y += w * 0.09f
+    }
+    c.save()
+    c.translate((w - tw) / 2f, y)
+    body.draw(c)
+    c.restore()
+    c.restoreToCount(save)
+  }
+
+  /** Story: the photo fills the screen and slowly drifts (alternating left and right); a clip simply fills it. */
+  private fun drawStoryPhoto(c: Canvas, i: Int, bm: Bitmap, localMs: Double, moving: Boolean) {
+    val p = if (moving) (localMs / durations[i]).coerceIn(0.0, 1.0) else 0.5
+    val zoom = if (moving) 1.14 - 0.1 * p else 1.0
+    val s = max(w.toFloat() / bm.width, h.toFloat() / bm.height) * zoom.toFloat()
+    val dir = if (i % 2 == 0) 1f else -1f
+    c.save()
+    c.translate(w / 2f + dir * w * 0.035f * (p.toFloat() - 0.5f) * 2f, h / 2f)
+    c.scale(s, s)
+    c.translate(-bm.width / 2f, -bm.height / 2f)
+    c.drawBitmap(bm, 0f, 0f, photoPaint)
+    c.restore()
+  }
+
+  /** Story's words: the caption large at the bottom, the age and date small above it. */
+  private fun drawStoryOverlay(c: Canvas, i: Int, item: Item, alpha: Float) {
+    if (alpha <= 0.01f) return
+    val save = c.saveLayerAlpha(0f, 0f, w.toFloat(), h.toFloat(), (alpha * 255).toInt())
+    c.drawRect(0f, h * 0.45f, w.toFloat(), h.toFloat(), scrimPaint)
+    val margin = w * 0.07f
+    var y = h - (if (h > w) h * 0.09f else h * 0.065f)
+    if (item.caption.isNotBlank()) {
+      inkPaint.color = Color.WHITE
+      inkPaint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+      inkPaint.textSize = w * 0.058f
+      inkPaint.setShadowLayer(w * 0.01f, 0f, w * 0.002f, Color.argb(150, 0, 0, 0))
+      val cap = layout(300_000 + i, item.caption, inkPaint, (w * 0.86f).toInt(), 2)
+      y -= cap.height
+      c.save()
+      c.translate(margin, y)
+      cap.draw(c)
+      c.restore()
+      y -= w * 0.03f
+    }
+    val line = listOf(item.age, item.date).filter { it.isNotBlank() }.joinToString("  ·  ")
+    if (line.isNotEmpty()) c.drawText(line.uppercase(), margin, y, datePaint)
+    c.restoreToCount(save)
+  }
+
+  /** Snapshots: where each instant photo lands on the pile, and how it's turned. */
+  private fun snapAngle(i: Int) = floatArrayOf(-3.2f, 2.6f, -1.4f, 3.4f, -2.4f, 1.6f)[i % 6]
+
+  /** One instant photo: a white frame, the picture, and the words written along its wide bottom edge. */
+  private fun drawSnapshot(c: Canvas, i: Int, item: Item, bm: Bitmap?, enterMs: Double) {
+    val fw = min(w, h) * 0.8f
+    val pad = fw * 0.05f
+    val pw = fw - pad * 2
+    val ph = pw * (if (bm != null && bm.height > bm.width) 1.18f else 0.86f)
+    val fh = ph + pad + fw * 0.2f
+    // landing: from below right, turning into place
+    val p = if (enterMs < 0) 1.0 else min(1.0, enterMs / 650.0)
+    val ease = (1.0 - (1.0 - p).pow(3.0)).toFloat()
+    c.save()
+    c.translate(w / 2f + (1f - ease) * w * 0.55f, h / 2f + (1f - ease) * h * 0.25f)
+    c.rotate(snapAngle(i) + (1f - ease) * 14f)
+    framePaint.color = Color.argb(70, 0, 0, 0)
+    c.drawRect(-fw / 2f + w * 0.006f, -fh / 2f + w * 0.01f, fw / 2f + w * 0.006f, fh / 2f + w * 0.01f, framePaint)
+    framePaint.color = Color.WHITE
+    c.drawRect(-fw / 2f, -fh / 2f, fw / 2f, fh / 2f, framePaint)
+    val left = -fw / 2f + pad
+    val top = -fh / 2f + pad
+    if (bm != null) {
+      val s = max(pw / bm.width, ph / bm.height)
+      c.save()
+      c.clipRect(left, top, left + pw, top + ph)
+      c.translate(left + pw / 2f, top + ph / 2f)
+      c.scale(s, s)
+      c.translate(-bm.width / 2f, -bm.height / 2f)
+      c.drawBitmap(bm, 0f, 0f, photoPaint)
+      c.restore()
+    } else {
+      framePaint.color = item.bg
+      c.drawRect(left, top, left + pw, top + ph, framePaint)
+      emojiPaint.textSize = pw * 0.35f
+      c.drawText(item.emoji, left + pw / 2f, top + ph / 2f - (emojiPaint.ascent() + emojiPaint.descent()) / 2f, emojiPaint)
+    }
+    inkPaint.color = Color.rgb(0x3A, 0x33, 0x40)
+    inkPaint.typeface = Typeface.create("casual", Typeface.NORMAL)
+    inkPaint.textSize = fw * 0.06f
+    inkPaint.clearShadowLayer()
+    val words = item.caption.ifBlank { listOf(item.age, item.date).filter { it.isNotBlank() }.joinToString(" · ") }
+    val cap = layout(400_000 + i, words, inkPaint, pw.toInt(), 2)
+    c.save()
+    c.translate(left, top + ph + (fh - ph - pad - cap.height) / 2f)
+    cap.draw(c)
+    c.restore()
+    if (item.caption.isNotBlank()) {
+      datePaint.textSize = fw * 0.036f
+      val tag = listOf(item.age, item.date).filter { it.isNotBlank() }.joinToString(" · ")
+      inkPaint.textSize = fw * 0.036f
+      inkPaint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+      inkPaint.color = Color.rgb(0x8A, 0x80, 0x90)
+      c.drawText(tag, left, fh / 2f - pad * 0.6f, inkPaint)
+      datePaint.textSize = w * 0.03f
+    }
+    c.restore()
+  }
+
+  /** Journal: the page, the photo near the top, and its age, date and words written underneath. */
+  private fun drawJournal(c: Canvas, i: Int, item: Item, bm: Bitmap?, localMs: Double) {
+    c.drawColor(cardBg)
+    val areaW = w * 0.86f
+    val areaH = h * (if (h > w) 0.58f else 0.6f)
+    val top = h * 0.07f
+    if (bm != null) {
+      val zoom = 1.0f + 0.04f * (1f - min(1f, (localMs / durations[i]).toFloat()))
+      val s = min(areaW / bm.width, areaH / bm.height)
+      val dw = bm.width * s
+      val dh = bm.height * s
+      val l = (w - dw) / 2f
+      val t = top + (areaH - dh) / 2f
+      framePaint.color = Color.argb(40, 0, 0, 0)
+      c.drawRect(l + w * 0.006f, t + w * 0.008f, l + dw + w * 0.006f, t + dh + w * 0.008f, framePaint)
+      c.save()
+      c.clipRect(l, t, l + dw, t + dh)
+      c.translate(w / 2f, t + dh / 2f)
+      c.scale(s * zoom, s * zoom)
+      c.translate(-bm.width / 2f, -bm.height / 2f)
+      c.drawBitmap(bm, 0f, 0f, photoPaint)
+      c.restore()
+    } else {
+      drawPlaceholder(c, item, 1.0)
+      c.drawColor(Color.argb(0, 0, 0, 0))
+    }
+    var y = top + areaH + h * 0.06f
+    val margin = (w - areaW) / 2f
+    inkPaint.clearShadowLayer()
+    inkPaint.typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+    inkPaint.color = accentInk
+    inkPaint.textSize = w * 0.052f
+    c.drawText(item.age, margin, y, inkPaint)
+    if (item.date.isNotBlank()) {
+      inkPaint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+      inkPaint.color = Color.argb(150, Color.red(cardInk), Color.green(cardInk), Color.blue(cardInk))
+      inkPaint.textSize = w * 0.03f
+      inkPaint.textAlign = Paint.Align.RIGHT
+      c.drawText(item.date, w - margin, y, inkPaint)
+      inkPaint.textAlign = Paint.Align.LEFT
+    }
+    if (item.caption.isNotBlank()) {
+      cardTextPaint.color = cardInk
+      cardTextPaint.textSize = w * 0.04f
+      val body = layout(200_000 + i, item.caption, cardTextPaint, areaW.toInt(), if (h > w) 6 else 3)
+      c.save()
+      c.translate(margin, y + w * 0.03f)
+      body.draw(c)
+      c.restore()
+    }
+  }
+
+  /** The picture of a slide at this moment: the clip's frame while it plays, else its photo (null for none). */
+  private fun pictureOf(i: Int, item: Item, localMs: Double, live: Boolean): Bitmap? {
+    if (item.clip != null && live) clipFrame(i, item, localMs)?.let { return it }
+    return bitmapFor(i)
+  }
+
+  private fun drawLayer(c: Canvas, i: Int, localMs: Double, live: Boolean = true) {
     val item = items[i]
     if (item.intro) {
       drawIntro(c, i, item)
+      return
+    }
+    if (item.card) {
+      drawTextCard(c, i, item, localMs)
+      return
+    }
+    if (item.pins == null && template != "classic") {
+      val bm = pictureOf(i, item, localMs, live)
+      when (template) {
+        "story" -> {
+          if (bm != null) drawStoryPhoto(c, i, bm, localMs, item.clip == null) else drawPlaceholder(c, item, 1.0)
+          val a = if (item.clip != null && durations[i] > 6000) 1.0 - ((localMs - 3000) / 800.0).coerceIn(0.0, 1.0) else 1.0
+          drawStoryOverlay(c, i, item, a.toFloat())
+        }
+        "snapshots" -> {
+          c.drawColor(cardBg)
+          drawSnapshot(c, i, item, bm, localMs)
+        }
+        else -> drawJournal(c, i, item, bm, localMs)
+      }
       return
     }
     if (item.clip != null) {
@@ -530,6 +778,19 @@ class SlideshowEncoder(
     cursor = i
     val local = tMs - starts[i]
     c.drawColor(Color.BLACK)
+    val photo = { k: Int -> !items[k].intro && !items[k].card && items[k].pins == null }
+    if (template == "snapshots" && photo(i)) {
+      c.drawColor(cardBg)
+      // the one before stays on the pile, underneath, as its photo
+      if (i > 0 && photo(i - 1)) drawSnapshot(c, i - 1, items[i - 1], bitmapFor(i - 1), -1.0)
+      else if (i > 0 && local < fadeMs) {
+        val save = c.saveLayerAlpha(0f, 0f, w.toFloat(), h.toFloat(), ((1.0 - local / fadeMs).coerceIn(0.0, 1.0) * 255).toInt())
+        drawLayer(c, i - 1, durations[i - 1])
+        c.restoreToCount(save)
+      }
+      drawSnapshot(c, i, items[i], pictureOf(i, items[i], local, true), local)
+      return
+    }
     if (i > 0) {
       val fade = min(fadeMs, 0.6 * min(durations[i], durations[i - 1]))
       if (local < fade) {
@@ -592,10 +853,39 @@ class SlideshowEncoder(
     }
   }
 
+  /** The music and the clips' own sound, mixed and encoded first (null when the video is silent, or if the sound can't be made). */
+  private fun soundTrack(totalMs: Double): EncodedAudio? {
+    val music = o.optString("music", "").let { if (it.isEmpty()) null else pathOf(it) }
+    val keepClipSound = o.optBoolean("clipSound", true)
+    val clips = if (!keepClipSound) emptyList() else items.indices.filter { items[it].clip != null && hasSound(items[it].clip!!) }.map {
+      ClipSound(items[it].clip!!, items[it].clipStartMs * 1000L, starts[it], durations[it])
+    }
+    return try {
+      AudioMixer(music, totalMs, clips, o.optDouble("musicVolume", 0.8).toFloat(), isCancelled).run()
+    } catch (e: CancelledException) {
+      throw e
+    } catch (e: Throwable) {
+      null // a video without sound rather than no video
+    }
+  }
+
   fun run(): String {
     if (items.isEmpty()) throw IllegalStateException("Nothing to export")
     val out = File(ctx.cacheDir, "grow-${System.currentTimeMillis()}.mp4")
     val totalMs = starts.last() + durations.last()
+    val audio = soundTrack(totalMs)
+    var audioTrack = -1
+    var audioNext = 0
+    val audioInfo = MediaCodec.BufferInfo()
+    /** The sound up to a moment, written between the pictures so the two stay together in the file. */
+    fun writeAudioUntil(mux: MediaMuxer, us: Long) {
+      if (audio == null || audioTrack < 0) return
+      while (audioNext < audio.samples.size && audio.samples[audioNext].ptsUs <= us) {
+        val s = audio.samples[audioNext++]
+        audioInfo.set(0, s.data.size, s.ptsUs, s.flags)
+        mux.writeSampleData(audioTrack, java.nio.ByteBuffer.wrap(s.data), audioInfo)
+      }
+    }
     val frames = ceil(totalMs / 1000.0 * fps).toInt()
     val bitrate = (w.toLong() * h.toLong() * fps * 0.12).toInt()
 
@@ -624,6 +914,7 @@ class SlideshowEncoder(
         }
         if (s == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
           track = mux.addTrack(enc.outputFormat)
+          if (audio != null) audioTrack = mux.addTrack(audio.format)
           mux.start()
           started = true
           continue
@@ -635,6 +926,7 @@ class SlideshowEncoder(
           data.position(info.offset)
           data.limit(info.offset + info.size)
           mux.writeSampleData(track, data, info)
+          writeAudioUntil(mux, info.presentationTimeUs + 500_000L)
         }
         enc.releaseOutputBuffer(s, false)
         if ((info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) return
@@ -671,6 +963,7 @@ class SlideshowEncoder(
       }
       enc.queueInputBuffer(last, 0, 0, frames * 1_000_000L / fps, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
       drain(true)
+      writeAudioUntil(mux, Long.MAX_VALUE)
       onProgress(1.0)
     } catch (e: Throwable) {
       out.delete()

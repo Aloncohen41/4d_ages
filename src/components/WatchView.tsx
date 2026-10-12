@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useTheme } from "../lib/useTheme";
 import { Child, Memory } from "../lib/types";
 import { Reel, buildBumpReel, buildWatchSections } from "../lib/reels";
@@ -11,6 +11,9 @@ import { Icon } from "./Icon";
 import { GrowPlayer } from "./Grow";
 import { CustomReelSheet } from "./CustomReelSheet";
 import { TYPE } from "../theme";
+import { VideoEvent, eventSlides, suggestEvents } from "../lib/videoEvents";
+import { EventVideoSheet } from "./EventVideoSheet";
+import { useStore } from "../lib/store";
 
 /**
  * "Watch them grow": the whole story, videos made for you by the CHILD'S age (0–1 month, 0–3 months, 0–6 months, 0–1 year, then every
@@ -25,6 +28,10 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
   const bump = useMemo(() => buildBumpReel(mine, child, BUMP_SOURCE), [mine, child]);
   const [open, setOpen] = useState<Reel | null>(null);
   const [custom, setCustom] = useState<{ from: string; to: string; title?: string } | null | undefined>(undefined);
+  // made for you: the days, trips, birthdays and months with lots of photos (not the ones put away with "Not now")
+  const edits = useStore((s) => s.videoEvents);
+  const events = useMemo(() => suggestEvents(mine, child, today).filter((e) => !edits[`${child.id}:${e.id}`]?.dismissed), [mine, child, today, edits]);
+  const [event, setEvent] = useState<VideoEvent | null>(null);
 
   const whole: Reel | null = everything.length > 1
     ? {
@@ -58,6 +65,31 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
 
   return (
     <View>
+      {events.length ? (
+        <View style={{ marginBottom: 14 }}>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17 }}>Made for you</Text>
+          <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 2, marginBottom: 10 }}>Days with lots of photos, trips, birthdays and months. Name one and make its video.</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+            {events.map((e) => {
+              const cover = eventSlides(mine, e, 1)[0];
+              const named = edits[`${child.id}:${e.id}`]?.title ?? e.title;
+              return (
+                <Pressable key={e.id} onPress={() => setEvent(e)} accessibilityLabel={`${named}, ${e.photos} photos`} style={{ width: 168, backgroundColor: t.card, borderRadius: 18, borderWidth: 1, borderColor: t.line, overflow: "hidden" }}>
+                  {cover ? <PhotoView photo={slideView(cover)} style={{ width: "100%", aspectRatio: 1.15 }} emojiSize={34} /> : <View style={{ aspectRatio: 1.15, backgroundColor: t.bg2 }} />}
+                  <View style={{ position: "absolute", left: 8, top: 8, backgroundColor: "#000a", borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3 }}>
+                    <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>{e.kind === "birthday" ? "🎂 Birthday" : e.kind === "trip" ? "🧳 Trip" : e.kind === "month" ? "🗓️ Month" : "✨ A day"}</Text>
+                  </View>
+                  <View style={{ padding: 10 }}>
+                    <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }} numberOfLines={2}>{named}</Text>
+                    <Text style={{ color: t.ink3, fontSize: 11.5 }} numberOfLines={1}>{e.subtitle}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <Btn label="Make your own video" icon="film" onPress={() => setCustom({ from: addDays(today, -30), to: today })} />
 
       {whole ? (
@@ -88,6 +120,7 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
           <Btn label="Choose the pictures yourself" kind="line" onPress={() => { const r = open; setOpen(null); setTimeout(() => setCustom({ from: r.from, to: r.to < today ? r.to : today }), 250); }} style={{ marginTop: 14 }} />
         </Sheet>
       ) : null}
+      {event ? <EventVideoSheet child={child} memories={mine} event={event} onClose={() => setEvent(null)} /> : null}
       {custom ? <CustomReelSheet child={child} memories={mine} initial={custom} onClose={() => setCustom(undefined)} /> : null}
     </View>
   );

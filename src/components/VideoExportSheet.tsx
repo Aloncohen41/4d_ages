@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { isPet } from "../lib/types";
 import { Icon } from "./Icon";
 import { Pressable, Text, View } from "react-native";
@@ -18,6 +18,11 @@ import {
   dimensions, estimateSeconds, isVideoExportAvailable, saveVideoToGallery, secondsPerPhoto, videoLength,
 } from "../lib/videoExport";
 import { ClipTrim } from "./ClipTrim";
+import { VideoStyleChoices } from "./VideoStyleChoices";
+import { useStore } from "../lib/store";
+import { MusicId, VideoTemplate, musicFor } from "../lib/videoStyles";
+import { WhoMode, cardMs, filterByWho, storyWords } from "../lib/videoEvents";
+import { formatDate } from "../lib/date";
 import { Btn, Input, Label, PhotoView, Seg, Sheet } from "./ui";
 import { HScroll } from "./HScroll";
 
@@ -43,13 +48,32 @@ function Preview({ uri }: { uri: string }) {
 }
 
 /** Turn "Watch them grow" into an MP4. The speed you pick here is baked into the video. */
-export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed, title, subtitle, fileLabel }: {
+export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed, title, subtitle, fileLabel, eventKind, initialTemplate }: {
   visible: boolean; onClose: () => void; slides: Slide[]; child: Child; initialSpeed: number; title?: string; subtitle?: string;
   /** What the video shows, for its file name: "1-2 years", "0-6 months", "2026"… */
   fileLabel?: string;
+  /** A suggested event's kind ("birthday", "trip"…), which picks the music that suits it, and the look it starts in. */
+  eventKind?: string;
+  initialTemplate?: VideoTemplate;
 }) {
   const t = useTheme();
-  const usable = slides.filter((s) => !!s.uri || !!s.clip); // the movie is made from real pictures, and the videos play
+  const memories = useStore((s) => s.memories);
+  const tags = useStore((s) => s.tags);
+  // the look, the music, who's in it, and the words
+  const [template, setTemplate] = useState<VideoTemplate>(initialTemplate ?? "classic");
+  const [music, setMusic] = useState<MusicId>(() => musicFor(initialTemplate ?? "classic", eventKind, isPet(child)));
+  const [musicChosen, setMusicChosen] = useState(false); // chosen by hand: a new look doesn't change it
+  const [who, setWho] = useState<WhoMode>("all");
+  const [cards, setCards] = useState<string[]>([]);
+  const [ownWords, setOwnWords] = useState("");
+  const [clipSound, setClipSound] = useState(true);
+  const stories = useMemo(() => storyWords(memories, child.id), [memories, child.id]);
+  const shown = useMemo(() => filterByWho(slides, memories, tags, who), [slides, memories, tags, who]);
+  const usable = shown.filter((s) => !!s.uri || !!s.clip); // the movie is made from real pictures, and the videos play
+  const wordCards = [
+    ...(ownWords.trim() ? [{ id: "own", date: "", text: ownWords.trim() }] : []), // first of all
+    ...stories.filter((s) => cards.includes(s.id)).map((s) => ({ id: s.id, date: s.date, text: s.text, kicker: s.title || formatDate(s.date) })),
+  ];
   const clips = usable.filter((s) => !!s.clip);
   const [lengths, setLengths] = useState<Record<string, number>>({}); // each video's length (ms)
   const [clipStarts, setClipStarts] = useState<Record<string, number>>({}); // where the 30 seconds of a long one start
@@ -93,14 +117,14 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   const cover = usable.find((s) => s.id === coverId) ?? usable[0];
   // the pictures offered as the cover: spread across the video (never hundreds of thumbnails), always including the one chosen
   const coverChoices = (() => { const c = evenly(usable, 30); return cover && !c.includes(cover) ? [cover, ...c] : c; })();
-  const secs = estimateSeconds(photoCount, speed, intro, clipMs);
+  const secs = estimateSeconds(photoCount, speed, intro, clipMs + wordCards.reduce((n, c) => n + cardMs(c.text, 2400 / speed), 0));
   const [w, h] = dimensions(format, quality);
   const eta = Math.max(5, Math.round((photoCount * (secondsPerPhoto(speed) / 2.4) * 0.5 + (clipMs / 1000) * 0.6) * (quality === "1080" ? 1.6 : 0.8) * (format === "vertical" ? 1.5 : 1) + 5));
 
   const create = async () => {
     setPhase("working"); setProgress(0); setMsg(""); started.current = Date.now();
     try {
-      const out = await createGrowVideo(child, slides, t, { speed, format, quality, intro, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined, ...(memorial != null ? { memorial } : {}), clipStarts, clipLengths: lengths }, setProgress);
+      const out = await createGrowVideo(child, shown, t, { speed, format, quality, intro, template, music, clipSound, cards: wordCards, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined, ...(memorial != null ? { memorial } : {}), clipStarts, clipLengths: lengths }, setProgress);
       setUri(await withFriendlyName(out, fileName)); // so it is shared under a proper name, not a random temporary one
       setPhase("done");
     } catch (e) {
@@ -138,6 +162,16 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
           Video export needs a one-time rebuild of the app. On your computer run: npm run android — then try again.
         </Text>
       ) : null}
+
+      <VideoStyleChoices
+        template={template} onTemplate={(v) => { setTemplate(v); if (!musicChosen) setMusic(musicFor(v, eventKind, isPet(child))); }}
+        music={music} onMusic={(m) => { setMusic(m); setMusicChosen(true); }}
+        who={who} onWho={setWho} childName={child.name}
+        stories={stories} cards={cards} onCards={setCards} ownWords={ownWords} onOwnWords={setOwnWords}
+        hasClips={clips.length > 0} clipSound={clipSound} onClipSound={setClipSound}
+        disabled={phase === "working"}
+      />
+      {!usable.length ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 8 }}>No pictures match "{who === "alone" ? `Only ${child.name}` : "With family"}". Choose Everyone, or tag people in your posts.</Text> : null}
 
       <Label>Speed — how long each photo stays on screen</Label>
       <Seg options={GROW_SPEEDS.map((v) => ({ id: v, label: `${v}×` }))} value={speed} onChange={(v) => phase !== "working" && setSpeed(v)} />

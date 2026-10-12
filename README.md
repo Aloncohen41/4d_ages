@@ -45,7 +45,7 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - A PDF book in date order ("Maya's Days", then "Maya's Years" from age two), with chapters by age and eight themes.
 - The book can be previewed page by page, saved to the phone or shared.
 - Pictures with a brother, a sister or a pet get pages of their own in the book.
-- Videos made automatically by age and by year, or picked by hand, exported as MP4 with a title card. Video clips play in them (up to 30 seconds each, and you choose which 30).
+- Videos made automatically by age and by year, suggested from big days, trips, birthdays and busy months, or picked by hand. Four looks (Classic, Story, Snapshots, Journal), public domain music, cards of words from your stories, and only your child or with family. Video clips play in them with their sound (up to 30 seconds each, and you choose which 30).
 - Classics pages for the traditional baby-book entries: teeth, the birth story, first haircut and monthly photos.
 
 **Family and sharing**
