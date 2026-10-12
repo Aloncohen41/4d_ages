@@ -7,11 +7,13 @@ import { Icon } from "../../src/components/Icon";
 import { DoorFrame, LineChart } from "../../src/components/GrowthChart";
 import { GrowthSummary } from "../../src/components/GrowthSummary";
 import { PregnancyGrowth } from "../../src/components/Pregnancy";
+import { PetCare } from "../../src/components/PetHealth";
+import { PetWeight } from "../../src/components/PetWeight";
 import { useShownChild, useStore } from "../../src/lib/store";
 import { useTheme } from "../../src/lib/useTheme";
 import { coverOf } from "../../src/lib/display";
 import { headSeries, heightSeries, weightSeries } from "../../src/lib/selectors";
-import { GrowthRef } from "../../src/lib/types";
+import { GrowthRef, isPet } from "../../src/lib/types";
 import { ageShort, formatDate } from "../../src/lib/date";
 import { HeightUnit, WeightUnit, effectiveRef, formatHeight, formatWeight, funComparisons, heightInThings, monthsOld, nextUp, rangeStatus } from "../../src/lib/growth";
 import { WeightComparisons } from "../../src/components/WeightComparisons";
@@ -22,6 +24,21 @@ export default function GrowthTab() {
     <Screen>
       <Growth />
     </Screen>
+  );
+}
+
+/** A pet's Health: their health (visits, treatments, details, reminders) and their weight, one switch apart. */
+function PetHealthTab() {
+  const t = useTheme();
+  const [part, setPart] = useState<"health" | "weight">("health");
+  return (
+    <View>
+      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>Health</Text>
+      <View style={{ marginBottom: 14 }}>
+        <Seg options={[{ id: "health" as const, label: "Health" }, { id: "weight" as const, label: "Weight" }]} value={part} onChange={setPart} />
+      </View>
+      {part === "health" ? <PetCare /> : <PetWeight />}
+    </View>
   );
 }
 
@@ -75,6 +92,7 @@ function Growth() {
   const weights = useMemo(() => (child ? weightSeries(memories, child.id) : []), [memories, child]);
   const heads = useMemo(() => (child ? headSeries(memories, child.id) : []), [memories, child]);
   if (!child) return null;
+  if (isPet(child)) return <PetHealthTab />;
   // before the birth: the week, the baby's size as a fruit, ultrasound pictures and scan measurements
   if (child.expecting) {
     return (

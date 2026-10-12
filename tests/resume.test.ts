@@ -44,7 +44,7 @@ const wait = () => new Promise((r) => setTimeout(r, 5));
   ok("if neither exists, the first child; with no children, nothing", pickChild(["maya", "leo"], "x", "y") === "maya" && pickChild([], "x", "y") === undefined);
 
   // ---- which tab opens
-  ok("tabs are the four real ones (Family and Add left the bar); paths map to the routes (Home is “/”)", TAB_NAMES.length === 7 && !isTab("family") && !isTab("add") && tabPath("index") === "/" && tabPath("milestones") === "/milestones" && isTab("book") && !isTab("settings") && !isTab(undefined));
+  ok("tabs are the four real ones (Family and Add left the bar); paths map to the routes (Home is “/”)", TAB_NAMES.length === 4 && !isTab("family") && !isTab("add") && tabPath("index") === "/" && tabPath("milestones") === "/milestones" && isTab("book") && !isTab("settings") && !isTab(undefined));
 
   // ---- the bug: an old notification tap must not drag you back to its child
   const day = phone(); const app = createResume(day); await app.load();

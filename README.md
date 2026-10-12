@@ -36,16 +36,16 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - A child who is already born can have their pregnancy added afterwards, and the book can include or leave out the pregnancy.
 
 **Pets**
-- Dogs, cats, birds, hamsters, snakes and horses get a book of their own: where they came from (with a map), their age in their own years, tricks and firsts, and the day they came home.
-- Health: vet visits, vaccinations, treatments and their details, with reminders as notifications or calendar events.
-- Adventures: every place they've been on a map, played back year by year (also as a video), their pack and favourite things.
-- Weight, with fun comparisons ("As heavy as 5 watermelons").
-- Four pet book themes, and an optional "In loving memory" page.
+- Dogs, cats, rabbits, birds, hamsters, snakes and horses get a book of their own: where they came from (with a map), their age in their own years, tricks and firsts, and the day they came home.
+- Health: vet visits, vaccinations, treatments and their details, with reminders as notifications or calendar events, and their weight with fun comparisons ("As heavy as 5 watermelons").
+- Stories: their tricks and firsts, and their adventures: every place they've been on a map, played back year by year (also as a video), their pack and favourite things.
+- Four pet book themes, and a book "In loving memory" when the time comes.
 
 **Keepsake book and videos**
 - A PDF book in date order ("Maya's Days", then "Maya's Years" from age two), with chapters by age and eight themes.
 - The book can be previewed page by page, saved to the phone or shared.
-- Videos made automatically by age and by year, or picked by hand, exported as MP4 with a title card.
+- Pictures with a brother, a sister or a pet get pages of their own in the book.
+- Videos made automatically by age and by year, or picked by hand, exported as MP4 with a title card. Video clips play in them (up to 30 seconds each, and you choose which 30).
 - Classics pages for the traditional baby-book entries: teeth, the birth story, first haircut and monthly photos.
 
 **Family and sharing**

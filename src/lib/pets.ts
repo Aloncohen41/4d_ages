@@ -7,10 +7,10 @@
  *    Chewy and The Old Farmer's Almanac;
  *  - cats: 15 at one, 24 at two, then 4 a year: the AAHA, International Cat Care and AAFP guideline;
  *  - horses: about 6.5 years a year to the age of four, then 2.5: the age chart Zoetis (then Pfizer Animal Health) published.
- * Hamsters, birds and snakes have no reliable conversion (a budgie and a parrot live very different lives), so they show a stage of life.
+ * Rabbits, hamsters, birds and snakes have no reliable conversion (a budgie and a parrot live very different lives), so they show a stage of life.
  */
 
-export type Species = "dog" | "cat" | "bird" | "hamster" | "snake" | "horse";
+export type Species = "dog" | "cat" | "rabbit" | "bird" | "hamster" | "snake" | "horse";
 export type DogSize = "small" | "medium" | "large";
 export type PetOrigin = "breeder" | "shelter" | "friend" | "found" | "shop" | "other";
 
@@ -19,6 +19,7 @@ export interface SpeciesInfo { id: Species; label: string; emoji: string; noun: 
 export const SPECIES: SpeciesInfo[] = [
   { id: "dog", label: "Dog", emoji: "🐶", noun: "dog", breeds: ["Mixed breed", "Labrador Retriever", "Golden Retriever", "German Shepherd", "French Bulldog", "Bulldog", "Poodle", "Beagle", "Dachshund", "Cocker Spaniel", "Border Collie", "Cavapoo", "Cockapoo", "Shih Tzu", "Chihuahua", "Jack Russell", "Pomeranian", "Husky", "Staffordshire Bull Terrier", "Boxer", "Yorkshire Terrier", "Maltese", "Pug", "Canaan Dog"] },
   { id: "cat", label: "Cat", emoji: "🐱", noun: "cat", breeds: ["Mixed breed", "Domestic shorthair", "Domestic longhair", "British Shorthair", "Maine Coon", "Ragdoll", "Siamese", "Persian", "Bengal", "Sphynx", "Scottish Fold", "Norwegian Forest Cat", "Russian Blue"] },
+  { id: "rabbit", label: "Rabbit", emoji: "🐰", noun: "rabbit", breeds: ["Mixed breed", "Netherland Dwarf", "Holland Lop", "Mini Lop", "Lionhead", "Mini Rex", "Dutch", "Flemish Giant", "English Lop", "Angora", "Rex", "French Lop"] },
   { id: "bird", label: "Bird", emoji: "🦜", noun: "bird", breeds: ["Budgie", "Cockatiel", "Lovebird", "African Grey", "Amazon parrot", "Macaw", "Cockatoo", "Conure", "Parrotlet", "Canary", "Finch"] },
   { id: "hamster", label: "Hamster", emoji: "🐹", noun: "hamster", breeds: ["Syrian", "Roborovski", "Campbell's dwarf", "Winter white", "Chinese"] },
   { id: "snake", label: "Snake", emoji: "🐍", noun: "snake", breeds: ["Corn snake", "Ball python", "King snake", "Milk snake", "Boa", "Hognose"] },
@@ -58,6 +59,7 @@ export function lifeStage(species: Species, totalMonths: number): string {
   const m = totalMonths;
   switch (species) {
     case "hamster": return m < 1 ? "Baby" : m < 4 ? "Young" : m < 18 ? "Adult" : "Senior";
+    case "rabbit": return m < 3 ? "Baby" : m < 12 ? "Young" : m < 6 * 12 ? "Adult" : "Senior";
     case "bird": return m < 3 ? "Chick" : m < 12 ? "Young" : "Adult";
     case "snake": return m < 12 ? "Hatchling" : m < 36 ? "Young" : "Adult";
     case "horse": return m < 12 ? "Foal" : m < 48 ? "Young" : m < 15 * 12 ? "Adult" : "Senior";
@@ -89,6 +91,7 @@ export const petRelation = (species?: string) => `Our ${speciesInfo(species).nou
 export const TRICK_IDEAS: Record<Species, string[]> = {
   dog: ["Sit", "Paw", "Lie down", "Come", "Stay", "Roll over", "High five", "Spin", "Toilet trained", "Walks on a lead", "Crate trained", "Fetch"],
   cat: ["Comes when called", "Uses the cat flap", "High five", "Sits on command", "Uses the scratching post", "Walks on a harness", "Fetch"],
+  rabbit: ["Litter trained", "Comes when called", "Binky (the happy jump)", "Stands up on command", "Jumps through a hoop", "Spins", "Eats from the hand"],
   bird: ["Steps up", "Says their name", "Whistles a tune", "Waves", "Comes to the hand", "Turns around", "Says hello"],
   hamster: ["Comes to the hand", "Uses the wheel", "Eats from the hand", "Climbs onto the hand"],
   snake: ["Handled calmly", "First feed with us", "Comes out to explore"],
@@ -99,6 +102,7 @@ export const TRICK_IDEAS: Record<Species, string[]> = {
 export const PET_FIRST_IDEAS: Record<Species, string[]> = {
   dog: ["First walk", "First night home", "First bath", "First vet visit", "First time at the beach", "First snow", "First haircut", "First holiday", "First birthday party"],
   cat: ["First night home", "First vet visit", "First time outside", "First bird spotted", "First cuddle on the sofa", "First birthday"],
+  rabbit: ["First night home", "First binky", "First time in the garden", "First vet visit", "First carrot", "First friend"],
   bird: ["First word", "First flight in the house", "First bath", "First vet visit", "First new toy"],
   hamster: ["First night home", "First run on the wheel", "First time in the ball", "First vet visit"],
   snake: ["First shed with us", "First feed", "First vet visit", "First time handled"],

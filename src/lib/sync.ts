@@ -342,7 +342,7 @@ export async function syncChild(childId: string): Promise<void> {
   apply((s) => ({ syncMeta: { ...s.syncMeta, [childId]: { cursor: newCursor, lastSync: new Date().toISOString() } } }));
 }
 
-async function pushChild(childId: string, remoteRelatives: { id: string; client_ts?: number }[], classicsReady = true) {
+async function pushChild(childId: string, remoteRelatives: { id: string; client_ts?: number; child_ref?: string | null }[], classicsReady = true) {
   const sb = client();
   let s = useStore.getState();
 
@@ -402,10 +402,11 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
 
   // family members: send any the cloud copy of this child doesn't have yet (or has an older version of)
   const known = new Map(remoteRelatives.map((r) => [r.id, Number(r.client_ts) || 0]));
-  const rels = relativesToPush(s.relatives, childId, known); // only this child's family
+  const refs = new Map(remoteRelatives.map((r) => [r.id, r.child_ref ?? null]));
+  const rels = relativesToPush(s.relatives, childId, known, refs); // only this child's family
   if (rels.length) {
     const { error } = await sb.from("relatives").upsert(
-      rels.map((r) => ({ child_id: childId, id: r.id, name: r.name, relation: relationLabel(r), custom_label: null, nickname: r.nickname ?? null, description: r.description ?? null, client_ts: r.updatedAt ?? 0, deleted: false })),
+      rels.map((r) => ({ child_id: childId, id: r.id, name: r.name, relation: relationLabel(r), custom_label: null, nickname: r.nickname ?? null, description: r.description ?? null, child_ref: r.childRef ?? null, client_ts: r.updatedAt ?? 0, deleted: false })),
       { onConflict: "child_id,id" }
     );
     if (error) throw new Error(error.message);
@@ -541,6 +542,25 @@ async function cloudFiles(childId: string): Promise<string[]> {
   }
 }
 
+/**
+ * A profile is being deleted: their sibling entry ("Sister", "Our dog") leaves every family it's in, on this phone and in the cloud, so it
+ * never lingers in the other children's families or books.
+ */
+async function leaveFamilies(childId: string) {
+  const st = useStore.getState();
+  const me = st.relatives.find((r) => r.childRef === childId);
+  if (!me) return;
+  const ts = Date.now();
+  const families = (me.childIds ?? st.kids.map((k) => k.id)).filter((id) => id !== childId && st.kids.find((k) => k.id === id)?.shared && st.kids.find((k) => k.id === id)?.role !== "viewer");
+  if (families.length) {
+    await client().from("relatives").upsert(
+      families.map((fam) => ({ child_id: fam, id: me.id, name: me.name, relation: me.relation, custom_label: null, nickname: null, description: null, child_ref: childId, client_ts: ts, deleted: true })),
+      { onConflict: "child_id,id" },
+    );
+  }
+  st.removeRelative(me.id);
+}
+
 /** What deleting a child's profile will do, so the parent is told before they confirm. */
 export type DeleteOutcome = "deleted" | "handed" | "left";
 
@@ -574,6 +594,7 @@ export async function deleteChild(childId: string): Promise<DeleteOutcome> {
         if (error) throw new Error(error.message);
       }
     }
+    if (plan.outcome === "deleted") await leaveFamilies(childId);
     const { data, error } = await client().rpc("delete_child", { p_child: childId });
     if (error) throw new Error(/function .*delete_child/i.test(error.message) ? "The database needs the latest setup (npm run db:setup) before a profile can be deleted." : error.message);
     useStore.getState().forgetChild(childId);

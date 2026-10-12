@@ -9,6 +9,7 @@ import { ageLong, ageShort, formatDate, todayISO } from "./date";
 
 interface NativeVideo {
   exportSlideshow(json: string): Promise<string>;
+  videoDuration(uri: string): Promise<number>;
   cancel(): void;
   saveToGallery(path: string, name: string): Promise<string>;
   addListener(event: "onProgress", cb: (e: { progress: number }) => void): { remove: () => void };
@@ -42,13 +43,36 @@ export interface GrowVideoOptions {
   cover?: string;
   /** A pet's video can end with "In loving memory" and these words. */
   memorial?: string;
+  /** Where each long clip starts (ms), by slide id: the 30 seconds chosen. Others start at the beginning. */
+  clipStarts?: Record<string, number>;
+  /** Each clip's length (ms), by slide id, when known. */
+  clipLengths?: Record<string, number>;
+}
+
+/** The most of any one video that goes into a made video. */
+export const CLIP_MAX_MS = 30_000;
+/** How long a clip plays in the video: the whole of a short one, 30 seconds of a long one (from where it was chosen to start). */
+export const clipPlays = (lengthMs: number | undefined, startMs = 0) => (lengthMs ? Math.max(0, Math.min(CLIP_MAX_MS, lengthMs - startMs)) : CLIP_MAX_MS);
+/** Where 30 seconds of a long clip may start: never so late that there's less than 30 seconds left. */
+export const clampClipStart = (startMs: number, lengthMs: number) => Math.max(0, Math.min(Math.round(startMs), Math.max(0, lengthMs - CLIP_MAX_MS)));
+
+/** A video's length in milliseconds (0 when it can't be read, or on a phone without the module). */
+export async function videoLength(uri: string): Promise<number> {
+  const mod = native();
+  if (!mod || !uri) return 0;
+  try {
+    return await mod.videoDuration(uri);
+  } catch {
+    return 0;
+  }
 }
 
 export const BASE_MS = 2400; // time per photo at 1×, same as the in-app player
 export const INTRO_MS = 2000;
 
 export const secondsPerPhoto = (speed: number) => BASE_MS / speed / 1000;
-export const estimateSeconds = (photos: number, speed: number, intro: boolean) => photos * secondsPerPhoto(speed) + (intro ? INTRO_MS / 1000 : 0);
+/** The video's length: each photo at the speed chosen, each clip for as long as it plays (see clipPlays), and the title card. */
+export const estimateSeconds = (photos: number, speed: number, intro: boolean, clipMs = 0) => photos * secondsPerPhoto(speed) + clipMs / 1000 + (intro ? INTRO_MS / 1000 : 0);
 
 export function dimensions(format: VideoFormat, quality: VideoQuality): [number, number] {
   const base = quality === "1080" ? 1080 : 720;
@@ -74,7 +98,10 @@ export function slideshowPayload(child: Child, usable: Slide[], theme: Theme, op
     items: [
       ...usable.map((p) => {
         const [bg, hill] = PALETTES[p.palette] || PALETTES.peach;
-        return { uri: p.uri, emoji: p.emoji, bg, hill, age: ageShort(child.birth, p.date), date: formatDate(p.date), caption: p.caption };
+        // a video plays (30 seconds at most, from where it was chosen to start); its picture stands in if the phone can't play it
+        const start = p.clip ? clampClipStart(opts.clipStarts?.[p.id] ?? 0, opts.clipLengths?.[p.id] ?? Infinity) : 0;
+        const clip = p.clip ? { clip: p.clip, clipStartMs: start, clipMs: clipPlays(opts.clipLengths?.[p.id], start) } : {};
+        return { uri: p.uri, emoji: p.emoji, bg, hill, age: ageShort(child.birth, p.date), date: formatDate(p.date), caption: p.caption, ...clip };
       }),
       // the ending, when chosen for a pet: "In loving memory", with a rainbow and their words
       ...(opts.memorial != null ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accent, age: "In loving memory", date: "", caption: opts.memorial || "Forever in our hearts" }] : []),
@@ -92,7 +119,7 @@ export async function createGrowVideo(
 ): Promise<string> {
   const mod = native();
   if (!mod) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
-  const usable = slides.filter((s) => !!s.uri);
+  const usable = slides.filter((s) => !!s.uri || !!s.clip);
   if (!usable.length) throw new Error("There are no photos to put in a video yet.");
 
   const payload = slideshowPayload(child, usable, theme, opts);

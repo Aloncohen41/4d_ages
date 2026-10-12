@@ -1,38 +1,29 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Switch, Text, View, useWindowDimensions } from "react-native";
 import { router } from "expo-router";
-import { Screen } from "../../src/components/Screen";
-import { Btn, DateField, Heading, Input, Seg, Sheet } from "../../src/components/ui";
-import { Icon } from "../../src/components/Icon";
-import { OsmMap } from "../../src/components/OsmMap";
-import { PlacePicker } from "../../src/components/PlacePicker";
-import { JourneyMap } from "../../src/components/Journey";
-import { useShownChild, uid, useStore } from "../../src/lib/store";
-import { useTheme } from "../../src/lib/useTheme";
-import { formatDate, todayISO } from "../../src/lib/date";
-import { Child, isPet } from "../../src/lib/types";
-import { Place, placesByYear, placesSummary, readPlaces, writePlaces } from "../../src/lib/places";
-import { FoundPlace } from "../../src/lib/geocode";
-import { PET_HOME_ID, PLACES_ID, classicsFor, filledCount } from "../../src/lib/classics";
-import { createJourneyVideo, saveVideoToGallery, type VideoFormat } from "../../src/lib/videoExport";
-import { withFriendlyName } from "../../src/lib/exportFiles";
-import { videoFileName } from "../../src/lib/fileNames";
-import { fileExport } from "../../src/lib/fileExport";
-import { THEMES, TYPE } from "../../src/theme";
-
-export default function AdventuresTab() {
-  return (
-    <Screen>
-      <Adventures />
-    </Screen>
-  );
-}
+import { Btn, DateField, Heading, Input, Seg, Sheet } from "./ui";
+import { Icon } from "./Icon";
+import { OsmMap } from "./OsmMap";
+import { PlacePicker } from "./PlacePicker";
+import { JourneyMap } from "./Journey";
+import { useShownChild, uid, useStore } from "../lib/store";
+import { useTheme } from "../lib/useTheme";
+import { formatDate, todayISO } from "../lib/date";
+import { Child, isPet } from "../lib/types";
+import { Place, placesByYear, placesSummary, readPlaces, writePlaces } from "../lib/places";
+import { FoundPlace } from "../lib/geocode";
+import { PET_HOME_ID, PLACES_ID, classicsFor, filledCount } from "../lib/classics";
+import { createJourneyVideo, saveVideoToGallery, type VideoFormat } from "../lib/videoExport";
+import { withFriendlyName } from "../lib/exportFiles";
+import { videoFileName } from "../lib/fileNames";
+import { fileExport } from "../lib/fileExport";
+import { THEMES, TYPE } from "../theme";
 
 /**
  * The places a pet has been, on a map: parks, beaches, holidays, home. Then their pack, their favourite things and the page for their kind
  * of pet, and at the bottom, the journey year by year (as a video too, and a page in their book).
  */
-function Adventures() {
+export function PetAdventures() {
   const t = useTheme();
   const { width } = useWindowDimensions();
   const child = useShownChild();
@@ -51,7 +42,7 @@ function Adventures() {
 
   return (
     <View>
-      <Heading title="Adventures" desc={`Everywhere ${child.name} has been: the park, the beach, holidays, and home.`} />
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{`Everywhere ${child.name} has been: the park, the beach, holidays, and home.`}</Text>
       {places.length ? (
         <>
           <Text style={[TYPE.titleSmall, { color: t.accentDeep, marginBottom: 8 }]}>{placesSummary(places)}</Text>

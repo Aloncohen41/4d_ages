@@ -88,14 +88,22 @@ export function mergeDefs(cur: MilestoneDef[], rows: any[]): MilestoneDef[] {
  * (an existing person gains the child; someone from before per-child families, with no list, is already in every family and is left alone).
  */
 export function mergeRelatives(cur: Relative[], rows: any[], childId?: string): Relative[] {
-  const out = cur.slice();
+  let out = cur.slice();
   for (const r of rows) {
-    if (r.deleted) continue;
+    if (r.deleted) {
+      // taken out of this child's family on another phone (or their own profile was deleted): out of it here too, and gone when in no family
+      const i = out.findIndex((x) => x.id === r.id);
+      if (i >= 0 && tsOf(r) >= (out[i].updatedAt ?? 0)) {
+        const left = (out[i].childIds ?? []).filter((x) => x !== childId);
+        out = left.length && childId ? out.map((x, k) => (k === i ? { ...x, childIds: left } : x)) : out.filter((_, k) => k !== i);
+      }
+      continue;
+    }
     const i = out.findIndex((x) => x.id === r.id);
     const ts = tsOf(r);
     // relationships are free text now; a row from an older app may still carry its own wording beside a preset, which wins
     const relation = (typeof r.custom_label === "string" && r.custom_label.trim()) || (r.relation === "Other" ? "Family" : r.relation) || "Family";
-    const fromRemote: Relative = { id: r.id, name: r.name ?? "", relation, nickname: r.nickname ?? undefined, description: r.description ?? undefined, updatedAt: ts, syncedTs: ts };
+    const fromRemote: Relative = { id: r.id, name: r.name ?? "", relation, nickname: r.nickname ?? undefined, description: r.description ?? undefined, ...(r.child_ref ? { childRef: r.child_ref } : {}), updatedAt: ts, syncedTs: ts };
     if (i < 0) out.push(childId ? { ...fromRemote, childIds: [childId] } : fromRemote);
     else {
       const have = out[i];
@@ -108,8 +116,9 @@ export function mergeRelatives(cur: Relative[], rows: any[], childId?: string): 
 }
 
 /** Which family members to send for this child: only people in that child's family, and only those the cloud doesn't have yet (or has older). */
-export function relativesToPush(all: Relative[], childId: string, known: Map<string, number>): Relative[] {
-  return all.filter((r) => inFamily(r, childId) && (!known.has(r.id) || (r.updatedAt ?? 0) > (known.get(r.id) ?? 0)));
+export function relativesToPush(all: Relative[], childId: string, known: Map<string, number>, refs: Map<string, string | null> = new Map()): Relative[] {
+  // also a sibling the cloud doesn't yet know is one of the children (saved before the link existed)
+  return all.filter((r) => inFamily(r, childId) && (!known.has(r.id) || (r.updatedAt ?? 0) > (known.get(r.id) ?? 0) || (!!r.childRef && refs.has(r.id) && refs.get(r.id) !== r.childRef)));
 }
 
 /** A pet's columns in the cloud (empty for a child). */

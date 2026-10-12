@@ -502,8 +502,8 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
       {!what ? (
         <View style={{ gap: 10 }}>
           {([
-            { id: "kid" as const, emoji: "👶", title: "My kid", desc: "A baby or a child, already here" },
             { id: "bump" as const, emoji: "🤰", title: "My bump", desc: "A baby on the way, with the due date" },
+            { id: "kid" as const, emoji: "👶", title: "My kid", desc: "A baby or a child, already here" },
             { id: "pet" as const, emoji: "🐾", title: "My pet", desc: "A dog, cat, bird, hamster, snake or horse" },
           ]).map((o) => (
             <Pressable key={o.id} onPress={() => pick(o.id)} accessibilityRole="button" android_ripple={{ color: withAlpha(t.ink, 0.08) }}

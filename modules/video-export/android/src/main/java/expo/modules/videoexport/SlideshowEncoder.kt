@@ -16,6 +16,7 @@ import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.net.Uri
 import android.text.Layout
@@ -44,8 +45,29 @@ class Item(
   val caption: String,
   val intro: Boolean,
   /** A map slide (the journey, year by year): the picture is the world map, with these places pinned on it. */
-  val pins: List<Pin>? = null
+  val pins: List<Pin>? = null,
+  /** A video clip that plays on this slide, from this moment (the picture above stands in if it can't be played). */
+  val clip: String? = null,
+  val clipStartMs: Long = 0L,
+  val rotation: Int = 0
 )
+
+/** How long a video is and which way up it was filmed; null when it can't be read. */
+private fun probe(path: String): Pair<Long, Int>? {
+  val r = MediaMetadataRetriever()
+  return try {
+    r.setDataSource(path)
+    val ms = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: return null
+    val rot = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull() ?: 0
+    Pair(ms, ((rot % 360) + 360) % 360)
+  } catch (e: Throwable) {
+    null
+  } finally {
+    try { r.release() } catch (e: Throwable) { }
+  }
+}
+
+private fun pathOf(uriOrPath: String): String = Uri.parse(uriOrPath).path ?: uriOrPath.removePrefix("file://")
 
 class SlideshowEncoder(
   private val ctx: Context,
@@ -66,6 +88,9 @@ class SlideshowEncoder(
   private val cache = HashMap<Int, Bitmap?>()
   private val blurCache = HashMap<Int, Bitmap>()
   private val layouts = HashMap<Int, StaticLayout>()
+  private val readers = HashMap<Int, ClipReader>()
+  private val unplayable = HashSet<Int>()
+  private val blurSecond = HashMap<Int, Int>()
   private var cursor = 0
 
   private val photoPaint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
@@ -122,6 +147,31 @@ class SlideshowEncoder(
     val arr = o.getJSONArray("items")
     for (i in 0 until arr.length()) {
       val obj = arr.getJSONObject(i)
+      // a video clip plays for as long as the part chosen (up to clipMs), at its own speed; one that can't be read is shown as its picture
+      val clipUri = obj.optString("clip", "")
+      val clipStart = max(0L, obj.optLong("clipStartMs", 0L))
+      val info = if (clipUri.isNotEmpty()) probe(pathOf(clipUri)) else null
+      val clipMs = if (info != null) min(obj.optDouble("clipMs", 30_000.0), (info.first - clipStart).toDouble()) else 0.0
+      if (info != null && clipMs >= 500) {
+        items.add(
+          Item(
+            if (obj.has("uri") && !obj.isNull("uri")) obj.getString("uri") else null,
+            obj.optString("emoji", "🎬"),
+            Color.parseColor(obj.optString("bg", "#FBE4D4")),
+            Color.parseColor(obj.optString("hill", "#E9A27A")),
+            obj.optString("age", ""),
+            obj.optString("date", ""),
+            obj.optString("caption", ""),
+            false,
+            null,
+            pathOf(clipUri),
+            clipStart,
+            info.second
+          )
+        )
+        durations.add(clipMs)
+        continue
+      }
       items.add(
         Item(
           if (obj.has("uri") && !obj.isNull("uri")) obj.getString("uri") else null,
@@ -419,11 +469,48 @@ class SlideshowEncoder(
     drawOverlay(c, i, item)
   }
 
+  /** The clip's picture at this moment, or null when it can't be played (its still picture is shown instead). */
+  private fun clipFrame(i: Int, item: Item, localMs: Double): Bitmap? {
+    if (item.clip == null || i in unplayable) return null
+    return try {
+      val r = readers.getOrPut(i) { ClipReader(item.clip, item.clipStartMs * 1000L, item.rotation, w, h) }
+      r.frameAt(localMs)
+    } catch (e: Throwable) {
+      unplayable.add(i)
+      readers.remove(i)?.close()
+      null
+    }
+  }
+
+  /** The age and caption over a clip show for its first few seconds, then fade so the clip is seen whole. */
+  private fun drawClipOverlay(c: Canvas, i: Int, item: Item, localMs: Double) {
+    val a = if (durations[i] > 6000) 1.0 - ((localMs - 3000) / 800.0).coerceIn(0.0, 1.0) else 1.0
+    if (a <= 0.01) return
+    if (a >= 0.99) return drawOverlay(c, i, item)
+    val save = c.saveLayerAlpha(0f, 0f, w.toFloat(), h.toFloat(), (a * 255).toInt())
+    drawOverlay(c, i, item)
+    c.restoreToCount(save)
+  }
+
   private fun drawLayer(c: Canvas, i: Int, localMs: Double) {
     val item = items[i]
     if (item.intro) {
       drawIntro(c, i, item)
       return
+    }
+    if (item.clip != null) {
+      val frame = clipFrame(i, item, localMs)
+      if (frame != null) {
+        // the blurred backdrop follows the clip, made again every second
+        val second = (localMs / 1000.0).toInt()
+        if (blurSecond[i] != second) {
+          blurCache.remove(i)?.recycle()
+          blurSecond[i] = second
+        }
+        drawFit(c, i, frame, 1.0)
+        drawClipOverlay(c, i, item, localMs)
+        return
+      }
     }
     if (item.pins != null) {
       drawMapSlide(c, i, item, localMs)
@@ -438,6 +525,8 @@ class SlideshowEncoder(
   private fun renderFrame(c: Canvas, tMs: Double) {
     var i = cursor
     while (i < items.size - 1 && tMs >= starts[i + 1]) i++
+    // a clip that has finished (and faded out) is closed, so only one or two decoders are ever open
+    if (readers.isNotEmpty()) for (k in readers.keys.filter { it < i - 1 || (it < i && tMs - starts[i] > fadeMs) }) readers.remove(k)?.close()
     cursor = i
     val local = tMs - starts[i]
     c.drawColor(Color.BLACK)
@@ -592,6 +681,8 @@ class SlideshowEncoder(
       try { if (started) mux.stop() } catch (e: Exception) { }
       try { mux.release() } catch (e: Exception) { }
       frameBmp.recycle()
+      for (r in readers.values) r.close()
+      readers.clear()
       for (b in cache.values) b?.recycle()
       cache.clear()
       for (b in blurCache.values) b.recycle()

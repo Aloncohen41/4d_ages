@@ -137,6 +137,8 @@ export interface Relative extends SyncFields {
   childIds?: string[];
   /** Set when this person IS one of the children (a sibling): which child. Their name then follows that child, and they are never in that child's own family. */
   childRef?: string;
+  /** Their picture is their own profile's (it follows it); a picture chosen by hand for them stays. */
+  photoFromProfile?: string; // the profile photo's memory id
 }
 
 

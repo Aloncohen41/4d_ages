@@ -34,12 +34,14 @@ const KID_TABS = [
   { name: "growth", title: "Growth", icon: "nav-growth" },
   { name: "book", title: "Book", icon: "nav-book" },
 ] as const; // Family is in the top-left menu; adding happens through the + button
-/** A pet's tabs: their health instead of development, the places they've been, and their weight instead of growth. */
+/**
+ * A pet's tabs, the same four pages as a child's in a pet's way: Health (their health and weight, in Growth's place) and Stories (tricks,
+ * firsts and adventures, in Milestones' place).
+ */
 const PET_TABS = [
   { name: "index", title: "Home", icon: "nav-home" },
-  { name: "care", title: "Health", icon: "nav-health" },
-  { name: "adventures", title: "Adventures", icon: "nav-map" },
-  { name: "weight", title: "Weight", icon: "nav-weight" },
+  { name: "growth", title: "Health", icon: "nav-health" },
+  { name: "milestones", title: "Stories", icon: "nav-paw" },
   { name: "book", title: "Book", icon: "nav-book" },
 ] as const;
 const TABS: readonly { name: string; title: string; icon: string }[] = [...KID_TABS, ...PET_TABS];

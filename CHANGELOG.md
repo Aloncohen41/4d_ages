@@ -2,6 +2,34 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.1
+
+**The family tree**
+- The family page in the book is now a family tree: grandparents at the top, then parents, aunts and uncles, then the child in the middle of their own row with their brothers, sisters, cousins and pets, and everyone else who loves them below.
+- It changes a little with the theme: leaf-shaped frames for Nature and Leaf & Scale, soft squares for Playful and Paw Prints, and dotted or dashed lines.
+
+**Pets**
+- Rabbits can now be added, with their breeds, tricks and firsts.
+- A pet has four tabs, like a child: Home, Health (their health and their weight), Stories (tricks and firsts, and their adventures) and Book.
+- Lasts and milestones are no longer offered for pets.
+- The Book tab has an "In loving memory" tick. It puts "In loving memory of Rex" on the cover, with the years, and adds a page for them straight after it with a few words of your own.
+
+**The book**
+- New Customize view. The book's pages fill the screen, with a little of the page before and after showing at the sides, and the themes sit in a strip along the bottom. Slide the strip left or right and the theme in the middle is applied to the pages straight away. Colour is one tab over.
+- Exporting has moved into Customize: once the book looks right, tap the share button at the top right to save or share the PDF.
+- Pictures where a brother, a sister or a pet is tagged get pages of their own, "With Noa" or "With Rex".
+
+**Videos**
+- Videos you added now play in the videos you make, instead of showing a still picture. Short ones play in full. For anything longer than 30 seconds, you choose which 30 seconds go in, with a preview that plays them.
+
+**And more**
+- A child's or pet's profile picture now shows for them in the family too, and changes when their profile picture does. A picture you chose for them by hand stays.
+- The maps are smoother and clearer, and still free to use.
+- Add to the family lists My bump first, then My kid, then My pet.
+
+**Fixed**
+- A deleted child's or pet's profile no longer stays in their brothers' and sisters' families, or in the book. Deleting a profile now takes them out of every family, on every phone.
+
 ## 1.1.0
 
 **Pets**

@@ -6,27 +6,29 @@ import { useTheme } from "../lib/useTheme";
 export interface MapPin { id: string; lat: number; lon: number; label: string }
 
 /*
- * A map from OpenStreetMap (free, no key), in a small web view: pins for the places a pet has been, or a pin the parent drops to mark a place.
- * Leaflet draws it; the map data and tiles come from OpenStreetMap, credited on the map.
+ * A map in a small web view: smooth vector maps from OpenFreeMap (free, no key, OpenStreetMap data), drawn by MapLibre. Pins for the places a
+ * pet has been, or a pin the parent drops to mark a place. Credited on the map.
  */
 const page = (accent: string, pins: MapPin[], picking: boolean, start?: { lat: number; lon: number }) => `<!doctype html><html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>html,body,#map{margin:0;height:100%;background:#eef1f3}.pin{width:18px;height:18px;border-radius:9px;background:${accent};border:3px solid #fff;box-shadow:0 1px 4px #0006}</style>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>html,body,#map{margin:0;height:100%;background:#eef1f3}.pin{width:16px;height:16px;border-radius:50%;box-sizing:content-box;background:${accent};border:3px solid #fff;box-shadow:0 1px 4px #0006}.maplibregl-ctrl-attrib{font-size:10px}</style>
 </head><body><div id="map"></div><script>
-var map = L.map("map", { zoomControl: true, attributionControl: true, worldCopyJump: true });
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap" }).addTo(map);
-var icon = L.divIcon({ className: "", html: '<div class="pin"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 var pins = ${JSON.stringify(pins)};
-var picked = null;
-pins.forEach(function (p) { L.marker([p.lat, p.lon], { icon: icon }).addTo(map).bindTooltip(p.label); });
-if (pins.length > 1) map.fitBounds(pins.map(function (p) { return [p.lat, p.lon]; }), { padding: [30, 30], maxZoom: 12 });
-else if (pins.length === 1) map.setView([pins[0].lat, pins[0].lon], 11);
-else ${start ? `map.setView([${start.lat}, ${start.lon}], 12)` : "map.setView([30, 10], 1)"};
-${picking ? `map.on("click", function (e) {
-  if (picked) picked.setLatLng(e.latlng); else picked = L.marker(e.latlng, { icon: icon }).addTo(map);
-  window.ReactNativeWebView.postMessage(JSON.stringify({ lat: e.latlng.lat, lon: e.latlng.lng }));
+// the view is set from the start (all the places in sight), and the pins are added straight away: neither waits for the map to finish loading
+var view = pins.length > 1
+  ? { bounds: pins.reduce(function (b, p) { return b.extend([p.lon, p.lat]); }, new maplibregl.LngLatBounds([pins[0].lon, pins[0].lat], [pins[0].lon, pins[0].lat])), fitBoundsOptions: { padding: 40, maxZoom: 12 } }
+  : pins.length === 1 ? { center: [pins[0].lon, pins[0].lat], zoom: 11 } : { center: [${start ? start.lon : 10}, ${start ? start.lat : 30}], zoom: ${start ? 12 : 1} };
+var map = new maplibregl.Map(Object.assign({ container: "map", style: "https://tiles.openfreemap.org/styles/liberty", attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false }, view));
+map.touchZoomRotate.disableRotation();
+map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+function pin(lng, lat, label) { var el = document.createElement("div"); el.className = "pin"; var m = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]); if (label) m.setPopup(new maplibregl.Popup({ offset: 12, closeButton: false }).setText(label)); return m.addTo(map); }
+pins.forEach(function (p) { pin(p.lon, p.lat, p.label); });
+${picking ? `var picked = null;
+map.on("click", function (e) {
+  if (picked) picked.setLngLat(e.lngLat); else picked = pin(e.lngLat.lng, e.lngLat.lat);
+  window.ReactNativeWebView.postMessage(JSON.stringify({ lat: e.lngLat.lat, lon: e.lngLat.lng }));
 });` : ""}
 </script></body></html>`;
 

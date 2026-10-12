@@ -15,12 +15,13 @@ export const TRICK_SOURCE = "Trick";
  * On a pet's Home: their tricks (tap one to tick it off today, tap a ticked one to add a photo or change the day) and firsts to remember.
  * No "lasts" for pets: anything like that is simply a story.
  */
-export function PetTricks({ child }: { child: Child }) {
+export function PetTricks({ child, open: always = false }: { child: Child; open?: boolean }) {
   const t = useTheme();
   const memories = useStore((s) => s.memories);
   const saveMemory = useStore((s) => s.saveMemory);
   const setEntrySheet = useStore((s) => s.setEntrySheet);
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
+  const open = always || opened;
   const species = speciesInfo(child.species).id;
   const learned = useMemo(() => new Map(memories.filter((m) => m.childId === child.id && m.source === TRICK_SOURCE).map((m) => [(m.title ?? "").toLowerCase(), m])), [memories, child.id]);
   const firsts = useMemo(() => new Set(memories.filter((m) => m.childId === child.id && m.type === "first").map((m) => (m.title ?? "").toLowerCase())), [memories, child.id]);
@@ -38,13 +39,13 @@ export function PetTricks({ child }: { child: Child }) {
 
   return (
     <View style={{ backgroundColor: t.card, borderRadius: 18, borderWidth: 1, borderColor: t.line, padding: 14, marginBottom: 12 }}>
-      <Pressable onPress={() => setOpen((v) => !v)} accessibilityRole="button" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Pressable onPress={() => !always && setOpen((v) => !v)} accessibilityRole="button" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Text style={{ fontSize: 24 }}>🎓</Text>
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.titleSmall, { color: t.ink }]}>Tricks & firsts</Text>
           <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{done} of {tricks.length} tricks · {firsts.size} {firsts.size === 1 ? "first" : "firsts"}</Text>
         </View>
-        <Icon name={open ? "chevron-up" : "chevron-down"} size={22} color={t.ink2} />
+        {!always ? <Icon name={open ? "chevron-up" : "chevron-down"} size={22} color={t.ink2} /> : null}
       </Pressable>
       {open ? (
         <>

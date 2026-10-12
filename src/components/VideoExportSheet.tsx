@@ -14,9 +14,10 @@ import { evenly } from "../lib/reels";
 import { videoFileName } from "../lib/fileNames";
 import { withFriendlyName } from "../lib/exportFiles";
 import {
-  VideoFormat, VideoQuality, cancelGrowVideo, createGrowVideo, defaultSubtitle, defaultTitle,
-  dimensions, estimateSeconds, isVideoExportAvailable, saveVideoToGallery, secondsPerPhoto,
+  CLIP_MAX_MS, VideoFormat, VideoQuality, cancelGrowVideo, clipPlays, createGrowVideo, defaultSubtitle, defaultTitle,
+  dimensions, estimateSeconds, isVideoExportAvailable, saveVideoToGallery, secondsPerPhoto, videoLength,
 } from "../lib/videoExport";
+import { ClipTrim } from "./ClipTrim";
 import { Btn, Input, Label, PhotoView, Seg, Sheet } from "./ui";
 import { HScroll } from "./HScroll";
 
@@ -48,7 +49,26 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   fileLabel?: string;
 }) {
   const t = useTheme();
-  const usable = slides.filter((s) => !!s.uri); // the movie is made from real pictures
+  const usable = slides.filter((s) => !!s.uri || !!s.clip); // the movie is made from real pictures, and the videos play
+  const clips = usable.filter((s) => !!s.clip);
+  const [lengths, setLengths] = useState<Record<string, number>>({}); // each video's length (ms)
+  const [clipStarts, setClipStarts] = useState<Record<string, number>>({}); // where the 30 seconds of a long one start
+  const [trimming, setTrimming] = useState<string | null>(null); // the long video whose 30 seconds are being chosen
+  const clipKey = clips.map((s) => s.id).join("|");
+  useEffect(() => {
+    if (!visible || !clips.length) return;
+    let live = true;
+    (async () => {
+      const found: Record<string, number> = {};
+      for (const s of clips) if (lengths[s.id] == null) found[s.id] = await videoLength(s.clip!);
+      if (live && Object.keys(found).length) setLengths((l) => ({ ...l, ...found }));
+    })();
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, clipKey]);
+  const longClips = clips.filter((s) => (lengths[s.id] ?? 0) > CLIP_MAX_MS);
+  const photoCount = usable.length - clips.length;
+  const clipMs = clips.reduce((n, s) => n + clipPlays(lengths[s.id], clipStarts[s.id] ?? 0), 0);
   const [speed, setSpeed] = useState(initialSpeed);
   const [format, setFormat] = useState<VideoFormat>("square");
   const [quality, setQuality] = useState<VideoQuality>("720");
@@ -73,14 +93,14 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   const cover = usable.find((s) => s.id === coverId) ?? usable[0];
   // the pictures offered as the cover: spread across the video (never hundreds of thumbnails), always including the one chosen
   const coverChoices = (() => { const c = evenly(usable, 30); return cover && !c.includes(cover) ? [cover, ...c] : c; })();
-  const secs = estimateSeconds(usable.length, speed, intro);
+  const secs = estimateSeconds(photoCount, speed, intro, clipMs);
   const [w, h] = dimensions(format, quality);
-  const eta = Math.max(5, Math.round(usable.length * (quality === "1080" ? 1.6 : 0.8) * (format === "vertical" ? 1.5 : 1) * (secondsPerPhoto(speed) / 2.4) * 0.5 + 5));
+  const eta = Math.max(5, Math.round((photoCount * (secondsPerPhoto(speed) / 2.4) * 0.5 + (clipMs / 1000) * 0.6) * (quality === "1080" ? 1.6 : 0.8) * (format === "vertical" ? 1.5 : 1) + 5));
 
   const create = async () => {
     setPhase("working"); setProgress(0); setMsg(""); started.current = Date.now();
     try {
-      const out = await createGrowVideo(child, slides, t, { speed, format, quality, intro, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined, ...(memorial != null ? { memorial } : {}) }, setProgress);
+      const out = await createGrowVideo(child, slides, t, { speed, format, quality, intro, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined, ...(memorial != null ? { memorial } : {}), clipStarts, clipLengths: lengths }, setProgress);
       setUri(await withFriendlyName(out, fileName)); // so it is shared under a proper name, not a random temporary one
       setPhase("done");
     } catch (e) {
@@ -122,8 +142,35 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
       <Label>Speed — how long each photo stays on screen</Label>
       <Seg options={GROW_SPEEDS.map((v) => ({ id: v, label: `${v}×` }))} value={speed} onChange={(v) => phase !== "working" && setSpeed(v)} />
       <Text style={{ color: t.ink3, fontSize: 12, marginTop: 6 }}>
-        {secondsPerPhoto(speed).toFixed(1)}s per photo · {usable.length} photo{usable.length === 1 ? "" : "s"} · video is about {mmss(secs)} long
+        {secondsPerPhoto(speed).toFixed(1)}s per photo · {photoCount} photo{photoCount === 1 ? "" : "s"}{clips.length ? ` · ${clips.length} video${clips.length === 1 ? "" : "s"}` : ""} · video is about {mmss(secs)} long
       </Text>
+      {clips.length ? (
+        <Text style={{ color: t.ink3, fontSize: 12, marginTop: 4 }}>Videos play in it as they are, without their sound{longClips.length ? ", up to 30 seconds each" : ""}.</Text>
+      ) : null}
+      {longClips.length ? (
+        <>
+          <Label>Long videos: choose the 30 seconds to show</Label>
+          {longClips.map((s) => {
+            const open = trimming === s.id;
+            const start = clipStarts[s.id] ?? 0;
+            return (
+              <View key={s.id} style={{ marginBottom: 10, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: open ? t.accent : t.line }}>
+                <Pressable onPress={() => phase !== "working" && setTrimming(open ? null : s.id)} accessibilityRole="button" accessibilityLabel="Choose the 30 seconds" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <View style={{ width: 52, height: 52, borderRadius: 10, overflow: "hidden", backgroundColor: t.bg3 }}>
+                    <PhotoView photo={slideView(s)} fit="cover" style={{ width: "100%", height: "100%" }} emojiSize={18} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>{s.caption || "A video"}</Text>
+                    <Text style={{ color: t.ink3, fontSize: 12 }}>Shows {mmss(start / 1000)} – {mmss(Math.min(lengths[s.id], start + CLIP_MAX_MS) / 1000)} of {mmss(lengths[s.id] / 1000)}</Text>
+                  </View>
+                  <Icon name={open ? "chevron-up" : "chevron-down"} size={20} color={t.accent} />
+                </Pressable>
+                {open ? <ClipTrim uri={s.clip!} lengthMs={lengths[s.id]} startMs={start} onChange={(v) => setClipStarts((m) => ({ ...m, [s.id]: v }))} /> : null}
+              </View>
+            );
+          })}
+        </>
+      ) : null}
 
       <Label>Shape</Label>
       <Seg options={[{ id: "square" as VideoFormat, label: "Square" }, { id: "vertical" as VideoFormat, label: "Vertical (stories)" }]} value={format} onChange={(v) => phase !== "working" && setFormat(v)} />

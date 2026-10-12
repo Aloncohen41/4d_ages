@@ -178,6 +178,30 @@ export function setUpSiblings(relatives: Relative[], kids: Child[], stamp: numbe
 }
 
 /** When a child is renamed (or their colour or gender changes), their sibling-person follows — unless the person was changed by hand. */
+/**
+ * A child's or pet's profile picture also shows for them in the family (their sibling entry), and follows it when it changes. A picture chosen
+ * by hand for that family member is left alone. `photoOf` gives a profile photo's picture file.
+ */
+export function profilePhotosToFamily(relatives: Relative[], kids: Pick<Child, "id" | "avatarPhotoId" | "avatarCrop">[], photoOf: (memoryId: string) => string | undefined): Relative[] {
+  let changed = false;
+  const out = relatives.map((r) => {
+    if (!r.childRef) return r;
+    const k = kids.find((x) => x.id === r.childRef);
+    if (!k) return r;
+    if (r.photoUri && !r.photoFromProfile) return r; // chosen by hand
+    const uri = k.avatarPhotoId ? photoOf(k.avatarPhotoId) : undefined;
+    if (!uri) {
+      if (!r.photoFromProfile) return r;
+      changed = true;
+      return { ...r, photoUri: undefined, crop: undefined, photoFromProfile: undefined, photoSized: undefined };
+    }
+    if (r.photoFromProfile === k.avatarPhotoId && JSON.stringify(r.crop ?? null) === JSON.stringify(k.avatarCrop ?? null)) return r;
+    changed = true;
+    return { ...r, photoUri: uri, crop: k.avatarCrop, photoFromProfile: k.avatarPhotoId, photoSized: undefined };
+  });
+  return changed ? out : relatives;
+}
+
 export function followChild(relatives: Relative[], before: Child, after: Child, stamp: number): Relative[] {
   return relatives.map((r) => {
     if (r.childRef !== after.id) return r;

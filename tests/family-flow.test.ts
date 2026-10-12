@@ -108,5 +108,5 @@ ok("the tag picker lists only this child's family, and new people it creates joi
 ok("adding a child pins the old family to the existing children (only when there are some), then adds the siblings", /s\.kids\.length \? pinToExistingChildren\(/.test(store) && /addSiblingsForNewChild\(pinned, s\.kids, child/.test(store));
 ok("renaming or recolouring a child updates their sibling record", /followChild\(s\.relatives, before, after/.test(store));
 ok("the “Set up siblings” section is gone from Family (siblings are still added automatically when a child is added)", !/Set up siblings|needsSiblingSetup|setupSiblings/.test(fam));
-ok("cloud sharing pulls into, and pushes from, the right child's family", /mergeRelatives\(s\.relatives, rRows, childId\)/.test(sync) && /relativesToPush\(s\.relatives, childId, known\)/.test(sync));
+ok("cloud sharing pulls into, and pushes from, the right child's family", /mergeRelatives\(s\.relatives, rRows, childId\)/.test(sync) && /relativesToPush\(s\.relatives, childId, known, refs\)/.test(sync));
 console.log(fails ? `${fails} FAILED` : "all family-flow tests passed");

@@ -38,6 +38,7 @@ export interface BookInput {
   places?: import("./places").Place[];
   mapUri?: string;
   memorial?: { words: string; dates: string };
+  together?: import("./bookPages").Together[];
 }
 
 /** "save": Android's save dialog (Downloads, Google Drive, any folder) and the PDF is saved there. "share": the share menu (WhatsApp, email, Drive…). */
@@ -46,7 +47,7 @@ export type BookDestination = "save" | "share";
 /** Prints the book to a PDF at exactly the chosen page size, with its proper name. Returns the file's uri. */
 async function printBook(i: BookInput, onProgress?: (text: string) => void): Promise<{ uri: string; fileName: string }> {
   const size = sizeById(i.size);
-  const plan = planBook(i.child, i.memories, size, { family: i.family, intro: i.intro, classics: i.classics, siblings: i.siblings, places: i.places, mapUri: i.mapUri, memorial: i.memorial });
+  const plan = planBook(i.child, i.memories, size, { family: i.family, intro: i.intro, classics: i.classics, siblings: i.siblings, places: i.places, mapUri: i.mapUri, memorial: i.memorial, together: i.together });
   // every picture made just large enough for where it's printed, within a total the phone can print in one go (see printSizes);
   // one at a time, so memory stays low. A picture that can't be read leaves its frame empty rather than stopping the book.
   const sizes = printSizes(plan, size);

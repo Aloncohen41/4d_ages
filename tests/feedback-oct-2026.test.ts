@@ -60,7 +60,7 @@ ok("[CHILD-02] the child form has Girl, Boy and Prefer not to say; children with
 
 /* ---------------- navigation (NAV-01 … 03, ADD-01) ---------------- */
 ok("[NAV-01] a menu button top-left with Family and Settings", /accessibilityLabel="Menu"/.test(screen) && /item\("family", "Family", "\/family"\)/.test(screen) && /item\("settings", "Settings", "\/settings"\)/.test(screen));
-ok("[NAV-02, NAV-03] the bottom bar is Home, Milestones, Growth, Book", TAB_NAMES.slice(0, 4).join() === "index,milestones,growth,book" && TAB_NAMES.slice(4).join() === "care,adventures,weight" && !existsSync(join(root, "app/(tabs)/add.tsx")) && !existsSync(join(root, "app/(tabs)/family.tsx")));
+ok("[NAV-02, NAV-03] the bottom bar is Home, Milestones, Growth, Book", TAB_NAMES.slice(0, 4).join() === "index,milestones,growth,book" && TAB_NAMES.length === 4 && !existsSync(join(root, "app/(tabs)/add.tsx")) && !existsSync(join(root, "app/(tabs)/family.tsx")));
 ok("[NAV-02] posts are still added with the + button", /<Fab /.test(read("app/(tabs)/_layout.tsx")));
 ok("[ADD-01] “Whose photos are these?” is gone", !screens.some((f) => /Whose photos are these/.test(read(f))));
 

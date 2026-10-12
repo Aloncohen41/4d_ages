@@ -1,4 +1,5 @@
 import { Child, Memory, MilestoneDef, Relative, Tag, isPet } from "./types";
+import { familyRows } from "./familyTree";
 import { onMap, placesByYear, placesSummary } from "./places";
 import { petAge } from "./pets";
 import { indexTags, initialsOf, labelOfTag, displayName, relationLine } from "./tags";
@@ -40,6 +41,8 @@ export interface BookHtmlInput {
   /** pager: the page to open on. overview: which pages to show, and how wide (in screen pixels) each is drawn. */
   start?: number;
   overview?: { index: number; width: number }[];
+  /** pager: the page in front, with a little of the pages before and after it showing at the sides (the Customize view) */
+  peek?: boolean;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -364,6 +367,28 @@ export function buildBookHtml(i: BookHtmlInput): string {
       case "classic":
         return classicPage(p.entry, p, n);
       case "family": {
+        if (p.tree) {
+          const rows = familyRows(p.people);
+          const face = (r: Relative, big = false) => {
+            const pic = r.photoUri ? i.image(r.photoUri) : null;
+            return `<div class="node${big ? " me" : ""}"><div class="face" style="background:${wash(p)};color:${ink(p)};border-color:${big ? accent : "#fff"}">${pic ? `<img src="${esc(pic)}"/>` : esc(initialsOf(r.name || displayName(r)))}</div><b>${esc(displayName(r))}</b><span>${esc(relationLine(r))}</span></div>`;
+          };
+          // the child in the middle of their own row, with their brothers, sisters, cousins and pets around them
+          const coverPhoto = plan.pages[0]?.kind === "cover" ? plan.pages[0].photo : undefined;
+          const me = { id: child.id, name: child.name, relation: "That's me!", ...(coverPhoto ? { photoUri: coverPhoto } : {}) } as Relative;
+          const half = Math.ceil(rows.same.length / 2);
+          const same = [...rows.same.slice(0, half).map((r) => face(r)), face(me, true), ...rows.same.slice(half).map((r) => face(r))];
+          const row = (nodes: string[], cls: string) => (nodes.length ? `<div class="gen ${cls}"><div class="nodes${nodes.length > 1 ? " linked" : ""}${nodes.length > 5 ? " many" : ""}">${nodes.join("")}</div></div>` : "");
+          const parts = [row(rows.grand.map((r) => face(r)), "grand"), row(rows.parent.map((r) => face(r)), "parent"), row(same, "same")].filter(Boolean);
+          return `<section class="page family tree-page tree-${style}">
+            ${corner(p, drawings ? drawings.family : "")}
+            <p class="kicker" style="color:${ink(p)}">Your family tree</p>
+            <h2>${esc(FAMILY_TITLES[style])}</h2>
+            <div class="tree" style="--line:${ink(p)}">${parts.join('<div class="stem"></div>')}</div>
+            ${rows.other.length ? `<p class="others-label" style="color:${ink(p)}">And everyone else who loves you</p><div class="gen other"><div class="nodes">${rows.other.map((r) => face(r)).join("")}</div></div>` : ""}
+            ${numbered(n)}
+          </section>`;
+        }
         return `<section class="page family">
           ${corner(p, drawings ? drawings.family : "")}
           <p class="kicker" style="color:${ink(p)}">Your family</p>
@@ -404,6 +429,16 @@ export function buildBookHtml(i: BookHtmlInput): string {
           ${chapterHead(p)}
           <div class="moments">${p.items.map((it) => `<div class="moment"><div class="photo single">${img(it.photo)}</div>${caption(it.memory, ink(p), n2 > 2 ? 1 : 3)}</div>`).join("")}</div>
           ${running}
+        </section>`;
+      }
+      case "together": {
+        // the pictures with a brother, a sister or a pet, laid out like the shared-moment pages, under "With Rex"
+        const n2 = p.items.length;
+        return `<section class="page pictures together n${n2}${wide ? " wide" : ""}" style="color:${look.ink}">
+          <p class="kicker" style="color:${accent}">${p.part ? "More moments together" : "Together"}</p>
+          <h2>With ${esc(p.who.name)}</h2>
+          <div class="moments">${p.items.map((it) => `<div class="moment"><div class="photo single">${img(it.photo)}</div>${caption(it.memory, ink(p), 1)}</div>`).join("")}</div>
+          ${numbered(n)}
         </section>`;
       }
       case "birthStory": {
@@ -585,6 +620,28 @@ h3{font-size:${pt(M.label)};line-height:1.25;color:${look.ink};font-weight:700;m
 .fact .v{font-size:${pt(M.body)};margin-top:${U(0.3)}}
 
 /* the family */
+.tree{display:flex;flex-direction:column;align-items:stretch;margin-top:${U(1.5)}}
+.tree .stem{width:0;height:${U(2.6)};border-left:${U(0.35)} solid var(--line);margin:0 auto;opacity:.55}
+.gen .nodes{display:flex;flex-wrap:wrap;justify-content:center;gap:${U(1.6)} ${U(2.4)};position:relative;padding-top:${U(2.2)}}
+.tree .gen:first-child .nodes{padding-top:0}
+.gen .nodes.linked::before{content:"";position:absolute;top:0;left:14%;right:14%;border-top:${U(0.35)} solid var(--line);opacity:.55}
+.tree .gen:first-child .nodes.linked::before{display:none}
+.gen .nodes.linked .node::before{content:"";position:absolute;top:-${U(2.2)};left:50%;height:${U(2.2)};border-left:${U(0.35)} solid var(--line);opacity:.55}
+.tree .gen:first-child .nodes.linked .node::before{display:none}
+.node{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:${U(16)}}
+.node .face{width:${U(12.5)};height:${U(12.5)};font-size:${U(5)}}
+.nodes.many .node{width:${U(13)}}
+.nodes.many .node .face{width:${U(10)};height:${U(10)};font-size:${U(4)}}
+.node.me .face{width:${U(16)};height:${U(16)};border-width:${U(1)};font-size:${U(6.5)}}
+.node b{font-size:${pt(M.small * 1.05)};margin-top:${U(0.8)};line-height:1.15}
+.node span{font-size:${pt(M.small * 0.85)};opacity:.7;line-height:1.15}
+.others-label{text-align:center;font-size:${pt(M.small)};font-weight:700;margin:${U(3)} 0 0}
+.gen.other .nodes{padding-top:${U(1.2)}}
+.tree-nature .node .face,.tree-leafscale .node .face{border-radius:60% 0 60% 0}
+.tree-playful .node .face,.tree-paws .node .face{border-radius:28%}
+.tree-blossom .tree .stem,.tree-blossom .gen .nodes.linked::before,.tree-blossom .gen .nodes.linked .node::before,.tree-paws .tree .stem,.tree-paws .gen .nodes.linked::before,.tree-paws .gen .nodes.linked .node::before{border-style:dotted}
+.tree-explorer .tree .stem,.tree-explorer .gen .nodes.linked::before,.tree-explorer .gen .nodes.linked .node::before,.tree-feathers .tree .stem,.tree-feathers .gen .nodes.linked::before,.tree-feathers .gen .nodes.linked .node::before{border-style:dashed}
+.tree-modern .node .face{box-shadow:none;border:${U(0.3)} solid #222}
 .people{display:grid;grid-template-columns:repeat(${size.notesPerPage <= 2 || tall ? 2 : 3},1fr);gap:${U(3.2)} ${U(3)};align-content:start}
 .person{display:flex;flex-direction:column;align-items:center;text-align:center}
 .face{width:${U(15)};height:${U(15)};border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:${look.fontCss};font-size:${U(6)};font-weight:700;border:${U(0.8)} solid #fff;box-shadow:0 ${U(0.3)} ${U(1)} rgba(60,40,30,.15)}
@@ -628,6 +685,7 @@ h3{font-size:${pt(M.label)};line-height:1.25;color:${look.ink};font-weight:700;m
 .moment .photo{flex:1;min-height:0}
 .moment .caption h3{font-size:${pt(M.label * 0.95)}}
 .moment .caption .body{font-size:${pt(M.body * 0.92)}}
+.together h2{margin-bottom:${U(2)}}
 .pictures.n2 .moments{grid-template-rows:minmax(0,1fr) minmax(0,1fr)}
 .pictures.n2 .moment{flex-direction:row;align-items:center;gap:${U(3)}}
 .pictures.n2 .moment .photo{flex:1.25;height:100%}
@@ -693,6 +751,10 @@ html,body{background:transparent;overflow-x:hidden}
 .pager{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100vh;scrollbar-width:none}
 .pager::-webkit-scrollbar{display:none}
 .pager .slot{flex:0 0 100vw;height:100vh;scroll-snap-align:center;display:flex;align-items:center;justify-content:center}
+.pager.peek{padding-left:11vw;box-sizing:border-box}
+.pager.peek .slot{flex:0 0 78vw;transition:transform .25s,opacity .25s}
+.pager.peek .slot:not(.on){transform:scale(.9);opacity:.55}
+.pager.peek::after{content:"";flex:0 0 11vw}
 .overview{display:flex;flex-wrap:wrap;justify-content:space-between;row-gap:10px}
 .overview .slot{display:flex;flex-direction:column;align-items:center;cursor:pointer}
 .overview .lead{flex:0 0 100%;padding:4px 0 6px}
@@ -703,16 +765,17 @@ html,body{background:transparent;overflow-x:hidden}
     return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="overview">${slots.join("")}</div>
 <script>function tap(i){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({open:i}))}</script></body></html>`;
   }
-  return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="pager" id="pager">${pagesHtml.map((h) => `<div class="slot">${sheet(h, 1)}</div>`).join("")}</div>
+  return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="pager${i.peek ? " peek" : ""}" id="pager">${pagesHtml.map((h) => `<div class="slot">${sheet(h, 1)}</div>`).join("")}</div>
 <script>
 (function(){
-  var pager=document.getElementById('pager'),frames=document.querySelectorAll('.frame'),last=-1;
-  function fit(){var z=Math.min((window.innerWidth-24)/${pageW.toFixed(2)},(window.innerHeight-24)/${pageH.toFixed(2)});
+  var pager=document.getElementById('pager'),frames=document.querySelectorAll('.frame'),slots=document.querySelectorAll('.slot'),last=-1,SW=${i.peek ? 0.78 : 1};
+  function step(){return window.innerWidth*SW;}
+  function fit(){var z=Math.min((step()-24)/${pageW.toFixed(2)},(window.innerHeight-24)/${pageH.toFixed(2)});
     for(var k=0;k<frames.length;k++){frames[k].style.width=(${pageW.toFixed(2)}*z)+'px';frames[k].style.height=(${pageH.toFixed(2)}*z)+'px';frames[k].firstChild.style.transform='scale('+z+')';}}
-  function report(){var i=Math.round(pager.scrollLeft/window.innerWidth);if(i!==last){last=i;window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({page:i}));}}
-  window.go=function(i){pager.scrollTo({left:i*window.innerWidth,behavior:'smooth'})};
+  function report(){var i=Math.round(pager.scrollLeft/step());if(i!==last){if(slots[last])slots[last].classList.remove('on');if(slots[i])slots[i].classList.add('on');last=i;window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({page:i}));}}
+  window.go=function(i){pager.scrollTo({left:i*step(),behavior:'smooth'})};
   fit();window.addEventListener('resize',fit);pager.addEventListener('scroll',report,{passive:true});
-  pager.scrollLeft=${i.start ?? 0}*window.innerWidth;report();
+  pager.scrollLeft=${i.start ?? 0}*step();report();
 })();
 </script></body></html>`;
 }
@@ -744,7 +807,7 @@ export function printSizes(plan: BookPlan, size: BookSize): Map<string, number> 
     if (p.kind === "cover") need(p.photo, 0.6);
     if (p.kind === "birth") need(p.photoUri, 0.75);
     if (p.kind === "picture") p.photos.forEach((u) => need(u, p.photos.length > 1 ? 0.55 : p.notes ? 0.75 : 0.9));
-    if (p.kind === "pictures") p.items.forEach((it) => need(it.photo, p.items.length > 2 ? 0.5 : 0.6));
+    if (p.kind === "pictures" || p.kind === "together") p.items.forEach((it) => need(it.photo, p.items.length > 2 ? 0.5 : 0.6));
     if (p.kind === "family") p.people.forEach((r) => need(r.photoUri, 0.2));
     if (p.kind === "classic") for (const [field, list] of Object.entries(p.entry.photos)) list.forEach((x) => need(x.uri, p.entry.id === "grid" ? 0.28 : field === "photo" || list.length === 1 ? 0.7 : 0.5));
     if (p.kind === "cameHome") { (p.entry?.photos.photos ?? []).slice(0, 1).forEach((x) => need(x.uri, 0.75)); need(p.mapUri, 0.5); }
@@ -764,7 +827,7 @@ export function picturesInBook(plan: BookPlan): string[] {
   for (const p of plan.pages) {
     if (p.kind === "cover" && p.photo) out.add(p.photo);
     if (p.kind === "picture") p.photos.forEach((u) => out.add(u));
-    if (p.kind === "pictures") p.items.forEach((it) => out.add(it.photo));
+    if (p.kind === "pictures" || p.kind === "together") p.items.forEach((it) => out.add(it.photo));
     if (p.kind === "birth" && p.photoUri) out.add(p.photoUri);
     if (p.kind === "classic") Object.values(p.entry.photos).flat().forEach((x) => x.uri && out.add(x.uri));
     if (p.kind === "family") p.people.forEach((r) => r.photoUri && out.add(r.photoUri));

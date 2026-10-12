@@ -361,7 +361,7 @@ export const useStore = create<State>()(
       removeRelative: (id) =>
         set((s) => {
           const r = s.relatives.find((x) => x.id === id);
-          if (r?.photoUri) deleteFile(r.photoUri);
+          if (r?.photoUri && !r.photoFromProfile) deleteFile(r.photoUri); // a profile's own picture isn't theirs to delete
           const gone = s.tags.filter((t) => t.relatedFamilyMemberId === id).map((t) => t.id);
           const strip = (ids: string[]) => ids.filter((x) => !gone.includes(x));
           return {

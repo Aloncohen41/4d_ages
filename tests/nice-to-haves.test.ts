@@ -53,7 +53,7 @@ ok("[NTH-01] a Classic cleared on the other phone is cleared here", mergeClassic
 const schema = read("supabase/schema.sql");
 ok("[NTH-01] the cloud keeps Classics in their own table, private to the family (editors only)", /create table if not exists public\.classics/.test(schema) && /enable row level security/.test(schema) && /member_read on public\.classics for select to authenticated using \(public\.is_editor\(child_id\)\)/.test(schema));
 ok("[NTH-01] Classics is in the top menu, behind sign-in, with a page per template", /item\("classics", "Classics", "\/classics"\)/.test(read("src/components/Screen.tsx")) && /name="classics"/.test(read("app/_layout.tsx")) && /name="classic\/\[id\]"/.test(read("app/_layout.tsx")) && /<Mouth /.test(read("app/classic/[id].tsx")));
-ok("[NTH-01] the book gets the child's Classics", /planBook\(child, chosen, size, \{ family, intro, classics, siblings, places, mapUri, memorial: memorialPage \}\)/.test(read("app/(tabs)/book.tsx")) && /classics: i\.classics/.test(read("src/lib/pdf.ts")));
+ok("[NTH-01] the book gets the child's Classics", /planBook\(child, chosen, size, \{ family, intro, classics, siblings, places, mapUri, memorial: memorialPage, together \}\)/.test(read("app/(tabs)/book.tsx")) && /classics: i\.classics/.test(read("src/lib/pdf.ts")));
 
 /* ---------------- NTH-02 date range, NTH-03 include / exclude, NTH-06 a book about someone */
 const a = photo("2024-02-01"), b = photo("2024-05-01"), c2 = photo("2024-09-01", { tagIds: ["tag-person-rosa"] });

@@ -95,6 +95,19 @@ class VideoExportModule : Module() {
       out
     }
 
+    // How long a video is, in milliseconds (0 when it can't be read): for choosing which 30 seconds of a long one go in a made video.
+    AsyncFunction("videoDuration") { uri: String ->
+      val retriever = MediaMetadataRetriever()
+      try {
+        retriever.setDataSource(Uri.parse(uri).path ?: uri.removePrefix("file://"))
+        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toDoubleOrNull() ?: 0.0
+      } catch (e: Throwable) {
+        0.0
+      } finally {
+        try { retriever.release() } catch (e: Throwable) { }
+      }
+    }
+
     // Copies the finished video into Movies/4D Ages (Android 10+, no permission needed).
     AsyncFunction("saveToGallery") { path: String, name: String ->
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {

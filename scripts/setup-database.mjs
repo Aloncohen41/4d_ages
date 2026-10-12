@@ -77,13 +77,13 @@ try {
   const t = await client.query("select table_name from information_schema.tables where table_schema='public' and table_name = any($1)", [tables]);
   const rls = await client.query("select relname from pg_class where relnamespace='public'::regnamespace and relrowsecurity and relname = any($1)", [tables]);
   const fns = await client.query("select proname from pg_proc where pronamespace='public'::regnamespace and proname in ('is_member','is_editor','can_see_memory','create_invite','join_child','delete_my_account','parent_count','remove_member','set_member_people','can_see_post','block_email','unblock_email','delete_child','check_invite','max_parents')");
-  const cols = await client.query("select table_name || '.' || column_name as c from information_schema.columns where table_schema='public' and (table_name, column_name) in (('children','gender'),('relatives','nickname'),('relatives','description'),('memories','head_cm'),('child_members','people'),('invites','role'),('invites','people'),('memories','health_kind'),('children','expecting'),('invites','email'),('memories','end_date'),('children','kind'),('children','species'),('children','gotcha_day'))");
+  const cols = await client.query("select table_name || '.' || column_name as c from information_schema.columns where table_schema='public' and (table_name, column_name) in (('children','gender'),('relatives','nickname'),('relatives','description'),('memories','head_cm'),('child_members','people'),('invites','role'),('invites','people'),('memories','health_kind'),('children','expecting'),('invites','email'),('memories','end_date'),('children','kind'),('children','species'),('children','gotcha_day'),('relatives','child_ref'))");
   const b = await client.query("select public from storage.buckets where id='media'");
   const checks = [
     [`all ${tables.length} tables exist`, t.rowCount === tables.length],
     ["privacy rules (row-level security) are ON for every table", rls.rowCount === tables.length],
     ["the sharing functions exist (membership, invites, the two-parent limit, removing someone, reactions, deleting a profile or an account, checking an invite, up to six owners for a pet)", fns.rowCount === 15],
-    ["the newer columns exist (gender; nickname and description; head circumference; who sees what; health log; expecting; invites for one email; how long a symptom lasted; pets)", cols.rowCount === 14],
+    ["the newer columns exist (gender; nickname and description; head circumference; who sees what; health log; expecting; invites for one email; how long a symptom lasted; pets; which profile a family member is)", cols.rowCount === 15],
     ["the private “media” bucket exists and is NOT public", b.rowCount === 1 && b.rows[0].public === false],
   ];
   for (const [label, okay] of checks) say(`${okay ? "✓" : "✗"} ${label}`);

@@ -4,21 +4,23 @@ import { BOOK_COLOURS, BOOK_STYLES, BookColour, BookSize, BookStyle, KIDS_THEMES
 import { BookDestination } from "../lib/pdf";
 import { useTheme } from "../lib/useTheme";
 import { TYPE } from "../theme";
-import { Btn, Sheet, Input } from "./ui";
+import { Btn, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
 
 /** What each theme looks like, in two little pictures. */
-const THEME_ICONS: Record<BookStyle, [IconName, IconName]> = {
+export const THEME_ICONS: Record<BookStyle, [IconName, IconName]> = {
   classic: ["t-moon", "t-balloon"], nature: ["t-leaf", "t-flower"], playful: ["t-kite", "t-teddy"], modern: ["t-font", "t-font"],
   stars: ["t-moon", "t-star"], blossom: ["t-flower", "heart"], explorer: ["t-plane", "t-cloud"], rainbow: ["t-rainbow", "t-balloon"],
   paws: ["t-paw", "t-bone"], feathers: ["t-feather", "t-cloud"], stable: ["t-horseshoe", "t-trophy"], leafscale: ["t-leaf", "t-sun"],
 };
 
+/** The themes on offer, in order: a pet's book has the pet themes only; a child's the children's, the newest (with a page background) first. */
+export const themeOrder = (pet: boolean): BookStyle[] => (pet ? PET_THEMES : [...KIDS_THEMES, ...BOOK_STYLES.map((s) => s.id).filter((id) => !KIDS_THEMES.includes(id) && !PET_THEMES.includes(id))]);
+
 /** The book's themes as cards: the paper colour, its pictures and its name. The kids' themes (with a page background) come first. */
 export function ThemeCards({ value, onChange, pet = false }: { value: BookStyle; onChange: (s: BookStyle) => void; pet?: boolean }) {
   const t = useTheme();
-  // a pet's book: the pet themes only; a child's: the children's, the newest (with a page background) first
-  const order = pet ? PET_THEMES : [...KIDS_THEMES, ...BOOK_STYLES.map((s) => s.id).filter((id) => !KIDS_THEMES.includes(id) && !PET_THEMES.includes(id))];
+  const order = themeOrder(pet);
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
       {order.map((id) => {
@@ -69,34 +71,17 @@ export function ColourChoice({ value, onChange }: { value: BookColour; onChange:
 }
 
 /**
- * Just before the PDF is made: the theme (with its page background) and colour, a reminder of the size and page count, a look at the pages,
- * and then save it to the phone or share it. While the PDF is made, it says how far along it is.
+ * Exporting, from the Customize view once the book looks right: the size and page count, then save it to the phone or share it. While the PDF
+ * is made, it says how far along it is.
  */
-export function BookExportSheet({ style, colour, size, pages, onStyle, onColour, onPreview, onExport, busy, progress, message, onClose, pet = false, memorial, onMemorial }: {
-  style: BookStyle; colour: BookColour; size: BookSize; pages: number;
-  /** a pet's book: the pet themes, and the choice of an "In loving memory" page at the end */
-  pet?: boolean; memorial?: { words: string } | null; onMemorial?: (m: { words: string } | null) => void;
-  onStyle: (s: BookStyle) => void; onColour: (c: BookColour) => void; onPreview: () => void;
+export function BookExportSheet({ themeLabel, size, pages, onExport, busy, progress, message, onClose }: {
+  themeLabel: string; size: BookSize; pages: number;
   onExport: (to: BookDestination) => void; busy: BookDestination | null; progress: string; message: string; onClose: () => void;
 }) {
   const t = useTheme();
   return (
-    <Sheet visible onClose={busy ? () => undefined : onClose} title="Before you export">
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginBottom: 8 }]}>Theme</Text>
-      <ThemeCards value={style} onChange={onStyle} pet={pet} />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 18, marginBottom: 8 }]}>Colour</Text>
-      <ColourChoice value={colour} onChange={onColour} />
-      {pet && onMemorial ? (
-        <View style={{ marginTop: 16 }}>
-          <Pressable onPress={() => onMemorial(memorial ? null : { words: "" })} accessibilityRole="checkbox" accessibilityState={{ checked: !!memorial }} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Icon name={memorial ? "check-square" : "square"} size={22} color={t.accent} />
-            <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>Add an "In loving memory" page at the end</Text>
-          </Pressable>
-          {memorial ? <Input value={memorial.words} onChangeText={(v) => onMemorial({ words: v })} placeholder="A few words. Example: Our best friend, forever in our hearts" multiline style={{ marginTop: 8, minHeight: 60, textAlignVertical: "top" }} /> : null}
-        </View>
-      ) : null}
-      <Btn label="Look through the pages" icon="nav-book" kind="line" onPress={onPreview} disabled={!!busy} style={{ marginTop: 18 }} />
-      <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 10 }]}>{size.label} · {pages} pages</Text>
+    <Sheet visible onClose={busy ? () => undefined : onClose} title="Export the book">
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, textAlign: "center" }]}>{themeLabel} · {size.label} · {pages} pages</Text>
       <Btn label={busy === "save" ? "Saving your PDF…" : "Save PDF (phone or Drive)"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
       <Btn label={busy === "share" ? "Building your PDF…" : "Share PDF (WhatsApp, email…)"} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
       {busy ? (

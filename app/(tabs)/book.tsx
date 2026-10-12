@@ -5,11 +5,11 @@ import { readPlaces } from "../../src/lib/places";
 import { useWorldMap } from "../../src/lib/worldMap";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { Screen } from "../../src/components/Screen";
-import { Btn, DateField, Heading, Seg } from "../../src/components/ui";
+import { Btn, DateField, Heading, Input, Seg } from "../../src/components/ui";
 import { Icon } from "../../src/components/Icon";
 import { BookOverview, BookPreviewModal } from "../../src/components/BookPreview";
 import { BookPostsSheet } from "../../src/components/BookPostsSheet";
-import { BookExportSheet, ColourChoice, ThemeCards } from "../../src/components/BookExportSheet";
+import { BookCustomizer } from "../../src/components/BookCustomizer";
 import { useShownChild, useStore } from "../../src/lib/store";
 import { useTheme } from "../../src/lib/useTheme";
 import { TYPE } from "../../src/theme";
@@ -54,7 +54,7 @@ function Book() {
   const [choosing, setChoosing] = useState(false);
   const [busy, setBusy] = useState<BookDestination | null>(null);
   const [progress, setProgress] = useState("");
-  const [exporting, setExporting] = useState(false); // the "Before you export" sheet
+  const [customizing, setCustomizing] = useState(false); // the Customize view: the theme and colour, and exporting from there
   const [msg, setMsg] = useState("");
 
   const prefs: BookPrefs = (child && allPrefs[child.id]) || {};
@@ -62,10 +62,8 @@ function Book() {
   const saved = styleById(prefs.style);
   const style = child && isPet(child) ? (PET_THEMES.includes(saved) && prefs.style ? saved : defaultPetTheme(child.species)) : PET_THEMES.includes(saved) ? "classic" : saved;
   const mapUri = useWorldMap();
-  const [memorial, setMemorial] = useState<{ words: string } | null>(null);
   const placesEntry = useStore((s) => s.classics.find((c) => c.childId === child?.id && c.id === PLACES_ID));
   const places = useMemo(() => readPlaces(placesEntry?.values), [placesEntry]);
-  const memorialPage = child && memorial ? { words: memorial.words, dates: `${new Date(child.birth).getFullYear()} – ${new Date().getFullYear()}` } : undefined;
   const colour = colourById(prefs.colour);
   const size = sizeById(prefs.size ?? DEFAULT_BOOK_SIZE);
   const set = (patch: Partial<BookPrefs>) => child && setBookPrefs(child.id, patch);
@@ -91,10 +89,18 @@ function Book() {
   const intro = child ? startsAtBirth(child, prefs) : true;
   const otherKids = child ? kids.filter((k) => k.id !== child.id && k.role !== "viewer") : [];
   const classics = useMemo(() => (child ? allClassics.filter((c) => c.childId === child.id) : []), [allClassics, child]);
-  const title = child && person ? `${child.name} & ${displayName(person)}` : undefined;
-  const subtitle = person ? "Our moments together" : prefs.from || prefs.to ? `${formatDate(prefs.from || child?.birth || todayISO())} – ${formatDate(prefs.to || todayISO())}` : undefined;
+  // a pet's book in their memory: from the year they were born to the year of their last post
+  const inMemory = !!child && isPet(child) && !!prefs.inMemory;
+  const lastYear = mine.reduce((y, m) => (m.date > y ? m.date : y), child?.birth ?? todayISO()).slice(0, 4);
+  const memorialPage = child && inMemory ? { words: prefs.memorialWords ?? "", dates: `${child.birth.slice(0, 4)} – ${lastYear}` } : undefined;
+  const title = child && person ? `${child.name} & ${displayName(person)}` : child && inMemory ? `In loving memory of ${child.name}` : undefined;
+  const subtitle = person ? "Our moments together" : prefs.from || prefs.to ? `${formatDate(prefs.from || child?.birth || todayISO())} – ${formatDate(prefs.to || todayISO())}` : memorialPage ? memorialPage.dates : undefined;
   // the page count follows the size and the content
-  const plan = useMemo(() => (child ? planBook(child, chosen, size, { family, intro, classics, siblings, places, mapUri, memorial: memorialPage }) : null), [child, chosen, size, family, intro, classics, siblings, places, mapUri, memorialPage?.words, memorialPage?.dates]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the brothers, sisters and pets in the family who aren't in this book: the pictures they're tagged in get pages of their own
+  const together = useMemo(() => (person ? [] : family.filter((r) => r.childRef && kids.some((k) => k.id === r.childRef)).map((r) => ({
+    id: r.id, name: displayName(r), tagIds: [`tag-person-${r.id}`, ...tagList.filter((x) => x.relatedFamilyMemberId === r.id).map((x) => x.id)],
+  }))), [family, kids, tagList, person]);
+  const plan = useMemo(() => (child ? planBook(child, chosen, size, { family, intro, classics, siblings, places, mapUri, memorial: memorialPage, together }) : null), [child, chosen, size, family, intro, classics, siblings, places, mapUri, memorialPage?.words, memorialPage?.dates, together]); // eslint-disable-line react-hooks/exhaustive-deps
   const input = useMemo(
     () => (child && plan ? { child, siblings, plan, defs, style, colour, size, relatives, tags: tagList, weightUnit, heightUnit, title, subtitle } : null),
     [child, siblings, plan, defs, style, colour, size, relatives, tagList, weightUnit, heightUnit, title, subtitle],
@@ -107,7 +113,7 @@ function Book() {
     setMsg("");
     setProgress("");
     try {
-      const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, places, mapUri, memorial: memorialPage, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
+      const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, places, mapUri, memorial: memorialPage, together, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
       if (done === "saved") setMsg("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
       if (done === "shared") setMsg("");
     } catch (e) {
@@ -142,7 +148,8 @@ function Book() {
       {plan.available > plan.pictures ? (
         <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2 }]}>Up to {BOOK_PHOTO_LIMIT} photos fit in one book, chosen evenly across the years. The rest of those memories are in it as words.</Text>
       ) : null}
-      <Btn label={`Preview all ${plan.pages.length} pages`} icon="nav-book" kind="line" onPress={() => setPreviewAt(0)} style={{ marginTop: 12 }} />
+      <Btn label="Customize the book" icon="t-star" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 12 }} />
+      <Btn label={`Preview all ${plan.pages.length} pages`} icon="nav-book" kind="line" onPress={() => setPreviewAt(0)} style={{ marginTop: 8 }} />
 
       {label("What's in the book")}
       {otherKids.length ? (
@@ -174,6 +181,19 @@ function Book() {
           </View>
         </Pressable>
       ) : null}
+      {isPet(child) ? (
+        <View style={{ marginBottom: 6 }}>
+          <Pressable onPress={() => set({ inMemory: prefs.inMemory ? undefined : true })} accessibilityRole="checkbox" accessibilityState={{ checked: !!prefs.inMemory }}
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 }}>
+            <Icon name={prefs.inMemory ? "check-square" : "square"} size={24} color={prefs.inMemory ? t.accent : t.ink3} />
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPE.bodyLarge, { color: t.ink }]}>In loving memory</Text>
+              <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Makes it a book to remember {child.name} by: "In loving memory of {child.name}" on the cover, and a page for them after it</Text>
+            </View>
+          </Pressable>
+          {prefs.inMemory ? <Input value={prefs.memorialWords ?? ""} onChangeText={(v) => set({ memorialWords: v })} placeholder="A few words. Example: Our best friend, forever in our hearts" multiline style={{ minHeight: 60, textAlignVertical: "top" }} /> : null}
+        </View>
+      ) : null}
       <View style={{ flexDirection: "row", gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 4 }]}>From</Text>
@@ -186,12 +206,6 @@ function Book() {
       </View>
       {prefs.from || prefs.to ? <Btn label="From birth to today" kind="line" onPress={() => set({ from: undefined, to: undefined })} style={{ marginTop: 8 }} /> : null}
       <Btn label={leftOut ? `Choose posts (${leftOut} left out)` : "Choose posts"} icon="select" kind="line" onPress={() => setChoosing(true)} style={{ marginTop: 8 }} />
-
-      {label("Theme")}
-      <ThemeCards value={style} onChange={(v) => set({ style: v })} pet={isPet(child)} />
-
-      {label("Colour", 16)}
-      <ColourChoice value={colour} onChange={(c) => set({ colour: c })} />
 
       {label("Page size", 18)}
       <View style={{ gap: 6 }}>
@@ -208,11 +222,12 @@ function Book() {
         })}
       </View>
 
-      <Btn label="Export the book (PDF)" icon="pdf" onPress={() => { setMsg(""); setExporting(true); }} style={{ marginTop: 18 }} />
+      {/* the theme and colour are chosen in the Customize view, and the book is exported from there (its share button, top right) */}
+      <Btn label="Customize and export" icon="pdf" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 18 }} />
       <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>{size.label} · {plan.pages.length} pages</Text>
-      {exporting ? (
-        <BookExportSheet pet={isPet(child)} memorial={memorial} onMemorial={setMemorial} style={style} colour={colour} size={size} pages={plan.pages.length} onStyle={(v) => set({ style: v })} onColour={(c) => set({ colour: c })}
-          onPreview={() => { setExporting(false); setTimeout(() => setPreviewAt(0), 250); }} onExport={doExport} busy={busy} progress={progress} message={msg} onClose={() => setExporting(false)} />
+      {customizing ? (
+        <BookCustomizer input={input} pages={plan.pages.length} pet={isPet(child)} onStyle={(v) => set({ style: v })} onColour={(c) => set({ colour: c })}
+          onClose={() => setCustomizing(false)} onExport={doExport} busy={busy} progress={progress} message={msg} />
       ) : null}
 
       {previewAt !== null ? <BookPreviewModal input={input} pages={plan.pages.length} start={previewAt} onClose={() => setPreviewAt(null)} /> : null}

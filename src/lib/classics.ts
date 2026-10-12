@@ -318,7 +318,7 @@ const PET_CLASSICS: ClassicTemplate[] = [
     ],
   },
   {
-    id: "pet-personality", title: "Personality", desc: "Who they are, in a few words", icon: "smile", for: "pet", species: ["dog", "cat"],
+    id: "pet-personality", title: "Personality", desc: "Who they are, in a few words", icon: "smile", for: "pet", species: ["dog", "cat", "rabbit"],
     fields: [
       { id: "words", label: "In three words", kind: "text", placeholder: "Example: Cuddly, cheeky, greedy" },
       { id: "loves", label: "Loves", kind: "text", placeholder: "Example: Belly rubs and the postman" },

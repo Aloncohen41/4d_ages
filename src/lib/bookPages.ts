@@ -1,4 +1,5 @@
 import { Child, Memory, Relative, Tag } from "./types";
+import { generationOf } from "./familyTree";
 import { byMoment } from "./display";
 import { ageBetween, daysBetween, parseISO } from "./date";
 import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, PET_HOME_ID, classicMedia, classicsFor, isFilled } from "./classics";
@@ -149,6 +150,8 @@ export interface BookPrefs {
   personId?: string; // only posts with this family member (a "Grandma book")
   siblings?: string[]; // brothers and sisters in the same book (their ids)
   pregnancy?: boolean; // the pregnancy (everything before the birth) is in the book: yes unless turned off
+  inMemory?: boolean; // a pet's book made in their memory: "In loving memory of…" on the cover, and a page for them after it
+  memorialWords?: string; // a few words on that page
 }
 
 /**
@@ -266,9 +269,10 @@ export type BookPage = PageBase &
     | { kind: "classic"; entry: ClassicEntry } // a filled-in page from Classics (teeth, food, the first haircut…)
     | { kind: "cameHome"; childId: string; entry?: ClassicEntry; mapUri?: string } // a pet's first page: the day they came home, and where from
     | { kind: "places"; places: Place[]; mapUri?: string } // a pet's adventures: the world map with every place, and the list by year
-    | { kind: "memorial"; words: string; dates: string } // "In loving memory", when chosen at export
+    | { kind: "memorial"; words: string; dates: string } // "In loving memory", when chosen on the Book tab
+    | { kind: "together"; who: Together; items: { memory: Memory; photo: string }[]; part: number } // pictures with a brother, sister or pet
     | { kind: "birthStory"; childId: string; parts: { label: string; text: string }[]; part: number } // the whole birth story, a few parts a page
-    | { kind: "family"; people: Relative[]; part: number }
+    | { kind: "family"; people: Relative[]; part: number; tree?: boolean } // the first is a family tree, any more people a list
     | { kind: "year"; year: number } // opens a new year of life ("Year two")
     | { kind: "picture"; memory: Memory; photos: string[]; birthday: number; notes?: Memory[] } // notes: a few short words sharing the page
     | { kind: "pictures"; items: { memory: Memory; photo: string; birthday: number }[] } // 2 to 4 small moments on one page
@@ -335,6 +339,12 @@ export interface BookPlan {
   pictures: number; // pictures in the book
   available: number; // pictures there were to choose from
 }
+/** Another profile in the family (a brother, a sister, a pet): the pictures they're tagged in get pages of their own. */
+export interface Together { id: string; name: string; tagIds: string[] }
+/** Pictures with someone, at most this many (two pages), and only when there are at least TOGETHER_MIN. */
+export const TOGETHER_MAX = 8;
+export const TOGETHER_MIN = 2;
+
 export interface PlanOptions {
   /** the child's family, in the order the parent arranged it: they get "The people who love you" pages */
   family?: Relative[];
@@ -349,9 +359,15 @@ export interface PlanOptions {
   places?: Place[];
   /** the world map picture (a file on the phone), for the pet's map pages */
   mapUri?: string;
-  /** a pet's "In loving memory" page, when chosen at export */
+  /** a pet's "In loving memory" page, when chosen on the Book tab */
   memorial?: { words: string; dates: string };
+  /** the other profiles in the family: "With Rex" pages of the pictures they're tagged in */
+  together?: Together[];
 }
+
+/** How many people the family tree holds (anyone more is listed on the pages after it). */
+const TREE_MAX = 14;
+const ROW_ORDER = { grand: 0, parent: 1, same: 2, other: 3 } as const;
 
 /** How many people fit on a family page, and how many firsts on a look-back page. */
 const peoplePerPage = (s: BookSize) => (s.notesPerPage <= 2 ? 4 : s.hCm / s.wCm > 1.2 ? 6 : s.notesPerPage >= 4 ? 9 : 6);
@@ -525,7 +541,11 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
     }
     const fam = opts.family ?? [];
     const per = peoplePerPage(size);
-    chunks(fam, per).forEach((people, part) => pages.push({ key: `family-${part}`, kind: "family", people, part }));
+    // the family tree first: the grandparents, the parents' generation and the child's own row before the friends of the family
+    const treeOrder = [...fam].sort((a, b) => ROW_ORDER[generationOf(a.relation)] - ROW_ORDER[generationOf(b.relation)]);
+    const inTree = treeOrder.slice(0, TREE_MAX);
+    if (inTree.length) pages.push({ key: "family-tree", kind: "family", people: inTree, part: 0, tree: true });
+    chunks(treeOrder.slice(TREE_MAX), per).forEach((people, part) => pages.push({ key: `family-${part + 1}`, kind: "family", people, part: part + 1 }));
   }
   emit(intro ? after : rest);
 
@@ -546,10 +566,18 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
     const per = firstsPerPage(size);
     chunks(firsts, per).forEach((memories, part) => pages.push({ key: `firsts-${part}`, kind: "firsts", memories, part }));
   }
-  if (opts.memorial) pages.push({ key: "memorial", kind: "memorial", words: opts.memorial.words, dates: opts.memorial.dates });
+  // "With Rex", "With Noa": the pictures of this book tagged with a brother, a sister or a pet, the newest last, four to a page
+  for (const who of opts.together ?? []) {
+    const tagged = new Set(who.tagIds);
+    const list = mine.filter((m) => m.tagIds?.some((x) => tagged.has(x)) && hasPicture(m)).map((m) => ({ memory: m, photo: picturesOf(m)[0] }));
+    if (list.length < TOGETHER_MIN) continue;
+    const picked = spread(list, TOGETHER_MAX);
+    chunks(picked, size.notesPerPage <= 2 ? 2 : 4).forEach((items, part) => pages.push({ key: `together-${who.id}-${part}`, kind: "together", who, items, part }));
+  }
+  if (opts.memorial) pages.splice(pages[0]?.kind === "cover" ? 1 : 0, 0, { key: "memorial", kind: "memorial", words: opts.memorial.words, dates: opts.memorial.dates });
   pages.push({ key: "end", kind: "end" });
   const classicPictures = pages.reduce((n, p) => n + (p.kind === "classic" ? classicMedia(p.entry).filter((x) => x.uri).length : 0), 0);
-  const pictures = birthPictures + [...shown.values()].reduce((n, l) => n + l.length, 0) + classicPictures;
+  const pictures = birthPictures + [...shown.values()].reduce((n, l) => n + l.length, 0) + classicPictures; // the pictures together are already counted where they first appear
   return { pages, pictures, available: withPictures.length + birthPictures };
 }
 

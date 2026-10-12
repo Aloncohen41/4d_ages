@@ -7,6 +7,7 @@ export interface Slide {
   memoryId: string;
   uri: string | null; // the picture file (a photo, or a video's thumbnail); null = illustrated (no picture)
   video: boolean; // a still frame standing in for a video clip
+  clip?: string; // that video clip's file: it plays in a made video
   emoji: string;
   palette: string;
   date: string;
@@ -35,12 +36,15 @@ export function slidesOf(memories: Memory[], opts: { perMedia?: boolean } = {}):
     if (opts.perMedia) {
       for (const x of m.media) {
         const shown = x.kind === "photo" ? x.uri : x.thumb;
-        if (shown) push({ ...base, id: `${m.id}:${x.id}`, uri: shown, video: x.kind === "video" });
+        if (shown) push({ ...base, id: `${m.id}:${x.id}`, uri: shown, video: x.kind === "video", ...(x.kind === "video" && x.uri ? { clip: x.uri } : {}) });
       }
       continue;
     }
     const c = coverOf(m.media);
-    if (c && c.kind === "photo") push({ ...base, id: m.id, uri: c.uri, video: !!c.video });
+    // the video behind the cover picture (the first photo or video), so it can play in a made video
+    const first = m.media.find((x) => (x.kind === "photo" && x.uri) || (x.kind === "video" && x.thumb));
+    const clip = first?.kind === "video" && first.uri ? { clip: first.uri } : {};
+    if (c && c.kind === "photo") push({ ...base, id: m.id, uri: c.uri, video: !!c.video, ...clip });
     else if (!c && m.type !== "measure") push({ ...base, id: m.id, uri: null, video: false });
   }
   return out;

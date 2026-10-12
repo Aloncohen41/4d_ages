@@ -70,10 +70,12 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
     const data: Omit<Relative, "id"> = {
       name: name.trim(), relation: relation.trim(), customLabel: undefined, nickname: nickname.trim() || undefined, description: description.trim() || undefined,
       photoUri, crop: photoUri ? crop : undefined, photoSized: photoUri ? true : undefined,
+      // their own profile's picture keeps following it; a picture chosen here is theirs from now on
+      photoFromProfile: existing?.photoFromProfile && photoUri === original ? existing.photoFromProfile : undefined,
     };
     if (existing) {
       updateRelative(existing.id, data);
-      if (original && original !== photoUri) deleteFile(original);
+      if (original && original !== photoUri && !existing.photoFromProfile) deleteFile(original); // never the profile's own picture
       const before = [...startFamilies].sort().join();
       if ([...families].sort().join() !== before) setRelativeChildren(existing.id, families); // only touched when it really changed
     } else addRelative({ id: uid("rel"), ...data, childIds: families });

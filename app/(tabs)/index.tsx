@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { isPet } from "../../src/lib/types";
-import { PetTricks } from "../../src/components/PetTricks";
 import { Pressable, Text, View } from "react-native";
 import { Screen, useNearEnd, useScrollControls } from "../../src/components/Screen";
 import { IconButton, MediaGallery, Seg } from "../../src/components/ui";
@@ -33,6 +32,8 @@ const CATEGORIES: { id: TypeFilter; label: string }[] = [
   { id: "milestone", label: "Milestones" },
   { id: "measure", label: "Growth" },
 ];
+/** A pet's: no lasts or milestones (they have tricks and firsts), and their growth is their weight. */
+const PET_CATEGORIES: { id: TypeFilter; label: string }[] = CATEGORIES.filter((c) => c.id !== "last" && c.id !== "milestone").map((c) => (c.id === "measure" ? { ...c, label: "Weight" } : c));
 
 export default function HomeTab() {
   return (
@@ -119,7 +120,6 @@ function Home() {
 
       <Memories part="banner" />
       <HomeCards child={child} onView={setViewing} />
-      {isPet(child) ? <PetTricks child={child} /> : null}
 
       <View style={{ marginBottom: 12 }}>
         <Seg options={[{ id: "story", label: "Stories" }, { id: "grow", label: "Watch them grow" }]} value={view} onChange={setView} />
@@ -133,7 +133,7 @@ function Home() {
       ) : (
         <>
           <HScroll contentContainerStyle={{ gap: 6, paddingBottom: 10 }}>
-            {CATEGORIES.map((c) => (
+            {(isPet(child) ? PET_CATEGORIES : CATEGORIES).map((c) => (
               <Pressable key={c.id} onPress={() => setTypeFilter(c.id)} style={pill(typeFilter === c.id)}>
                 <Text style={{ color: typeFilter === c.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{c.label}</Text>
               </Pressable>

@@ -1,28 +1,19 @@
 import React, { useMemo } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
-import { Screen } from "../../src/components/Screen";
-import { Btn, Heading, Seg } from "../../src/components/ui";
-import { LineChart } from "../../src/components/GrowthChart";
-import { useShownChild, useStore } from "../../src/lib/store";
-import { useTheme } from "../../src/lib/useTheme";
-import { weightSeries } from "../../src/lib/selectors";
-import { formatDate } from "../../src/lib/date";
-import { WeightUnit, formatWeight } from "../../src/lib/growth";
-import { isPet } from "../../src/lib/types";
-import { petAge } from "../../src/lib/pets";
-import { TYPE } from "../../src/theme";
-import { WeightComparisons } from "../../src/components/WeightComparisons";
-
-export default function WeightTab() {
-  return (
-    <Screen>
-      <Weight />
-    </Screen>
-  );
-}
+import { Btn, Heading, Seg } from "./ui";
+import { LineChart } from "./GrowthChart";
+import { useShownChild, useStore } from "../lib/store";
+import { useTheme } from "../lib/useTheme";
+import { weightSeries } from "../lib/selectors";
+import { formatDate } from "../lib/date";
+import { WeightUnit, formatWeight } from "../lib/growth";
+import { isPet } from "../lib/types";
+import { petAge } from "../lib/pets";
+import { TYPE } from "../theme";
+import { WeightComparisons } from "./WeightComparisons";
 
 /** A pet's weight: the latest, the change since the one before, a chart over time, and every weighing. */
-function Weight() {
+export function PetWeight() {
   const t = useTheme();
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
@@ -39,7 +30,7 @@ function Weight() {
 
   return (
     <View>
-      <Heading title="Weight" desc={`${child.name}'s weight over time. Weigh them now and then, and add it here.`} />
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{`${child.name}'s weight over time. Weigh them now and then, and add it here.`}</Text>
       {!viewOnly ? <Btn label="Add a weight" icon="scale" onPress={() => setEntrySheet({ kind: "measure" })} /> : null}
       <View style={{ marginTop: 12, width: 160 }}>
         <Seg options={[{ id: "kg" as WeightUnit, label: "kg" }, { id: "lb" as WeightUnit, label: "lb" }]} value={wUnit} onChange={setWeightUnit} />

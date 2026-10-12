@@ -6,10 +6,12 @@ import { Btn, PhotoView, Seg } from "../../src/components/ui";
 import { MilestoneChecklist } from "../../src/components/MilestoneChecklist";
 import { PregnancyMilestones } from "../../src/components/Pregnancy";
 import { PregnancyNotes } from "../../src/components/PregnancyNotes";
+import { PetTricks } from "../../src/components/PetTricks";
+import { PetAdventures } from "../../src/components/PetAdventures";
 import { ReinforceButton, ReinforceSheet } from "../../src/components/ReinforceSheet";
 import { TagChip } from "../../src/components/TagChip";
 import { resolveTags } from "../../src/lib/tags";
-import { Tag } from "../../src/lib/types";
+import { Tag, isPet } from "../../src/lib/types";
 import { useShownChild, useStore } from "../../src/lib/store";
 import { useTheme } from "../../src/lib/useTheme";
 import { byMoment, coverOf } from "../../src/lib/display";
@@ -37,6 +39,7 @@ function Milestones() {
   if (!child) return null;
   // before the birth: the pregnancy milestones, and symptoms and cravings
   if (child.expecting) return <PregnancySections />;
+  if (isPet(child)) return <PetStories />;
   const copy: Record<Section, { title: string; desc?: string }> = {
     milestones: { title: "Milestones" },
     firsts: { title: "Firsts", desc: "Things they did for the very first time. Add a photo and a few words while you still remember it." },
@@ -54,6 +57,23 @@ function Milestones() {
       </View>
       {section === "milestones" ? <MilestoneChecklist /> : <EntryList kind={section === "firsts" ? "first" : "last"} />}
       <ReinforceSheet visible={reinforce} onClose={() => setReinforce(false)} />
+    </View>
+  );
+}
+
+/** A pet's Stories: their tricks and firsts (a pet's milestones), and the places they've been. */
+function PetStories() {
+  const t = useTheme();
+  const child = useShownChild();
+  const [part, setPart] = useState<"tricks" | "adventures">("tricks");
+  if (!child) return null;
+  return (
+    <View>
+      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>Stories</Text>
+      <View style={{ marginBottom: 14 }}>
+        <Seg options={[{ id: "tricks" as const, label: "Tricks & firsts" }, { id: "adventures" as const, label: "Adventures" }]} value={part} onChange={setPart} />
+      </View>
+      {part === "tricks" ? <PetTricks child={child} open /> : <PetAdventures />}
     </View>
   );
 }

@@ -14,6 +14,7 @@ import { ShareIntakeListener } from "../src/components/ShareIntakeListener";
 import { ImportSheet } from "../src/components/ImportSheet";
 import { ShareSheet } from "../src/components/ShareSheet";
 import { UpdatePrompt } from "../src/components/UpdatePrompt";
+import { FamilyPhotoSync } from "../src/components/FamilyPhotoSync";
 import { DriveAutoBackup } from "../src/components/DriveAutoBackup";
 import { Toast } from "../src/components/Toast";
 import { Confetti } from "../src/components/Confetti";
@@ -135,7 +136,7 @@ export default function RootLayout() {
       router.navigate("/");
     } else if (d.kind === "health-reminder") {
       st.setActive(d.childId);
-      router.navigate("/care");
+      router.navigate("/growth"); // a pet's Health
     } else if (d.kind === "bump-photo") {
       st.setActive(d.childId);
       router.navigate("/growth");
@@ -152,6 +153,7 @@ export default function RootLayout() {
       <ShareIntakeListener />
       <ThumbBackfill />
       <UpdatePrompt />
+      {signedIn && hasKids ? <FamilyPhotoSync /> : null}
       {signedIn && hasKids ? <DriveAutoBackup /> : null}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={signedIn && hasKids}>

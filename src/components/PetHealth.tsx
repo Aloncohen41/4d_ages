@@ -1,32 +1,23 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Linking, Pressable, Switch, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Screen } from "../../src/components/Screen";
-import { Btn, DateField, Heading, Input, Seg, Sheet } from "../../src/components/ui";
-import { Icon } from "../../src/components/Icon";
-import { useShownChild, uid, useStore } from "../../src/lib/store";
-import { useTheme } from "../../src/lib/useTheme";
-import { byMoment } from "../../src/lib/display";
-import { formatDate, formatTime, todayISO } from "../../src/lib/date";
-import { Child, isPet } from "../../src/lib/types";
-import { PET_HEALTH_KINDS, PET_HEALTH_NOTE } from "../../src/lib/pets";
-import { PET_DETAILS_ID, REMINDERS_ID } from "../../src/lib/classics";
-import { HealthReminder, REMINDER_IDEAS, REPEATS, Repeat, nextDates, readReminders, writeReminders } from "../../src/lib/reminders";
-import { addToCalendar, removeFromCalendar } from "../../src/lib/calendarEvents";
-import { TYPE } from "../../src/theme";
-
-export default function CareTab() {
-  return (
-    <Screen>
-      <Care />
-    </Screen>
-  );
-}
+import { Btn, DateField, Heading, Input, Seg, Sheet } from "./ui";
+import { Icon } from "./Icon";
+import { useShownChild, uid, useStore } from "../lib/store";
+import { useTheme } from "../lib/useTheme";
+import { byMoment } from "../lib/display";
+import { formatDate, formatTime, todayISO } from "../lib/date";
+import { Child, isPet } from "../lib/types";
+import { PET_HEALTH_KINDS, PET_HEALTH_NOTE } from "../lib/pets";
+import { PET_DETAILS_ID, REMINDERS_ID } from "../lib/classics";
+import { HealthReminder, REMINDER_IDEAS, REPEATS, Repeat, nextDates, readReminders, writeReminders } from "../lib/reminders";
+import { addToCalendar, removeFromCalendar } from "../lib/calendarEvents";
+import { TYPE } from "../theme";
 
 const kindOf = (id?: string) => PET_HEALTH_KINDS.find((k) => k.id === id) ?? PET_HEALTH_KINDS[PET_HEALTH_KINDS.length - 1];
 
 /** A pet's health, instead of development: their details (microchip, insurance, the vet), reminders, and every visit and treatment. */
-function Care() {
+export function PetCare() {
   const t = useTheme();
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
@@ -39,7 +30,7 @@ function Care() {
 
   return (
     <View>
-      <Heading title="Health" desc={`${child.name}'s vet visits, vaccinations and treatments, with reminders so nothing is missed.`} />
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{`${child.name}'s vet visits, vaccinations and treatments, with reminders so nothing is missed.`}</Text>
       <DetailsCard child={child} />
       <RemindersCard child={child} />
 
