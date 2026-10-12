@@ -1,4 +1,5 @@
 import { Child, KidTheme, Relative } from "./types";
+import { petRelation } from "./pets";
 
 /*
  * Each child has their own family. A person is one record that can be in the family of several children (Grandma is in both siblings'),
@@ -112,8 +113,9 @@ export const SIBLING_RELATIONS: readonly string[] = ["Sister", "Brother", "Sibli
 /** By the colour chosen for the child: pink → Sister, blue → Brother, green → Sibling. */
 export const siblingRelation = (theme: KidTheme): string => (theme === "pink" ? "Sister" : theme === "blue" ? "Brother" : "Sibling");
 
-/** A child's sibling wording: from their gender when it is set (Girl → Sister, Boy → Brother, Prefer not to say → Sibling), else from their colour as before. */
-export const siblingRelationOf = (k: Pick<Child, "theme" | "gender">): string =>
+/** A child's sibling wording (a pet's: "Our dog", "Our cat"…): from their gender when it is set (Girl → Sister, Boy → Brother, Prefer not to say → Sibling), else from their colour as before. */
+export const siblingRelationOf = (k: Pick<Child, "theme" | "gender"> & Partial<Pick<Child, "kind" | "species">>): string =>
+  k.kind === "pet" ? petRelation(k.species) : // a pet is "Our dog" in the family
   k.gender === "girl" ? "Sister" : k.gender === "boy" ? "Brother" : k.gender === "unspecified" ? "Sibling" : siblingRelation(k.theme);
 
 const newSibling = (k: Child, inFamiliesOf: string[], stamp: number, id: string): Relative =>

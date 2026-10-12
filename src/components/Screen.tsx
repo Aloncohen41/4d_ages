@@ -8,7 +8,7 @@ import { useTheme } from "../lib/useTheme";
 import { WORDMARKS } from "../lib/wordmark";
 import { THEMES, THEME_ORDER, TYPE } from "../theme";
 import { withAlpha } from "../lib/m3";
-import { AvatarCrop, Gender, KidTheme } from "../lib/types";
+import { AvatarCrop, Child, Gender, KidTheme, isPet } from "../lib/types";
 import { addMonths, ageLong, ageTotals, formatDate, pregnancy, smartAge, todayISO } from "../lib/date";
 import { weekLabel } from "../lib/pregnancy";
 
@@ -24,6 +24,8 @@ import { APP_NAME, WORDMARK_ASPECT } from "../brand";
 import { Icon, IconName } from "./Icon";
 import { CollectionSheet, CollectionKind } from "./CollectionSheet";
 import { ArrivalSheet } from "./Pregnancy";
+import { AddPetForm } from "./PetForm";
+import { DogSize, petAge, speciesInfo } from "../lib/pets";
 import { deleteChild, deleteChildPlan } from "../lib/sync";
 import { friendlyShareError } from "../lib/shareFlow";
 
@@ -164,7 +166,7 @@ function Hero() {
     const mine = memories.filter((m) => m.childId === child.id);
     return {
       ph: mine.filter((m) => m.type === "photo").reduce((n, m) => n + Math.max(1, m.media.length), 0), // pictures & videos (stories aren't counted)
-      ms: mine.filter((m) => m.type === "milestone").length,
+      ms: isPet(child) ? mine.filter((m) => m.type === "first").length : mine.filter((m) => m.type === "milestone").length, // a pet: tricks and firsts
       st: mine.filter((m) => m.type === "story").length,
     };
   }, [child, memories]);
@@ -182,7 +184,9 @@ function Hero() {
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.headlineLarge, { color: t.onAccentSoft }]} numberOfLines={1}>{child.name}</Text>
-          {child.expecting ? (
+          {isPet(child) ? (
+            <PetAgeLine child={child} />
+          ) : child.expecting ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep, flexShrink: 1 }]}>{weekLabel(child.birth, todayISO())} · {pregnancy(child.birth).weeksToGo} week{pregnancy(child.birth).weeksToGo === 1 ? "" : "s"} to go</Text></View>
           ) : (
             <Pressable onPress={() => setAgeOpen(true)} hitSlop={6}>
@@ -193,13 +197,27 @@ function Hero() {
       </View>
       <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
         <Pressable style={box} onPress={() => setCollection("photos")}><Text style={statNum(t.ink)}>{stats.ph}</Text><Text style={statLbl(t.ink3)}>photos</Text></Pressable>
-        <Pressable style={box} onPress={() => setCollection("milestones")}><Text style={statNum(t.ink)}>{stats.ms}</Text><Text style={statLbl(t.ink3)}>milestones</Text></Pressable>
+        <Pressable style={box} onPress={() => setCollection("milestones")}><Text style={statNum(t.ink)}>{stats.ms}</Text><Text style={statLbl(t.ink3)}>{isPet(child) ? "tricks & firsts" : "milestones"}</Text></Pressable>
         <Pressable style={box} onPress={() => setCollection("stories")}><Text style={statNum(t.ink)}>{stats.st}</Text><Text style={statLbl(t.ink3)}>stories</Text></Pressable>
       </View>
       <AgeSheet visible={ageOpen} onClose={() => setAgeOpen(false)} />
       <ProfileSheet visible={editOpen} onClose={() => setEditOpen(false)} onArrived={() => { setEditOpen(false); setTimeout(() => setArrival(true), 300); }} />
       {arrival ? <ArrivalSheet child={child} onClose={() => setArrival(false)} /> : null}
       <CollectionSheet kind={collection} onClose={() => setCollection(null)} />
+    </View>
+  );
+}
+
+/** "2 years, 3 months" and a little box: "about 24 in dog years" (or their stage of life, for pets without a conversion). */
+function PetAgeLine({ child }: { child: Child }) {
+  const t = useTheme();
+  const a = petAge(child, todayISO());
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
+      <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{speciesInfo(child.species).emoji} {a.human}</Text>
+      <View style={{ backgroundColor: t.card, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 }}>
+        <Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{a.own ?? a.stage}</Text>
+      </View>
     </View>
   );
 }
@@ -234,6 +252,7 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
   const updateChild = useStore((s) => s.updateChild);
   const addMemories = useStore((s) => s.addMemories);
   const [deleting, setDeleting] = useState(false);
+  const [petPatch, setPetPatch] = useState<Partial<Pick<Child, "breed" | "dogSize" | "birthApprox" | "gotchaDay">>>({});
   const [name, setName] = useState("");
   const [birth, setBirth] = useState(todayISO());
   const [theme, setTheme] = useState<KidTheme>("pink");
@@ -246,7 +265,7 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
 
   React.useEffect(() => {
     if (visible && child) {
-      setName(child.name); setBirth(child.birth); setTheme(child.theme); setAvatarId(child.avatarPhotoId); setCrop(child.avatarCrop); setEmoji(child.emoji); setGender(child.gender ?? "unspecified"); setShowEmoji(false); setErr("");
+      setName(child.name); setBirth(child.birth); setTheme(child.theme); setAvatarId(child.avatarPhotoId); setCrop(child.avatarCrop); setEmoji(child.emoji); setGender(child.gender ?? "unspecified"); setShowEmoji(false); setErr(""); setPetPatch({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -312,7 +331,8 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
     if (!name.trim()) return setErr("Please keep a name — even a nickname works.");
     if (!expecting && birth > todayISO()) return setErr("Birth date can't be in the future.");
     if (expecting && birth > addMonths(todayISO(), 10)) return setErr("That due date is too far away.");
-    updateChild(child.id, { name: name.trim(), birth, theme, avatarPhotoId: avatarId, avatarCrop: avatarId ? crop : undefined, emoji, gender, expecting: expecting ? true : undefined });
+    updateChild(child.id, { name: name.trim(), birth, theme, avatarPhotoId: avatarId, avatarCrop: avatarId ? crop : undefined, emoji, gender, expecting: expecting && !isPet(child) ? true : undefined,
+      ...(isPet(child) ? { ...petPatch, ...(petPatch.breed !== undefined ? { breed: petPatch.breed.trim() || undefined } : {}), ...(petPatch.birthApprox === false ? { birthApprox: undefined } : {}) } : {}) });
     onClose();
   };
 
@@ -338,7 +358,7 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
           <Icon name="chevron-right" size={22} color={t.onAccentSoft} />
         </Pressable>
       ) : null}
-      {!child.expecting && child.role !== "viewer" ? (
+      {!child.expecting && !isPet(child) && child.role !== "viewer" ? (
         // telling the story afterwards: the pregnancy (looking back) and the birth
         <View style={{ flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 2 }}>
           <Pressable onPress={() => { onClose(); setTimeout(() => router.push({ pathname: "/pregnancy", params: { child: child.id } }), 300); }} accessibilityRole="button"
@@ -357,10 +377,35 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
       ) : null}
       <Label>Name</Label>
       <Input value={name} onChangeText={setName} placeholder={expecting ? "You can change it any time" : undefined} />
-      <Label>{expecting ? "Due date" : "Birth date"}</Label>
-      <DateField value={birth} onChange={setBirth} max={addMonths(todayISO(), 10)} />
-      <Label>Gender</Label>
-      <GenderPicker value={gender} onChange={setGender} expecting={expecting} />
+      {isPet(child) ? (
+        <>
+          <Label>Birthday</Label>
+          <DateField value={birth} onChange={setBirth} max={todayISO()} />
+          <Pressable onPress={() => setPetPatch((p) => ({ ...p, birthApprox: !(p.birthApprox ?? child.birthApprox) }))} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+            <Icon name={(petPatch.birthApprox ?? child.birthApprox) ? "check-square" : "square"} size={22} color={t.accent} />
+            <Text style={[TYPE.bodyMedium, { color: t.ink2, flex: 1 }]}>We're not sure of the exact day</Text>
+          </Pressable>
+          <Label>The day they came home</Label>
+          <DateField value={petPatch.gotchaDay ?? child.gotchaDay ?? birth} onChange={(d) => setPetPatch((p) => ({ ...p, gotchaDay: d }))} min={birth} max={todayISO()} />
+          <Label>Breed</Label>
+          <Input value={petPatch.breed ?? child.breed ?? ""} onChangeText={(v) => setPetPatch((p) => ({ ...p, breed: v }))} placeholder="Optional" />
+          {child.species === "dog" ? (
+            <>
+              <Label>Size (for the age in dog years)</Label>
+              <Seg options={[{ id: "small" as DogSize, label: "Small" }, { id: "medium" as DogSize, label: "Medium" }, { id: "large" as DogSize, label: "Large" }]} value={petPatch.dogSize ?? child.dogSize ?? "medium"} onChange={(v) => setPetPatch((p) => ({ ...p, dogSize: v }))} />
+            </>
+          ) : null}
+          <Label>Boy or girl</Label>
+          <Seg options={[{ id: "boy" as Gender, label: "Boy" }, { id: "girl" as Gender, label: "Girl" }, { id: "unspecified" as Gender, label: "Not sure" }]} value={gender} onChange={setGender} />
+        </>
+      ) : (
+        <>
+          <Label>{expecting ? "Due date" : "Birth date"}</Label>
+          <DateField value={birth} onChange={setBirth} max={addMonths(todayISO(), 10)} />
+          <Label>Gender</Label>
+          <GenderPicker value={gender} onChange={setGender} expecting={expecting} />
+        </>
+      )}
       <Label>Color mode</Label>
       <ThemePicker value={theme} onChange={setTheme} order={THEME_ORDER} themes={THEMES} />
       <Label>Profile picture — choose one of their photos</Label>
@@ -421,10 +466,14 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [crop, setCrop] = useState<AvatarCrop | undefined>();
   const [err, setErr] = useState("");
+  // first: who's being added (my kid, my bump, my pet)
+  const [what, setWhat] = useState<"kid" | "bump" | "pet" | null>(null);
   // a date still to come is a due date: the profile is a pregnancy (the name can wait)
   const expecting = birth > todayISO();
 
-  const reset = () => { setName(""); setBirth(todayISO()); setTheme("green"); setEmoji("🐣"); setGender("unspecified"); setShowEmoji(false); setPhotoUri(null); setCrop(undefined); setErr(""); };
+  const reset = () => { setWhat(null); setName(""); setBirth(todayISO()); setTheme("green"); setEmoji("🐣"); setGender("unspecified"); setShowEmoji(false); setPhotoUri(null); setCrop(undefined); setErr(""); };
+  const close = () => { reset(); onClose(); };
+  const pick = (w: "kid" | "bump" | "pet") => { setWhat(w); setBirth(w === "bump" ? addMonths(todayISO(), 6) : todayISO()); };
 
   const choose = async () => {
     const picked = await pickMedia({ videos: false, multiple: false });
@@ -445,14 +494,34 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
       addMemories([p]);
       updateChild(child.id, { avatarPhotoId: p.id, avatarCrop: crop });
     }
-    reset();
-    onClose();
+    close();
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Add your little one">
-      <Label>Birth date, or due date</Label>
-      <DateField value={birth} onChange={setBirth} max={addMonths(todayISO(), 10)} />
+    <Sheet visible={visible} onClose={close} title={what === "pet" ? "My pet" : what === "bump" ? "My bump" : what === "kid" ? "My kid" : "Add to the family"}>
+      {!what ? (
+        <View style={{ gap: 10 }}>
+          {([
+            { id: "kid" as const, emoji: "👶", title: "My kid", desc: "A baby or a child, already here" },
+            { id: "bump" as const, emoji: "🤰", title: "My bump", desc: "A baby on the way, with the due date" },
+            { id: "pet" as const, emoji: "🐾", title: "My pet", desc: "A dog, cat, bird, hamster, snake or horse" },
+          ]).map((o) => (
+            <Pressable key={o.id} onPress={() => pick(o.id)} accessibilityRole="button" android_ripple={{ color: withAlpha(t.ink, 0.08) }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 18, borderWidth: 1, borderColor: t.line, backgroundColor: t.card, overflow: "hidden" }}>
+              <Text style={{ fontSize: 34 }}>{o.emoji}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[TYPE.titleMedium, { color: t.ink }]}>{o.title}</Text>
+                <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{o.desc}</Text>
+              </View>
+              <Icon name="chevron-right" size={22} color={t.ink2} />
+            </Pressable>
+          ))}
+        </View>
+      ) : what === "pet" ? (
+        <AddPetForm onDone={close} />
+      ) : (<>
+      <Label>{what === "bump" ? "Due date" : "Birth date"}</Label>
+      <DateField value={birth} onChange={setBirth} min={what === "bump" ? todayISO() : undefined} max={what === "bump" ? addMonths(todayISO(), 10) : todayISO()} />
       {expecting ? (
         <View style={{ backgroundColor: t.accentSoft, borderRadius: 14, padding: 12, marginTop: 8 }}>
           <Text style={[TYPE.titleSmall, { color: t.onAccentSoft }]}>A pregnancy profile: due {formatDate(birth)}, week {pregnancy(birth).week}</Text>
@@ -483,6 +552,7 @@ export function AddChildSheet({ visible, onClose }: { visible: boolean; onClose:
       ) : null}
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 12 }}>{err}</Text> : null}
       <Btn label={`Start ${name.trim() ? name.trim() + "'s" : "their"} chapter`} onPress={create} style={{ marginTop: 20 }} />
+      </>)}
     </Sheet>
   );
 }

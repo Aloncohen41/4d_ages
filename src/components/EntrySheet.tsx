@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
+import { PET_HEALTH_KINDS } from "../lib/pets";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { Child, EntryKind, HealthKind, MILESTONE_CATALOG, MILESTONE_CATEGORIES, MILESTONE_DEFS, MediaItem } from "../lib/types";
+import { Child, EntryKind, HealthKind, MILESTONE_CATALOG, MILESTONE_CATEGORIES, MILESTONE_DEFS, MediaItem, isPet } from "../lib/types";
 import { areaOf, memoryForDef } from "../lib/development";
 import { KIND_META, parseNumber } from "../lib/entries";
 import { milestonesLogged } from "../lib/selectors";
@@ -94,7 +95,8 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
   const [dateTouched, setDateTouched] = useState(isEdit);
   const [time, setTime] = useState<string | undefined>(editing?.time);
   const [location, setLocation] = useState(editing?.location ?? "");
-  const [healthKind, setHealthKind] = useState<HealthKind>(editing?.healthKind ?? prefill.healthKind ?? "checkup");
+  const pet = isPet(child); // a pet: their own health kinds, and weight only
+  const [healthKind, setHealthKind] = useState<HealthKind>(editing?.healthKind ?? prefill.healthKind ?? (pet ? "vet" : "checkup"));
   const [tags, setTags] = useState<string[]>(editing?.tagIds ?? []);
   const [media, setMedia] = useState<MediaItem[]>(initialMedia);
   const [emoji, setEmoji] = useState(editing?.emoji ?? editingDef?.emoji ?? prefill.emoji ?? meta.emoji);
@@ -147,7 +149,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
       if (weightText.trim()) {
         const n = parseNumber(weightText);
         const kg = n == null ? NaN : toKg(n, weightUnit);
-        if (!(kg >= 0.5 && kg <= 180)) return setErr(`That weight doesn't look right — enter it in ${weightUnit}.`);
+        if (!(pet ? kg > 0.005 && kg <= 1500 : kg >= 0.5 && kg <= 180)) return setErr(`That weight doesn't look right — enter it in ${weightUnit}.`);
         weightKg = round(kg, 3);
       }
       if (headText.trim()) {
@@ -156,7 +158,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
         if (!(cm >= 20 && cm <= 70)) return setErr(`That head measurement doesn't look right. Enter it in ${heightUnit}.`);
         headCm = round(cm, 1);
       }
-      if (heightCm == null && weightKg == null && headCm == null) return setErr("Enter a height, a weight or a head measurement.");
+      if (heightCm == null && weightKg == null && headCm == null) return setErr(pet ? "Enter the weight." : "Enter a height, a weight or a head measurement.");
     } else if (kind === "story") {
       if (!title.trim() && !text.trim() && !media.length) return setErr("Add a title, a few words or a photo.");
     } else if (kind === "health") {
@@ -186,7 +188,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
   const chip = (on: boolean) => ({ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: on ? t.chipOn : t.card, borderWidth: 1, borderColor: on ? t.chipOn : t.line } as const);
   const heading =
     kind === "milestone" ? (isEdit ? "Edit milestone" : "Log a milestone")
-    : kind === "measure" ? (isEdit ? "Edit measurement" : "Measurement")
+    : kind === "measure" ? (pet ? (isEdit ? "Edit weight" : "Weight") : isEdit ? "Edit measurement" : "Measurement")
     : kind === "story" ? (isEdit ? "Edit story" : "New story")
     : kind === "first" ? (isEdit ? "Edit first" : "A new first")
     : kind === "health" ? (isEdit ? "Edit health entry" : "Health")
@@ -264,7 +266,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
 
       {kind === "health" ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 14 }}>
-          {HEALTH_KINDS.map((k) => (
+          {(pet ? PET_HEALTH_KINDS.map((k) => ({ id: k.id as HealthKind, label: `${k.emoji} ${k.label}` })) : HEALTH_KINDS).map((k) => (
             <Pressable key={k.id} onPress={() => setHealthKind(k.id)} accessibilityRole="radio" accessibilityState={{ selected: healthKind === k.id }} style={chip(healthKind === k.id)}>
               <Text style={{ color: healthKind === k.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{k.label}</Text>
             </Pressable>
@@ -275,28 +277,28 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
       {/* height, weight and head circumference: any of them */}
       {kind === "measure" ? (
         <View style={{ backgroundColor: t.bg2, borderRadius: 16, padding: 14, marginTop: 14, gap: 4 }}>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
+          {!pet ? <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>Height</Text>
               <Input value={heightText} onChangeText={setHeightText} keyboardType="decimal-pad" placeholder={heightUnit === "cm" ? "Example: 74.5" : "Example: 29.5"} />
             </View>
             <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: "cm" }, { id: "in" as const, label: "in" }]} value={heightUnit} onChange={setHeightUnit} /></View>
-          </View>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: 8 }}>
+          </View> : null}
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: pet ? 0 : 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>Weight</Text>
               <Input value={weightText} onChangeText={setWeightText} keyboardType="decimal-pad" placeholder={weightUnit === "kg" ? "Example: 9.2" : "Example: 20.3"} />
             </View>
             <View style={{ width: 92 }}><Seg options={[{ id: "kg" as const, label: "kg" }, { id: "lb" as const, label: "lb" }]} value={weightUnit} onChange={setWeightUnit} /></View>
           </View>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: 8 }}>
+          {!pet ? <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>Head circumference</Text>
               <Input value={headText} onChangeText={setHeadText} keyboardType="decimal-pad" placeholder={heightUnit === "cm" ? "Example: 44" : "Example: 17.3"} />
             </View>
             <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: "cm" }, { id: "in" as const, label: "in" }]} value={heightUnit} onChange={setHeightUnit} /></View>
-          </View>
-          <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>Fill in any of them. They also appear in the Growth tab.</Text>
+          </View> : null}
+          <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>{pet ? "It also appears in the Weight tab." : "Fill in any of them. They also appear in the Growth tab."}</Text>
         </View>
       ) : null}
 

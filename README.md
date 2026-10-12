@@ -1,6 +1,6 @@
 # 4D Ages
 
-A baby book for Android. 4D Ages keeps a child's story in one place: photos and videos, milestones, firsts and lasts, growth, and the
+A baby book for Android, for children and pets. 4D Ages keeps a child's (or a pet's) story in one place: photos and videos, milestones, firsts and lasts, growth, and the
 small everyday moments, from pregnancy onwards. Both parents can keep the same book from their own phones, grandparents can follow
 along, and the whole thing can be turned into a printed keepsake book or a short video at any time.
 
@@ -22,7 +22,7 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - Firsts and lasts, with ideas to choose from.
 
 **Growth**
-- Height, weight and head circumference, with percentiles from the WHO or CDC charts.
+- Height, weight and head circumference, with percentiles from the WHO or CDC charts, and comparisons from a banana to a grown-up ("As tall as 125 pancakes, stacked").
 - A growth chart with percentile lines, a door-frame view and "as tall as" comparisons.
 - Metric or imperial units.
 
@@ -34,6 +34,13 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - A weekly bump photo with tips for consistent shots. The photos play back as a video of the bump growing.
 - "Welcome to the world" sets the birth date and turns the pregnancy into the child's own profile, with a guided birth story that gets its own pages in the book.
 - A child who is already born can have their pregnancy added afterwards, and the book can include or leave out the pregnancy.
+
+**Pets**
+- Dogs, cats, birds, hamsters, snakes and horses get a book of their own: where they came from (with a map), their age in their own years, tricks and firsts, and the day they came home.
+- Health: vet visits, vaccinations, treatments and their details, with reminders as notifications or calendar events.
+- Adventures: every place they've been on a map, played back year by year (also as a video), their pack and favourite things.
+- Weight, with fun comparisons ("As heavy as 5 watermelons").
+- Four pet book themes, and an optional "In loving memory" page.
 
 **Keepsake book and videos**
 - A PDF book in date order ("Maya's Days", then "Maya's Years" from age two), with chapters by age and eight themes.
@@ -76,6 +83,7 @@ A build without Supabase configured still runs, but only on that phone and witho
 - Material 3 colour, shape and type, with a tonal palette generated from each child's colour
 - Three small native modules of our own in `modules/`: MP4 export, receiving shared photos from other apps, and saving or sharing finished files through Android
 - expo-print for the PDF book
+- [OpenStreetMap](https://www.openstreetmap.org) for maps and place search (Leaflet in a web view, and Nominatim), so no map key is needed; the world map picture is drawn from Natural Earth (public domain)
 
 ## Getting started
 

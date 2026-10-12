@@ -1,4 +1,8 @@
 import React, { useMemo, useState } from "react";
+import { isPet } from "../../src/lib/types";
+import { PLACES_ID } from "../../src/lib/classics";
+import { readPlaces } from "../../src/lib/places";
+import { useWorldMap } from "../../src/lib/worldMap";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { Screen } from "../../src/components/Screen";
 import { Btn, DateField, Heading, Seg } from "../../src/components/ui";
@@ -11,7 +15,7 @@ import { useTheme } from "../../src/lib/useTheme";
 import { TYPE } from "../../src/theme";
 import { MILESTONE_DEFS } from "../../src/lib/types";
 import {
-  BOOK_COLOURS, BOOK_PHOTO_LIMIT, BOOK_SIZES, BOOK_STYLES, BookPrefs, bookName, DEFAULT_BOOK_SIZE, colourById, inBook, planBook, selectForBook, sizeById, startsAtBirth, styleById,
+  BOOK_COLOURS, BOOK_PHOTO_LIMIT, BOOK_SIZES, BOOK_STYLES, BookPrefs, bookName, DEFAULT_BOOK_SIZE, colourById, inBook, planBook, selectForBook, sizeById, startsAtBirth, styleById, PET_THEMES, defaultPetTheme,
 } from "../../src/lib/bookPages";
 import { BookDestination, exportBook } from "../../src/lib/pdf";
 import { familyOf, orderedFamily } from "../../src/lib/family";
@@ -54,7 +58,14 @@ function Book() {
   const [msg, setMsg] = useState("");
 
   const prefs: BookPrefs = (child && allPrefs[child.id]) || {};
-  const style = styleById(prefs.style);
+  // a pet's book starts in the theme for its kind of pet, and never uses a child's theme (or the other way round)
+  const saved = styleById(prefs.style);
+  const style = child && isPet(child) ? (PET_THEMES.includes(saved) && prefs.style ? saved : defaultPetTheme(child.species)) : PET_THEMES.includes(saved) ? "classic" : saved;
+  const mapUri = useWorldMap();
+  const [memorial, setMemorial] = useState<{ words: string } | null>(null);
+  const placesEntry = useStore((s) => s.classics.find((c) => c.childId === child?.id && c.id === PLACES_ID));
+  const places = useMemo(() => readPlaces(placesEntry?.values), [placesEntry]);
+  const memorialPage = child && memorial ? { words: memorial.words, dates: `${new Date(child.birth).getFullYear()} – ${new Date().getFullYear()}` } : undefined;
   const colour = colourById(prefs.colour);
   const size = sizeById(prefs.size ?? DEFAULT_BOOK_SIZE);
   const set = (patch: Partial<BookPrefs>) => child && setBookPrefs(child.id, patch);
@@ -83,7 +94,7 @@ function Book() {
   const title = child && person ? `${child.name} & ${displayName(person)}` : undefined;
   const subtitle = person ? "Our moments together" : prefs.from || prefs.to ? `${formatDate(prefs.from || child?.birth || todayISO())} – ${formatDate(prefs.to || todayISO())}` : undefined;
   // the page count follows the size and the content
-  const plan = useMemo(() => (child ? planBook(child, chosen, size, { family, intro, classics, siblings }) : null), [child, chosen, size, family, intro, classics, siblings]);
+  const plan = useMemo(() => (child ? planBook(child, chosen, size, { family, intro, classics, siblings, places, mapUri, memorial: memorialPage }) : null), [child, chosen, size, family, intro, classics, siblings, places, mapUri, memorialPage?.words, memorialPage?.dates]); // eslint-disable-line react-hooks/exhaustive-deps
   const input = useMemo(
     () => (child && plan ? { child, siblings, plan, defs, style, colour, size, relatives, tags: tagList, weightUnit, heightUnit, title, subtitle } : null),
     [child, siblings, plan, defs, style, colour, size, relatives, tagList, weightUnit, heightUnit, title, subtitle],
@@ -96,7 +107,7 @@ function Book() {
     setMsg("");
     setProgress("");
     try {
-      const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
+      const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, places, mapUri, memorial: memorialPage, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
       if (done === "saved") setMsg("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
       if (done === "shared") setMsg("");
     } catch (e) {
@@ -177,7 +188,7 @@ function Book() {
       <Btn label={leftOut ? `Choose posts (${leftOut} left out)` : "Choose posts"} icon="select" kind="line" onPress={() => setChoosing(true)} style={{ marginTop: 8 }} />
 
       {label("Theme")}
-      <ThemeCards value={style} onChange={(v) => set({ style: v })} />
+      <ThemeCards value={style} onChange={(v) => set({ style: v })} pet={isPet(child)} />
 
       {label("Colour", 16)}
       <ColourChoice value={colour} onChange={(c) => set({ colour: c })} />
@@ -200,7 +211,7 @@ function Book() {
       <Btn label="Export the book (PDF)" icon="pdf" onPress={() => { setMsg(""); setExporting(true); }} style={{ marginTop: 18 }} />
       <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>{size.label} · {plan.pages.length} pages</Text>
       {exporting ? (
-        <BookExportSheet style={style} colour={colour} size={size} pages={plan.pages.length} onStyle={(v) => set({ style: v })} onColour={(c) => set({ colour: c })}
+        <BookExportSheet pet={isPet(child)} memorial={memorial} onMemorial={setMemorial} style={style} colour={colour} size={size} pages={plan.pages.length} onStyle={(v) => set({ style: v })} onColour={(c) => set({ colour: c })}
           onPreview={() => { setExporting(false); setTimeout(() => setPreviewAt(0), 250); }} onExport={doExport} busy={busy} progress={progress} message={msg} onClose={() => setExporting(false)} />
       ) : null}
 

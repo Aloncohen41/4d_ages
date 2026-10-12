@@ -28,7 +28,7 @@ export type EntryKind = Exclude<MemoryType, "photo">;
 /** Which typical-range band growth is compared with. "all" averages girls and boys; "none" is from earlier versions (off) and now means "all". */
 export type GrowthRef = "girl" | "boy" | "all" | "none";
 /** A health log entry: a check-up, a vaccination, an illness, a medicine, or anything else. Kept apart from the book and the timeline. */
-export type HealthKind = "checkup" | "vaccination" | "illness" | "medicine" | "other";
+export type HealthKind = "checkup" | "vaccination" | "illness" | "medicine" | "other" | "vet" | "parasite" | "operation" | "grooming";
 
 /** A child's gender, set on their profile. Used to pick the growth comparison; children from before it existed count as "unspecified". */
 export type Gender = "girl" | "boy" | "unspecified";
@@ -71,7 +71,17 @@ export interface Child extends SyncFields {
   /** Not born yet: `birth` is the due date until the baby arrives (then the real birth date is set and this is cleared). */
   expecting?: boolean;
   viewPeople?: string[]; // a viewer's people (family member ids)
+  /** A pet's book (missing = a child's). A pet has its own tabs: Home, Health, Adventures, Weight and Book (see pets.ts). */
+  kind?: "pet";
+  species?: import("./pets").Species;
+  breed?: string;
+  dogSize?: import("./pets").DogSize; // for the age in dog years
+  birthApprox?: boolean; // the birthday is a guess (a rescue): ages say "about"
+  gotchaDay?: string; // the day they came home (YYYY-MM-DD)
 }
+
+/** A pet's book, not a child's. */
+export const isPet = (c?: { kind?: string } | null) => c?.kind === "pet";
 
 export interface MediaItem {
   id: string;

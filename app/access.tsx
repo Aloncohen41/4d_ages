@@ -9,7 +9,7 @@ import { useTheme } from "../src/lib/useTheme";
 import { TYPE } from "../src/theme";
 
 /**
- * Settings → Who can see your children: each child, opening that child's sharing screen (who can see the book, invites for the other parent
+ * Settings → Who can see your memories: each child, opening that child's sharing screen (who can see the book, invites for the other parent
  * or a family member, remove and block). One place to learn, reached from here or from the child's profile.
  */
 export default function AccessPage() {
@@ -19,7 +19,7 @@ export default function AccessPage() {
   const kids = useMemo(() => allKids.filter((k) => k.role !== "viewer"), [allKids]);
   const viewing = useMemo(() => allKids.filter((k) => k.role === "viewer"), [allKids]);
   return (
-    <Page title="Who can see your children">
+    <Page title="Who can see your memories">
       <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 10 }]}>
         Each child's book is seen only by the people you invite: the other parent, who sees and adds to everything, and family members, who
         see only the posts with the people you choose. Tap a child to see who has access, invite someone, or remove or block them.

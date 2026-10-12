@@ -31,7 +31,7 @@ export const MONTHLY_PHOTO_DAYS = 7;
  * Monthly photos page. Null when there's nothing to take (or they're past their first birthday, or not born yet).
  */
 export function monthlyPhotoDue(child: Child, classics: ClassicEntry[], today: string): { month: number; date: string } | null {
-  if (child.expecting) return null;
+  if (child.expecting || child.kind === "pet") return null; // a pet has no monthly-photo grid
   const grid = classics.find((c) => c.childId === child.id && c.id === "grid");
   for (let month = 12; month >= 1; month--) {
     const date = addMonthsClamped(child.birth, month);

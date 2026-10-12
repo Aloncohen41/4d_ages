@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import { isPet } from "../../src/lib/types";
+import { PetTricks } from "../../src/components/PetTricks";
 import { Pressable, Text, View } from "react-native";
 import { Screen, useNearEnd, useScrollControls } from "../../src/components/Screen";
 import { IconButton, MediaGallery, Seg } from "../../src/components/ui";
@@ -117,6 +119,7 @@ function Home() {
 
       <Memories part="banner" />
       <HomeCards child={child} onView={setViewing} />
+      {isPet(child) ? <PetTricks child={child} /> : null}
 
       <View style={{ marginBottom: 12 }}>
         <Seg options={[{ id: "story", label: "Stories" }, { id: "grow", label: "Watch them grow" }]} value={view} onChange={setView} />

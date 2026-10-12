@@ -79,6 +79,12 @@
         {
           "microphonePermission": "Allow 4D Ages to record voice notes for your child's book."
         }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "4D Ages adds your pet's vet, vaccine and treatment reminders to your calendar, when you ask it to."
+        }
       ]
     ]
   }

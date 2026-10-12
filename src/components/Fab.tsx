@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
-import { useStore } from "../lib/store";
+import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { EntryKind } from "../lib/types";
+import { EntryKind, isPet } from "../lib/types";
 import { KIND_META } from "../lib/entries";
 import { addPhotosFlow } from "../lib/addPhotos";
 import { withAlpha } from "../lib/m3";
@@ -13,13 +13,17 @@ import { VoiceRecorderSheet } from "./Voice";
 export const FAB_GAP = 16;
 type Action = EntryKind | "photo" | "voice";
 const ACTIONS: Action[] = ["story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
+/** A pet's: no milestones or lasts; weight, and health (it has its own tab). */
+const PET_ACTIONS: Action[] = ["story", "health", "measure", "first", "voice", "photo"];
 const ICON: Record<Action, IconName> = { story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", health: "health", photo: "add-photo", voice: "voice" };
-const LABEL = (a: Action) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : KIND_META[a].label);
+const LABEL = (a: Action, pet = false) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : pet && a === "measure" ? "Weight" : KIND_META[a].label);
 
 /** Floating "+" in the bottom-right corner. Tap to fan out the quick-add options upward. */
 export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
   const t = useTheme();
   const setEntrySheet = useStore((s) => s.setEntrySheet);
+  const pet = isPet(useActiveChild());
+  const actions = pet ? PET_ACTIONS : ACTIONS;
   const [open, setOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -44,14 +48,14 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
       ) : null}
       <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
         <View pointerEvents={open ? "auto" : "none"} style={{ alignItems: "flex-end", marginBottom: 12 }}>
-          {ACTIONS.map((kind, i) => {
+          {actions.map((kind, i) => {
             const delay = (ACTIONS.length - 1 - i) / (ACTIONS.length * 1.6); // the ones nearest the button appear first
             const progress = anim.interpolate({ inputRange: [delay, Math.min(1, delay + 0.45)], outputRange: [0, 1], extrapolate: "clamp" });
             return (
               <Animated.View key={kind} style={{ opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }, { scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
-                <Pressable onPress={() => choose(kind)} android_ripple={{ color: withAlpha(t.onChipOn, 0.14) }} style={[styles.item, { backgroundColor: t.chipOn }]} accessibilityLabel={`Add ${LABEL(kind)}`}>
+                <Pressable onPress={() => choose(kind)} android_ripple={{ color: withAlpha(t.onChipOn, 0.14) }} style={[styles.item, { backgroundColor: t.chipOn }]} accessibilityLabel={`Add ${LABEL(kind, pet)}`}>
                   <Icon name={ICON[kind]} size={22} color={t.onChipOn} />
-                  <Text style={[TYPE.labelLarge, { color: t.onChipOn }]}>{LABEL(kind)}</Text>
+                  <Text style={[TYPE.labelLarge, { color: t.onChipOn }]}>{LABEL(kind, pet)}</Text>
                 </Pressable>
               </Animated.View>
             );

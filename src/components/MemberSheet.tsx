@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { SPECIES, petRelation } from "../lib/pets";
+import { TYPE } from "../theme";
 import { Alert, Pressable, Text, View } from "react-native";
 import { uid, useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -13,7 +15,7 @@ import { AvatarCropper } from "./AvatarCropper";
  * Add or edit a family member. One form for everyone, in this order: name, photo, relationship (in the family's own words), nickname,
  * a few words about who they are, and whose family they're in.
  */
-export function MemberSheet({ memberId, onClose }: { memberId?: string; onClose: () => void }) {
+export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: string; onClose: () => void; pet?: boolean }) {
   const t = useTheme();
   const existing = useStore((s) => (memberId ? s.relatives.find((r) => r.id === memberId) : undefined));
   const memories = useStore((s) => s.memories);
@@ -89,7 +91,10 @@ export function MemberSheet({ memberId, onClose }: { memberId?: string; onClose:
   };
 
   return (
-    <Sheet visible onClose={discard} title={existing ? "Edit family member" : "Add a family member"}>
+    <Sheet visible onClose={discard} title={existing ? "Edit family member" : pet ? "Add a pet to the family" : "Add a family member"}>
+      {pet && !existing ? (
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 6 }]}>A pet in the family, to tag in photos. Want them to have their own book too? Add them with + at the top, then My pet.</Text>
+      ) : null}
       <Label>Name</Label>
       <Input value={name} onChangeText={setName} placeholder="Their name" maxLength={40} accessibilityLabel="Name" />
 
@@ -107,7 +112,16 @@ export function MemberSheet({ memberId, onClose }: { memberId?: string; onClose:
       ) : null}
 
       <Label>Relationship</Label>
-      <Input value={relation} onChangeText={setRelation} placeholder="Example: Mummy" maxLength={30} accessibilityLabel="Relationship" />
+      <Input value={relation} onChangeText={setRelation} placeholder={pet ? "Example: Our dog" : "Example: Mummy"} maxLength={30} accessibilityLabel="Relationship" />
+      {pet && !existing ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+          {SPECIES.map((s) => (
+            <Pressable key={s.id} onPress={() => setRelation(petRelation(s.id))} style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12, backgroundColor: relation === petRelation(s.id) ? t.chipOn : t.accentSoft }}>
+              <Text style={{ color: relation === petRelation(s.id) ? t.onChipOn : t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{s.emoji} {petRelation(s.id)}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       <Label>Nickname (optional)</Label>
       <Input value={nickname} onChangeText={setNickname} placeholder="Example: Nana" maxLength={30} accessibilityLabel="Nickname" />

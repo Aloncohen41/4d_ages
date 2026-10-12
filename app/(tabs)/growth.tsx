@@ -13,7 +13,8 @@ import { coverOf } from "../../src/lib/display";
 import { headSeries, heightSeries, weightSeries } from "../../src/lib/selectors";
 import { GrowthRef } from "../../src/lib/types";
 import { ageShort, formatDate } from "../../src/lib/date";
-import { HeightUnit, WeightUnit, effectiveRef, formatHeight, formatWeight, funComparisons, monthsOld, nextUp, rangeStatus } from "../../src/lib/growth";
+import { HeightUnit, WeightUnit, effectiveRef, formatHeight, formatWeight, funComparisons, heightInThings, monthsOld, nextUp, rangeStatus } from "../../src/lib/growth";
+import { WeightComparisons } from "../../src/components/WeightComparisons";
 import { TYPE } from "../../src/theme";
 
 export default function GrowthTab() {
@@ -30,6 +31,7 @@ function Comparisons({ cm, unit }: { cm: number; unit: HeightUnit }) {
   const [offset, setOffset] = useState(0);
   const list = funComparisons(cm, 3, offset);
   const next = nextUp(cm);
+  const stack = heightInThings(cm, offset); // "As tall as 104 pencils, end to end"
   if (!list.length) return <Text style={{ color: t.ink3, marginTop: 10 }}>Comparisons start once they're 20 cm — a banana!</Text>;
   return (
     <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: t.line, paddingTop: 12 }}>
@@ -43,6 +45,12 @@ function Comparisons({ cm, unit }: { cm: number; unit: HeightUnit }) {
           </View>
         </View>
       ))}
+      {stack ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 8 }}>
+          <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 24 }}>{stack.ref.emoji}</Text></View>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14, flex: 1 }}>{stack.text}</Text>
+        </View>
+      ) : null}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
         {next ? <Text style={{ color: t.ink3, fontSize: 12, flex: 1 }}>Next up: {next.ref.name}, {formatHeight(next.gap, unit)} to go</Text> : <View />}
         <Pressable onPress={() => setOffset((o) => o + 1)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="refresh-cw" size={14} color={t.accentDeep} /><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>More</Text></Pressable>
@@ -164,6 +172,7 @@ function Growth() {
           </View>
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>Weight curve</Text>
           <LineChart child={child} entries={weights} unit={unit} mode="weight" weightUnit={wUnit} />
+          {latestW ? <WeightComparisons kg={latestW.kg} /> : null}
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>History</Text>
           {[...weights].reverse().map((e) => row(e.id, formatWeight(e.kg, wUnit), e.date))}
         </>

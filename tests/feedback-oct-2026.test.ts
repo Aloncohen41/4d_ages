@@ -60,7 +60,7 @@ ok("[CHILD-02] the child form has Girl, Boy and Prefer not to say; children with
 
 /* ---------------- navigation (NAV-01 … 03, ADD-01) ---------------- */
 ok("[NAV-01] a menu button top-left with Family and Settings", /accessibilityLabel="Menu"/.test(screen) && /item\("family", "Family", "\/family"\)/.test(screen) && /item\("settings", "Settings", "\/settings"\)/.test(screen));
-ok("[NAV-02, NAV-03] the bottom bar is Home, Milestones, Growth, Book", TAB_NAMES.join() === "index,milestones,growth,book" && !existsSync(join(root, "app/(tabs)/add.tsx")) && !existsSync(join(root, "app/(tabs)/family.tsx")));
+ok("[NAV-02, NAV-03] the bottom bar is Home, Milestones, Growth, Book", TAB_NAMES.slice(0, 4).join() === "index,milestones,growth,book" && TAB_NAMES.slice(4).join() === "care,adventures,weight" && !existsSync(join(root, "app/(tabs)/add.tsx")) && !existsSync(join(root, "app/(tabs)/family.tsx")));
 ok("[NAV-02] posts are still added with the + button", /<Fab /.test(read("app/(tabs)/_layout.tsx")));
 ok("[ADD-01] “Whose photos are these?” is gone", !screens.some((f) => /Whose photos are these/.test(read(f))));
 
@@ -101,7 +101,7 @@ ok("[BOOK-04] the Book page shows the page count and a page-by-page preview", /\
 /* ---------------- family (FAM-01 … 10) ---------------- */
 const member = read("src/components/MemberSheet.tsx");
 const labels = [...member.matchAll(/<Label>([^<]+)<\/Label>/g)].map((m) => m[1]);
-ok("[FAM-01] one form, fields in order: name, photo, relationship (free text), nickname, description, then whose family", labels.slice(0, 5).join("|") === "Name|Photo (optional)|Relationship|Nickname (optional)|Description (optional)" && /placeholder="Example: Mummy"/.test(member) && /Example: Lives abroad and visits every summer/.test(member) && /In the family of/.test(member));
+ok("[FAM-01] one form, fields in order: name, photo, relationship (free text), nickname, description, then whose family", labels.slice(0, 5).join("|") === "Name|Photo (optional)|Relationship|Nickname (optional)|Description (optional)" && /"Example: Mummy"/.test(member) && /Example: Lives abroad and visits every summer/.test(member) && /In the family of/.test(member));
 ok("[FAM-01] no preset relationship buttons are left anywhere", !screens.some((f) => /RELATION_PRESETS|QUICK = \[/.test(read(f))));
 const migrated = migrateRelativesV6({ relatives: [{ id: "a", name: "Ruth", relation: "Grandma", customLabel: "Nana" }, { id: "b", name: "Sam", relation: "Other" }, { id: "c", name: "Tom", relation: "Dad" }] }).relatives as { relation: string; customLabel?: string }[];
 ok("[FAM-01] existing people keep what they were shown as, now as text", migrated.map((r) => r.relation).join() === "Nana,Family,Dad" && migrated.every((r) => r.customLabel === undefined));

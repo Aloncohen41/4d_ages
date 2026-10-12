@@ -94,7 +94,7 @@ export interface FunRef {
 
 const r = (cm: number, emoji: string, name: string, category: RefCategory): FunRef => ({ cm, emoji, name, category });
 
-/** Familiar things at heights that make sense from a newborn (~50 cm) up to a five-year-old (~110 cm). Approximate. */
+/** Familiar (and a few surprising) things, from a newborn (~50 cm) all the way up to a grown-up (~2 m). Approximate. */
 export const FUN_REFS: FunRef[] = [
   r(20, "🍌", "a banana", "Everyday objects"),
   r(23, "🍼", "a baby bottle", "Household items"),
@@ -124,7 +124,89 @@ export const FUN_REFS: FunRef[] = [
   r(110, "🧹", "an upright vacuum cleaner", "Household items"),
   r(115, "🐧", "an emperor penguin", "Animals"),
   r(120, "🎢", "a roller-coaster height line", "Fun objects"),
+  // from about six to grown-up: the gap between a ten-year-old and an adult is full of these
+  r(122, "🦘", "a red kangaroo sitting up", "Animals"),
+  r(125, "🎹", "an upright piano", "Furniture"),
+  r(128, "🦕", "a T. rex's thigh bone", "Fun objects"),
+  r(132, "🦩", "a flamingo", "Animals"),
+  r(135, "🦯", "a hiking pole", "Everyday objects"),
+  r(140, "🏒", "a hockey stick", "Fun objects"),
+  r(145, "🧸", "the giant teddy from the fair", "Toys"),
+  r(147, "🎱", "a snooker cue", "Fun objects"),
+  r(150, "🐼", "a giant panda standing up", "Animals"),
+  r(155, "🏂", "a snowboard", "Fun objects"),
+  r(160, "📮", "a red post box", "Everyday objects"),
+  r(163, "🛏️", "a bunk bed", "Furniture"),
+  r(167, "🦤", "an emu", "Animals"),
+  r(172, "🦍", "a gorilla standing tall", "Animals"),
+  r(178, "🧊", "a fridge-freezer", "Household items"),
+  r(183, "🥤", "a vending machine", "Everyday objects"),
+  r(186, "🏄", "a surfboard", "Fun objects"),
+  r(190, "🕰️", "a grandfather clock", "Furniture"),
+  r(198, "🛝", "a climbing frame", "Toys"),
+  r(203, "🚪", "a front door", "Household items"),
+  r(210, "🐦", "an ostrich", "Animals"),
 ];
+
+/** Small things to stack or line up: "as tall as 104 pencils". Each with its height, or its length end to end. */
+export const STACK_REFS: { cm: number; one: string; many: string; emoji: string; how: "stacked" | "end to end" }[] = [
+  { cm: 1.2, one: "pancake", many: "pancakes", emoji: "🥞", how: "stacked" },
+  { cm: 5.4, one: "rubber duck", many: "rubber ducks", emoji: "🦆", how: "stacked" },
+  { cm: 9.5, one: "cupcake", many: "cupcakes", emoji: "🧁", how: "stacked" },
+  { cm: 19, one: "pencil", many: "pencils", emoji: "✏️", how: "end to end" },
+  { cm: 20, one: "banana", many: "bananas", emoji: "🍌", how: "end to end" },
+  { cm: 15, one: "hot dog", many: "hot dogs", emoji: "🌭", how: "end to end" },
+  { cm: 6.7, one: "tennis ball", many: "tennis balls", emoji: "🎾", how: "stacked" },
+];
+
+/** "As tall as 104 pencils, end to end": one of the small things, turned with `turn` (for "More"). */
+export function heightInThings(cm: number, turn = 0): { count: number; ref: (typeof STACK_REFS)[number]; text: string } | null {
+  if (cm < 20) return null;
+  const ref = STACK_REFS[((turn % STACK_REFS.length) + STACK_REFS.length) % STACK_REFS.length];
+  const count = Math.round(cm / ref.cm);
+  return { count, ref, text: `As tall as ${count} ${count === 1 ? ref.one : ref.many}, ${ref.how}` };
+}
+
+export interface WeightRef { kg: number; emoji: string; name: string; many: string }
+const w = (kg: number, emoji: string, name: string, many: string): WeightRef => ({ kg, emoji, name, many });
+
+/** Things to weigh against, from a hamster to a horse (and a car). Approximate. */
+export const WEIGHT_REFS: WeightRef[] = [
+  w(0.02, "🔋", "an AA battery", "AA batteries"),
+  w(0.06, "🥚", "an egg", "eggs"),
+  w(0.12, "🍌", "a banana", "bananas"),
+  w(0.2, "🍎", "a big apple", "big apples"),
+  w(0.45, "⚽", "a football", "footballs"),
+  w(1, "🍍", "a pineapple", "pineapples"),
+  w(2.3, "🧱", "a house brick", "house bricks"),
+  w(4.5, "🐈", "a house cat", "house cats"),
+  w(5, "🍉", "a watermelon", "watermelons"),
+  w(7, "🎳", "a bowling ball", "bowling balls"),
+  w(10, "🛞", "a car tyre", "car tyres"),
+  w(16, "📺", "a big TV", "big TVs"),
+  w(25, "🥔", "a sack of potatoes", "sacks of potatoes"),
+  w(30, "🐕", "a Labrador", "Labradors"),
+  w(45, "🦘", "a kangaroo", "kangaroos"),
+  w(70, "🧺", "a washing machine", "washing machines"),
+  w(100, "🐼", "a giant panda", "giant pandas"),
+  w(160, "🦍", "a gorilla", "gorillas"),
+  w(230, "🎹", "an upright piano", "upright pianos"),
+  w(450, "🐻‍❄️", "a polar bear", "polar bears"),
+  w(700, "🐄", "a cow", "cows"),
+  w(1100, "🚗", "a small car", "small cars"),
+];
+
+/** "As heavy as 5 watermelons": the biggest thing that goes into the weight a whole number of times (turned with `turn` for "More"). */
+export function weightInThings(kg: number, turn = 0): { count: number; ref: WeightRef; text: string }[] {
+  const fits = WEIGHT_REFS.filter((x) => x.kg <= kg && kg / x.kg <= 400).reverse(); // the closest first, nothing silly like 30,000 eggs
+  if (!fits.length) return [];
+  const out = fits.map((ref) => {
+    const count = Math.max(1, Math.round(kg / ref.kg));
+    return { count, ref, text: count === 1 ? `As heavy as ${ref.name}` : `As heavy as ${count} ${ref.many}` };
+  });
+  const start = ((turn * 3) % out.length + out.length) % out.length;
+  return [...out.slice(start), ...out.slice(0, start)].slice(0, 3);
+}
 
 /** The tallest familiar object that's no taller than the child */
 export function funReference(cm: number): FunRef | null {

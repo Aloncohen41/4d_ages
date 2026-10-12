@@ -53,7 +53,7 @@ ok("[NTH-01] a Classic cleared on the other phone is cleared here", mergeClassic
 const schema = read("supabase/schema.sql");
 ok("[NTH-01] the cloud keeps Classics in their own table, private to the family (editors only)", /create table if not exists public\.classics/.test(schema) && /enable row level security/.test(schema) && /member_read on public\.classics for select to authenticated using \(public\.is_editor\(child_id\)\)/.test(schema));
 ok("[NTH-01] Classics is in the top menu, behind sign-in, with a page per template", /item\("classics", "Classics", "\/classics"\)/.test(read("src/components/Screen.tsx")) && /name="classics"/.test(read("app/_layout.tsx")) && /name="classic\/\[id\]"/.test(read("app/_layout.tsx")) && /<Mouth /.test(read("app/classic/[id].tsx")));
-ok("[NTH-01] the book gets the child's Classics", /planBook\(child, chosen, size, \{ family, intro, classics, siblings \}\)/.test(read("app/(tabs)/book.tsx")) && /classics: i\.classics/.test(read("src/lib/pdf.ts")));
+ok("[NTH-01] the book gets the child's Classics", /planBook\(child, chosen, size, \{ family, intro, classics, siblings, places, mapUri, memorial: memorialPage \}\)/.test(read("app/(tabs)/book.tsx")) && /classics: i\.classics/.test(read("src/lib/pdf.ts")));
 
 /* ---------------- NTH-02 date range, NTH-03 include / exclude, NTH-06 a book about someone */
 const a = photo("2024-02-01"), b = photo("2024-05-01"), c2 = photo("2024-09-01", { tagIds: ["tag-person-rosa"] });
@@ -67,7 +67,7 @@ ok("[NTH-06] a person's page has “Make a book about …”, which opens Book w
 ok("[NTH-02, 03, 06] the book's settings are kept for each child", /bookPrefs: s\.bookPrefs/.test(read("src/lib/store.ts")) && /setBookPrefs: \(childId, patch\)/.test(read("src/lib/store.ts")));
 
 /* ---------------- NTH-04 themes */
-ok("[NTH-04] the themes: Classic graphics, Nature, Child's games (Playful), Modern (plain), and four kids' themes with page backgrounds", BOOK_STYLES.map((s) => s.id).join() === "classic,nature,playful,modern,stars,blossom,explorer,rainbow" && /games/i.test(BOOK_STYLES.find((s) => s.id === "playful")!.desc));
+ok("[NTH-04] the themes: Classic graphics, Nature, Child's games (Playful), Modern (plain), and four kids' themes with page backgrounds", BOOK_STYLES.map((s) => s.id).slice(0, 8).join() === "classic,nature,playful,modern,stars,blossom,explorer,rainbow" && /games/i.test(BOOK_STYLES.find((s) => s.id === "playful")!.desc));
 ok("[NTH-04] each in several colours (by age, or one colour all through)", BOOK_COLOURS.length >= 5 && colourById("nope") === "age");
 ok("[NTH-04] themes from earlier versions still open", styleById("minimal") === "modern" && styleById("storybook") === "playful" && styleById(undefined) === "classic");
 ok("[NTH-04] each illustrated theme has its own drawings for every age", (["classic", "nature", "playful"] as const).every((t) => ["newborn", "early", "late", "toddler", "kid"].every((b) => !!THEME_MOTIFS[t][b as "newborn"])) && THEME_MOTIFS.nature.toddler === "tree" && THEME_MOTIFS.playful.early === "ball");

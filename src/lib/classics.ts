@@ -1,4 +1,5 @@
 import { MediaItem, SyncFields } from "./types";
+import type { Species } from "./pets";
 import type { IconName } from "../components/Icon";
 
 /*
@@ -24,6 +25,11 @@ export interface ClassicTemplate {
   desc: string;
   icon: IconName;
   fields: ClassicField[];
+  /** Whose pages these are: a child's (the default) or a pet's, and for a pet, which kinds (missing = every kind). */
+  for?: "pet";
+  species?: Species[];
+  /** Kept like a page (and synced), but shown in its own tab (Health, Adventures), never as a page or in the book. */
+  hidden?: boolean;
 }
 
 export interface ClassicEntry extends SyncFields {
@@ -75,6 +81,15 @@ export const BIRTH_STORY_PARTS: { id: string; label: string; prompt: string }[] 
   { id: "home", label: "Going home", prompt: "The first car ride, the first night, and brothers, sisters or pets meeting the baby." },
   { id: "toBaby", label: "A note to your little one", prompt: "What would you like them to know about the day they were born?" },
 ];
+
+/** The places a pet has been, kept as JSON in the Adventures page (see places.ts). */
+export const PLACES_ID = "pet-places";
+/** A pet's details (microchip, insurance, vet), on the Health tab. */
+export const PET_DETAILS_ID = "pet-details";
+/** A pet's health reminders (vaccines, flea and worm, check-ups), as JSON (see reminders.ts). */
+export const REMINDERS_ID = "pet-reminders";
+/** Where a pet came from and the day they came home (the first page of their book). */
+export const PET_HOME_ID = "pet-home";
 
 export const CLASSICS: ClassicTemplate[] = [
   {
@@ -262,3 +277,105 @@ export function datedItems(e: ClassicEntry, field: ClassicField): { id: string; 
 
 /** Every picture a classic holds (for syncing and the book). */
 export const classicMedia = (e: ClassicEntry): MediaItem[] => Object.values(e.photos).flat();
+
+/** A pet's pages (after the children's in CLASSICS). */
+const PET_CLASSICS: ClassicTemplate[] = [
+  {
+    id: PET_HOME_ID, title: "Coming home", desc: "The day they came home, where from, and the first night", icon: "home", for: "pet",
+    fields: [
+      { id: "date", label: "The day they came home", kind: "date" },
+      { id: "from", label: "Where they came from", kind: "choice", options: ["A breeder", "A shelter or rescue", "Family or friends", "We found them", "A pet shop", "Somewhere else"] },
+      { id: "place", label: "The place", kind: "text", placeholder: "Example: Battersea Dogs Home" },
+      { id: "address", label: "Where it is", kind: "text", placeholder: "Example: London" },
+      { id: "story", label: "The first day and night", kind: "long", placeholder: "Example: You cried a little, then fell asleep on the sofa…" },
+      { id: "photos", label: "Photos from that day", kind: "photos" },
+    ],
+  },
+  {
+    id: "pet-name", title: "How you got your name", desc: "Who chose it, and the names that nearly won", icon: "edit-2", for: "pet",
+    fields: [
+      { id: "story", label: "The story of the name", kind: "long", placeholder: "Example: Your big sister picked it the moment she saw you" },
+      { id: "nicknames", label: "Nicknames", kind: "list", placeholder: "One per line. Example: Rexy" },
+    ],
+  },
+  {
+    id: "pet-favourites", title: "Favourite things", desc: "Toys, treats, the best spot and the best walk", icon: "heart", for: "pet",
+    fields: [
+      { id: "toys", label: "Favourite toys", kind: "list", placeholder: "One per line. Example: The squeaky duck" },
+      { id: "treats", label: "Favourite treats", kind: "list", placeholder: "One per line. Example: Cheese" },
+      { id: "spot", label: "Favourite spot", kind: "text", placeholder: "Example: The sunny patch by the window" },
+      { id: "walk", label: "Favourite walk or ride", kind: "text", placeholder: "Example: The woods by the river" },
+      { id: "game", label: "Favourite game", kind: "text", placeholder: "Example: Tug of war" },
+      { id: "photos", label: "Photos", kind: "photos" },
+    ],
+  },
+  {
+    id: "pet-pack", title: "Their pack", desc: "Best friends, furry and human", icon: "family", for: "pet",
+    fields: [
+      { id: "friends", label: "Best animal friends", kind: "list", placeholder: "One per line. Example: Bella, the dog next door" },
+      { id: "humans", label: "Favourite humans", kind: "list", placeholder: "One per line. Example: Grandma, who always has a treat" },
+      { id: "photos", label: "Photos together", kind: "photos" },
+    ],
+  },
+  {
+    id: "pet-personality", title: "Personality", desc: "Who they are, in a few words", icon: "smile", for: "pet", species: ["dog", "cat"],
+    fields: [
+      { id: "words", label: "In three words", kind: "text", placeholder: "Example: Cuddly, cheeky, greedy" },
+      { id: "loves", label: "Loves", kind: "text", placeholder: "Example: Belly rubs and the postman" },
+      { id: "scared", label: "Scared of", kind: "text", placeholder: "Example: The hoover" },
+      { id: "habits", label: "Funny habits", kind: "long", placeholder: "Example: Sleeps upside down with their legs in the air" },
+      { id: "photo", label: "Photo", kind: "photo" },
+    ],
+  },
+  {
+    id: "pet-words", title: "Words and sounds", desc: "Everything they can say", icon: "message-circle", for: "pet", species: ["bird"],
+    fields: [
+      { id: "words", label: "Words and sounds", kind: "list", placeholder: "One per line. Example: Hello gorgeous (March 2026)" },
+      { id: "best", label: "The best one", kind: "long", placeholder: "Example: The phone ring, perfectly, every morning" },
+      { id: "photos", label: "Photos", kind: "photos" },
+    ],
+  },
+  {
+    id: "pet-sheds", title: "Shed log", desc: "Every shed, with a photo", icon: "calendar", for: "pet", species: ["snake"],
+    fields: [
+      { id: "sheds", label: "Sheds", kind: "list", placeholder: "One per line. Example: 12 March, one perfect piece" },
+      { id: "notes", label: "Notes", kind: "long", placeholder: "Example: Always goes quiet for a few days before" },
+      { id: "photos", label: "Photos", kind: "photos" },
+    ],
+  },
+  {
+    id: "pet-riding", title: "Riding and shows", desc: "Rides, shows and rosettes", icon: "trophy", for: "pet", species: ["horse"],
+    fields: [
+      { id: "shows", label: "Shows and rosettes", kind: "list", placeholder: "One per line. Example: County show, 2nd place, May 2026" },
+      { id: "story", label: "The best ride", kind: "long", placeholder: "Example: The first gallop on the beach" },
+      { id: "photos", label: "Photos", kind: "photos" },
+    ],
+  },
+  {
+    id: "pet-nights", title: "Nightly adventures", desc: "What happens while everyone sleeps", icon: "sleep", for: "pet", species: ["hamster"],
+    fields: [
+      { id: "story", label: "The stories", kind: "long", placeholder: "Example: Moved the whole food bowl into the house, one seed at a time" },
+      { id: "photos", label: "Photos", kind: "photos" },
+    ],
+  },
+  {
+    id: PET_DETAILS_ID, title: "Pet details", desc: "Microchip, insurance and the vet", icon: "health", for: "pet", hidden: true,
+    fields: [
+      { id: "microchip", label: "Microchip number", kind: "text" },
+      { id: "insurance", label: "Insurance", kind: "text", placeholder: "Company and policy number" },
+      { id: "vet", label: "Vet", kind: "text", placeholder: "Name of the practice" },
+      { id: "vetPhone", label: "Vet's phone", kind: "text" },
+      { id: "allergies", label: "Allergies", kind: "long" },
+      { id: "diet", label: "Food and diet", kind: "long" },
+    ],
+  },
+  { id: PLACES_ID, title: "Adventures", desc: "The places they've been", icon: "place", for: "pet", hidden: true, fields: [] },
+  { id: REMINDERS_ID, title: "Reminders", desc: "Vaccines, flea and worm, check-ups", icon: "bell", for: "pet", hidden: true, fields: [] },
+];
+CLASSICS.push(...PET_CLASSICS);
+
+/** The pages for this child or pet (a pet's for its kind), without the hidden ones unless asked. */
+export function classicsFor(c: { kind?: string; species?: string }, opts: { hidden?: boolean } = {}): ClassicTemplate[] {
+  const pet = c.kind === "pet";
+  return CLASSICS.filter((t) => (pet ? t.for === "pet" && (!t.species || t.species.includes(c.species as Species)) : !t.for) && (opts.hidden || !t.hidden));
+}

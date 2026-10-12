@@ -112,6 +112,16 @@ export function relativesToPush(all: Relative[], childId: string, known: Map<str
   return all.filter((r) => inFamily(r, childId) && (!known.has(r.id) || (r.updatedAt ?? 0) > (known.get(r.id) ?? 0)));
 }
 
+/** A pet's columns in the cloud (empty for a child). */
+export const petColumns = (c: Child) => ({
+  kind: c.kind ?? null, species: c.species ?? null, breed: c.breed ?? null, dog_size: c.dogSize ?? null, birth_approx: !!c.birthApprox, gotcha_day: c.gotchaDay ?? null,
+});
+/** A pet's fields from a cloud row (nothing for a child). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const petFromRow = (row: any): Partial<Child> => (row?.kind === "pet"
+  ? { kind: "pet", species: row.species ?? undefined, breed: row.breed ?? undefined, dogSize: row.dog_size ?? undefined, birthApprox: row.birth_approx ? true : undefined, gotchaDay: row.gotcha_day ? String(row.gotcha_day) : undefined }
+  : { kind: undefined, species: undefined, breed: undefined, dogSize: undefined, birthApprox: undefined, gotchaDay: undefined });
+
 export function mergeChild(cur: Child, row: any): Child {
   const ts = tsOf(row);
   if (ts > (cur.updatedAt ?? 0)) {
@@ -125,6 +135,7 @@ export function mergeChild(cur: Child, row: any): Child {
       growthRef: row.growth_ref ?? undefined,
       gender: row.gender ?? cur.gender,
       expecting: row.expecting === true ? true : undefined,
+      ...petFromRow(row),
       updatedAt: ts,
       syncedTs: ts,
     };

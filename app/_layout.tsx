@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { readReminders } from "../src/lib/reminders";
+import { REMINDERS_ID } from "../src/lib/classics";
 import { Appearance } from "react-native";
 import { Stack, router } from "expo-router";
 import * as Linking from "expo-linking";
@@ -95,15 +97,19 @@ export default function RootLayout() {
   const hasKids = kids.length > 0;
 
   // Keep the scheduled notifications (birthdays, monthly cheers, "is this happening?") in line with the children, settings and ticked milestones
-  const kidsKey = useMemo(() => kids.map((k) => `${k.id}|${k.name}|${k.birth}|${k.expecting ? 1 : 0}|${k.role ?? ""}`).join(";"), [kids]);
+  const kidsKey = useMemo(() => kids.map((k) => `${k.id}|${k.name}|${k.birth}|${k.expecting ? 1 : 0}|${k.role ?? ""}|${k.kind ?? ""}|${k.gotchaDay ?? ""}`).join(";"), [kids]);
+  // a pet's health reminders: the notifications follow them
+  const classics = useStore((s) => s.classics);
+  const remindersKey = useMemo(() => classics.filter((c) => c.id === REMINDERS_ID).map((c) => `${c.childId}:${c.values.list ?? ""}`).join(";"), [classics]);
   const reachedKey = useMemo(() => kids.map((k) => `${k.id}:${memories.filter((m) => m.childId === k.id && m.type === "milestone").map((m) => m.milestoneId).sort().join(",")}`).join(";"), [kids, memories]);
   useEffect(() => {
     if (!hydrated) return;
     const reached: Record<string, Set<string>> = {};
     for (const k of kids) reached[k.id] = reachedDefIds(MILESTONE_CATALOG, milestonesLogged(memories, k.id));
-    scheduleNotifications(kids.map((k) => ({ id: k.id, name: k.name, birth: k.birth, expecting: k.expecting, role: k.role })), notif, reached).catch(() => {});
+    scheduleNotifications(kids.map((k) => ({ id: k.id, name: k.name, birth: k.birth, expecting: k.expecting, role: k.role, kind: k.kind, gotchaDay: k.gotchaDay,
+      reminders: k.kind === "pet" ? readReminders(classics.find((c) => c.childId === k.id && c.id === REMINDERS_ID)?.values) : undefined })), notif, reached).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, kidsKey, notif, reachedKey]);
+  }, [hydrated, kidsKey, notif, reachedKey, remindersKey]);
 
   // Tapping a birthday reminder opens that child's year in review; a milestone cheer or question opens their milestones.
   // Each tap is acted on ONCE: Android can hand the same tap back later (restoring the app from recents), and without this it would
@@ -124,6 +130,12 @@ export default function RootLayout() {
     } else if (d.kind === "milestone-age" || d.kind === "milestone-ask") {
       st.setActive(d.childId);
       router.navigate("/milestones");
+    } else if (d.kind === "gotcha") {
+      st.setActive(d.childId);
+      router.navigate("/");
+    } else if (d.kind === "health-reminder") {
+      st.setActive(d.childId);
+      router.navigate("/care");
     } else if (d.kind === "bump-photo") {
       st.setActive(d.childId);
       router.navigate("/growth");

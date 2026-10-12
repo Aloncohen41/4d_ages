@@ -31,6 +31,9 @@ import kotlin.math.pow
 
 class CancelledException : RuntimeException("Export cancelled")
 
+/** A place on the world map (0..1 across and down the map picture); `fresh` ones pop in during their slide, the rest are already there. */
+class Pin(val x: Float, val y: Float, val fresh: Boolean)
+
 class Item(
   val path: String?,
   val emoji: String,
@@ -39,7 +42,9 @@ class Item(
   val age: String,
   val date: String,
   val caption: String,
-  val intro: Boolean
+  val intro: Boolean,
+  /** A map slide (the journey, year by year): the picture is the world map, with these places pinned on it. */
+  val pins: List<Pin>? = null
 )
 
 class SlideshowEncoder(
@@ -126,7 +131,8 @@ class SlideshowEncoder(
           obj.optString("age", ""),
           obj.optString("date", ""),
           obj.optString("caption", ""),
-          false
+          false,
+          obj.optJSONArray("pins")?.let { a -> (0 until a.length()).map { k -> a.getJSONObject(k).let { p -> Pin(p.getDouble("x").toFloat(), p.getDouble("y").toFloat(), p.optBoolean("fresh", false)) } } }
         )
       )
       durations.add(perMs)
@@ -356,10 +362,71 @@ class SlideshowEncoder(
     return 1.0 + 0.08 * (1.0 - e)
   }
 
+  private val pinPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+  /**
+   * A year of the journey: the whole world map, the places from earlier years already pinned (softly), and this year's places popping in
+   * one after another with a ring that spreads out, then the year and its places along the bottom.
+   */
+  private fun drawMapSlide(c: Canvas, i: Int, item: Item, localMs: Double) {
+    c.drawColor(Color.rgb(0xEC, 0xF1, 0xF3))
+    val bm = bitmapFor(i)
+    val pins = item.pins ?: emptyList()
+    var left = 0f
+    var top = 0f
+    var mw = w.toFloat()
+    var mh = h.toFloat()
+    if (bm != null) {
+      val s = min(w.toFloat() / bm.width, h * 0.78f / bm.height)
+      mw = bm.width * s
+      mh = bm.height * s
+      left = (w - mw) / 2f
+      top = (h - mh) / 2f - h * 0.06f
+      c.save()
+      c.translate(left, top)
+      c.scale(s, s)
+      c.drawBitmap(bm, 0f, 0f, photoPaint)
+      c.restore()
+    }
+    val r = min(w, h) * 0.018f
+    val fresh = pins.filter { it.fresh }
+    for (p in pins.filter { !it.fresh }) {
+      pinPaint.style = Paint.Style.FILL
+      pinPaint.color = item.hill
+      pinPaint.alpha = 120
+      c.drawCircle(left + p.x * mw, top + p.y * mh, r * 0.8f, pinPaint)
+    }
+    val stagger = if (fresh.isEmpty()) 0.0 else min(450.0, perMs * 0.55 / fresh.size)
+    fresh.forEachIndexed { k, p ->
+      val t = ((localMs - 250 - k * stagger) / 380.0).coerceIn(0.0, 1.0)
+      if (t <= 0.0) return@forEachIndexed
+      val pop = (if (t < 0.7) t / 0.7 * 1.25 else 1.25 - (t - 0.7) / 0.3 * 0.25).toFloat() // grows past full size, then settles
+      val cx = left + p.x * mw
+      val cy = top + p.y * mh
+      val ring = ((localMs - 250 - k * stagger) / 900.0).coerceIn(0.0, 1.0)
+      pinPaint.style = Paint.Style.STROKE
+      pinPaint.strokeWidth = r * 0.35f
+      pinPaint.color = item.hill
+      pinPaint.alpha = ((1 - ring) * 200).toInt()
+      c.drawCircle(cx, cy, r * (1.2f + ring.toFloat() * 2.6f), pinPaint)
+      pinPaint.style = Paint.Style.FILL
+      pinPaint.alpha = 255
+      pinPaint.color = Color.WHITE
+      c.drawCircle(cx, cy, r * 1.25f * pop, pinPaint)
+      pinPaint.color = item.hill
+      c.drawCircle(cx, cy, r * pop, pinPaint)
+    }
+    drawOverlay(c, i, item)
+  }
+
   private fun drawLayer(c: Canvas, i: Int, localMs: Double) {
     val item = items[i]
     if (item.intro) {
       drawIntro(c, i, item)
+      return
+    }
+    if (item.pins != null) {
+      drawMapSlide(c, i, item, localMs)
       return
     }
     val zoom = zoomAt(localMs)

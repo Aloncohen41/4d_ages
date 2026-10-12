@@ -1,4 +1,6 @@
-import { Child, Memory, MilestoneDef, Relative, Tag } from "./types";
+import { Child, Memory, MilestoneDef, Relative, Tag, isPet } from "./types";
+import { onMap, placesByYear, placesSummary } from "./places";
+import { petAge } from "./pets";
 import { indexTags, initialsOf, labelOfTag, displayName, relationLine } from "./tags";
 import { ageLong, ageShort, daysBetween, formatDate, formatSpan, formatTime, parseISO, smartAge, todayISO } from "./date";
 import { formatHeight, formatWeight, HeightUnit, WeightUnit } from "./growth";
@@ -68,6 +70,10 @@ export const FAMILY_TITLES: Record<BookStyle, string> = {
   blossom: "The birds that make you bloom",
   explorer: "Your crew for every adventure",
   rainbow: "All the colours of your rainbow",
+  paws: "The humans who love you",
+  feathers: "Your flock",
+  stable: "Your herd",
+  leafscale: "Your favourite humans",
 };
 
 const COLOUR_BAND: Record<Exclude<BookColour, "age">, AgeBand> = { blush: "newborn", sky: "early", sunshine: "late", sage: "toddler", lavender: "kid" };
@@ -80,12 +86,18 @@ export const THEME_MOTIFS: Record<Exclude<BookStyle, "modern">, Record<AgeBand |
   blossom: { newborn: "flower", early: "heart", late: "flower", toddler: "sprig", kid: "flower", cover: "flower", cover2: "heart", year: "balloons", family: "heart" },
   explorer: { newborn: "clouds", early: "plane", late: "sun", toddler: "kite", kid: "plane", cover: "plane", cover2: "clouds", year: "balloons", family: "heart" },
   rainbow: { newborn: "rainbow", early: "balloons", late: "sun", toddler: "rainbow", kid: "kite", cover: "rainbow", cover2: "sun", year: "balloons", family: "heart" },
+  paws: { newborn: "paw", early: "ball", late: "bone", toddler: "paw", kid: "bone", cover: "paw", cover2: "heart", year: "ball", family: "heart" },
+  feathers: { newborn: "feather", early: "clouds", late: "feather", toddler: "sun", kid: "feather", cover: "feather", cover2: "clouds", year: "sun", family: "heart" },
+  stable: { newborn: "horseshoe", early: "rosette", late: "hills", toddler: "horseshoe", kid: "rosette", cover: "horseshoe", cover2: "rosette", year: "rosette", family: "heart" },
+  leafscale: { newborn: "leaf", early: "sun", late: "sprig", toddler: "leaf", kid: "sprig", cover: "leaf", cover2: "sun", year: "sun", family: "heart" },
 };
 
 /**
  * The kids' themes' page backgrounds: a small repeating pattern (at a soft strength, so words and photos stay clear) and a frame drawn around
  * each page. Made of plain shapes, so it prints the same on every printer.
  */
+/** A paw print, on a 100 × 100 box (a pad and four toes). */
+const PAW = `<ellipse cx="50" cy="66" rx="22" ry="18"/><ellipse cx="24" cy="40" rx="9" ry="12"/><ellipse cx="42" cy="26" rx="9" ry="12"/><ellipse cx="60" cy="26" rx="9" ry="12"/><ellipse cx="77" cy="40" rx="9" ry="12"/>`;
 const svgUrl = (inner: string, w = 80, h = 80) => `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'>${inner}</svg>`)}")`;
 const tinyStar = (x: number, y: number, r: number, c: string) => {
   const pts = Array.from({ length: 10 }, (_, k) => { const a = (Math.PI / 5) * k - Math.PI / 2, rr = k % 2 ? r * 0.45 : r; return `${(x + rr * Math.cos(a)).toFixed(1)},${(y + rr * Math.sin(a)).toFixed(1)}`; }).join(" ");
@@ -105,6 +117,22 @@ export const THEME_BACKGROUND: Partial<Record<BookStyle, { pattern: string; tile
   explorer: {
     pattern: svgUrl(`<g opacity='0.3'><g fill='#9cc4de'><circle cx='14' cy='20' r='5'/><circle cx='21' cy='17' r='7'/><circle cx='28' cy='20' r='5'/><rect x='14' y='20' width='14' height='5' rx='2.5'/></g><path d='M52 54 L72 46 L60 60z' fill='#7fb0d0'/><path d='M60 60 L62 66 L66 56z' fill='#a9cbe0'/><path d='M4 70 Q20 62 34 70' fill='none' stroke='#9cc4de' stroke-width='1.2' stroke-dasharray='3 3'/></g>`),
     tile: 24, frame: "2px dashed rgba(47,122,168,.4)",
+  },
+  paws: {
+    pattern: svgUrl(`<g opacity='0.26' fill='#c79a74'><g transform='translate(12 14) scale(.18)'>${PAW}</g><g transform='translate(48 46) scale(.14) rotate(20 50 50)'>${PAW}</g><rect x='50' y='14' width='16' height='4' rx='2'/><circle cx='50' cy='14' r='3'/><circle cx='50' cy='18' r='3'/><circle cx='66' cy='14' r='3'/><circle cx='66' cy='18' r='3'/></g>`),
+    tile: 22, frame: "2px dotted rgba(176,106,59,.4)",
+  },
+  feathers: {
+    pattern: svgUrl(`<g opacity='0.28'><path d='M16 40 C10 26 18 12 30 8 C30 22 26 34 16 40z' fill='#8fb6d6'/><path d='M16 40 L28 10' stroke='#fff' stroke-width='1'/><path d='M58 70 C52 58 58 46 68 42 C68 54 66 64 58 70z' fill='#b8cfe2'/><circle cx='60' cy='18' r='1.8' fill='#8fb6d6'/></g>`),
+    tile: 22, frame: "1px solid rgba(63,127,179,.35)",
+  },
+  stable: {
+    pattern: svgUrl(`<g opacity='0.26' fill='none' stroke='#8c9a52' stroke-width='3' stroke-linecap='round'><path d='M10 30 a10 10 0 1 1 20 0'/><path d='M46 66 a9 9 0 1 1 18 0'/></g><g opacity='0.26' fill='#c9b45e'><circle cx='60' cy='18' r='4'/><circle cx='24' cy='62' r='3'/></g>`),
+    tile: 24, frame: "2px dashed rgba(107,123,51,.4)",
+  },
+  leafscale: {
+    pattern: svgUrl(`<g opacity='0.28' fill='#7fb08a'><path d='M10 34 C10 18 24 10 36 10 C36 26 24 34 10 34z'/><path d='M52 70 C52 58 62 52 72 52 C72 64 62 70 52 70z'/></g><g opacity='0.3' fill='#e3c76a'><circle cx='62' cy='18' r='3'/></g>`),
+    tile: 22, frame: "1px solid rgba(59,122,76,.35)",
   },
   rainbow: {
     pattern: svgUrl(`<g opacity='0.38'><circle cx='10' cy='12' r='2.4' fill='#f28b6b'/><rect x='34' y='8' width='7' height='3' rx='1.5' fill='#f6c453' transform='rotate(25 37 9)'/><circle cx='62' cy='18' r='2' fill='#7cc6a4'/><rect x='18' y='44' width='7' height='3' rx='1.5' fill='#8fb2e8' transform='rotate(-30 21 45)'/><circle cx='50' cy='48' r='2.6' fill='#c39be0'/><rect x='64' y='66' width='7' height='3' rx='1.5' fill='#f28b6b' transform='rotate(40 67 67)'/><circle cx='28' cy='70' r='1.8' fill='#f6c453'/></g>`),
@@ -153,6 +181,18 @@ export function motif(name: string, c: string): string {
       return svg(`<path d="M50 88 C20 66 6 48 6 32 A22 22 0 0 1 50 22 A22 22 0 0 1 94 32 C94 48 80 66 50 88z" fill="${c}"/>`);
     case "confetti":
       return svg(`<g fill="${c}"><circle cx="12" cy="18" r="3"/><rect x="30" y="8" width="6" height="3" rx="1" transform="rotate(30 33 9)"/><circle cx="52" cy="22" r="2.5"/><rect x="70" y="12" width="7" height="3" rx="1" transform="rotate(-25 73 13)"/><circle cx="90" cy="26" r="3"/><rect x="20" y="40" width="6" height="3" rx="1" transform="rotate(-40 23 41)"/><circle cx="80" cy="48" r="2.5"/><circle cx="40" cy="44" r="2"/><rect x="60" y="36" width="6" height="3" rx="1" transform="rotate(50 63 37)"/></g>`);
+    case "paw":
+      return svg(`<g fill="${c}">${PAW}</g>`);
+    case "bone":
+      return svg(`<g fill="${c}" transform="rotate(-30 50 50)"><rect x="24" y="43" width="52" height="14" rx="7"/><circle cx="22" cy="42" r="10"/><circle cx="22" cy="58" r="10"/><circle cx="78" cy="42" r="10"/><circle cx="78" cy="58" r="10"/></g>`);
+    case "feather":
+      return svg(`<path d="M28 90 C18 60 30 22 70 8 C76 44 60 76 28 90z" fill="${c}"/><path d="M28 90 L66 14" stroke="#fff" stroke-width="2.5" opacity=".55"/><path d="M38 70 L54 66 M44 54 L60 48 M50 40 L64 34" stroke="#fff" stroke-width="2" opacity=".4"/>`);
+    case "horseshoe":
+      return svg(`<path d="M24 86 V46 a26 26 0 0 1 52 0 V86" fill="none" stroke="${c}" stroke-width="13" stroke-linecap="round"/><g fill="#fff" opacity=".6"><circle cx="24" cy="66" r="2.5"/><circle cx="24" cy="48" r="2.5"/><circle cx="76" cy="66" r="2.5"/><circle cx="76" cy="48" r="2.5"/></g>`);
+    case "rosette":
+      return svg(`<path d="M38 56 L28 94 L42 86 L46 98 L50 60z M62 56 L72 94 L58 86 L54 98 L50 60z" fill="${c}" opacity=".75"/><g fill="${c}">${Array.from({ length: 12 }, (_, k) => `<circle cx="50" cy="16" r="9" transform="rotate(${k * 30} 50 40)"/>`).join("")}</g><circle cx="50" cy="40" r="17" fill="${c}"/><circle cx="50" cy="40" r="10" fill="#fff" opacity=".45"/>`);
+    case "leaf":
+      return svg(`<path d="M14 86 C14 40 44 14 88 12 C88 58 60 86 14 86z" fill="${c}"/><path d="M14 86 C40 60 60 40 86 14" stroke="#fff" stroke-width="2.5" opacity=".5" fill="none"/>`);
     case "quote":
       return svg(`<path d="M12 62c0-20 10-34 28-40l3 7c-10 5-15 12-15 20h14v26H12zM56 62c0-20 10-34 28-40l3 7c-10 5-15 12-15 20h14v26H56z" fill="${c}"/>`);
     default:
@@ -288,7 +328,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
           ${drawings ? `<div class="motif big tl">${motif(drawings.cover, fixed("newborn").ink)}</div><div class="motif tr">${motif(drawings.cover2, fixed("late").ink)}</div>` : ""}
           <div class="cover-frame">${pic ? `<img src="${esc(pic)}"/>` : `<div class="monogram">${esc(initialsOf(child.name))}</div>`}</div>
           <h1 style="color:${accent}">${esc(title)}</h1>
-          <p class="subtitle">${esc(i.subtitle || (multi ? kids.map((k) => `${k.name}, born ${formatDate(k.birth)}`).join(" · ") : child.expecting ? `Due ${formatDate(child.birth)}` : `Born ${formatDate(child.birth)}`))}</p>
+          <p class="subtitle">${esc(i.subtitle || (multi ? kids.map((k) => `${k.name}, born ${formatDate(k.birth)}`).join(" · ") : child.expecting ? `Due ${formatDate(child.birth)}` : isPet(child) ? `Came home ${formatDate(child.gotchaDay ?? child.birth)}` : `Born ${formatDate(child.birth)}`))}</p>
           <p class="brand">${esc(APP_NAME)}</p>
         </section>`;
       }
@@ -403,6 +443,45 @@ export function buildBookHtml(i: BookHtmlInput): string {
           ${numbered(n)}
         </section>`;
       }
+      case "cameHome": {
+        const v = p.entry?.values ?? {};
+        const photos = (p.entry?.photos.photos ?? []).map((x) => x.uri).filter(Boolean).slice(0, 1);
+        const pin = v.lat && v.lon ? onMap(Number(v.lat), Number(v.lon)) : null;
+        const facts: [string, string][] = [["The day", formatDate(v.date || child.gotchaDay || child.birth)], ...(v.from ? [["From", v.from] as [string, string]] : []), ...(v.place ? [["Where", v.place] as [string, string]] : []), ...(v.address && v.address !== v.place ? [["", v.address] as [string, string]] : [])];
+        return `<section class="page birth${photos.length ? " has-photo" : ""}" style="background-color:${wash(p)}">
+          ${corner(p, drawings ? drawings.cover : "")}
+          ${photos.length ? `<div class="photo single arch">${img(photos[0])}</div>` : ""}
+          <div class="birth-text">
+            <p class="kicker" style="color:${ink(p)}">Welcome home</p>
+            <h2>The day ${esc(child.name)} came home</h2>
+            <div class="facts">${facts.map(([k, val]) => `<div class="fact"><span class="k" style="color:${ink(p)}">${esc(k)}</span><span class="v">${esc(val)}</span></div>`).join("")}</div>
+            ${v.story?.trim() ? `<p class="body" style="-webkit-line-clamp:${photos.length ? 3 : 8}">${esc(v.story.trim())}</p>` : ""}
+            ${p.mapUri && pin && !photos.length ? `<div class="worldmap mini">${img(p.mapUri)}<span class="pin" style="left:${(pin.x * 100).toFixed(2)}%;top:${(pin.y * 100).toFixed(2)}%;background:${ink(p)}"></span></div>` : ""}
+          </div>
+          ${numbered(n)}
+        </section>`;
+      }
+      case "places": {
+        const years = placesByYear(p.places);
+        return `<section class="page places">
+          ${corner(p, drawings ? drawings.cover2 : "")}
+          <p class="kicker" style="color:${ink(p)}">Adventures</p>
+          <h2>Everywhere ${esc(child.name)} has been</h2>
+          ${p.mapUri ? `<div class="worldmap">${img(p.mapUri)}${p.places.map((pl) => { const q = onMap(pl.lat, pl.lon); return `<span class="pin" style="left:${(q.x * 100).toFixed(2)}%;top:${(q.y * 100).toFixed(2)}%;background:${accent}"></span>`; }).join("")}</div>` : ""}
+          <p class="meta">${esc(placesSummary(p.places))}</p>
+          <div class="years">${years.map((y) => `<div class="year-row"><b style="color:${ink(p)}">${esc(y.year)}</b><span>${esc(y.places.map((pl) => pl.name).join(" · "))}</span></div>`).join("")}</div>
+          ${numbered(n)}
+        </section>`;
+      }
+      case "memorial": {
+        return `<section class="page memorial" style="background-color:${look.motifs ? fixed("kid").wash : look.paper}">
+          <div class="motif big">${motif("rainbow", accent)}</div>
+          <p class="kicker" style="color:${accent}">In loving memory</p>
+          <h2>${esc(child.name)}</h2>
+          <p class="subtitle">${esc(p.dates)}</p>
+          ${p.words.trim() ? `<p class="body">${esc(p.words.trim())}</p>` : ""}
+        </section>`;
+      }
       case "end": {
         const now = todayISO();
         const sm = smartAge(child.birth, now);
@@ -421,7 +500,9 @@ export function buildBookHtml(i: BookHtmlInput): string {
             ? `<h2>${esc(names(kids))} today</h2><div class="ages">${kids.map((k) => `<div><b>${esc(k.expecting ? "Due" : smartAge(k.birth, now).value)}</b><span>${esc(k.name)}, ${esc(k.expecting ? formatDate(k.birth) : smartAge(k.birth, now).unit)}</span></div>`).join("")}</div>`
             : child.expecting
               ? `<h2>Not long now, ${esc(child.name)}</h2><div class="numeral" style="color:${accent}">${weeksToGo}</div><p class="subtitle">${weeksToGo === 1 ? "week" : "weeks"} to go · due ${esc(formatDate(child.birth))}</p>`
-              : `<h2>${esc(child.name)} today</h2><div class="numeral" style="color:${accent}">${esc(sm.value)}</div><p class="subtitle">${esc(sm.unit)} · ${esc(ageLong(child.birth, now))}</p>`}
+              : isPet(child)
+                ? `<h2>${esc(child.name)} today</h2><p class="subtitle">${esc(petAge(child, now).human)} · ${esc(petAge(child, now).own ?? petAge(child, now).stage)}</p>`
+                : `<h2>${esc(child.name)} today</h2><div class="numeral" style="color:${accent}">${esc(sm.value)}</div><p class="subtitle">${esc(sm.unit)} · ${esc(ageLong(child.birth, now))}</p>`}
           ${stats.length ? `<div class="stats">${stats.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("")}</div>` : ""}
           <p class="brand">Made with love on ${esc(formatDate(now))} · ${esc(APP_NAME)}</p>
         </section>`;
@@ -487,6 +568,17 @@ h3{font-size:${pt(M.label)};line-height:1.25;color:${look.ink};font-weight:700;m
 .birth.has-photo .photo{flex:1.1}
 .birth:not(.has-photo){justify-content:center}
 .birth-text{flex:none}
+.worldmap{position:relative;width:100%;margin-top:${U(2)};border-radius:${U(1.6)};overflow:hidden;line-height:0}
+.worldmap img{width:100%;display:block}
+.worldmap.mini{width:70%}
+.worldmap .pin{position:absolute;width:${U(2.2)};height:${U(2.2)};margin:-${U(1.1)} 0 0 -${U(1.1)};border-radius:50%;border:${U(0.4)} solid #fff;box-shadow:0 0 ${U(0.6)} rgba(0,0,0,.25)}
+.places .years{margin-top:${U(1.6)};display:flex;flex-direction:column;gap:${U(0.8)}}
+.places .year-row{display:flex;gap:${U(2)};font-size:${pt(M.small)}}
+.places .year-row b{min-width:${U(7)}}
+.memorial{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.memorial .motif.big{position:static;width:${U(22)};height:${U(14)};margin-bottom:${U(2)}}
+.memorial h2{margin-top:${U(1)}}
+.memorial .body{-webkit-line-clamp:8;max-width:80%;margin-top:${U(2)}}
 .facts{display:grid;grid-template-columns:repeat(${tall ? 2 : 3},1fr);gap:${U(1.4)} ${U(3)};margin-top:${U(1)}}
 .fact{display:flex;flex-direction:column;background:rgba(255,255,255,.7);border-radius:${U(1.6)};padding:${U(1.2)} ${U(1.8)}}
 .fact .k{font-size:${pt(M.small)};line-height:1.3;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
@@ -655,6 +747,8 @@ export function printSizes(plan: BookPlan, size: BookSize): Map<string, number> 
     if (p.kind === "pictures") p.items.forEach((it) => need(it.photo, p.items.length > 2 ? 0.5 : 0.6));
     if (p.kind === "family") p.people.forEach((r) => need(r.photoUri, 0.2));
     if (p.kind === "classic") for (const [field, list] of Object.entries(p.entry.photos)) list.forEach((x) => need(x.uri, p.entry.id === "grid" ? 0.28 : field === "photo" || list.length === 1 ? 0.7 : 0.5));
+    if (p.kind === "cameHome") { (p.entry?.photos.photos ?? []).slice(0, 1).forEach((x) => need(x.uri, 0.75)); need(p.mapUri, 0.5); }
+    if (p.kind === "places") need(p.mapUri, 0.9);
   }
   const bytes = [...want.values()].reduce((t, px) => t + px * px * 0.75 * JPEG_BYTES_PER_PIXEL, 0);
   if (bytes > PRINT_BUDGET_BYTES) {
@@ -674,6 +768,8 @@ export function picturesInBook(plan: BookPlan): string[] {
     if (p.kind === "birth" && p.photoUri) out.add(p.photoUri);
     if (p.kind === "classic") Object.values(p.entry.photos).flat().forEach((x) => x.uri && out.add(x.uri));
     if (p.kind === "family") p.people.forEach((r) => r.photoUri && out.add(r.photoUri));
+    if (p.kind === "cameHome") { (p.entry?.photos.photos ?? []).slice(0, 1).forEach((x) => x.uri && out.add(x.uri)); if (p.mapUri) out.add(p.mapUri); }
+    if (p.kind === "places" && p.mapUri) out.add(p.mapUri);
   }
   return [...out];
 }

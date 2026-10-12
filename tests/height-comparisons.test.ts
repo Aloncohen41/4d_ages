@@ -12,7 +12,7 @@ ok("nearest first", [61, 88, 110].every((cm) => { const s = funComparisons(cm, 3
 ok("'more comparisons' rotates to new ones", JSON.stringify(funComparisons(97, 3, 0).map((x) => x.ref.name)) !== JSON.stringify(funComparisons(97, 3, 1).map((x) => x.ref.name)));
 ok("phrase: about as tall vs taller than", funComparisons(66, 1)[0].phrase === "About as tall as" && funComparisons(75, 6).some((x) => x.phrase === "Taller than"));
 ok("very small → nothing; tall → still works", funComparisons(15).length === 0 && funComparisons(160).length === 3);
-ok("next up", nextUp(66)!.ref.name === "a rocking horse" && Math.abs(nextUp(66)!.gap - 2) < 1e-9 && nextUp(150) === null);
+ok("next up", nextUp(66)!.ref.name === "a rocking horse" && Math.abs(nextUp(66)!.gap - 2) < 1e-9 && nextUp(150)!.ref.name === "a snowboard" && nextUp(230) === null);
 ok("tallest single reference", funReference(66)!.name === "a baguette" && funReference(10) === null);
 const fr = frameRefs(100, 380, 30);
 ok("door-frame objects thinned out (no overlaps)", fr.length > 5 && fr.every((x, i) => i === 0 || (x.cm - fr[i - 1].cm) / 100 * 380 >= 29.9));

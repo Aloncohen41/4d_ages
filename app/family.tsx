@@ -31,7 +31,7 @@ export default function FamilyPage() {
   const updateRelative = useStore((s) => s.updateRelative);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState(false);
-  const [sheet, setSheet] = useState<{ memberId?: string } | null>(null);
+  const [sheet, setSheet] = useState<{ memberId?: string; pet?: boolean } | null>(null);
   const [importing, setImporting] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   // dragging a row: which one, how far it has moved, and where every row sits (to work out where it lands)
@@ -121,7 +121,10 @@ export default function FamilyPage() {
         </View>
       ) : null}
 
-      <Btn label="Add someone" icon="plus" onPress={() => setSheet({})} />
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        <Btn label="Add someone" icon="plus" onPress={() => setSheet({})} style={{ flex: 1 }} />
+        <Btn label="Add a pet" icon="paw" kind="soft" onPress={() => setSheet({ pet: true })} style={{ flex: 1 }} />
+      </View>
 
       {sources.length ? (
         <Pressable onPress={() => setImporting(true)} accessibilityLabel={`Import family from ${importFrom}`} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline }}>
@@ -194,7 +197,7 @@ export default function FamilyPage() {
         </View>
       )}
 
-      {sheet ? <MemberSheet key={sheet.memberId ?? "new"} memberId={sheet.memberId} onClose={() => setSheet(null)} /> : null}
+      {sheet ? <MemberSheet key={sheet.memberId ?? (sheet.pet ? "new-pet" : "new")} memberId={sheet.memberId} pet={sheet.pet} onClose={() => setSheet(null)} /> : null}
       <FamilyImportSheet visible={importing} onClose={() => setImporting(false)} child={child} />
     </Page>
   );

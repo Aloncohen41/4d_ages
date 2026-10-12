@@ -108,7 +108,7 @@ export default function Settings() {
             <LinkRow icon="smile" label="Your name" value={accountName(session)} onPress={() => setSheet("name")} />
             <LinkRow icon="mail" label="Email" value={`${session.user.email ?? ""}${providerOf(session) === "google" ? " (Google)" : ""}`} onPress={() => setSheet("email")} />
             {providerOf(session) === "email" ? <LinkRow icon="lock" label="Change password" onPress={() => setSheet("password")} /> : null}
-            <LinkRow icon="user-plus" label="Who can see your children" value="Parents and family, by email: invite, remove or block" onPress={() => router.push("/access")} />
+            <LinkRow icon="user-plus" label="Who can see your memories" value="Parents, owners and family, by email: invite, remove or block" onPress={() => router.push("/access")} />
             <View style={{ height: 14 }} />
             <Btn label={busy ? "Signing out…" : "Sign out"} kind="soft" icon="logout" disabled={busy} onPress={out} />
             <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Your books stay in your account. Sign back in to see everything again.</Text>

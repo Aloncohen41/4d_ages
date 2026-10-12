@@ -4,7 +4,7 @@ import { State, useStore } from "./store";
 import { personTag, relationLabel, upsertTagIn } from "./tags";
 import { deleteFile } from "./media";
 import { Child, MediaItem } from "./types";
-import { classicToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow } from "./syncMerge";
+import { classicToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow, petColumns, petFromRow } from "./syncMerge";
 import { classicMedia } from "./classics";
 import { loadReactions } from "./reactions";
 
@@ -86,7 +86,7 @@ export async function shareChild(childId: string): Promise<void> {
   const ts = child.updatedAt ?? Date.now();
   const { error: e1 } = await sb.from("children").upsert({
     id: child.id, name: child.name, birth: child.birth, theme: child.theme, emoji: child.emoji,
-    avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, owner_id: user.id, client_ts: ts,
+    avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, ...petColumns(child), owner_id: user.id, client_ts: ts,
   });
   if (e1) throw new Error(e1.message);
   // already a member (a first try that stopped half way, or sharing again): nothing to change
@@ -171,6 +171,9 @@ export async function listMembers(childId: string): Promise<Member[]> {
 
 /** A book has at most two parents; family members who can only view don't count. */
 export const MAX_PARENTS = 2;
+/** A pet's book can have up to six owners (it needs less guarding than a child's). */
+export const MAX_PET_OWNERS = 6;
+export const maxParents = (c?: { kind?: string } | null) => (c?.kind === "pet" ? MAX_PET_OWNERS : MAX_PARENTS);
 export const parentsOf = (members: Member[]) => members.filter((m) => m.role !== "viewer");
 
 /**
@@ -349,7 +352,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
     const ts = child.updatedAt ?? Date.now();
     const { error } = await sb.from("children").update({
       name: child.name, birth: child.birth, theme: child.theme, emoji: child.emoji,
-      avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, client_ts: ts,
+      avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, ...petColumns(child), client_ts: ts,
     }).eq("id", childId);
     if (error) throw new Error(error.message);
     apply((st) => ({ kids: st.kids.map((k) => (k.id === childId ? { ...k, updatedAt: ts, syncedTs: ts } : k)) }));
@@ -483,7 +486,7 @@ async function downloadMissing(childId: string) {
 
 /* ---------- the account: every child is kept in it ---------- */
 
-interface ChildRow { id: string; name: string; birth: string; theme: string; emoji: string; avatar_photo_id?: string | null; growth_ref?: string | null; gender?: string | null; expecting?: boolean | null; client_ts?: number }
+interface ChildRow { id: string; name: string; birth: string; theme: string; emoji: string; avatar_photo_id?: string | null; growth_ref?: string | null; gender?: string | null; expecting?: boolean | null; client_ts?: number; kind?: string | null; species?: string | null; breed?: string | null; dog_size?: string | null; birth_approx?: boolean | null; gotcha_day?: string | null }
 
 /** A child as the cloud sends it. */
 function childFromRow(row: ChildRow): Child {
@@ -492,6 +495,7 @@ function childFromRow(row: ChildRow): Child {
     avatarPhotoId: row.avatar_photo_id ?? undefined, growthRef: (row.growth_ref as Child["growthRef"]) ?? undefined,
     gender: (row.gender as Child["gender"]) ?? undefined,
     ...(row.expecting ? { expecting: true } : {}),
+    ...Object.fromEntries(Object.entries(petFromRow(row)).filter(([, v]) => v !== undefined)),
     shared: true, updatedAt: Number(row.client_ts) || 0, syncedTs: Number(row.client_ts) || 0,
   };
 }

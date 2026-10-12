@@ -6,6 +6,8 @@ import { planBirthdayNotifications } from "./birthdayPlan";
 import { planMilestoneNotifications, sampleMilestoneNotification } from "./milestonePlan";
 import { planMonthlyPhotoNotifications } from "./remember";
 import { planBumpPhotoNotifications } from "./pregnancy";
+import { planGotchaNotifications, planHealthReminders } from "./petPlan";
+import { HealthReminder } from "./reminders";
 
 export /** The app's brand colour on notifications (the tint behind the small icon, the LED), kept in step with the theme. */
 const BRAND = THEMES.pink.accent;
@@ -41,12 +43,16 @@ export async function requestNotificationPermission(): Promise<boolean> {
  * "Is this happening?" questions. `reached` lists the milestones already ticked, so we only ask about the rest.
  * Run on launch and whenever the children, settings or ticked milestones change, so the next stretch is always scheduled.
  */
-export async function scheduleNotifications(kids: { id: string; name: string; birth: string; theme?: string; emoji?: string; expecting?: boolean; role?: string }[], prefs: NotifPrefs, reached: Record<string, Set<string>>): Promise<number> {
+export async function scheduleNotifications(kids: { id: string; name: string; birth: string; theme?: string; emoji?: string; expecting?: boolean; role?: string; kind?: string; gotchaDay?: string; reminders?: HealthReminder[] }[], prefs: NotifPrefs, reached: Record<string, Set<string>>): Promise<number> {
   // a baby who isn't born yet gets no birthday or monthly reminders until they arrive, but a weekly bump photo reminder instead
   const born = kids.filter((k) => !k.expecting);
+  // a pet: their birthday and gotcha day, and their health reminders; the children's milestones and monthly photos aren't for them
+  const children = born.filter((k) => k.kind !== "pet");
+  const pets = born.filter((k) => k.kind === "pet" && k.role !== "viewer");
   await Notifications.cancelAllScheduledNotificationsAsync();
   const now = new Date();
-  const plan = [...planBirthdayNotifications(born, prefs, now), ...planMilestoneNotifications(born, prefs, now, reached), ...planMonthlyPhotoNotifications(born, prefs, now), ...planBumpPhotoNotifications(kids, prefs, now)]
+  const plan = [...planBirthdayNotifications(born, prefs, now), ...planMilestoneNotifications(children, prefs, now, reached), ...planMonthlyPhotoNotifications(children, prefs, now),
+    ...planGotchaNotifications(pets, prefs, now), ...planHealthReminders(pets.map((p) => ({ id: p.id, name: p.name, reminders: p.reminders ?? [] })), now), ...planBumpPhotoNotifications(kids, prefs, now)]
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 64);
   if (!plan.length) return 0;

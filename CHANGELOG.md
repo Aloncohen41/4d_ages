@@ -2,6 +2,29 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.0
+
+**Pets**
+- Add to the family now asks who you're adding: My kid, My bump or My pet. Dogs, cats, birds, hamsters, snakes and horses.
+- A pet's profile has their breed, boy or girl, their birthday (or a guess), the day they came home, and where they came from: who, the place, photos of the day, and the place on a map or by address.
+- Their age shows in human time with their own years beside it, for example "2 years, 3 months (about 25 in dog years)". Dogs, cats and horses use vets' guidelines; birds, hamsters and snakes show a stage of life.
+- Their own tabs: Home, Health, Adventures, Weight and Book.
+- Home has tricks to tick off and firsts to remember.
+- Health keeps vet visits, vaccinations, flea and worm treatments, operations (with their story) and the groomer, plus their microchip, insurance and vet. Reminders can be a notification, an event in your phone's calendar, or both.
+- Adventures shows every place they've been on a map, with their pack, their favourite things and a page for their kind of pet (a parrot's words, a snake's sheds, a horse's rosettes). At the bottom, the journey plays year by year, and can be made into a video.
+- Weight has a chart and the history.
+- The book, "Rex's Days" then "Rex's Years", has four pet themes, opens with the day they came home, counts the chapters from that day, and includes their adventures map. A pet's book or video can end with an "In loving memory" page.
+- Birthdays and gotcha days are both celebrated with a reminder.
+- Pets appear in the children's families ("Our dog Rex"), and the Family page has Add a pet.
+- A pet's book can be shared with up to six owners.
+
+**Comparisons**
+- Many more height comparisons, all the way from ten years old to grown-up, and in multiples: "As tall as 125 pancakes, stacked".
+- New weight comparisons for children and pets: "As heavy as 5 watermelons".
+
+**And more**
+- Settings: "Who can see your children" is now "Who can see your memories".
+
 ## 1.0.9
 
 **Exports fixed**

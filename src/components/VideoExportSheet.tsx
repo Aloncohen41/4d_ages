@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { isPet } from "../lib/types";
+import { Icon } from "./Icon";
 import { Pressable, Text, View } from "react-native";
 import * as Sharing from "expo-sharing";
 import { fileExport } from "../lib/fileExport";
@@ -51,6 +53,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   const [format, setFormat] = useState<VideoFormat>("square");
   const [quality, setQuality] = useState<VideoQuality>("720");
   const [intro, setIntro] = useState(true);
+  const [memorial, setMemorial] = useState<string | null>(null); // a pet's video: an "In loving memory" ending
   const [heading, setHeading] = useState("");
   const [phase, setPhase] = useState<"idle" | "working" | "done">("idle");
   const [progress, setProgress] = useState(0);
@@ -77,7 +80,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   const create = async () => {
     setPhase("working"); setProgress(0); setMsg(""); started.current = Date.now();
     try {
-      const out = await createGrowVideo(child, slides, t, { speed, format, quality, intro, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined }, setProgress);
+      const out = await createGrowVideo(child, slides, t, { speed, format, quality, intro, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined, ...(memorial != null ? { memorial } : {}) }, setProgress);
       setUri(await withFriendlyName(out, fileName)); // so it is shared under a proper name, not a random temporary one
       setPhase("done");
     } catch (e) {
@@ -148,6 +151,15 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
         </>
       ) : null}
       {!intro ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>Without a title card the video starts with its first picture.</Text> : null}
+      {isPet(child) ? (
+        <View style={{ marginTop: 14 }}>
+          <Pressable onPress={() => phase !== "working" && setMemorial(memorial == null ? "" : null)} accessibilityRole="checkbox" accessibilityState={{ checked: memorial != null }} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Icon name={memorial != null ? "check-square" : "square"} size={22} color={t.accent} />
+            <Text style={{ color: t.ink, fontSize: 15, flex: 1 }}>End with "In loving memory"</Text>
+          </Pressable>
+          {memorial != null ? <Input value={memorial} onChangeText={setMemorial} placeholder="A few words. Example: Forever in our hearts" style={{ marginTop: 8 }} maxLength={120} /> : null}
+        </View>
+      ) : null}
 
       {phase === "working" ? (
         <View style={{ marginTop: 20 }}>

@@ -5,7 +5,8 @@ import { Page } from "../src/components/Page";
 import { Icon } from "../src/components/Icon";
 import { useShownChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
-import { CLASSICS, filledCount } from "../src/lib/classics";
+import { classicsFor, filledCount } from "../src/lib/classics";
+import { isPet } from "../src/lib/types";
 import { TYPE } from "../src/theme";
 
 /**
@@ -21,9 +22,9 @@ export default function ClassicsPage() {
   return (
     <Page title="Classics">
       <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 14 }]}>
-        {viewOnly ? `These pages are kept by ${child.name}'s parents.` : `The pages of a classic baby book, for ${child.name}. Fill in any of them, any time. The ones you fill in are added to ${child.name}'s book.`}
+        {viewOnly ? `These pages are kept by ${child.name}'s parents.` : `${isPet(child) ? "Pages about" : "The pages of a classic baby book, for"} ${child.name}. Fill in any of them, any time. The ones you fill in are added to ${child.name}'s book.`}
       </Text>
-      {viewOnly ? null : CLASSICS.map((tpl) => {
+      {viewOnly ? null : classicsFor(child).map((tpl) => {
         const entry = classics.find((c) => c.childId === child.id && c.id === tpl.id);
         const filled = filledCount(tpl, entry);
         return (

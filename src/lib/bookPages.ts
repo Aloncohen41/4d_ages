@@ -1,7 +1,8 @@
 import { Child, Memory, Relative, Tag } from "./types";
 import { byMoment } from "./display";
 import { ageBetween, daysBetween, parseISO } from "./date";
-import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, classicMedia, isFilled } from "./classics";
+import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, PET_HOME_ID, classicMedia, classicsFor, isFilled } from "./classics";
+import type { Place } from "./places";
 
 /*
  * The keepsake book, page by page. One plan drives both the preview on the phone and the exported PDF (both are drawn from the same HTML, see
@@ -62,7 +63,7 @@ export function bookMetrics(s: BookSize) {
  * The book's theme: its paper, type and the little drawings on its pages. Classic graphics (moon, clouds, sun, balloons), Nature (leaves,
  * flowers, trees, hills), Child's games (toys and games) and Modern (plain, no drawings). Each comes in several colours (BOOK_COLOURS).
  */
-export type BookStyle = "classic" | "nature" | "playful" | "modern" | "stars" | "blossom" | "explorer" | "rainbow";
+export type BookStyle = "classic" | "nature" | "playful" | "modern" | "stars" | "blossom" | "explorer" | "rainbow" | "paws" | "feathers" | "stable" | "leafscale";
 /** The birth story's parts, grouped into pages: about as much writing as fits a page of this size (a long part has a page to itself). */
 export function storyPages(parts: { label: string; text: string }[], size: BookSize): { label: string; text: string }[][] {
   const room = Math.round(1400 * (size.wCm * size.hCm) / (29.7 * 21)); // characters that fit a page, from A4
@@ -93,7 +94,17 @@ export const BOOK_STYLES: { id: BookStyle; label: string; desc: string }[] = [
   { id: "blossom", label: "Blossom", desc: "Little flowers on blush pink, a dotted frame on every page" },
   { id: "explorer", label: "Little Explorer", desc: "Clouds and paper planes on soft blue, a trail around every page" },
   { id: "rainbow", label: "Rainbow Play", desc: "Colourful confetti and rainbows on cream, for any little one" },
+  { id: "paws", label: "Paw Prints", desc: "Paws, bones and balls on warm cream" },
+  { id: "feathers", label: "Feathers & Sky", desc: "Soft feathers and clouds on pale blue" },
+  { id: "stable", label: "Hay & Horseshoes", desc: "Horseshoes and rosettes on a meadow green" },
+  { id: "leafscale", label: "Leaf & Scale", desc: "Leaves and sunshine on soft jungle green" },
 ];
+/** A pet's book themes (a pet's book shows only these; a child's never does). */
+export const PET_THEMES: BookStyle[] = ["paws", "feathers", "stable", "leafscale"];
+/** The themes for this book: a pet's, or a child's. */
+export const stylesFor = (c: { kind?: string }) => BOOK_STYLES.filter((x) => (c.kind === "pet") === PET_THEMES.includes(x.id));
+/** A pet's theme to start with, by kind of pet. */
+export const defaultPetTheme = (species?: string): BookStyle => (species === "bird" ? "feathers" : species === "horse" ? "stable" : species === "snake" ? "leafscale" : "paws");
 /** The four themes with a page background made for children (the others are plain paper with small drawings). */
 export const KIDS_THEMES: BookStyle[] = ["stars", "blossom", "explorer", "rainbow"];
 /** Themes from earlier versions, so a saved choice still opens. */
@@ -109,6 +120,10 @@ export const STYLE_LOOK: Record<BookStyle, { paper: string; ink: string; accent:
   blossom: { paper: "#fff4f5", ink: "#4a2a33", accent: "#c4587a", sub: "#9a6b78", fontCss: "Georgia, 'Noto Serif', serif", bodyCss: "Georgia, 'Noto Serif', serif", radius: 4, frame: 1.6, motifs: true },
   explorer: { paper: "#f1f7fb", ink: "#1f3a4d", accent: "#2f7aa8", sub: "#5d7f93", fontCss: "'Trebuchet MS', Verdana, sans-serif", bodyCss: "Verdana, Roboto, sans-serif", radius: 2, frame: 1.4, motifs: true },
   rainbow: { paper: "#fffbf2", ink: "#3b2f2a", accent: "#e0663f", sub: "#8c7466", fontCss: "'Trebuchet MS', Verdana, sans-serif", bodyCss: "Verdana, Roboto, sans-serif", radius: 4, frame: 1.6, motifs: true },
+  paws: { paper: "#fffaf3", ink: "#3d2c22", accent: "#b06a3b", sub: "#8f735f", fontCss: "'Trebuchet MS', Verdana, sans-serif", bodyCss: "Verdana, Roboto, sans-serif", radius: 4, frame: 1.6, motifs: true },
+  feathers: { paper: "#f3f8fc", ink: "#21364a", accent: "#3f7fb3", sub: "#627d93", fontCss: "Georgia, 'Noto Serif', serif", bodyCss: "Verdana, Roboto, sans-serif", radius: 3, frame: 1.4, motifs: true },
+  stable: { paper: "#f7f9f0", ink: "#2f3524", accent: "#6b7b33", sub: "#7a7f63", fontCss: "Georgia, 'Noto Serif', serif", bodyCss: "Georgia, 'Noto Serif', serif", radius: 2, frame: 1.4, motifs: true },
+  leafscale: { paper: "#f2f8f1", ink: "#203325", accent: "#3b7a4c", sub: "#5f7a63", fontCss: "'Trebuchet MS', Verdana, sans-serif", bodyCss: "Verdana, Roboto, sans-serif", radius: 3, frame: 1.4, motifs: true },
 };
 
 /** The book's colour: one that changes with their age (newborn blush, then sky, sunshine, sage and lavender), or one colour all through. */
@@ -207,6 +222,16 @@ export function chapterOf(birth: string, date: string, coarse = false): Chapter 
   return { key: `y${a.years}`, label: plural(a.years, "year"), band: "kid", year: a.years };
 }
 
+const ORDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"];
+/** A pet's chapters: a year at a time from the day they came home ("Your first year with us"), and what came before. */
+export function petChapter(pet: { birth: string; gotchaDay?: string }, date: string): Chapter {
+  const home = pet.gotchaDay ?? pet.birth;
+  if (date < home) return { key: "pre-home", label: "Before you came home", band: "newborn", year: -1 };
+  const y = ageBetween(home, date).years;
+  const bands: AgeBand[] = ["newborn", "early", "late", "toddler", "kid"];
+  return { key: `home-${y}`, label: y < ORDINALS.length ? `Your ${ORDINALS[y]} year with us` : `Year ${y + 1} with us`, band: bands[y % bands.length], year: y };
+}
+
 /** The birthday a date is, if it is one: 1 for the first birthday, 2 for the second… 0 if it isn't a birthday. */
 export function birthdayOn(birth: string, date: string): number {
   const b = parseISO(birth), d = parseISO(date);
@@ -239,6 +264,9 @@ export type BookPage = PageBase &
     | { kind: "cover"; photo?: string } // their profile picture, else the first picture of them
     | { kind: "birth"; childId: string; details: BirthDetails; story?: Memory; photo?: Memory; storyText?: string; photoUri?: string }
     | { kind: "classic"; entry: ClassicEntry } // a filled-in page from Classics (teeth, food, the first haircut…)
+    | { kind: "cameHome"; childId: string; entry?: ClassicEntry; mapUri?: string } // a pet's first page: the day they came home, and where from
+    | { kind: "places"; places: Place[]; mapUri?: string } // a pet's adventures: the world map with every place, and the list by year
+    | { kind: "memorial"; words: string; dates: string } // "In loving memory", when chosen at export
     | { kind: "birthStory"; childId: string; parts: { label: string; text: string }[]; part: number } // the whole birth story, a few parts a page
     | { kind: "family"; people: Relative[]; part: number }
     | { kind: "year"; year: number } // opens a new year of life ("Year two")
@@ -317,6 +345,12 @@ export interface PlanOptions {
   classics?: ClassicEntry[];
   /** a book of brothers and sisters: these children too, in one book in date order (chapters by calendar year) */
   siblings?: Child[];
+  /** a pet's places (their Adventures), for the map page */
+  places?: Place[];
+  /** the world map picture (a file on the phone), for the pet's map pages */
+  mapUri?: string;
+  /** a pet's "In loving memory" page, when chosen at export */
+  memorial?: { words: string; dates: string };
 }
 
 /** How many people fit on a family page, and how many firsts on a look-back page. */
@@ -337,7 +371,7 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
   // each birth page: the birth date and its details, with the birth story (a story on that day) and the first photo of that day.
   // A baby who isn't born yet has no birth page (yet).
   const births = intro
-    ? kids.filter((k) => !k.expecting).map((k) => {
+    ? kids.filter((k) => !k.expecting && k.kind !== "pet").map((k) => {
         const story = mine.find((m) => m.childId === k.id && m.date === k.birth && m.type === "story");
         const photo = mine.find((m) => m.childId === k.id && m.date === k.birth && hasPicture(m) && m.id !== story?.id);
         return { kid: k, story, photo };
@@ -422,7 +456,7 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
   const emit = (list: Memory[]) => {
     for (const m of list) {
       const kid = kidOf(m);
-      const c = multi ? calendarChapter(m.date) : chapterOf(kid.birth, m.date, coarse);
+      const c = multi ? calendarChapter(m.date) : kid.kind === "pet" ? petChapter(kid, m.date) : chapterOf(kid.birth, m.date, coarse);
       if (c.key !== chapter?.key) {
         endChapter();
         // a new year of life opens with a page of its own (one child's book only)
@@ -459,7 +493,8 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
   };
 
   // the pregnancy comes first (scans, bump photos), then the birth and the family, then their life in date order
-  const beforeBirth = multi ? [] : rest.filter((m) => m.date < child.birth || child.expecting);
+  // (a pet: what came before the day they came home)
+  const beforeBirth = multi ? [] : child.kind === "pet" ? rest.filter((m) => m.date < (child.gotchaDay ?? child.birth)) : rest.filter((m) => m.date < child.birth || child.expecting);
   const after = rest.filter((m) => !beforeBirth.includes(m));
   if (intro && beforeBirth.length) emit(beforeBirth);
   chapter = undefined;
@@ -484,6 +519,10 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
       const told = BIRTH_STORY_PARTS.map((p) => ({ label: p.label, text: v[p.id]?.trim() ?? "" })).filter((p) => p.text);
       storyPages(told, size).forEach((parts, part) => pages.push({ key: `birthstory-${kid.id}-${part}`, kind: "birthStory", childId: kid.id, parts, part }));
     }
+    if (child.kind === "pet" && !multi) {
+      const home = opts.classics?.find((c) => c.childId === child.id && c.id === PET_HOME_ID);
+      pages.push({ key: `home-${child.id}`, kind: "cameHome", childId: child.id, ...(home ? { entry: home } : {}), ...(opts.mapUri ? { mapUri: opts.mapUri } : {}) });
+    }
     const fam = opts.family ?? [];
     const per = peoplePerPage(size);
     chunks(fam, per).forEach((people, part) => pages.push({ key: `family-${part}`, kind: "family", people, part }));
@@ -492,10 +531,13 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
 
   // the filled-in Classics, in the order of the Classics page (the Birth story is on the birth page); one child's book only
   if (intro && !multi) {
-    for (const tpl of CLASSICS) {
+    // this child's (or pet's) own pages only, never the ones kept for a tab (a pet's microchip and vet aren't for the book)
+    for (const tpl of classicsFor(child)) {
       const e = opts.classics?.find((c) => c.childId === child.id && c.id === tpl.id);
-      if (tpl.id !== "birth" && e && isFilled(tpl, e)) pages.push({ key: `classic-${tpl.id}`, kind: "classic", entry: e });
+      if (tpl.id !== "birth" && tpl.id !== PET_HOME_ID && e && isFilled(tpl, e)) pages.push({ key: `classic-${tpl.id}`, kind: "classic", entry: e });
     }
+    // a pet's adventures: the map, when they've been somewhere
+    if (child.kind === "pet" && opts.places?.length) pages.push({ key: "places", kind: "places", places: opts.places, ...(opts.mapUri ? { mapUri: opts.mapUri } : {}) });
   }
 
   // a look back at every first and milestone, when there are a few
@@ -504,6 +546,7 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
     const per = firstsPerPage(size);
     chunks(firsts, per).forEach((memories, part) => pages.push({ key: `firsts-${part}`, kind: "firsts", memories, part }));
   }
+  if (opts.memorial) pages.push({ key: "memorial", kind: "memorial", words: opts.memorial.words, dates: opts.memorial.dates });
   pages.push({ key: "end", kind: "end" });
   const classicPictures = pages.reduce((n, p) => n + (p.kind === "classic" ? classicMedia(p.entry).filter((x) => x.uri).length : 0), 0);
   const pictures = birthPictures + [...shown.values()].reduce((n, l) => n + l.length, 0) + classicPictures;

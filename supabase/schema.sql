@@ -135,6 +135,13 @@ create table if not exists public.child_blocks (
 alter table public.child_blocks enable row level security;
 drop policy if exists blocks_read on public.child_blocks;
 create policy blocks_read on public.child_blocks for select to authenticated using (public.is_editor(child_id));
+-- a pet's book (kind = 'pet'): what kind of pet, the breed, the dog's size (for dog years), whether the birthday is a guess, and the day they came home
+alter table public.children add column if not exists kind text;
+alter table public.children add column if not exists species text;
+alter table public.children add column if not exists breed text;
+alter table public.children add column if not exists dog_size text;
+alter table public.children add column if not exists birth_approx boolean not null default false;
+alter table public.children add column if not exists gotcha_day date;
 alter table public.memories add column if not exists end_date date;         -- a pregnancy symptom: the last day of the time it lasted
 alter table public.memories add column if not exists health_kind text;      -- health log entries: 'checkup' | 'vaccination' | 'illness' | 'medicine' | 'other'
 alter table public.children add column if not exists expecting boolean not null default false;   -- not born yet: birth is the due date
@@ -276,7 +283,11 @@ on conflict (child_id, user_id) do nothing;
 delete from public.children where id in ('maya', 'leo') and not exists (select 1 from public.memories m where m.child_id = children.id);
 
 -- ---------- invite codes ----------
--- A child's book has at most two parents (owner and editor); any number of family members may be invited to view.
+-- A child's book has at most two parents (owner and editor); a pet's book up to six owners. Any number of family members may be invited to view.
+create or replace function public.max_parents(cid text) returns int
+language sql stable security definer set search_path = public as $$
+  select case when (select kind from public.children where id = cid) = 'pet' then 6 else 2 end
+$$;
 create or replace function public.parent_count(cid text) returns int
 language sql security definer stable set search_path = public as $$
   select count(*)::int from public.child_members where child_id = cid and role <> 'viewer';
@@ -293,8 +304,8 @@ begin
   if not public.is_editor(p_child) then
     raise exception 'You are not part of this child';
   end if;
-  if p_people is null and public.parent_count(p_child) >= 2 then
-    raise exception 'This book is already shared by two parents. One of you has to remove the other before someone else can join.';
+  if p_people is null and public.parent_count(p_child) >= public.max_parents(p_child) then
+    raise exception 'This book already has as many parents as it can (two for a child, six for a pet). Someone has to be removed before another can join.';
   end if;
   v_code := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8));
   if p_email is not null and exists (select 1 from public.child_blocks where child_id = p_child and email = lower(trim(p_email))) then
@@ -322,8 +333,8 @@ begin
     raise exception 'This code was made for a different email address. Sign in with that email, or ask for a new code.';
   end if;
   if v_inv.role <> 'viewer' and not exists (select 1 from public.child_members where child_id = v_inv.child_id and user_id = auth.uid() and role <> 'viewer')
-     and public.parent_count(v_inv.child_id) >= 2 then
-    raise exception 'This book is already shared by two parents. One of them has to remove the other first.';
+     and public.parent_count(v_inv.child_id) >= public.max_parents(v_inv.child_id) then
+    raise exception 'This book already has as many parents as it can (two for a child, six for a pet). Someone has to be removed first.';
   end if;
   -- joining again with a new code updates what you can see (someone already an owner or editor keeps that)
   insert into public.child_members (child_id, user_id, role, email, people)
@@ -415,6 +426,7 @@ end $$;
 grant execute on function public.remove_member(text, uuid, boolean) to authenticated;
 grant execute on function public.set_member_people(text, uuid, text[]) to authenticated;
 grant execute on function public.parent_count(text) to authenticated;
+grant execute on function public.max_parents(text) to authenticated;
 
 -- ---------- live updates: a change on one phone reaches the other at once (row-level security still decides who hears what) ----------
 do $$

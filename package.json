@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "setup": "expo install expo-localization expo-router react-native-screens react-native-safe-area-context expo-linking expo-constants expo-status-bar expo-image-picker expo-file-system expo-image expo-video expo-print expo-sharing expo-font expo-splash-screen expo-notifications react-native-pager-view @react-navigation/material-top-tabs react-native-tab-view @expo/vector-icons expo-dev-client @react-native-async-storage/async-storage @react-native-community/datetimepicker @react-native-community/slider expo-system-ui react-dom react-native-reanimated react-native-worklets typescript @types/react && expo install --fix",
+    "setup": "expo install expo-calendar expo-localization expo-router react-native-screens react-native-safe-area-context expo-linking expo-constants expo-status-bar expo-image-picker expo-file-system expo-image expo-video expo-print expo-sharing expo-font expo-splash-screen expo-notifications react-native-pager-view @react-navigation/material-top-tabs react-native-tab-view @expo/vector-icons expo-dev-client @react-native-async-storage/async-storage @react-native-community/datetimepicker @react-native-community/slider expo-system-ui react-dom react-native-reanimated react-native-worklets typescript @types/react && expo install --fix",
     "start": "expo start --dev-client",
     "android": "expo run:android --device",
     "prebuild": "expo prebuild --platform android",
@@ -33,7 +33,9 @@
     "@supabase/supabase-js": "^2.45.0",
     "@types/react": "~19.2.4",
     "expo": "~57.0.26",
+    "expo-asset": "~57.0.19",
     "expo-audio": "~57.0.5",
+    "expo-calendar": "~57.0.5",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.21",
     "expo-dev-client": "~57.0.19",

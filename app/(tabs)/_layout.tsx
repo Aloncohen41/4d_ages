@@ -5,6 +5,7 @@ import type { ParamListBase, TabNavigationState } from "expo-router/react-naviga
 import { withLayoutContext } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useActiveChild } from "../../src/lib/store";
+import { isPet } from "../../src/lib/types";
 import { useTheme } from "../../src/lib/useTheme";
 import { useSwipeHeld } from "../../src/lib/swipeGuard";
 import { StatusBar } from "expo-status-bar";
@@ -27,12 +28,21 @@ import { withAlpha } from "../../src/lib/m3";
 const { Navigator } = createMaterialTopTabNavigator();
 const Tabs = withLayoutContext<MaterialTopTabNavigationOptions, typeof Navigator, TabNavigationState<ParamListBase>, MaterialTopTabNavigationEventMap>(Navigator);
 
-const TABS = [
+const KID_TABS = [
   { name: "index", title: "Home", icon: "nav-home" },
   { name: "milestones", title: "Milestones", icon: "nav-milestones" },
   { name: "growth", title: "Growth", icon: "nav-growth" },
   { name: "book", title: "Book", icon: "nav-book" },
 ] as const; // Family is in the top-left menu; adding happens through the + button
+/** A pet's tabs: their health instead of development, the places they've been, and their weight instead of growth. */
+const PET_TABS = [
+  { name: "index", title: "Home", icon: "nav-home" },
+  { name: "care", title: "Health", icon: "nav-health" },
+  { name: "adventures", title: "Adventures", icon: "nav-map" },
+  { name: "weight", title: "Weight", icon: "nav-weight" },
+  { name: "book", title: "Book", icon: "nav-book" },
+] as const;
+const TABS: readonly { name: string; title: string; icon: string }[] = [...KID_TABS, ...PET_TABS];
 
 export const TAB_BAR_HEIGHT = 74;
 
@@ -109,6 +119,7 @@ export default function TabsLayout() {
       <StatusBar style={t.dark ? "light" : "dark"} />
       <TopBar />{/* above the pager, so it stays still while the tabs slide */}
       <Tabs
+        key={isPet(active) ? "pet" : "kid"} // a pet and a child have different tabs: the pager is made afresh when switching between them
         tabBarPosition="bottom"
         tabBar={(props: MaterialTopTabBarProps) => <BottomBar {...props} restoreTo={restoring ? saved : null} onRestored={() => setRestoring(false)} />}
         screenOptions={{
@@ -118,7 +129,7 @@ export default function TabsLayout() {
           sceneStyle: { backgroundColor: t.bg }, // never a white gap between pages
         }}
       >
-        {TABS.map((tab) => (
+        {(isPet(active) ? PET_TABS : KID_TABS).map((tab) => (
           <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.title }} />
         ))}
       </Tabs>

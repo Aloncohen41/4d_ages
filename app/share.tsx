@@ -10,7 +10,7 @@ import { useActiveChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { isConfigured, keyIsSecret, useSession } from "../src/lib/supabase";
 import {
-  MAX_PARENTS, Member, PendingInvite, cancelInvite, ensureShared, inviteFor, joinLink, openInvite, listBlocked, listInvites, listMembers,
+  MAX_PET_OWNERS, maxParents, Member, PendingInvite, cancelInvite, ensureShared, inviteFor, joinLink, openInvite, listBlocked, listInvites, listMembers,
   parentsOf, removeMember, setMemberPeople, unblockEmail,
 } from "../src/lib/sync";
 import { InviteKind, cleanEmail, friendlyShareError, inviteMessage, isEmail, kindSummary, normalizeCode } from "../src/lib/shareFlow";
@@ -18,7 +18,7 @@ import { familyOf, orderedFamily } from "../src/lib/family";
 import { displayName, relationLine } from "../src/lib/tags";
 import { formatDate } from "../src/lib/date";
 import { APP_NAME } from "../src/brand";
-import { Child } from "../src/lib/types";
+import { Child, isPet } from "../src/lib/types";
 import { TYPE } from "../src/theme";
 
 /**
@@ -120,7 +120,7 @@ function Overview({ child, onInvite, onSend }: { child: Child; onInvite: (k: Inv
   // you are always listed, even before the list has loaded or anyone else has joined
   const people: Member[] = members.some((m) => m.me) ? members : [{ userId: session?.user.id ?? "me", email: session?.user.email ?? "", role: "owner", people: [], me: true }, ...members];
   const me = people.find((m) => m.me);
-  const parentsFull = parentsOf(members).length >= MAX_PARENTS;
+  const parentsFull = parentsOf(members).length >= maxParents(child);
   const nameOf = (id: string) => { const r = relatives.find((x) => x.id === id); return r ? displayName(r) : null; };
   const canRemove = (m: Member) => !m.me && m.role !== "owner" && (me?.role === "owner" || (me?.role === "editor" && m.role === "viewer"));
 
@@ -183,7 +183,9 @@ function Overview({ child, onInvite, onSend }: { child: Child; onInvite: (k: Inv
 
       {/* invite: choose the kind first */}
       <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 24, marginBottom: 8 }]}>Invite someone</Text>
-      <Choice icon="family" title="The other parent" text={parentsFull ? "This book already has two parents. To invite someone else as a parent, one of you has to be removed first." : `Sees everything in ${child.name}'s book and can add to it, like you.`} disabled={parentsFull || !!busy} onPress={() => onInvite("parent")} />
+      <Choice icon="family" title={isPet(child) ? "Another owner" : "The other parent"} text={parentsFull
+        ? (isPet(child) ? `${child.name}'s book already has ${MAX_PET_OWNERS} owners. Someone has to be removed before another can join.` : "This book already has two parents. To invite someone else as a parent, one of you has to be removed first.")
+        : `Sees everything in ${child.name}'s book and can add to it, like you.${isPet(child) ? ` Up to ${MAX_PET_OWNERS} owners.` : ""}`} disabled={parentsFull || !!busy} onPress={() => onInvite("parent")} />
       <Choice icon="eye" title="A family member" text="Grandparents, aunts, uncles… They see only the posts with the people you choose, and can leave a heart and a comment." disabled={!!busy} onPress={() => onInvite("family")} />
 
       {/* invites still waiting */}
@@ -341,7 +343,7 @@ function InviteSteps({ child, kind, onCreated, onCancel }: { child: Child; kind:
           {stepLabel}
           <Text style={[TYPE.titleMedium, { color: t.ink }]}>Check the invite</Text>
           <View style={{ backgroundColor: t.card, borderRadius: 16, borderWidth: 1, borderColor: t.line, padding: 14, marginTop: 8, gap: 6 }}>
-            <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{kind === "parent" ? "The other parent" : whoName || "A family member"}</Text>
+            <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{kind === "parent" ? (isPet(child) ? "Another owner" : "The other parent") : whoName || "A family member"}</Text>
             <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>{cleanEmail(email)}</Text>
             <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{kindSummary(kind, child.name, names)}</Text>
           </View>

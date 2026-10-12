@@ -9,12 +9,13 @@ import { useStore } from "../lib/store";
 import { CENTILE_LINES, centileCurve } from "../lib/percentiles";
 
 /** Growth curve: your measurements as a line, over the 3rd, 50th and 97th percentile lines for their age and sex (WHO or CDC charts). */
-export function LineChart({ child, entries, unit, mode = "height", weightUnit = "kg" }: {
+export function LineChart({ child, entries, unit, mode = "height", weightUnit = "kg", centiles = true }: {
   child: Child;
   entries: { date: string; cm?: number; kg?: number }[];
   unit: HeightUnit;
   mode?: "height" | "weight";
   weightUnit?: WeightUnit;
+  centiles?: boolean; // the children's percentile lines (off for a pet)
 }) {
   const t = useTheme();
   const [w, setW] = useState(0);
@@ -25,7 +26,7 @@ export function LineChart({ child, entries, unit, mode = "height", weightUnit = 
   if (!pts.length) return null;
   const maxX = Math.max(12, Math.ceil(Math.max(...pts.map((p) => p.x)) / 6) * 6);
   // the 3rd, 50th and 97th percentile lines for their age and sex, from the chosen charts (WHO or CDC)
-  const lines = CENTILE_LINES.map((c) => ({ label: c.label, pts: centileCurve(source, mode, effectiveRef(child), c.z, maxX) })).filter((c) => c.pts.length > 1);
+  const lines = !centiles ? [] : CENTILE_LINES.map((c) => ({ label: c.label, pts: centileCurve(source, mode, effectiveRef(child), c.z, maxX) })).filter((c) => c.pts.length > 1);
   const all = lines.flatMap((c) => c.pts.map((p) => p[1]));
   const stepY = mode === "weight" ? (maxX > 72 ? 5 : 2) : 10;
   const minY = Math.floor(Math.min(...pts.map((p) => p.y), ...all) / stepY) * stepY;

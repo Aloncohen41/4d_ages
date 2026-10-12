@@ -20,6 +20,7 @@ export function friendlyShareError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e ?? "");
   if (/network|fetch|timed? ?out|offline|Failed to/i.test(msg)) return "You seem to be offline. Connect to the internet and try again.";
   if (/sign in first|JWT|not authenticated|session/i.test(msg)) return "Please sign in again, then try once more.";
+  if (/as many parents as it can/i.test(msg)) return "This book already has as many parents as it can (two for a child, six for a pet). Someone has to be removed before another can join.";
   if (/already shared by two parents/i.test(msg)) return "This book already has two parents. One of them has to remove the other before someone else can join as a parent.";
   if (/different email/i.test(msg)) return "This code was made for a different email. Sign in with the email the invite was sent to, or ask for a new code.";
   if (/invalid or has expired|expired/i.test(msg)) return "That code isn't valid any more (each code works once, for 7 days). Ask for a new one.";

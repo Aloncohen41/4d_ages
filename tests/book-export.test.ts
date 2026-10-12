@@ -68,7 +68,7 @@ ok("the theme is chosen just before exporting, from cards", /title="Before you e
 const schema = read("supabase/schema.sql"), access = read("app/share.tsx");
 ok("an invite can be for one email: only that email can join with it", /p_email text default null/.test(schema) && /This code was made for a different email address/.test(schema) && /inviteFor\(child\.id, kind, email/.test(access) && /The invite only works for this email/.test(access));
 ok("block: someone removed and blocked can't join again with any code, until unblocked", /create table if not exists public\.child_blocks/.test(schema) && /You don''t have access to this book/.test(schema) && /create or replace function public\.unblock_email/.test(schema) && /"Remove and block"/.test(access) && /Unblock/.test(access));
-ok("inviting a family member is different from inviting the other parent", /title="The other parent"/.test(access) && /title="A family member"/.test(access) && /They see only the posts with the people you choose/.test(access));
+ok("inviting a family member is different from inviting the other parent", /"The other parent"/.test(access) && /title="A family member"/.test(access) && /They see only the posts with the people you choose/.test(access));
 ok("everyone with access is listed by email, with what family members see (and Change)", /m\.me \? `You\$\{m\.email \? ` \(\$\{m\.email\}\)` : ""\}` : m\.email/.test(access) && /setMemberPeople\(child\.id, member\.userId, people\)/.test(access));
 
 console.log(fails ? `${fails} FAILED` : "all book and access tests passed");
