@@ -73,7 +73,7 @@ export function VoiceRecorderSheet({ onDone, onClose }: { onDone: (item: MediaIt
   const stop = async () => {
     await recorder.stop();
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-    if (recorder.uri) setRecorded(persistFile(recorder.uri, "m4a"));
+    if (recorder.uri) setRecorded(await persistFile(recorder.uri, "m4a"));
   };
   const use = (uri: string) => {
     setRecorded(null); // handed over: not deleted on close
@@ -85,7 +85,7 @@ export function VoiceRecorderSheet({ onDone, onClose }: { onDone: (item: MediaIt
     if (res.canceled || !res.assets?.[0]) return;
     const a = res.assets[0];
     const ext = (a.name.match(/\.([A-Za-z0-9]{2,5})$/)?.[1] || "m4a").toLowerCase();
-    use(persistFile(a.uri, ext));
+    use(await persistFile(a.uri, ext));
   };
 
   return (

@@ -31,12 +31,14 @@ export async function saveToFolder(mimeType: string): Promise<((uri: string, fil
  * Gives an exported file its proper name before it is shared. Without this the recipient sees the random temporary name the phone made
  * ("a3f9-77c1.pdf"). Returns the new file's uri; if anything goes wrong it quietly falls back to the original file, so exporting never fails over a name.
  */
-export function withFriendlyName(uri: string, fileName: string): string {
+export async function withFriendlyName(uri: string, fileName: string): Promise<string> {
   try {
     const source = new File(uri);
     const dest = new File(Paths.cache, fileName);
     if (dest.exists) dest.delete();
-    source.copy(dest);
+    // the copy runs in the background: it must finish before the original is removed, or the named file is missing or cut short
+    await source.copy(dest);
+    if (!dest.exists || (source.size ?? 0) !== (dest.size ?? -1)) return uri; // didn't copy whole: keep the original name rather than a broken file
     try { source.delete(); } catch { /* the temporary original is cleaned up by the phone anyway */ }
     return dest.uri;
   } catch {

@@ -1,5 +1,22 @@
 import type { MilestoneDef } from "./types";
 
+/**
+ * The last day a pregnancy note can have: today while expecting; for a child already born (telling the pregnancy afterwards, "looking back"),
+ * the day before the birth. Their birth date stands in for the due date, so weeks are counted back from it.
+ */
+export const pregnancyLastDay = (child: { birth: string; expecting?: boolean }, today: string) => {
+  if (child.expecting) return today;
+  const d = new Date(child.birth + "T00:00:00");
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+/** The day a pregnancy milestone usually happens, counted back from the birth (for ticking one off when looking back). */
+export const usualDay = (birth: string, week: number) => {
+  const d = new Date(birth + "T00:00:00");
+  d.setDate(d.getDate() - Math.max(0, 40 - week) * 7);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 /** What a pregnancy profile is called until the name is chosen. */
 export const PREGNANCY_NAME = "Bump";
 

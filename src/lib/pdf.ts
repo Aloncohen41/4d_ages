@@ -66,7 +66,7 @@ async function printBook(i: BookInput, onProgress?: (text: string) => void): Pro
     html = null;
   }
   const fileName = bookFileName(i); // e.g. "Maya Classic Album By 4D-Ages.pdf" instead of a random temporary name
-  return { uri: withFriendlyName(uri, fileName), fileName };
+  return { uri: await withFriendlyName(uri, fileName), fileName };
 }
 
 const bookFileName = (i: BookInput) => albumFileName([i.child, ...(i.siblings ?? [])].map((k) => k.name).join(" & "), i.style);

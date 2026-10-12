@@ -16,14 +16,16 @@ const fsStub = require("./stubs/file-system.js");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const read = (f: string) => readFileSync(path.join(__dirname, "..", f), "utf8");
 
-// ---------- renaming an exported file
+// ---------- renaming an exported file (copying finishes a moment later, as on the phone: the original must not be removed before it does)
+const renaming = (async () => {
 fsStub.__files.set("file:///cache/Print/3f9a-77c1.pdf", "pdf-bytes");
-const named = withFriendlyName("file:///cache/Print/3f9a-77c1.pdf", "Maya Classic Album By 4D-Ages.pdf");
-ok("the exported file is given its proper name (not the random temporary one)", named === "file:///cache/Maya Classic Album By 4D-Ages.pdf" && fsStub.__files.get(named) === "pdf-bytes");
-ok("the temporary original is cleaned up", !fsStub.__files.has("file:///cache/Print/3f9a-77c1.pdf"));
+const named = await withFriendlyName("file:///cache/Print/3f9a-77c1.pdf", "Maya Classic Album By 4D-Ages.pdf");
+ok("the exported file is given its proper name (not the random temporary one), whole", named === "file:///cache/Maya Classic Album By 4D-Ages.pdf" && fsStub.__files.get(named) === "pdf-bytes");
+ok("the temporary original is cleaned up, only after the copy is finished", !fsStub.__files.has("file:///cache/Print/3f9a-77c1.pdf"));
 fsStub.__files.set("file:///cache/x.mp4", "v2");
-ok("exporting again overwrites the earlier file of the same name instead of failing", withFriendlyName("file:///cache/x.mp4", "Maya Classic Album By 4D-Ages.pdf") === named && fsStub.__files.get(named) === "v2");
-ok("if renaming fails for any reason the ORIGINAL is used, so the export still works", withFriendlyName("file:///cache/BROKEN.pdf", "Whatever.pdf") === "file:///cache/BROKEN.pdf");
+ok("exporting again overwrites the earlier file of the same name instead of failing", (await withFriendlyName("file:///cache/x.mp4", "Maya Classic Album By 4D-Ages.pdf")) === named && fsStub.__files.get(named) === "v2");
+ok("if renaming fails for any reason the ORIGINAL is used, so the export still works", (await withFriendlyName("file:///cache/BROKEN.pdf", "Whatever.pdf")) === "file:///cache/BROKEN.pdf");
+})();
 
 // ---------- what the encoder is sent
 const child: any = { id: "c", name: "Maya", birth: "2025-03-10", emoji: "🌸" };
@@ -49,4 +51,7 @@ ok("without a cover the title card is exactly as before (emoji and plain colours
 ok("every place that exports a video passes what it shows: the reels, the custom builder, the year in review", /fileLabel=\{open\.fileLabel\}/.test(read("src/components/WatchView.tsx")) && /fileLabel=\{span\.file\}/.test(read("src/components/CustomReelSheet.tsx")) && /fileLabel=\{`Year \$\{year\}`\}/.test(read("src/components/Memories.tsx")));
 // the title card and the photo captions must never share a cached layout
 ok("the title card's text is cached under NEGATIVE keys, so it can never equal a photo's index (the first photo used to show the title card's subtitle)", kt.includes("layouts.getOrPut(-(idx * 2 + 1))") && kt.includes("layouts.getOrPut(-(idx * 2 + 2))") && !/layouts\.getOrPut\(idx \* 2/.test(kt) && (kt.match(/layouts\.getOrPut\(idx\)/g) || []).length === 1);
-console.log(fails ? `${fails} FAILED` : "all export tests passed");
+renaming.then(() => {
+  console.log(fails ? `${fails} FAILED` : "all export tests passed");
+  if (fails) process.exit(1);
+});

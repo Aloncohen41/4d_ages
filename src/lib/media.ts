@@ -21,13 +21,16 @@ export const toMediaItems = (picked: Picked[]): MediaItem[] => picked.map((p) =>
 
 const rid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-/** Copy a picked file into the app's private storage so it survives cache cleaning. */
-export function persistFile(uri: string, ext: string): string {
+/**
+ * Copy a picked file into the app's private storage so it survives cache cleaning. The copy is finished before this returns: copying runs in
+ * the background, and reading the file (its date, a video's thumbnail) or deleting the original before it ends leaves a missing or cut-off file.
+ */
+export async function persistFile(uri: string, ext: string): Promise<string> {
   try {
     const dir = new Directory(Paths.document, "media");
     if (!dir.exists) dir.create({ intermediates: true });
     const dest = new File(dir, `${rid()}.${ext}`);
-    new File(uri).copy(dest);
+    await new File(uri).copy(dest);
     return dest.uri;
   } catch {
     return uri; // fall back to the original location
@@ -86,7 +89,7 @@ export async function pickMedia(opts: { videos: boolean; multiple: boolean }): P
       exifToISO(String(ex.DateTimeOriginal ?? "")) ||
       exifToISO(String(ex.DateTime ?? "")) ||
       dateFromFileName(a.fileName);
-    const uri = persistFile(a.uri, extOf(a.fileName, a.uri, kind));
+    const uri = await persistFile(a.uri, extOf(a.fileName, a.uri, kind));
     // the picker doesn't always pass the EXIF on, and videos have none: then the date is read from inside the file
     const fromFile = found ? null : readFileDate(uri, kind, todayISO());
     const date = found || fromFile || todayISO();

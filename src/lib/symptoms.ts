@@ -4,6 +4,8 @@
  * is noted and are never saved with it, so they never go into the book. Pure data, for tests.
  */
 
+import { Emergency, callLine, emergencyFor } from "./emergency";
+
 const NHS = "https://www.nhs.uk/pregnancy";
 
 export interface SymptomGuide {
@@ -84,7 +86,7 @@ export const SYMPTOMS: SymptomGuide[] = [
       "Paracetamol is usually fine in pregnancy, unless your midwife or GP has said otherwise. Follow the packet.",
     ],
     callIf: ["the pain is very bad", "you're in your second or third trimester (it can be a sign of early labour)", "you also have a fever, bleeding, pain when you wee, or pain in your side under your ribs"],
-    urgentIf: ["you lose feeling in your legs, bottom or genitals (call 999)"],
+    urgentIf: ["you lose feeling in your legs, bottom or genitals (call an ambulance)"],
   },
   {
     id: "pelvic", label: "Pelvic pain (PGP or SPD)", emoji: "🦴", source: `${NHS}/common-symptoms/pelvic-pain/`,
@@ -252,7 +254,7 @@ export const SYMPTOMS: SymptomGuide[] = [
       "Your midwife can also tell you about support near you.",
     ],
     callIf: ["stress, anxiety or low mood are affecting your day-to-day life"],
-    urgentIf: ["you have thoughts of harming yourself (call 999 or go to A&E)"],
+    urgentIf: ["you have thoughts of harming yourself (call an ambulance or go to the emergency department)"],
   },
 ];
 
@@ -273,13 +275,16 @@ export const LEGACY_SOURCE = "Pregnancy";
 /** An older note: a craving if its title says so, otherwise a symptom. */
 export const legacyIsCraving = (title?: string) => /crav|can't stand|went off|smell of/i.test(title ?? "");
 
-/** At the end of every set of tips. */
-export const SYMPTOM_DISCLAIMER =
-  "These tips are general information based on the NHS website. They aren't medical advice and don't replace your midwife, GP or doctor, who know you and your pregnancy. Every pregnancy is different, so check with a pharmacist, midwife or doctor before taking any medicine. If you're worried or something doesn't feel right, contact your midwife or doctor. In an emergency, call your local emergency number (999 in the UK).";
+/** At the end of every set of tips, with the emergency number for where the phone is (see emergency.ts). */
+export const symptomDisclaimer = (e: Emergency) =>
+  `These tips are general information based on the NHS website. They aren't medical advice and don't replace your midwife, GP or doctor, who know you and your pregnancy. Every pregnancy is different, so check with a pharmacist, midwife or doctor before taking any medicine. If you're worried or something doesn't feel right, contact your midwife or doctor. In an emergency, ${callLine(e)}.`;
+/** The same for the UK (where the tips come from), and wherever the phone's country isn't known. */
+export const SYMPTOM_DISCLAIMER = symptomDisclaimer(emergencyFor("GB"));
 
 /** For a symptom that isn't on the list: no tips, but a gentle nudge. */
-export const OTHER_SYMPTOM_NOTE =
-  "We can't offer tips for this one, but you know your body best. If something doesn't feel right, or you're even a little worried, give your midwife or GP a ring. That's exactly what they're there for, and no question is too small. If it feels urgent, call your maternity unit or your local emergency number.";
+export const otherSymptomNote = (e: Emergency) =>
+  `We can't offer tips for this one, but you know your body best. If something doesn't feel right, or you're even a little worried, give your midwife or GP a ring. That's exactly what they're there for, and no question is too small. If it feels urgent, call your maternity unit, or ${callLine(e)}.`;
+export const OTHER_SYMPTOM_NOTE = otherSymptomNote(emergencyFor("GB"));
 
 /** Under the cravings. */
 export const CRAVING_NOTE =

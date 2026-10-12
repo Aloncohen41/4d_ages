@@ -10,7 +10,7 @@ import { Btn } from "./ui";
 const when = (ms: number) => { const d = new Date(ms); return `${formatDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)}, ${formatTime(toHHMM(d))}`; };
 
 /**
- * Settings → Backup: a copy of every book, with its photos and videos, in a "4D Ages backup" folder in your own Google Drive. On, it backs up
+ * Settings → Backup: every book in one file, "4D Ages backup.zip", in your own Google Drive (the photos are kept in your account already). On, it backs up
  * a minute after each change; "Back up now" does it straight away; "Restore from Drive" brings a backup back onto this phone.
  */
 export function DriveBackupCard() {
@@ -34,7 +34,7 @@ export function DriveBackupCard() {
   };
   const backup = () => run(async () => {
     await backupNow(true, setBusy);
-    if (!useStore.getState().driveBackup.error) showToast({ title: "Backed up to Google Drive", body: "Your books, photos and videos are in the “4D Ages backup” folder." });
+    if (!useStore.getState().driveBackup.error) showToast({ title: "Backed up to Google Drive", body: "Your books are saved in “4D Ages backup.zip” in your Drive." });
   });
   const toggle = (on: boolean) => {
     setPrefs({ enabled: on });
@@ -68,7 +68,7 @@ export function DriveBackupCard() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <View style={{ flex: 1 }}>
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>Back up to Google Drive</Text>
-          <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>A copy of every book, with its photos and videos, in a “4D Ages backup” folder in your own Drive. When it's on, it backs up a minute after each change.</Text>
+          <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Every book in one small file, “4D Ages backup.zip”, in your own Google Drive. Photos and videos aren't copied again: they're kept safely in your account and come back with the books. When it's on, it backs up a minute after each change.</Text>
         </View>
         <Switch value={prefs.enabled} onValueChange={toggle} disabled={!!busy} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={prefs.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
       </View>

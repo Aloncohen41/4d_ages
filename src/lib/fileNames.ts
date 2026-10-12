@@ -7,7 +7,7 @@ export const FILE_BRAND = APP_NAME.replace(/\s+/g, "-");
 export function cleanPart(text: string, max = 40): string {
   return (text || "")
     .replace(/[\u2012-\u2015]/g, "-") // en / em dashes → hyphen
-    .replace(/[\u0000-\u001f<>:"/\\|?*]/g, " ") // characters no file name may contain
+    .replace(/[\u0000-\u001f<>:"/\\|?*#%]/g, " ") // characters no file name may contain (and # and %, which break a file's address)
     .replace(/[\ud800-\udfff\u200d\ufe0f]/g, "") // emoji and their joiners
     .replace(/\s+/g, " ")
     .trim()

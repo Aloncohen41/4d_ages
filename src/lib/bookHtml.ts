@@ -366,6 +366,16 @@ export function buildBookHtml(i: BookHtmlInput): string {
           ${running}
         </section>`;
       }
+      case "birthStory": {
+        const who = (kids.find((k) => k.id === p.childId) ?? child).name;
+        return `<section class="page classic birth-story">
+          ${corner(p, drawings ? drawings.newborn : "")}
+          <p class="kicker" style="color:${ink(p)}">The day ${esc(who)} was born</p>
+          <h2>${p.part ? "The story, continued" : "Our birth story"}</h2>
+          ${p.parts.map((x) => `<h3>${esc(x.label)}</h3><p class="body">${esc(x.text)}</p>`).join("")}
+          ${numbered(n)}
+        </section>`;
+      }
       case "story": {
         const m = p.memory;
         return `<section class="page story-page">

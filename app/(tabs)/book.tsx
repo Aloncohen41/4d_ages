@@ -72,8 +72,11 @@ function Book() {
   }, [relatives, child, siblings, familyOrder, inBookIds]);
   const mine = useMemo(() => (child ? memories.filter((m) => inBookIds.has(m.childId)) : []), [memories, child, inBookIds]);
   // the posts the book could hold with these dates (and person), whether or not you left some out: the "Choose posts" list
-  const candidates = useMemo(() => selectForBook(mine.filter(inBook), { ...prefs, excluded: [] }, tagList).sort((a, b) => (a.date < b.date ? 1 : -1)), [mine, prefs, tagList]);
-  const chosen = useMemo(() => [...selectForBook(mine.filter(inBook), prefs, tagList), ...mine.filter((m) => !inBook(m))], [mine, prefs, tagList]);
+  // each child's birthday, so the pregnancy can be left out (an expecting child's book is all pregnancy, so it always stays)
+  const births = useMemo(() => Object.fromEntries([child, ...siblings].filter((k): k is NonNullable<typeof k> => !!k && !k.expecting).map((k) => [k.id, k.birth])), [child, siblings]);
+  const candidates = useMemo(() => selectForBook(mine.filter(inBook), { ...prefs, excluded: [] }, tagList, births).sort((a, b) => (a.date < b.date ? 1 : -1)), [mine, prefs, tagList, births]);
+  const chosen = useMemo(() => [...selectForBook(mine.filter(inBook), prefs, tagList, births), ...mine.filter((m) => !inBook(m) && (prefs.pregnancy !== false || !births[m.childId] || m.date >= births[m.childId]))], [mine, prefs, tagList, births]);
+  const pregnancyPosts = useMemo(() => mine.filter((m) => births[m.childId] && m.date < births[m.childId]).length, [mine, births]);
   const intro = child ? startsAtBirth(child, prefs) : true;
   const otherKids = child ? kids.filter((k) => k.id !== child.id && k.role !== "viewer") : [];
   const classics = useMemo(() => (child ? allClassics.filter((c) => c.childId === child.id) : []), [allClassics, child]);
@@ -149,6 +152,16 @@ function Book() {
           </View>
           {siblings.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>One book for {[child, ...siblings].map((k) => k.name).join(" and ")}, in date order, with chapters by year.</Text> : null}
         </View>
+      ) : null}
+      {pregnancyPosts ? (
+        <Pressable onPress={() => set({ pregnancy: prefs.pregnancy === false ? undefined : false })} accessibilityRole="checkbox" accessibilityState={{ checked: prefs.pregnancy !== false }}
+          style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, marginBottom: 6 }}>
+          <Icon name={prefs.pregnancy !== false ? "check-square" : "square"} size={24} color={prefs.pregnancy !== false ? t.accent : t.ink3} />
+          <View style={{ flex: 1 }}>
+            <Text style={[TYPE.bodyLarge, { color: t.ink }]}>Include the pregnancy</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{pregnancyPosts} {pregnancyPosts === 1 ? "post" : "posts"} from before the birth: scans, the bump, cravings and milestones</Text>
+          </View>
+        </Pressable>
       ) : null}
       <View style={{ flexDirection: "row", gap: 10 }}>
         <View style={{ flex: 1 }}>

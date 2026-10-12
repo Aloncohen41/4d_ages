@@ -78,7 +78,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
     setPhase("working"); setProgress(0); setMsg(""); started.current = Date.now();
     try {
       const out = await createGrowVideo(child, slides, t, { speed, format, quality, intro, title: heading, subtitle: subtitle || defaultSubtitle(child, usable.length), cover: intro ? cover?.uri ?? undefined : undefined }, setProgress);
-      setUri(withFriendlyName(out, fileName)); // so it is shared under a proper name, not a random temporary one
+      setUri(await withFriendlyName(out, fileName)); // so it is shared under a proper name, not a random temporary one
       setPhase("done");
     } catch (e) {
       setPhase("idle");

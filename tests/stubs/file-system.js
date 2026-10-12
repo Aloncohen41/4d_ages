@@ -9,7 +9,13 @@ class Directory {
 class File {
   constructor(...parts) { this.uri = join(parts); }
   get exists() { return files.has(this.uri); }
-  copy(dest) { if (this.uri.includes("BROKEN")) throw new Error("disk error"); if (files.has(this.uri)) files.set(dest.uri, files.get(this.uri)); }
+  get size() { return files.has(this.uri) ? String(files.get(this.uri)).length : null; }
+  // like the real one (SDK 57): the copy finishes a moment later, reading the source then, so deleting the source first leaves nothing
+  copy(dest) {
+    if (this.uri.includes("BROKEN")) return Promise.reject(new Error("disk error"));
+    const from = this.uri;
+    return new Promise((resolve, reject) => setTimeout(() => { if (!files.has(from)) return reject(new Error("ENOENT: " + from)); files.set(dest.uri, files.get(from)); resolve(); }, 5));
+  }
   delete() { files.delete(this.uri); }
 }
 module.exports = { File, Directory, Paths: { document: new Directory("file:///docs"), cache: new Directory("file:///cache") }, __files: files };

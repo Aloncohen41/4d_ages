@@ -338,6 +338,23 @@ function ProfileSheet({ visible, onClose, onArrived }: { visible: boolean; onClo
           <Icon name="chevron-right" size={22} color={t.onAccentSoft} />
         </Pressable>
       ) : null}
+      {!child.expecting && child.role !== "viewer" ? (
+        // telling the story afterwards: the pregnancy (looking back) and the birth
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 2 }}>
+          <Pressable onPress={() => { onClose(); setTimeout(() => router.push({ pathname: "/pregnancy", params: { child: child.id } }), 300); }} accessibilityRole="button"
+            style={{ flex: 1, backgroundColor: t.bg2, borderRadius: 16, padding: 12, gap: 4 }}>
+            <Text style={{ fontSize: 22 }}>🤰</Text>
+            <Text style={[TYPE.titleSmall, { color: t.ink }]}>Tell us how your pregnancy was</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Scans, the bump, cravings and firsts</Text>
+          </Pressable>
+          <Pressable onPress={() => { onClose(); setTimeout(() => useStore.getState().setBirthStoryFor(child.id), 300); }} accessibilityRole="button"
+            style={{ flex: 1, backgroundColor: t.bg2, borderRadius: 16, padding: 12, gap: 4 }}>
+            <Text style={{ fontSize: 22 }}>📖</Text>
+            <Text style={[TYPE.titleSmall, { color: t.ink }]}>Tell us the birth story</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>The day {child.name} arrived</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <Label>Name</Label>
       <Input value={name} onChangeText={setName} placeholder={expecting ? "You can change it any time" : undefined} />
       <Label>{expecting ? "Due date" : "Birth date"}</Label>

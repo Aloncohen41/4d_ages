@@ -14,6 +14,8 @@ import { ShareSheet } from "../src/components/ShareSheet";
 import { UpdatePrompt } from "../src/components/UpdatePrompt";
 import { DriveAutoBackup } from "../src/components/DriveAutoBackup";
 import { Toast } from "../src/components/Toast";
+import { Confetti } from "../src/components/Confetti";
+import { BirthStoryHost } from "../src/components/BirthStory";
 import { NewPasswordAfterReset } from "../src/components/AccountSheets";
 import { AppLock } from "../src/components/AppLock";
 import { EntrySheet } from "../src/components/EntrySheet";
@@ -148,6 +150,7 @@ export default function RootLayout() {
           <Stack.Screen name="classics" />
           <Stack.Screen name="classic/[id]" />
           <Stack.Screen name="health" />
+          <Stack.Screen name="pregnancy" />
           <Stack.Screen name="access" />
         </Stack.Protected>
         <Stack.Protected guard={signedIn && !hasKids}>
@@ -171,7 +174,9 @@ export default function RootLayout() {
       {signedIn && hasKids ? <EditPhotoSheet /> : null}
       {signedIn && hasKids ? <TagBrowserSheet /> : null}
       {/* last, so it shows above every screen */}
+      {signedIn && hasKids ? <BirthStoryHost /> : null}
       <Toast />
+      <Confetti />
     </SafeAreaProvider>
   );
 }

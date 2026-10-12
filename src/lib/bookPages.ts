@@ -1,7 +1,7 @@
 import { Child, Memory, Relative, Tag } from "./types";
 import { byMoment } from "./display";
 import { ageBetween, daysBetween, parseISO } from "./date";
-import { CLASSICS, ClassicEntry, classicMedia, isFilled } from "./classics";
+import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, classicMedia, isFilled } from "./classics";
 
 /*
  * The keepsake book, page by page. One plan drives both the preview on the phone and the exported PDF (both are drawn from the same HTML, see
@@ -63,6 +63,22 @@ export function bookMetrics(s: BookSize) {
  * flowers, trees, hills), Child's games (toys and games) and Modern (plain, no drawings). Each comes in several colours (BOOK_COLOURS).
  */
 export type BookStyle = "classic" | "nature" | "playful" | "modern" | "stars" | "blossom" | "explorer" | "rainbow";
+/** The birth story's parts, grouped into pages: about as much writing as fits a page of this size (a long part has a page to itself). */
+export function storyPages(parts: { label: string; text: string }[], size: BookSize): { label: string; text: string }[][] {
+  const room = Math.round(1400 * (size.wCm * size.hCm) / (29.7 * 21)); // characters that fit a page, from A4
+  const out: { label: string; text: string }[][] = [];
+  let page: { label: string; text: string }[] = [];
+  let used = 0;
+  for (const p of parts) {
+    const cost = p.text.length + 80; // the heading and the space around it
+    if (page.length && used + cost > room) { out.push(page); page = []; used = 0; }
+    page.push(p);
+    used += cost;
+  }
+  if (page.length) out.push(page);
+  return out;
+}
+
 /** The book's name: "Maya's Days" until they turn two, then "Maya's Years". */
 export function bookName(child: Pick<Child, "name" | "birth" | "expecting">, on: string): string {
   return `${child.name}'s ${!child.expecting && ageBetween(child.birth, on).years >= 2 ? "Years" : "Days"}`;
@@ -117,13 +133,14 @@ export interface BookPrefs {
   excluded?: string[]; // posts you took out of the book
   personId?: string; // only posts with this family member (a "Grandma book")
   siblings?: string[]; // brothers and sisters in the same book (their ids)
+  pregnancy?: boolean; // the pregnancy (everything before the birth) is in the book: yes unless turned off
 }
 
 /**
- * The memories a book is made of, as you set it up: within the dates, without the posts you took out, and (for a book about someone) only the
- * posts they are tagged in.
+ * The memories a book is made of, as you set it up: within the dates, without the posts you took out, without the pregnancy if it was turned off
+ * (`births`: each child's birthday), and (for a book about someone) only the posts they are tagged in.
  */
-export function selectForBook(memories: Memory[], prefs: BookPrefs, tags: Tag[] = []): Memory[] {
+export function selectForBook(memories: Memory[], prefs: BookPrefs, tags: Tag[] = [], births: Record<string, string> = {}): Memory[] {
   const excluded = new Set(prefs.excluded ?? []);
   const personTags = prefs.personId
     ? new Set([`tag-person-${prefs.personId}`, ...tags.filter((t) => t.relatedFamilyMemberId === prefs.personId).map((t) => t.id)])
@@ -131,6 +148,7 @@ export function selectForBook(memories: Memory[], prefs: BookPrefs, tags: Tag[] 
   return memories.filter(
     (m) =>
       !excluded.has(m.id) &&
+      (prefs.pregnancy !== false || !births[m.childId] || m.date >= births[m.childId]) &&
       (!prefs.from || m.date >= prefs.from) &&
       (!prefs.to || m.date <= prefs.to) &&
       (!personTags || m.tagIds.some((x) => personTags.has(x))),
@@ -221,6 +239,7 @@ export type BookPage = PageBase &
     | { kind: "cover"; photo?: string } // their profile picture, else the first picture of them
     | { kind: "birth"; childId: string; details: BirthDetails; story?: Memory; photo?: Memory; storyText?: string; photoUri?: string }
     | { kind: "classic"; entry: ClassicEntry } // a filled-in page from Classics (teeth, food, the first haircut…)
+    | { kind: "birthStory"; childId: string; parts: { label: string; text: string }[]; part: number } // the whole birth story, a few parts a page
     | { kind: "family"; people: Relative[]; part: number }
     | { kind: "year"; year: number } // opens a new year of life ("Year two")
     | { kind: "picture"; memory: Memory; photos: string[]; birthday: number; notes?: Memory[] } // notes: a few short words sharing the page
@@ -461,6 +480,9 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
       const photoUri = (photo && picturesOf(photo)[0]) || (story && picturesOf(story)[0]) || bc?.photos.photo?.find((x) => x.uri)?.uri;
       const storyText = story?.description?.trim() || v.story?.trim() || undefined;
       pages.push({ key: `birth-${kid.id}`, kind: "birth", childId: kid.id, details, story, photo, ...(storyText ? { storyText } : {}), ...(photoUri ? { photoUri } : {}) });
+      // the whole birth story, when it was told: as many parts to a page as fit
+      const told = BIRTH_STORY_PARTS.map((p) => ({ label: p.label, text: v[p.id]?.trim() ?? "" })).filter((p) => p.text);
+      storyPages(told, size).forEach((parts, part) => pages.push({ key: `birthstory-${kid.id}-${part}`, kind: "birthStory", childId: kid.id, parts, part }));
     }
     const fam = opts.family ?? [];
     const per = peoplePerPage(size);

@@ -5,14 +5,16 @@ import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { byMoment } from "../lib/display";
 import { formatDate, todayISO } from "../lib/date";
-import { weekOn } from "../lib/pregnancy";
+import { pregnancyLastDay, weekOn } from "../lib/pregnancy";
 import {
-  CRAVING_IDEAS, CRAVING_NOTE, CRAVING_SOURCE, FOODS_TO_AVOID_URL, LEGACY_SOURCE, OTHER_SYMPTOM_NOTE, SYMPTOMS, SYMPTOM_DISCLAIMER, SYMPTOM_SOURCE,
-  SymptomGuide, legacyIsCraving, symptomForTitle,
+  CRAVING_IDEAS, CRAVING_NOTE, CRAVING_SOURCE, FOODS_TO_AVOID_URL, LEGACY_SOURCE, SYMPTOMS, SYMPTOM_SOURCE,
+  SymptomGuide, legacyIsCraving, otherSymptomNote, symptomDisclaimer, symptomForTitle,
 } from "../lib/symptoms";
 import { TYPE } from "../theme";
 import { Btn, DateField, Input, Seg, Sheet } from "./ui";
 import { Icon } from "./Icon";
+import { localEmergency } from "../lib/region";
+import { callLine } from "../lib/emergency";
 
 export type NoteKind = "symptom" | "craving";
 
@@ -35,6 +37,7 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
   const memories = useStore((s) => s.memories);
   const [open, setOpen] = useState<{ title: string; edit?: Memory } | null>(null);
   const viewOnly = child.role === "viewer";
+  const past = !child.expecting; // looking back after the birth: no tips or warnings, it's over
   const notes = useMemo(() => memories.filter((m) => m.childId === child.id && kindOf(m) === kind).sort((a, b) => byMoment(b, a)), [memories, child.id, kind]);
   const symptom = kind === "symptom";
   const chip = (label: string, emoji: string | undefined, onPress: () => void, accent = false) => (
@@ -48,7 +51,7 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
   return (
     <View>
       <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>
-        {symptom ? "The hard parts too, and how long they lasted. Tap one for a few tips that can help." : "The midnight snacks and the smells you couldn't stand, to laugh about later."}
+        {symptom ? (past ? "The hard parts too, and how long they lasted." : "The hard parts too, and how long they lasted. Tap one for a few tips that can help.") : "The midnight snacks and the smells you couldn't stand, to laugh about later."}
       </Text>
       {!viewOnly ? (
         <>
@@ -60,7 +63,7 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
           </View>
         </>
       ) : null}
-      {!symptom ? (
+      {!symptom && !past ? (
         <Pressable onPress={() => Linking.openURL(FOODS_TO_AVOID_URL)} style={{ marginTop: 12 }}>
           <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{CRAVING_NOTE} <Text style={{ color: t.accentDeep, fontWeight: "700" }}>Foods to avoid (NHS)</Text></Text>
         </Pressable>
@@ -92,6 +95,7 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
 /** The tips for a symptom: what can help, when to call, when to get help straight away, the NHS page, and the disclaimer. */
 function Tips({ guide }: { guide: SymptomGuide }) {
   const t = useTheme();
+  const emergency = useMemo(localEmergency, []); // the number for where this phone is: 999 in the UK, 101 (Magen David Adom) in Israel…
   const list = (items: string[], color: string) => items.map((x) => (
     <View key={x} style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
       <Text style={{ color, fontWeight: "700" }}>•</Text>
@@ -112,13 +116,13 @@ function Tips({ guide }: { guide: SymptomGuide }) {
         <View style={{ borderLeftWidth: 3, borderLeftColor: t.danger, paddingLeft: 10, marginTop: 12 }}>
           <Text style={[TYPE.titleSmall, { color: t.danger }]}>Get help straight away if you have</Text>
           {list(guide.urgentIf, t.danger)}
-          <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 4 }]}>Call your maternity unit, midwife or doctor. In an emergency, call your local emergency number.</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 4 }]}>Call your maternity unit, midwife or doctor. In an emergency, {callLine(emergency)}.</Text>
         </View>
       ) : null}
       <Pressable onPress={() => Linking.openURL(guide.source)} hitSlop={6} style={{ marginTop: 12 }}>
         <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Read more on the NHS website</Text>
       </Pressable>
-      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10, fontSize: 11.5, lineHeight: 16 }]}>{SYMPTOM_DISCLAIMER}</Text>
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10, fontSize: 11.5, lineHeight: 16 }]}>{symptomDisclaimer(emergency)}</Text>
     </View>
   );
 }
@@ -128,7 +132,8 @@ function NoteSheet({ child, kind, start, edit, onClose }: { child: Child; kind: 
   const t = useTheme();
   const saveMemory = useStore((s) => s.saveMemory);
   const removeMemory = useStore((s) => s.removeMemory);
-  const today = todayISO();
+  const today = pregnancyLastDay(child, todayISO());
+  const past = !child.expecting;
   const symptom = kind === "symptom";
   const [title, setTitle] = useState(edit?.title ?? start);
   const [text, setText] = useState(edit?.description ?? "");
@@ -136,8 +141,8 @@ function NoteSheet({ child, kind, start, edit, onClose }: { child: Child; kind: 
   const [ongoing, setOngoing] = useState<"on" | "ended">(edit ? (edit.endDate ? "ended" : "on") : "on");
   const [to, setTo] = useState(edit?.endDate ?? today);
   const [showTips, setShowTips] = useState(!edit);
-  const guide = symptom ? symptomForTitle(title) : undefined;
-  const custom = symptom && !!title.trim() && !guide;
+  const guide = symptom && !past ? symptomForTitle(title) : undefined; // looking back: no tips
+  const custom = symptom && !past && !!title.trim() && !guide;
 
   const save = () => {
     const end = symptom && ongoing === "ended" ? (to < from ? from : to) : undefined;
@@ -186,7 +191,7 @@ function NoteSheet({ child, kind, start, edit, onClose }: { child: Child; kind: 
       ) : null}
       {custom ? (
         <View style={{ backgroundColor: t.bg2, borderRadius: 16, padding: 14, marginTop: 14 }}>
-          <Text style={[TYPE.bodySmall, { color: t.ink2, lineHeight: 19 }]}>{OTHER_SYMPTOM_NOTE}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink2, lineHeight: 19 }]}>{otherSymptomNote(localEmergency())}</Text>
         </View>
       ) : null}
 

@@ -85,7 +85,7 @@ The backup in Settings uses the same Google setup, plus two things in the same G
 
 1. **APIs & Services → Library → Google Drive API → Enable.**
 2. **Google Auth Platform → Data access → Add or remove scopes:** add `.../auth/drive.file` and save. This scope only lets the app see the
-   files it creates (the "4D Ages backup" folder), nothing else in the user's Drive, so Google doesn't require a review for it.
+   file it creates ("4D Ages backup.zip"), nothing else in the user's Drive, so Google doesn't require a review for it.
 
 If the app's OAuth consent screen is still in **Testing**, only the test users listed there can connect Drive. Publish it (**Audience → Publish
 app**) to let anyone use it.

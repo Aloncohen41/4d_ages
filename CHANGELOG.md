@@ -2,6 +2,27 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.0.9
+
+**Exports fixed**
+- Saving or sharing the PDF book works again. The file was being handed on before it had finished copying, so the save dialog and WhatsApp received a file that wasn't there.
+- The same problem made created videos come out black and 0 seconds long. Videos now play and share properly.
+- Names with symbols such as # or % no longer break the exported file.
+
+**The birth story**
+- "Welcome to the world" has a new "Tell us the whole birth story" option: twelve parts, from how it all started to a note for your little one. Answer as many as you like.
+- The story is kept on the Birth story page in Classics, and has its own pages in the book after the day they were born.
+- Confetti when the baby arrives and when the story is told.
+
+**Pregnancy**
+- Children who are already born (older profiles too) can now tell their pregnancy from their profile: milestones, symptoms, cravings, scans and bump photos, dated before the birth. No tips or warnings, since it's in the past.
+- The book has a tick box to include or leave out the pregnancy.
+- The emergency number in the symptom warnings follows the phone's country, for example 101 (Magen David Adom) in Israel, 999 in the UK and 911 in the US.
+
+**Backup to Google Drive**
+- The backup is now one small file, "4D Ages backup.zip", replaced each time. Photos and videos are no longer copied to Drive, because they're already kept in your account and come back with the books on restore.
+- The folder of photo copies made by 1.0.8 is moved to the Drive bin automatically, where it can still be recovered for 30 days.
+
 ## 1.0.8
 
 **Saving and sharing the book**

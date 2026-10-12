@@ -82,6 +82,10 @@ export interface State {
   shareOpen: boolean;
   /** A short in-app message at the top of the screen (see Toast.tsx), instead of a system pop-up. Not saved. */
   toast?: Toast;
+  /** When confetti was last asked for (see Confetti.tsx). Not saved. */
+  celebrateAt?: number;
+  /** The child whose birth story is being told (see BirthStory.tsx). Not saved. */
+  birthStoryFor?: string;
   /** Backing up to Google Drive (see driveBackup.ts): whether it runs by itself after changes, and how the last one went. Kept on this phone. */
   driveBackup: DriveBackupPrefs;
   pendingRecap: { childId: string; year: number } | null;
@@ -131,6 +135,9 @@ export interface State {
   setShareOpen: (open: boolean) => void;
   showToast: (toast: Omit<Toast, "id"> | null) => void;
   setDriveBackup: (patch: Partial<DriveBackupPrefs>) => void;
+  /** Confetti over the whole app. */
+  celebrate: () => void;
+  setBirthStoryFor: (childId: string | undefined) => void;
   setPendingRecap: (v: { childId: string; year: number } | null) => void;
   setEntrySheet: (v: EntrySheetState | null) => void;
   setTagSheet: (v: { keys: string[]; forHome?: boolean } | null) => void;
@@ -379,6 +386,8 @@ export const useStore = create<State>()(
       setNotif: (patch) => set((s) => ({ notif: { ...s.notif, ...patch } })),
       setSync: (patch) => set((s) => ({ sync: { ...s.sync, ...patch } })),
       setShareOpen: (shareOpen) => set({ shareOpen }),
+      celebrate: () => set({ celebrateAt: Date.now() }),
+      setBirthStoryFor: (birthStoryFor) => set({ birthStoryFor }),
       setDriveBackup: (patch) => set((s) => ({ driveBackup: { ...s.driveBackup, ...patch } })),
       showToast: (toast) => set({ toast: toast ? { ...toast, id: Date.now() } : undefined }),
       setPendingRecap: (pendingRecap) => set({ pendingRecap }),

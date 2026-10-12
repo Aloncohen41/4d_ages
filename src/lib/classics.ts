@@ -57,6 +57,25 @@ const FIRSTS = [
   "Haircut", "Swim", "Holiday", "Wave", "Clap", "Kiss", "Drew a picture", "Rode a bike", "Day at nursery",
 ].map((label) => ({ id: label.toLowerCase().replace(/[^a-z]+/g, "-"), label }));
 
+/**
+ * The whole birth story, a part at a time, asked the way a friend who can't wait to hear it would. Each part is a field of the Birth story page,
+ * so it can be added to later from Classics, and each part that's filled in gets its own place in the book, after the day they were born.
+ */
+export const BIRTH_STORY_PARTS: { id: string; label: string; prompt: string }[] = [
+  { id: "started", label: "How it all started", prompt: "When did you know it was happening? Where were you, what were you doing, and what was the first sign: a twinge, your waters, a planned induction or caesarean?" },
+  { id: "gettingThere", label: "Getting there", prompt: "Who did you call first? How did you get to the hospital or birth centre, or did they come to you? Was there a mad dash?" },
+  { id: "labourStory", label: "Labour", prompt: "How long did it go on, and how did it feel? What helped you through: breathing, music, a warm bath, walking, gas and air, an epidural?" },
+  { id: "partner", label: "Your birth partner", prompt: "Who was by your side, and what did they do? The lovely bits, the funny bits, and anything you'll never let them forget." },
+  { id: "team", label: "The people who looked after you", prompt: "The midwives, doctors or doula. Anyone you'll always remember, and what they said or did?" },
+  { id: "arrival", label: "The moment they arrived", prompt: "How did your baby come into the world? What do you remember most about those last minutes?" },
+  { id: "firstMeeting", label: "Meeting for the first time", prompt: "The first cry, the first cuddle, the first look at that little face. What went through your mind?" },
+  { id: "firstHours", label: "The first hours", prompt: "Skin to skin, the first feed, the first phone calls, and who came to meet them." },
+  { id: "unexpected", label: "Things that didn't go to plan", prompt: "Anything that surprised you or went differently. Only if you'd like to share it." },
+  { id: "funny", label: "The funny moments", prompt: "Every birth has at least one!" },
+  { id: "home", label: "Going home", prompt: "The first car ride, the first night, and brothers, sisters or pets meeting the baby." },
+  { id: "toBaby", label: "A note to your little one", prompt: "What would you like them to know about the day they were born?" },
+];
+
 export const CLASSICS: ClassicTemplate[] = [
   {
     id: "birth", title: "Birth story", desc: "When, where, who was there, and how it happened", icon: "birthday",
@@ -70,6 +89,7 @@ export const CLASSICS: ClassicTemplate[] = [
       { id: "length", label: "Length", kind: "text", placeholder: "Example: 50 cm" },
       { id: "who", label: "Who was there", kind: "text", placeholder: "Example: Mummy, Daddy and the midwife" },
       { id: "story", label: "The story", kind: "long", placeholder: "Example: You arrived just as the sun came up…" },
+      ...BIRTH_STORY_PARTS.map((p) => ({ id: p.id, label: p.label, kind: "long" as const, placeholder: p.prompt })),
       { id: "photo", label: "Photo", kind: "photo" },
     ],
   },

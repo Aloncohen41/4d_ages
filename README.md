@@ -32,7 +32,8 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - Symptoms (with how long they lasted) and cravings. Common symptoms come with tips based on the NHS pregnancy pages; the tips are never saved into the book.
 - Ultrasound pictures and scan measurements.
 - A weekly bump photo with tips for consistent shots. The photos play back as a video of the bump growing.
-- "Welcome to the world" sets the birth date and turns the pregnancy into the child's own profile.
+- "Welcome to the world" sets the birth date and turns the pregnancy into the child's own profile, with a guided birth story that gets its own pages in the book.
+- A child who is already born can have their pregnancy added afterwards, and the book can include or leave out the pregnancy.
 
 **Keepsake book and videos**
 - A PDF book in date order ("Maya's Days", then "Maya's Years" from age two), with chapters by age and eight themes.
@@ -53,7 +54,7 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - App lock with fingerprint or face unlock, and light, dark or system theme.
 - Dates are always written day first.
 - More than one account can be used on the same phone; each account's books are kept separately.
-- Optional backup to the user's own Google Drive, updated after each change, with restore.
+- Optional backup to the user's own Google Drive: one small file with the books, updated after each change, with restore. Photos come back from the account.
 - The app checks for a newer version when it opens.
 
 ## How it works

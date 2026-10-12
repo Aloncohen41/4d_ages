@@ -1,23 +1,25 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin, isSuccessResponse } from "@react-native-google-signin/google-signin";
 import * as LegacyFS from "expo-file-system/legacy";
-import { Directory, File, Paths } from "expo-file-system";
+import { File, Paths } from "expo-file-system";
 import { APP_NAME, APP_VERSION } from "../brand";
 import { STORE_VERSION, useStore } from "./store";
 import { migrateStored } from "./migrate";
-import { BACKUP_FILE, BACKUP_FOLDER, baseName, buildBackup, filesIn, parseBackup, prepareRestore, remapFiles } from "./backupData";
+import { BACKUP_FILE, BACKUP_ZIP, LEGACY_FOLDER, buildBackup, prepareRestore, unzipBackup, zipBackup } from "./backupData";
 import { googleReady } from "./supabase";
+import { syncAll } from "./sync";
 
 /*
- * Backing up to Google Drive, and restoring from it. The backup goes in a "4D Ages backup" folder in the parent's own Drive: one data file,
- * plus each photo and video uploaded once. The app can only see the files it made there (Google's "drive.file" access), nothing else in Drive.
+ * Backing up to Google Drive, and restoring from it. The backup is one file, "4D Ages backup.zip", in the parent's own Drive, replaced each
+ * time: the books, compressed. Photos and videos aren't copied into Drive (they're kept in the account already, see backupData.ts). The app
+ * can only see the files it made in Drive (Google's "drive.file" access), nothing else there.
  */
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const API = "https://www.googleapis.com/drive/v3";
 const UPLOAD = "https://www.googleapis.com/upload/drive/v3";
-/** Which Drive file holds each of this phone's files (by file name), so each is uploaded once. */
-const UPLOADED_KEY = "4d-ages-drive-files";
+/** Set once the 1.0.8 backup folder (separate photo files) has been moved to the Drive bin. */
+const LEGACY_CLEARED_KEY = "4d-ages-drive-legacy-cleared";
 
 export class NeedsGoogle extends Error {
   constructor() {
@@ -61,48 +63,26 @@ async function api<T>(accessToken: string, path: string, init: RequestInit = {})
 
 const q = (s: string) => encodeURIComponent(s);
 
-/** The backup folder (made the first time). */
-async function folderId(accessToken: string): Promise<string> {
-  const found = await api<{ files: { id: string }[] }>(accessToken, `/files?q=${q(`name='${BACKUP_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)}&fields=files(id)&spaces=drive`);
-  if (found.files[0]) return found.files[0].id;
-  const made = await api<{ id: string }>(accessToken, "/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: BACKUP_FOLDER, mimeType: "application/vnd.google-apps.folder" }) });
-  return made.id;
+/** The app's backup file in Drive (the newest, if there were ever two), or undefined. */
+async function findZip(accessToken: string): Promise<{ id: string; modifiedTime: string } | undefined> {
+  const res = await api<{ files: { id: string; modifiedTime: string }[] }>(accessToken, `/files?q=${q(`name='${BACKUP_ZIP}' and trashed=false`)}&fields=files(id,modifiedTime)&orderBy=modifiedTime desc&spaces=drive`);
+  return res.files[0];
 }
 
-/** Every file in the backup folder, by name. */
-async function listFolder(accessToken: string, folder: string): Promise<Map<string, { id: string; modifiedTime: string }>> {
-  const out = new Map<string, { id: string; modifiedTime: string }>();
-  let page = "";
-  do {
-    const res = await api<{ files: { id: string; name: string; modifiedTime: string }[]; nextPageToken?: string }>(accessToken,
-      `/files?q=${q(`'${folder}' in parents and trashed=false`)}&fields=nextPageToken,files(id,name,modifiedTime)&pageSize=1000&spaces=drive${page ? `&pageToken=${page}` : ""}`);
-    for (const f of res.files) if (!out.has(f.name) || out.get(f.name)!.modifiedTime < f.modifiedTime) out.set(f.name, f);
-    page = res.nextPageToken ?? "";
-  } while (page);
-  return out;
+/** 1.0.8 kept a folder of separate files: moved to the Drive bin (recoverable there for 30 days) once the zip is safely saved. */
+async function clearLegacy(accessToken: string) {
+  if (await AsyncStorage.getItem(LEGACY_CLEARED_KEY).catch(() => null)) return;
+  const res = await api<{ files: { id: string }[] }>(accessToken, `/files?q=${q(`name='${LEGACY_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)}&fields=files(id)&spaces=drive`);
+  for (const f of res.files) await api(accessToken, `/files/${f.id}?fields=id`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashed: true }) });
+  await AsyncStorage.setItem(LEGACY_CLEARED_KEY, "1");
+  await AsyncStorage.removeItem("4d-ages-drive-files");
 }
-
-/** Uploads one file from the phone into the folder (streamed from disk, so a long video never sits in memory). */
-async function uploadFile(accessToken: string, folder: string, uri: string, name: string, mimeType: string, existingId?: string): Promise<string> {
-  const id = existingId ?? (await api<{ id: string }>(accessToken, "/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, parents: [folder] }) })).id;
-  const res = await LegacyFS.uploadAsync(`${UPLOAD}/files/${id}?uploadType=media`, uri, {
-    httpMethod: "PATCH", uploadType: LegacyFS.FileSystemUploadType.BINARY_CONTENT, headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": mimeType },
-  });
-  if (res.status === 401) throw new NeedsGoogle();
-  if (res.status >= 300) throw new Error(`Google Drive didn't take ${name} (${res.status}).`);
-  return id;
-}
-
-const mimeOf = (name: string) => {
-  const ext = name.split(".").pop()?.toLowerCase() ?? "";
-  return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", heic: "image/heic", webp: "image/webp", mp4: "video/mp4", mov: "video/quicktime", m4a: "audio/mp4", aac: "audio/aac", mp3: "audio/mpeg" } as Record<string, string>)[ext] ?? "application/octet-stream";
-};
 
 let running: Promise<void> | null = null;
 
 /**
- * Backs up this account's books to Drive: the files not uploaded yet, then the data file. `interactive` when the parent tapped it (they may be
- * asked to pick an account and allow Drive); the automatic backup never asks and just records that Drive needs connecting again.
+ * Backs up this account's books to Drive, replacing the last backup. `interactive` when the parent tapped it (they may be asked to pick an
+ * account and allow Drive); the automatic backup never asks and just records that Drive needs connecting again.
  */
 export function backupNow(interactive: boolean, onProgress?: (text: string) => void): Promise<void> {
   if (running) return running;
@@ -111,27 +91,20 @@ export function backupNow(interactive: boolean, onProgress?: (text: string) => v
     try {
       const auth = await token(interactive);
       if (!auth) return; // the parent closed the account picker
-      onProgress?.("Opening your Drive…");
-      const folder = await folderId(auth.accessToken);
-      const st = useStore.getState() as unknown as Record<string, unknown>;
-      const backup = buildBackup(st, `${APP_NAME} ${APP_VERSION}`, STORE_VERSION, Date.now());
-      const uploaded: Record<string, string> = JSON.parse((await AsyncStorage.getItem(UPLOADED_KEY).catch(() => null)) ?? "{}");
-      const files = [...filesIn(backup.data)].filter((u) => new File(u).exists);
-      const todo = files.filter((u) => !uploaded[baseName(u)]);
-      let n = 0;
-      for (const u of todo) {
-        onProgress?.(`Uploading photos and videos: ${++n} of ${todo.length}`);
-        const name = baseName(u);
-        uploaded[name] = await uploadFile(auth.accessToken, folder, u, name, mimeOf(name));
-        await AsyncStorage.setItem(UPLOADED_KEY, JSON.stringify(uploaded)); // so an interrupted backup carries on where it stopped
-      }
-      onProgress?.("Saving the books…");
-      const dataFile = new File(Paths.cache, BACKUP_FILE);
-      if (dataFile.exists) dataFile.delete();
-      dataFile.write(JSON.stringify(backup));
-      const existing = (await listFolder(auth.accessToken, folder)).get(BACKUP_FILE)?.id;
-      await uploadFile(auth.accessToken, folder, dataFile.uri, BACKUP_FILE, "application/json", existing);
+      onProgress?.("Saving your books…");
+      const backup = buildBackup(useStore.getState() as unknown as Record<string, unknown>, `${APP_NAME} ${APP_VERSION}`, STORE_VERSION, Date.now());
+      const zip = new File(Paths.cache, BACKUP_ZIP);
+      if (zip.exists) zip.delete();
+      zip.write(zipBackup(backup));
+      const existing = await findZip(auth.accessToken);
+      const id = existing?.id ?? (await api<{ id: string }>(auth.accessToken, "/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: BACKUP_ZIP, mimeType: "application/zip" }) })).id;
+      const res = await LegacyFS.uploadAsync(`${UPLOAD}/files/${id}?uploadType=media`, zip.uri, {
+        httpMethod: "PATCH", uploadType: LegacyFS.FileSystemUploadType.BINARY_CONTENT, headers: { Authorization: `Bearer ${auth.accessToken}`, "Content-Type": "application/zip" },
+      });
+      if (res.status === 401) throw new NeedsGoogle();
+      if (res.status >= 300) throw new Error(`Google Drive didn't take the backup (${res.status}).`);
       set({ lastAt: Date.now(), account: auth.email, error: undefined });
+      await clearLegacy(auth.accessToken).catch(() => undefined); // tidying up never fails a backup
     } catch (e) {
       if (e instanceof NeedsGoogle) set({ error: "needs-google" });
       else set({ error: e instanceof Error ? e.message : String(e) });
@@ -143,58 +116,44 @@ export function backupNow(interactive: boolean, onProgress?: (text: string) => v
   return running;
 }
 
-/** When the backup on Drive was made, or null if there isn't one. Asks to connect Drive if needed (a tap). */
+/** The backup in Drive: the newest zip, or 1.0.8's data file if that's all there is. */
+async function readBackup(accessToken: string) {
+  let id = (await findZip(accessToken))?.id;
+  if (!id) {
+    const old = await api<{ files: { id: string }[] }>(accessToken, `/files?q=${q(`name='${BACKUP_FILE}' and trashed=false`)}&fields=files(id)&orderBy=modifiedTime desc&spaces=drive`);
+    id = old.files[0]?.id;
+  }
+  if (!id) return null;
+  const dest = new File(Paths.cache, "drive-restore.zip");
+  if (dest.exists) dest.delete();
+  const res = await LegacyFS.downloadAsync(`${API}/files/${id}?alt=media`, dest.uri, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (res.status === 401) throw new NeedsGoogle();
+  if (res.status >= 300) throw new Error(`Couldn't download the backup (${res.status}).`);
+  return unzipBackup(dest.bytesSync());
+}
+
+/** When the backup in Drive was made, or null if there isn't one. Asks to connect Drive if needed (a tap). */
 export async function findBackup(): Promise<{ savedAt: number; app: string; kids: number; memories: number; account: string } | null> {
   const auth = await token(true);
   if (!auth) return null;
-  const folder = await folderId(auth.accessToken);
-  const file = (await listFolder(auth.accessToken, folder)).get(BACKUP_FILE);
-  if (!file) return null;
-  const text = await fetch(`${API}/files/${file.id}?alt=media`, { headers: { Authorization: `Bearer ${auth.accessToken}` } }).then((r) => r.text());
-  const b = parseBackup(text);
+  const b = await readBackup(auth.accessToken);
+  if (!b) return null;
   return { savedAt: b.savedAt, app: b.app, kids: (b.data.kids as unknown[]).length, memories: Array.isArray(b.data.memories) ? (b.data.memories as unknown[]).length : 0, account: auth.email };
 }
 
 /**
- * Restores the books from the Drive backup onto this phone, replacing what's here: the data, and any photos and videos missing from the phone.
- * They then go back to the account as well (see prepareRestore).
+ * Restores the books from the Drive backup onto this phone, replacing what's here. They go back to the account too, and the photos and
+ * videos come down from the account as each book syncs (see prepareRestore and downloadMissing in sync.ts).
  */
 export async function restoreFromDrive(onProgress?: (text: string) => void): Promise<number> {
   const auth = await token(true);
   if (!auth) throw new Error("Restoring was cancelled.");
-  onProgress?.("Opening your Drive…");
-  const folder = await folderId(auth.accessToken);
-  const all = await listFolder(auth.accessToken, folder);
-  const file = all.get(BACKUP_FILE);
-  if (!file) throw new Error("There's no 4D Ages backup in this Google account's Drive yet.");
-  const text = await fetch(`${API}/files/${file.id}?alt=media`, { headers: { Authorization: `Bearer ${auth.accessToken}` } }).then((r) => r.text());
-  const backup = parseBackup(text);
-  const data = backup.storeVersion < STORE_VERSION ? migrateStored(backup.data as never, backup.storeVersion) as Record<string, unknown> : backup.data;
-
-  // the photos and videos: the ones not on this phone are downloaded
-  const dir = new Directory(Paths.document, "media");
-  if (!dir.exists) dir.create({ intermediates: true });
-  const wanted = [...filesIn(data)];
-  const local = new Map<string, string>();
-  let n = 0;
-  for (const u of wanted) {
-    const name = baseName(u);
-    onProgress?.(`Downloading photos and videos: ${++n} of ${wanted.length}`);
-    if (new File(u).exists) { local.set(u, u); continue; }
-    const dest = new File(dir, name);
-    if (!dest.exists) {
-      const onDrive = all.get(name);
-      if (!onDrive) continue; // never uploaded: the post keeps its words, without that picture
-      const res = await LegacyFS.downloadAsync(`${API}/files/${onDrive.id}?alt=media`, dest.uri, { headers: { Authorization: `Bearer ${auth.accessToken}` } });
-      if (res.status >= 300) continue;
-    }
-    local.set(u, dest.uri);
-  }
-  const restored = prepareRestore(remapFiles(data, (u) => local.get(u)));
+  onProgress?.("Downloading your backup…");
+  const backup = await readBackup(auth.accessToken);
+  if (!backup) throw new Error("There's no 4D Ages backup in this Google account's Drive yet.");
+  const data = backup.storeVersion < STORE_VERSION ? (migrateStored(backup.data as never, backup.storeVersion) as Record<string, unknown>) : backup.data;
+  const restored = prepareRestore(data);
   useStore.setState({ ...(restored as object), preview: false });
-  // what was just downloaded is already on Drive
-  const uploaded: Record<string, string> = JSON.parse((await AsyncStorage.getItem(UPLOADED_KEY).catch(() => null)) ?? "{}");
-  for (const u of local.values()) { const f = all.get(baseName(u)); if (f) uploaded[baseName(u)] = f.id; }
-  await AsyncStorage.setItem(UPLOADED_KEY, JSON.stringify(uploaded));
+  syncAll().catch(() => undefined); // back to the account, and the photos come down
   return (restored.kids as unknown[]).length;
 }

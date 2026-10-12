@@ -23,7 +23,7 @@ export async function shrinkImage(uri: string, max = 640, quality = 0.82): Promi
     const target = fitWithin(width, height, max);
     if (!target) return uri;
     const out = await manipulateAsync(uri, [{ resize: target }], { compress: quality, format: SaveFormat.JPEG });
-    const kept = persistFile(out.uri, "jpg");
+    const kept = await persistFile(out.uri, "jpg");
     if (kept !== out.uri) deleteFile(out.uri);
     return kept;
   } catch {

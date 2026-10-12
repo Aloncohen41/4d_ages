@@ -1,16 +1,38 @@
+import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { ACCOUNT_FIELDS } from "./accounts";
 
 /*
  * What a Google Drive backup holds, and how it is put back. Pure, for tests: driveBackup.ts does the uploading and downloading.
  *
- * The backup is one data file (the books: children, memories, family, classics, tags…) plus every photo, video and voice note it uses, each
- * uploaded once under its own file name. Restoring downloads the data file and any of those files the phone doesn't have, and points the
- * books at them.
+ * The backup is ONE file in the parent's Drive, "4D Ages backup.zip": the books (children, memories, family, classics, tags…), compressed. The
+ * photos and videos aren't copied into it: they are already kept in the account's private cloud storage (that's how the other parent sees
+ * them), and the originals stay in the phone's gallery. Restoring brings the books back, and the photos come back from the account as usual.
  */
 
 export const BACKUP_FORMAT = 1;
-export const BACKUP_FOLDER = "4D Ages backup";
+/** The backup file in Drive. */
+export const BACKUP_ZIP = "4D Ages backup.zip";
+/** Inside the zip. */
 export const BACKUP_FILE = "4d-ages-backup.json";
+/** Where 1.0.8 kept a backup (a folder of separate files); it's replaced by the zip and moved to the Drive bin. */
+export const LEGACY_FOLDER = "4D Ages backup";
+
+/** The backup as one compressed file. */
+export const zipBackup = (b: BackupFile): Uint8Array => zipSync({ [BACKUP_FILE]: strToU8(JSON.stringify(b)) }, { level: 9 });
+
+/** The backup inside a zip (or a plain data file from 1.0.8). */
+export function unzipBackup(bytes: Uint8Array): BackupFile {
+  let text: string;
+  try {
+    const files = unzipSync(bytes);
+    const inside = files[BACKUP_FILE];
+    if (!inside) throw new Error("no data");
+    text = strFromU8(inside);
+  } catch {
+    text = strFromU8(bytes); // not a zip: the data file itself
+  }
+  return parseBackup(text);
+}
 
 export interface BackupFile {
   format: number;
