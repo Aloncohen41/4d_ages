@@ -7,7 +7,7 @@
  * second app, and a different storage key hides every saved memory.
  */
 export const APP_NAME = "4D Ages";
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "1.1.1";
 export const TAGLINE = "A baby book that grows with them";
 /** The one line on the login page, set in the display face (see theme.ts). */
 export const LOGIN_TAGLINE = "Keepsake books for the ages.";
