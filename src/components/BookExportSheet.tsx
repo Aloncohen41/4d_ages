@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { BOOK_COLOURS, BOOK_STYLES, BookColour, BookSize, BookStyle, KIDS_THEMES, STYLE_LOOK, PET_THEMES } from "../lib/bookPages";
 import { BookDestination } from "../lib/pdf";
 import { useTheme } from "../lib/useTheme";
+import { onWeb } from "../lib/onWeb";
 import { TYPE } from "../theme";
 import { Btn, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
@@ -82,8 +83,18 @@ export function BookExportSheet({ themeLabel, size, pages, onExport, busy, progr
   return (
     <Sheet visible onClose={busy ? () => undefined : onClose} title="Export the book">
       <Text style={[TYPE.bodyMedium, { color: t.ink3, textAlign: "center" }]}>{themeLabel} · {size.label} · {pages} pages</Text>
-      <Btn label={busy === "save" ? "Saving your PDF…" : "Save PDF (phone or Drive)"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
-      <Btn label={busy === "share" ? "Building your PDF…" : "Share PDF (WhatsApp, email…)"} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
+      {onWeb ? (
+        <>
+          {/* the website: the browser's print window, where "Save as PDF" saves the book */}
+          <Btn label={busy ? "Opening the print window…" : "Save as PDF"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
+          <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 8 }]}>In the print window, choose Save as PDF as the printer. The pages are already the right size.</Text>
+        </>
+      ) : (
+        <>
+          <Btn label={busy === "save" ? "Saving your PDF…" : "Save PDF (phone or Drive)"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
+          <Btn label={busy === "share" ? "Building your PDF…" : "Share PDF (WhatsApp, email…)"} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
+        </>
+      )}
       {busy ? (
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
           <ActivityIndicator color={t.accent} />

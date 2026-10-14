@@ -15,6 +15,8 @@ import { FoundPlace } from "../lib/geocode";
 import { PET_HOME_ID, PLACES_ID, classicsFor, filledCount } from "../lib/classics";
 import { createJourneyVideo, saveVideoToGallery, type VideoFormat } from "../lib/videoExport";
 import { withFriendlyName } from "../lib/exportFiles";
+import { onWeb } from "../lib/onWeb";
+import { shareFile } from "../lib/webDownload";
 import { videoFileName } from "../lib/fileNames";
 import { fileExport } from "../lib/fileExport";
 import { THEMES, TYPE } from "../theme";
@@ -167,7 +169,7 @@ function JourneyVideoSheet({ child, places, onClose }: { child: Child; places: P
       ) : (
         <>
           <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>{child.name}'s adventures are ready.</Text>
-          <Btn label="Share" icon="share" onPress={() => { const fx = fileExport(); if (fx) fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, "")); }} style={{ marginTop: 14 }} />
+          <Btn label="Share" icon="share" onPress={() => { if (onWeb) { shareFile(uri, /\.webm$/i.test(uri) ? fileName.replace(/\.mp4$/, ".webm") : fileName, "video/mp4"); return; } const fx = fileExport(); if (fx) fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, "")); }} style={{ marginTop: 14 }} />
           <Btn label="Save to phone" icon="download" kind="line" onPress={async () => { try { await saveVideoToGallery(uri, fileName); Alert.alert("Saved", "It's in your phone's gallery."); } catch (e) { Alert.alert("Couldn't save it", e instanceof Error ? e.message : String(e)); } }} style={{ marginTop: 10 }} />
         </>
       )}

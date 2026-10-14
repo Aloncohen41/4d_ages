@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { readReminders } from "../src/lib/reminders";
 import { REMINDERS_ID } from "../src/lib/classics";
-import { Appearance } from "react-native";
+import { Appearance, Platform } from "react-native";
 import { Stack, router } from "expo-router";
 import * as Linking from "expo-linking";
-import * as Notifications from "expo-notifications";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import { Fraunces_600SemiBold_Italic } from "@expo-google-fonts/fraunces";
@@ -18,6 +17,8 @@ import { FamilyPhotoSync } from "../src/components/FamilyPhotoSync";
 import { DriveAutoBackup } from "../src/components/DriveAutoBackup";
 import { Toast } from "../src/components/Toast";
 import { Confetti } from "../src/components/Confetti";
+import { WebToast } from "../src/components/WebToast";
+import { AppColumn } from "../src/components/AppColumn";
 import { BirthdayConfetti } from "../src/components/BirthdayConfetti";
 import { BirthStoryHost } from "../src/components/BirthStory";
 import { NewPasswordAfterReset } from "../src/components/AccountSheets";
@@ -29,6 +30,7 @@ import { ThumbBackfill } from "../src/components/ThumbBackfill";
 import { BrandScreen } from "../src/components/BrandScreen";
 import { ICON_FONT } from "../src/components/Icon";
 import { configureNotifications, scheduleNotifications } from "../src/lib/notifications";
+import { clearNotificationTap, useNotificationTap } from "../src/lib/notificationTap";
 import { MILESTONE_CATALOG } from "../src/lib/types";
 import { milestonesLogged } from "../src/lib/selectors";
 import { reachedDefIds } from "../src/lib/development";
@@ -59,7 +61,7 @@ export default function RootLayout() {
   const appearance = useStore((s) => s.appearance);
   // the phone's own parts (date and time pickers, the status bar) follow the choice in Settings too
   useEffect(() => {
-    Appearance.setColorScheme(appearance === "system" ? "unspecified" : appearance);
+    if (Platform.OS !== "web") Appearance.setColorScheme(appearance === "system" ? "unspecified" : appearance); // a browser follows the page's own colours
   }, [appearance]);
   const kids = useStore((s) => s.kids);
   const notif = useStore((s) => s.notif);
@@ -116,7 +118,7 @@ export default function RootLayout() {
   // Tapping a birthday reminder opens that child's year in review; a milestone cheer or question opens their milestones.
   // Each tap is acted on ONCE: Android can hand the same tap back later (restoring the app from recents), and without this it would
   // pull you back to that notification's child every time you reopened the app.
-  const response = Notifications.useLastNotificationResponse();
+  const response = useNotificationTap();
   useEffect(() => {
     const d = response?.notification.request.content.data as { kind?: string; childId?: string; turning?: number } | undefined;
     const nid = response?.notification.request.identifier;
@@ -124,7 +126,7 @@ export default function RootLayout() {
     const st = useStore.getState();
     if (!st.kids.some((k) => k.id === d.childId)) return;
     resume.save({ handledNotification: nid });
-    (Notifications as unknown as { clearLastNotificationResponseAsync?: () => Promise<void> }).clearLastNotificationResponseAsync?.()?.catch(() => undefined);
+    clearNotificationTap();
     if (d.kind === "birthday") {
       st.setActive(d.childId);
       st.setPendingRecap({ childId: d.childId, year: d.turning ?? 1 });
@@ -156,6 +158,7 @@ export default function RootLayout() {
       <UpdatePrompt />
       {signedIn && hasKids ? <FamilyPhotoSync /> : null}
       {signedIn && hasKids ? <DriveAutoBackup /> : null}
+      <AppColumn>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={signedIn && hasKids}>
           <Stack.Screen name="(tabs)" />
@@ -180,6 +183,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth-callback" />
         <Stack.Screen name="join" />
       </Stack>
+      </AppColumn>
       {signedIn ? <ImportSheet /> : null}
       {signedIn ? <ShareSheet /> : null}
       <NewPasswordAfterReset />
@@ -192,6 +196,7 @@ export default function RootLayout() {
       {signedIn && hasKids ? <BirthStoryHost /> : null}
       <Toast />
       <Confetti />
+      <WebToast />
       {signedIn && hasKids ? <BirthdayConfetti /> : null}
     </SafeAreaProvider>
   );

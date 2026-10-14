@@ -38,3 +38,7 @@ jobs:
 
       - name: Tests
         run: npm test
+
+      # the website is built from the same code: it must always build too
+      - name: Website build
+        run: npm run build:web

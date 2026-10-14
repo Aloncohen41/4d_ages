@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, ToastAndroid, View } from "react-native";
+import { toast } from "../lib/toast";
+import { Pressable, Text, View } from "react-native";
 import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { Child } from "../lib/types";
@@ -34,7 +35,7 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
   const approve = () => {
     if (!src || !n) return;
     importFamily(child.id, marked);
-    ToastAndroid.show(`${n} ${n === 1 ? "person" : "people"} added to ${child.name}'s family`, ToastAndroid.SHORT);
+    toast(`${n} ${n === 1 ? "person" : "people"} added to ${child.name}'s family`);
     onClose();
   };
   const approveButton = <Btn label={n ? `Import ${n} ${n === 1 ? "person" : "people"}` : "Mark who to import"} onPress={approve} disabled={!n} />;

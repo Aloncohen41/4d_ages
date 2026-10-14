@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
+import { openDatePicker } from "../lib/datePicker";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { Child, Memory, MILESTONE_DEFS } from "../lib/types";
 import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -189,7 +189,7 @@ export function PregnancyMilestones({ child }: { child: Child }) {
     logMilestone({ childId: child.id, defId: def.id, title: def.label, emoji: def.emoji, date, tagIds: [], note: "", media: [] });
   };
   const pickDateFor = (m: Memory) =>
-    DateTimePickerAndroid.open({ value: parseISO(m.date), mode: "date", maximumDate: parseISO(today), onChange: (e, d) => { if (e.type === "set" && d) saveMemory({ ...m, id: m.id, date: toISO(d) }); } });
+    openDatePicker({ value: parseISO(m.date), mode: "date", maximumDate: parseISO(today), onChange: (e, d) => { if (e.type === "set" && d) saveMemory({ ...m, id: m.id, date: toISO(d) }); } });
 
   return (
     <View>

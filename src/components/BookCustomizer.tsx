@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
-import { WebView, WebViewMessageEvent } from "react-native-webview";
+import { WebFrame as WebView, WebFrameMessage as WebViewMessageEvent } from "./WebFrame";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BOOK_STYLES, BookColour, BookPlan, BookSize, BookStyle, STYLE_LOOK } from "../lib/bookPages";
 import { buildBookHtml } from "../lib/bookHtml";
@@ -114,6 +114,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
               snapToInterval={ITEM}
               decelerationRate="fast"
               contentOffset={{ x: at * ITEM, y: 0 }}
+              onLayout={() => strip.current?.scrollTo({ x: at * ITEM, animated: false })} // (the website doesn't take a starting offset)
               contentContainerStyle={{ paddingHorizontal: (width - ITEM) / 2, paddingVertical: 8 }}
               scrollEventThrottle={16}
               onScroll={Animated.event([{ nativeEvent: { contentOffset: { x } } }], {

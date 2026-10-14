@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { onWeb } from "../lib/onWeb";
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../lib/useTheme";
@@ -24,9 +25,11 @@ export function AboutCard() {
       <Image source={WORDMARKS[t.key]} style={{ width: 230, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
       <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13.5, marginTop: 2 }}>{TAGLINE}</Text>
       <Text style={{ color: t.ink4, fontSize: 12, marginTop: 4 }}>Version {APP_VERSION}</Text>
-      <Pressable onPress={check} hitSlop={8} accessibilityRole="button" style={{ marginTop: 4 }}>
-        <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{status || "Check for updates"}</Text>
-      </Pressable>
+      {!onWeb ? (
+        <Pressable onPress={check} hitSlop={8} accessibilityRole="button" style={{ marginTop: 4 }}>
+          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{status || "Check for updates"}</Text>
+        </Pressable>
+      ) : null}
       <Text style={{ color: t.ink3, fontSize: 12, lineHeight: 17, textAlign: "center", marginTop: 12 }}>
         Your photos and notes are private to your account and the people you invite. Milestone ages follow ZERO TO THREE's “Developmental Milestones by Age”.
       </Text>

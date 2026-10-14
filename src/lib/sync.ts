@@ -1,4 +1,4 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { fileBytes, fileExists, fileSize, localFilesReady, saveFromUrl } from "./localFiles";
 import { supabase } from "./supabase";
 import { State, useStore } from "./store";
 import { personTag, relationLabel, upsertTagIn } from "./tags";
@@ -44,11 +44,10 @@ const extOf = (uri: string) => (uri.split("?")[0].split(".").pop() || "bin").toL
 
 /** Upload a local file; returns its cloud path, or null if it's missing / too big. */
 async function upload(childId: string, key: string, uri: string): Promise<string | null> {
-  const f = new File(uri);
-  if (!f.exists || f.size > MAX_UPLOAD_BYTES) return null;
+  if (!fileExists(uri) || fileSize(uri) > MAX_UPLOAD_BYTES) return null;
   const ext = extOf(uri);
   const path = `${childId}/${key}.${ext}`;
-  const bytes = await f.bytes();
+  const bytes = await fileBytes(uri);
   const { error } = await client().storage.from(BUCKET).upload(path, bytes, { upsert: true, contentType: MIME[ext] || "application/octet-stream" });
   if (error) throw new Error(error.message);
   return path;
@@ -57,12 +56,7 @@ async function upload(childId: string, key: string, uri: string): Promise<string
 async function download(path: string, name: string): Promise<string> {
   const { data, error } = await client().storage.from(BUCKET).createSignedUrl(path, 3600);
   if (error || !data) throw new Error(error?.message || "Couldn't get a download link");
-  const dir = new Directory(Paths.document, "media");
-  if (!dir.exists) dir.create({ intermediates: true });
-  const dest = new File(dir, `${name}.${extOf(path)}`);
-  if (dest.exists) dest.delete();
-  const file = await File.downloadFileAsync(data.signedUrl, dest);
-  return file.uri;
+  return saveFromUrl(data.signedUrl, name, extOf(path));
 }
 
 const progress = (text?: string) => useStore.getState().setSync({ progress: text });
@@ -451,16 +445,17 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
 }
 
 async function downloadMissing(childId: string) {
+  await localFilesReady; // (the website reads its list of kept files first)
   const s = useStore.getState();
   const jobs: { memoryId: string; mediaId: string; path: string }[] = [];
   for (const m of s.memories) {
     if (m.childId !== childId) continue;
-    for (const x of m.media) if (x.path && !(x.uri && new File(x.uri).exists)) jobs.push({ memoryId: m.id, mediaId: x.id, path: x.path });
+    for (const x of m.media) if (x.path && !fileExists(x.uri)) jobs.push({ memoryId: m.id, mediaId: x.id, path: x.path });
   }
   const classicJobs: { id: string; field: string; mediaId: string; path: string }[] = [];
   for (const e of s.classics) {
     if (e.childId !== childId) continue;
-    for (const [field, list] of Object.entries(e.photos)) for (const x of list) if (x.path && !(x.uri && new File(x.uri).exists)) classicJobs.push({ id: e.id, field, mediaId: x.id, path: x.path });
+    for (const [field, list] of Object.entries(e.photos)) for (const x of list) if (x.path && !fileExists(x.uri)) classicJobs.push({ id: e.id, field, mediaId: x.id, path: x.path });
   }
   for (const j of classicJobs) {
     try {

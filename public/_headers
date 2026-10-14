@@ -1,0 +1,18 @@
+# Cloudflare Pages: how the website's files are served.
+
+# The site's helper (it serves the photos kept in the browser) must always be the newest.
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+
+# The app's code and pictures have their contents in their names, so they can be kept for a year.
+/_expo/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), geolocation=(self), microphone=(self)

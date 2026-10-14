@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { onWeb } from "../lib/onWeb";
 import { Pressable, Text, View } from "react-native";
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, useAudioRecorderState } from "expo-audio";
 import * as DocumentPicker from "expo-document-picker";
@@ -73,7 +74,7 @@ export function VoiceRecorderSheet({ onDone, onClose }: { onDone: (item: MediaIt
   const stop = async () => {
     await recorder.stop();
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-    if (recorder.uri) setRecorded(await persistFile(recorder.uri, "m4a"));
+    if (recorder.uri) setRecorded(await persistFile(recorder.uri, onWeb ? "webm" : "m4a")); // a browser records in its own format
   };
   const use = (uri: string) => {
     setRecorded(null); // handed over: not deleted on close

@@ -8,6 +8,20 @@ import { Theme } from "../theme";
 import { ageLong, ageShort, formatDate, todayISO } from "./date";
 import { MusicId, VideoTemplate, musicFile } from "./videoStyles";
 import { cardMs } from "./videoEvents";
+import { onWeb } from "./onWeb";
+import { cancelWebVideo, recordWebVideo, webVideoSupported } from "./webVideo";
+import { keepFile } from "./localFiles";
+
+/** The website records the video in the browser (see webVideo.ts) and keeps it like any other file. */
+async function onTheWeb(payload: Record<string, unknown>, onProgress: (p: number) => void): Promise<string> {
+  const blob = await recordWebVideo(payload, onProgress);
+  const url = URL.createObjectURL(blob);
+  try {
+    return await keepFile(url, blob.type.includes("mp4") ? "mp4" : "webm");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 interface NativeVideo {
   exportSlideshow(json: string): Promise<string>;
@@ -29,7 +43,7 @@ function native(): NativeVideo | null {
   return cached ?? null;
 }
 
-export const isVideoExportAvailable = () => native() !== null;
+export const isVideoExportAvailable = () => (onWeb ? webVideoSupported() : native() !== null);
 
 export type VideoFormat = "square" | "vertical";
 export type VideoQuality = "720" | "1080";
@@ -142,12 +156,13 @@ export async function createGrowVideo(
   onProgress: (p: number) => void
 ): Promise<string> {
   const mod = native();
-  if (!mod) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
+  if (!mod && !onWeb) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
   const usable = slides.filter((s) => !!s.uri || !!s.clip);
   if (!usable.length) throw new Error("There are no photos to put in a video yet.");
 
   const musicUri = opts.music ? (await musicFile(opts.music).catch(() => null)) ?? undefined : undefined; // no music rather than no video
   const payload = slideshowPayload(child, usable, theme, { ...opts, musicUri });
+  if (onWeb || !mod) return onTheWeb(payload as unknown as Record<string, unknown>, onProgress);
 
   const sub = mod.addListener("onProgress", (e) => onProgress(e.progress));
   try {
@@ -164,7 +179,7 @@ export async function createGrowVideo(
  */
 export async function createJourneyVideo(pet: Child, places: Place[], theme: Theme, format: VideoFormat, onProgress: (p: number) => void, memorial?: string): Promise<string> {
   const mod = native();
-  if (!mod) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
+  if (!mod && !onWeb) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
   const slides = journeySlides(places);
   if (slides.length < 1) throw new Error("Add a place or two first.");
   // loaded here, not at the top, so the rest of this file can be tested without the phone's libraries
@@ -186,6 +201,7 @@ export async function createJourneyVideo(pet: Child, places: Place[], theme: The
       ...(memorial ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accentSoft, age: "In loving memory", date: "", caption: memorial }] : []),
     ],
   };
+  if (onWeb || !mod) return onTheWeb(payload, onProgress);
   const sub = mod.addListener("onProgress", (e) => onProgress(e.progress));
   try {
     const path = await mod.exportSlideshow(JSON.stringify(payload));
@@ -196,6 +212,7 @@ export async function createJourneyVideo(pet: Child, places: Place[], theme: The
 }
 
 export function cancelGrowVideo() {
+  if (onWeb) return cancelWebVideo();
   native()?.cancel();
 }
 

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { onWeb } from "../lib/onWeb";
 import { Alert, AppState, Linking } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CURRENT_VERSION, Release, latestRelease, shouldOffer } from "../lib/updateCheck";
@@ -9,6 +10,7 @@ const RECHECK_MS = 6 * 60 * 60 * 1000;
 
 /** Offers a newer version (the latest GitHub release) when the app opens. Shows nothing otherwise. */
 export function UpdatePrompt() {
+  if (onWeb) return null; // the website is always the newest version
   useEffect(() => {
     let alive = true;
     let lastCheck = 0;

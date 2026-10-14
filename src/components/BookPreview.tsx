@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, Text, View, useWindowDimensions } from "react-native";
-import { WebView, WebViewMessageEvent } from "react-native-webview";
+import { WebFrame as WebView, WebFrameMessage as WebViewMessageEvent } from "./WebFrame";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BookPlan, BookSize, bookMetrics } from "../lib/bookPages";
 import { BookHtmlInput, buildBookHtml } from "../lib/bookHtml";

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { onWeb } from "../lib/onWeb";
 import { AppState, Modal, Text, View } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import { Image } from "expo-image";
@@ -14,6 +15,7 @@ export const RELOCK_AFTER_MS = 60 * 1000;
 
 /** Whether this phone can lock the app: it has a fingerprint, face or screen lock set up. */
 export async function canLock(): Promise<boolean> {
+  if (onWeb) return false; // the website: the browser and computer have their own locks
   try {
     const level = await LocalAuthentication.getEnrolledLevelAsync();
     return level !== LocalAuthentication.SecurityLevel.NONE;
@@ -37,6 +39,7 @@ export async function unlock(reason = `Unlock ${APP_NAME}`): Promise<boolean> {
  * and when you come back to it after a minute away. Nothing of the book is shown behind the cover.
  */
 export function AppLock() {
+  if (onWeb) return null;
   const t = useTheme();
   const enabled = useStore((s) => s.appLock);
   const hydrated = useStore((s) => s.hydrated);

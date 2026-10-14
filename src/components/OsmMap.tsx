@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { View } from "react-native";
-import { WebView } from "react-native-webview";
+import { WebFrame as WebView } from "./WebFrame";
 import { useTheme } from "../lib/useTheme";
 
 export interface MapPin { id: string; lat: number; lon: number; label: string }

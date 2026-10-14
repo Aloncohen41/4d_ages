@@ -143,6 +143,6 @@ ok("there is a wordmark for every child theme, the same size as the original (so
 ok("the logo follows the child's colour: every place that shows it picks the themed wordmark", ["src/components/Screen.tsx", "src/components/AboutCard.tsx"].every((f) => { const s = readFileSync(join(root, f), "utf8"); return /WORDMARKS\[t\.key\]/.test(s) && !/4d-ages-wordmark\.png/.test(s); }));
 // What the project ships: every file git tracks or would add (anything .gitignore covers, like local build output in android/ or .expo/, is left out).
 const shipped: string[] = require("node:child_process").execSync("git ls-files --cached --others --exclude-standard", { cwd: root, encoding: "utf8" }).split("\n").filter(Boolean);
-const strays = shipped.filter((f) => /\.(png|jpe?g|svg|webp|gif|ico)$/i.test(f) && !/^(assets|branding)\//.test(f) && f !== "docs/img/wordmark.png" && f !== "docs/img/share-card.png"); // the website's copy of the logo, and the card a share link shows
+const strays = shipped.filter((f) => /\.(png|jpe?g|svg|webp|gif|ico)$/i.test(f) && !/^(assets|branding)\//.test(f) && !/^public\/(icon-(192|512|maskable-512)|apple-touch-icon)\.png$/.test(f) && f !== "docs/img/wordmark.png" && f !== "docs/img/share-card.png"); // the website's copy of the logo, and the card a share link shows
 ok("no other image files anywhere in the project" + (strays.length ? " — found " + strays.join(", ") : ""), strays.length === 0);
 console.log(fails ? `${fails} FAILED` : "all branding tests passed");

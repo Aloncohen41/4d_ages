@@ -98,6 +98,17 @@
           "calendarPermission": "4D Ages adds your pet's vet, vaccine and treatment reminders to your calendar, when you ask it to."
         }
       ]
-    ]
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/icon.png",
+      "name": "4D Ages",
+      "shortName": "4D Ages",
+      "description": "Keepsake books for the ages: your child's photos, milestones and stories, made into books and videos.",
+      "themeColor": "#E8798F",
+      "backgroundColor": "#FEFBF6",
+      "lang": "en"
+    }
   }
 }

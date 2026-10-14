@@ -9,6 +9,7 @@ import { BookColour, BookStyle, BookSizeId, bookMetrics, planBook, sizeById } fr
 import { buildBookHtml, printSizes } from "./bookHtml";
 import { HeightUnit, WeightUnit } from "./growth";
 import type { ClassicEntry } from "./classics";
+import { onWeb } from "./onWeb";
 
 export { BOOK_SIZES, BOOK_STYLES } from "./bookPages";
 export { memoryHeading } from "./bookHtml";
@@ -81,6 +82,7 @@ const bookFileName = (i: BookInput) => albumFileName([i.child, ...(i.siblings ??
  * Returns where it went: "saved", "shared", or "cancelled" when no folder was picked.
  */
 export async function exportBook(i: BookInput, to: BookDestination = "share", onProgress?: (text: string) => void): Promise<"saved" | "shared" | "cancelled"> {
+  if (onWeb) return printOnWeb(i, onProgress);
   const fx = fileExport();
   if (fx && to === "save") {
     // the save dialog first (so nothing is built if you change your mind), then the PDF is copied into the file you chose
@@ -115,4 +117,32 @@ export async function exportBook(i: BookInput, to: BookDestination = "share", on
     await Sharing.shareAsync(uri, { mimeType: "application/pdf", dialogTitle: fileName.replace(/\.pdf$/, ""), UTI: "com.adobe.pdf" });
   }
   return "shared";
+}
+
+/**
+ * The website: the book opens in the browser's print window at its exact page size, where "Save as PDF" saves it (the file is named after the
+ * book). Pictures are read straight from where they are (this browser, or the account), at full quality.
+ */
+async function printOnWeb(i: BookInput, onProgress?: (text: string) => void): Promise<"saved"> {
+  const size = sizeById(i.size);
+  const plan = planBook(i.child, i.memories, size, { family: i.family, intro: i.intro, classics: i.classics, siblings: i.siblings, places: i.places, mapUri: i.mapUri, memorial: i.memorial, together: i.together });
+  onProgress?.("Opening the print window…");
+  const title = bookFileName(i).replace(/.pdf$/, "");
+  const html = buildBookHtml({ ...i, plan, size, image: (u) => u || null, mode: "print" }).replace("<head>", `<head><title>${title.replace(/</g, "")}</title>`);
+  const frame = document.createElement("iframe");
+  Object.assign(frame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
+  document.body.appendChild(frame);
+  const doc = frame.contentDocument!;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  // every picture loaded first, so none prints as an empty frame
+  await Promise.all([...doc.images].map((img) => (img.complete ? Promise.resolve() : new Promise((r) => { img.onload = img.onerror = () => r(undefined); }))));
+  const before = document.title;
+  document.title = title; // the browser names the PDF after the page
+  frame.contentWindow!.focus();
+  frame.contentWindow!.print();
+  document.title = before;
+  setTimeout(() => frame.remove(), 60_000);
+  return "saved";
 }

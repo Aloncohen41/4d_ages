@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin, isSuccessResponse } from "@react-native-google-signin/google-signin";
 import * as LegacyFS from "expo-file-system/legacy";
@@ -27,7 +28,7 @@ export class NeedsGoogle extends Error {
   }
 }
 
-export const driveAvailable = () => googleReady;
+export const driveAvailable = () => googleReady && Platform.OS !== "web"; // the website keeps everything in your account already
 
 /** A Drive access token. Asks the parent to pick an account and allow Drive only when `interactive` (a tap); in the background it never asks. */
 async function token(interactive: boolean): Promise<{ accessToken: string; email: string } | null> {

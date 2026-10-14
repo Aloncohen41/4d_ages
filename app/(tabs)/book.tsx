@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { isPet } from "../../src/lib/types";
+import { onWeb } from "../../src/lib/onWeb";
 import { PLACES_ID } from "../../src/lib/classics";
 import { readPlaces } from "../../src/lib/places";
 import { useWorldMap } from "../../src/lib/worldMap";
@@ -114,7 +115,7 @@ function Book() {
     setProgress("");
     try {
       const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, places, mapUri, memorial: memorialPage, together, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
-      if (done === "saved") setMsg("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
+      if (done === "saved") setMsg(onWeb ? "" : "Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
       if (done === "shared") setMsg("");
     } catch (e) {
       setMsg(e instanceof Error && e.message ? e.message : "Couldn't build the PDF. Try again.");

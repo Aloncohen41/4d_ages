@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Pressable, Text, ToastAndroid, View } from "react-native";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { openDatePicker } from "../lib/datePicker";
+import { toast } from "../lib/toast";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useShownChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { AREAS, BANDS, MILESTONE_CATALOG, MILESTONE_DEFS, Memory, MilestoneDef } from "../lib/types";
@@ -51,7 +52,6 @@ export function MilestoneChecklist() {
   const others = mine.filter((m) => !inChart.has(m.milestoneId ?? ""));
   const nameOf = (m: Memory) => [...MILESTONE_DEFS, ...custom].find((d) => d.id === m.milestoneId)?.label ?? m.title ?? "Milestone";
 
-  const toast = (msg: string) => ToastAndroid.show(msg, ToastAndroid.SHORT);
   const tick = (def: MilestoneDef, date: string) => {
     const problem = logMilestone({ childId: child.id, defId: def.id, title: def.label, emoji: def.emoji, date, tagIds: [], note: "", media: [] });
     if (problem) toast(problem);
@@ -60,7 +60,7 @@ export function MilestoneChecklist() {
   // ticking is instant and uses today's date; tap the date afterwards to change it
   const reach = (def: MilestoneDef) => tick(def, today);
   const pickDate = (current: string, onPick: (date: string) => void) =>
-    DateTimePickerAndroid.open({
+    openDatePicker({
       value: parseISO(current),
       mode: "date",
       minimumDate: parseISO(child.birth),

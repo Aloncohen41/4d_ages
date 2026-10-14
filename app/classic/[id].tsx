@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import { openDatePicker } from "../../src/lib/datePicker";
 import { Alert, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { Page } from "../../src/components/Page";
 import { Btn, DateField, Input, TimeField } from "../../src/components/ui";
 import { Icon } from "../../src/components/Icon";
@@ -16,7 +16,7 @@ import { TYPE } from "../../src/theme";
 
 /** Pick a date with the phone's calendar. */
 function pickDate(current: string | undefined, min: string, onSet: (d: string) => void) {
-  DateTimePickerAndroid.open({
+  openDatePicker({
     value: parseISO(current || todayISO()),
     mode: "date",
     minimumDate: parseISO(min),

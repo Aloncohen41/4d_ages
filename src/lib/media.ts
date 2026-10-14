@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
-import { Directory, File, Paths } from "expo-file-system";
+import { onWeb } from "./onWeb";
+import { keepFile, removeFile } from "./localFiles";
 import { Child, MediaItem, MediaKind, Memory } from "./types";
 import { dateFromFileName, exifToISO, todayISO } from "./date";
 import { readFileDate } from "./fileDate";
@@ -25,26 +26,9 @@ const rid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice
  * Copy a picked file into the app's private storage so it survives cache cleaning. The copy is finished before this returns: copying runs in
  * the background, and reading the file (its date, a video's thumbnail) or deleting the original before it ends leaves a missing or cut-off file.
  */
-export async function persistFile(uri: string, ext: string): Promise<string> {
-  try {
-    const dir = new Directory(Paths.document, "media");
-    if (!dir.exists) dir.create({ intermediates: true });
-    const dest = new File(dir, `${rid()}.${ext}`);
-    await new File(uri).copy(dest);
-    return dest.uri;
-  } catch {
-    return uri; // fall back to the original location
-  }
-}
+export const persistFile = (uri: string, ext: string): Promise<string> => keepFile(uri, ext);
 
-export function deleteFile(uri: string) {
-  try {
-    const f = new File(uri);
-    if (f.exists) f.delete();
-  } catch {
-    /* already gone */
-  }
-}
+export const deleteFile = (uri: string) => removeFile(uri);
 
 function extOf(name: string | null | undefined, uri: string, kind: MediaKind): string {
   const src = name || uri.split("?")[0];
@@ -85,10 +69,14 @@ export async function pickMedia(opts: { videos: boolean; multiple: boolean }): P
   return Promise.all(res.assets.map(async (a) => {
     const kind: MediaKind = a.type === "video" ? "video" : "photo";
     const ex = (a.exif || {}) as Record<string, unknown>;
+    // on the website the browser gives no EXIF, but it does say when the file was last changed (for a photo, usually when it was taken)
+    const modified = onWeb ? (a as unknown as { file?: { lastModified?: number } }).file?.lastModified : undefined;
+    const fromModified = modified ? new Date(modified).toISOString().slice(0, 10) : null;
     const found =
       exifToISO(String(ex.DateTimeOriginal ?? "")) ||
       exifToISO(String(ex.DateTime ?? "")) ||
-      dateFromFileName(a.fileName);
+      dateFromFileName(a.fileName) ||
+      (fromModified && fromModified <= todayISO() ? fromModified : null);
     const uri = await persistFile(a.uri, extOf(a.fileName, a.uri, kind));
     // the picker doesn't always pass the EXIF on, and videos have none: then the date is read from inside the file
     const fromFile = found ? null : readFileDate(uri, kind, todayISO());

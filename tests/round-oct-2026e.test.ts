@@ -17,7 +17,7 @@ let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : 
 const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
 
 // ---- the exports: every file copy is waited for
-const code = ["src/lib/exportFiles.ts", "src/lib/media.ts", "src/lib/pdf.ts", "src/components/VideoExportSheet.tsx", "src/components/Voice.tsx", "src/lib/resize.ts"].map(read).join("\n");
+const code = ["src/lib/exportFiles.ts", "src/lib/media.ts", "src/lib/localFiles.ts", "src/lib/pdf.ts", "src/components/VideoExportSheet.tsx", "src/components/Voice.tsx", "src/lib/resize.ts"].map(read).join("\n");
 ok("every file copy is waited for before the file is used or the original removed (the PDF and video bug)", !/(?<!await )new File\([^)]*\)\.copy\(|(?<!await )source\.copy\(/.test(code) && /await source\.copy\(dest\)/.test(code) && /await new File\(uri\)\.copy\(dest\)/.test(code));
 ok("…and every caller waits for the named file", /uri: await withFriendlyName\(uri, fileName\)/.test(read("src/lib/pdf.ts")) && /setUri\(await withFriendlyName\(out, fileName\)\)/.test(read("src/components/VideoExportSheet.tsx")) && /await persistFile\(a\.uri/.test(read("src/lib/media.ts")) && /await persistFile\(out\.uri, "jpg"\)/.test(read("src/lib/resize.ts")));
 ok("a copy that didn't finish whole is never handed on (the original is used instead)", /\(source\.size \?\? 0\) !== \(dest\.size \?\? -1\)\) return uri/.test(read("src/lib/exportFiles.ts")));
@@ -30,7 +30,7 @@ ok("the backup is one zip file, and it opens again exactly", BACKUP_ZIP === "4D 
 ok("1.0.8's plain data file can still be restored", unzipBackup(new TextEncoder().encode(JSON.stringify(buildBackup(state, "x", 6, 7)))).savedAt === 7);
 const drive = read("src/lib/driveBackup.ts");
 ok("photos and videos aren't uploaded to Drive again (they're in the account already), and the old folder of copies goes to the bin", !/uploadFile\(auth\.accessToken, folder, u/.test(drive) && /trashed: true/.test(drive) && /LEGACY_FOLDER/.test(drive));
-ok("after a restore the books sync, so their photos come back from the account", /syncAll\(\)\.catch/.test(drive) && /x\.path && !\(x\.uri && new File\(x\.uri\)\.exists\)/.test(read("src/lib/sync.ts")));
+ok("after a restore the books sync, so their photos come back from the account", /syncAll\(\)\.catch/.test(drive) && /x\.path && !fileExists\(x\.uri\)/.test(read("src/lib/sync.ts")));
 
 // ---- the emergency number
 ok("the emergency number follows the phone's country: 101 (Magen David Adom) in Israel, 999 in the UK, 911 in the US, 112 in Europe", emergencyFor("IL").number === "101" && /Magen David Adom/.test(emergencyFor("IL").service) && emergencyFor("GB").number === "999" && emergencyFor("US").number === "911" && emergencyFor("DE").number === "112" && emergencyFor(null, "he").number === "101" && emergencyFor(null, null).number === "112");

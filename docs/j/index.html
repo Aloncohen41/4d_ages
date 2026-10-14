@@ -26,6 +26,7 @@
     <p class="muted" style="text-align:center;margin:0">Your code</p>
     <div class="code" id="code">--------</div>
     <a class="btn solid" id="open" href="#">Open in 4D Ages</a>
+    <a class="btn line" id="web" href="#" hidden>Open it on the website</a>
     <a class="btn line" href="https://github.com/Aloncohen41/4d_ages/releases/latest">Don't have the app? Download it</a>
     <p class="muted" id="hint">After installing, tap "Open in 4D Ages" again, or open the app, choose "Join a partner's baby book" and type the code.</p>
   </div>
@@ -45,6 +46,8 @@
     open.href = android
       ? "intent://join?code=" + code + "#Intent;scheme=fourdages;package=com.alonc.fourdages;S.browser_fallback_url=" + encodeURIComponent(page + "&noapp=1") + ";end"
       : "fourdages://join?code=" + code;
+    // on the 4D Ages website itself: the book can be opened right here, in the browser
+    if (!/github\.io$/.test(location.hostname)) { var web = document.getElementById("web"); web.href = "/join?code=" + code; web.hidden = false; }
     if (/noapp=1/.test(location.search)) document.getElementById("hint").textContent = "The app isn't on this phone yet. Download it, then come back to this link and tap \"Open in 4D Ages\".";
   } else {
     codeEl.textContent = "No code";

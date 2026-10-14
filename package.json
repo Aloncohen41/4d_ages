@@ -20,10 +20,13 @@
     "check": "node scripts/check-setup.mjs",
     "prestart": "node scripts/check-setup.mjs",
     "preandroid": "node scripts/check-setup.mjs",
-    "preandroid:sync": "node scripts/check-setup.mjs"
+    "preandroid:sync": "node scripts/check-setup.mjs",
+    "web": "expo start --web",
+    "build:web": "node scripts/build-web.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo/metro-runtime": "~57.0.17",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "9.1.0",
@@ -66,6 +69,7 @@
     "react-native-screens": "~4.26.0",
     "react-native-tab-view": "^4.3.3",
     "react-native-url-polyfill": "^2.0.0",
+    "react-native-web": "^0.21.2",
     "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1",
     "typescript": "~6.0.3",

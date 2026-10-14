@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle, useWindowDimensions } from "react-native";
+import { openDatePicker } from "../lib/datePicker";
+import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle, useWindowDimensions , Platform } from "react-native";
 import { Image } from "expo-image";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useTheme } from "../lib/useTheme";
 import { useStore } from "../lib/store";
@@ -126,7 +126,8 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={[s.scrim, { backgroundColor: t.scrim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <KeyboardAvoidingView behavior="padding" style={{ maxHeight: "92%" }}>
+        {/* on a computer, a sheet is the app's width, in the middle (see AppColumn) */}
+        <KeyboardAvoidingView behavior="padding" style={{ maxHeight: "92%", width: "100%", maxWidth: Platform.OS === "web" ? 560 : undefined, alignSelf: "center" }}>
           <View style={[s.sheet, { backgroundColor: t.card }]}>
             <View style={{ alignSelf: "center", width: 32, height: 4, borderRadius: 2, marginTop: 12, marginBottom: 6, backgroundColor: withAlpha(t.ink2, 0.4) }} />
             <View style={s.sheetHead}>
@@ -148,7 +149,7 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
 export function DateField({ value, onChange, min, max }: { value: string; onChange: (v: string) => void; min?: string; max?: string }) {
   const t = useTheme();
   const open = () => {
-    DateTimePickerAndroid.open({
+    openDatePicker({
       value: parseISO(value),
       mode: "date",
       minimumDate: min ? parseISO(min) : undefined,
@@ -183,7 +184,7 @@ export function TimeField({ value, onChange }: { value?: string; onChange: (v?: 
       const [h, m] = value.split(":").map(Number);
       base.setHours(h, m, 0, 0);
     }
-    DateTimePickerAndroid.open({
+    openDatePicker({
       value: base,
       mode: "time",
       is24Hour: true,

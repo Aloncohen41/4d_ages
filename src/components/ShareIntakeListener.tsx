@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { ToastAndroid } from "react-native";
+import { toast } from "../lib/toast";
+import {  } from "react-native";
 import { useStore } from "../lib/store";
 import { ShareResult, hasInitialShare, isShareIntakeAvailable, listenForShares, readInitialShare } from "../lib/shareIntake";
 import { skippedMessage } from "../lib/sharedMedia";
@@ -18,7 +19,7 @@ export function ShareIntakeListener() {
     const arrived = (r: ShareResult) => {
       const cur = st().incoming;
       const all = [...(cur?.items ?? []), ...r.items];
-      if (r.skipped.length) ToastAndroid.show(skippedMessage(r.skipped), ToastAndroid.LONG);
+      if (r.skipped.length) toast(skippedMessage(r.skipped), true);
       const text = cur?.text ?? r.text;
       st().setIncoming(all.length ? { items: all, ...(text ? { text } : {}) } : null);
     };

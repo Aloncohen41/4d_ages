@@ -18,6 +18,8 @@ import {
   dimensions, estimateSeconds, isVideoExportAvailable, saveVideoToGallery, secondsPerPhoto, videoLength,
 } from "../lib/videoExport";
 import { ClipTrim } from "./ClipTrim";
+import { onWeb } from "../lib/onWeb";
+import { downloadFile, shareFile } from "../lib/webDownload";
 import { VideoStyleChoices } from "./VideoStyleChoices";
 import { useStore } from "../lib/store";
 import { MusicId, VideoTemplate, musicFor } from "../lib/videoStyles";
@@ -134,14 +136,18 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
     }
   };
 
+  // the website's video may be WebM (the browser's own kind), so its name ends to match
+  const webName = uri && /.webm$/i.test(uri) ? fileName.replace(/.mp4$/, ".webm") : fileName;
   const share = async () => {
     if (!uri) return;
+    if (onWeb) { if ((await shareFile(uri, webName, /.webm$/i.test(webName) ? "video/webm" : "video/mp4")) === "downloaded") setMsg("✓ Downloaded."); return; }
     const fx = fileExport(); // the share menu without waiting for an answer (see modules/file-export)
     if (fx) return fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, ""));
     if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "video/mp4", dialogTitle: fileName.replace(/\.mp4$/, "") });
   };
   const save = async () => {
     if (!uri) return;
+    if (onWeb) { downloadFile(uri, webName); setMsg("✓ Downloaded."); return; }
     try {
       await saveVideoToGallery(uri, fileName);
       setMsg(`✓ Saved to Movies / ${APP_NAME} on your phone.`);
@@ -263,7 +269,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
           <Preview uri={uri} />
           <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
             <Btn label="Share…" onPress={share} style={{ flex: 1 }} />
-            <Btn label="Save to phone" kind="line" onPress={save} style={{ flex: 1 }} />
+            <Btn label={onWeb ? "Download" : "Save to phone"} kind="line" onPress={save} style={{ flex: 1 }} />
           </View>
         </>
       ) : null}

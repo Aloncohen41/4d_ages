@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { openDatePicker } from "../lib/datePicker";
+import { toast } from "../lib/toast";
 import { earliestDate } from "./EntrySheet";
-import { ActivityIndicator, Alert, Pressable, Text, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { APP_NAME } from "../brand";
 import { uid, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -119,7 +120,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
     ]);
 
   const changeDate = (uri: string, current: string) =>
-    DateTimePickerAndroid.open({
+    openDatePicker({
       value: parseISO(current),
       mode: "date",
       minimumDate: parseISO(earliestDate(child.birth)),
@@ -154,7 +155,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
     addMemories(posts);
     setActive(child.id);
     setIncoming(null);
-    ToastAndroid.show(`Added ${posts.length === 1 ? "a post" : `${posts.length} posts`} to ${child.name}'s story. Tap the pencil on a post to tag people.`, ToastAndroid.LONG);
+    toast(`Added ${posts.length === 1 ? "a post" : `${posts.length} posts`} to ${child.name}'s story. Tap the pencil on a post to tag people.`, true);
     router.navigate("/");
   };
 
