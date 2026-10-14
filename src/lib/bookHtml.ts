@@ -1,5 +1,5 @@
 import { Child, Memory, MilestoneDef, Relative, Tag, isPet } from "./types";
-import { familyRows } from "./familyTree";
+import { treeLayout } from "./kinship";
 import { onMap, placesByYear, placesSummary } from "./places";
 import { petAge } from "./pets";
 import { indexTags, initialsOf, labelOfTag, displayName, relationLine } from "./tags";
@@ -368,7 +368,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
         return classicPage(p.entry, p, n);
       case "family": {
         if (p.tree) {
-          const rows = familyRows(p.people);
+          const L = treeLayout(p.people);
           const face = (r: Relative, big = false) => {
             const pic = r.photoUri ? i.image(r.photoUri) : null;
             return `<div class="node${big ? " me" : ""}"><div class="face" style="background:${wash(p)};color:${ink(p)};border-color:${big ? accent : "#fff"}">${pic ? `<img src="${esc(pic)}"/>` : esc(initialsOf(r.name || displayName(r)))}</div><b>${esc(displayName(r))}</b><span>${esc(relationLine(r))}</span></div>`;
@@ -376,14 +376,37 @@ export function buildBookHtml(i: BookHtmlInput): string {
           // the child in the middle of their own row, with their brothers, sisters, cousins and pets around them
           const coverPhoto = plan.pages[0]?.kind === "cover" ? plan.pages[0].photo : undefined;
           const me = { id: child.id, name: child.name, relation: "That's me!", ...(coverPhoto ? { photoUri: coverPhoto } : {}) } as Relative;
-          const half = Math.ceil(rows.same.length / 2);
-          const same = [...rows.same.slice(0, half).map((r) => face(r)), face(me, true), ...rows.same.slice(half).map((r) => face(r))];
-          const row = (nodes: string[], cls: string) => (nodes.length ? `<div class="gen ${cls}"><div class="nodes${nodes.length > 1 ? " linked" : ""}${nodes.length > 5 ? " many" : ""}">${nodes.join("")}</div></div>` : "");
-          const parts = [row(rows.grand.map((r) => face(r)), "grand"), row(rows.parent.map((r) => face(r)), "parent"), row(same, "same")].filter(Boolean);
-          return `<section class="page family tree-page tree-${style}">
+          // couples side by side, joined by a little heart
+          const group = (list: Relative[]) => {
+            const out: string[] = [];
+            for (let k = 0; k < list.length; k++) {
+              const a = list[k], b = list[k + 1];
+              if (b && (a.partnerId === b.id || b.partnerId === a.id)) { out.push(`<div class="pair">${face(a)}<i class="bond">♥</i>${face(b)}</div>`); k++; }
+              else out.push(face(a));
+            }
+            return out;
+          };
+          const count = (row: { left: Relative[]; mid: Relative[]; right: Relative[] }) => row.left.length + row.mid.length + row.right.length;
+          const rowsUsed = [L.great, L.grand, L.parent].filter((r) => count(r)).length + 1;
+          const widest = Math.max(...[L.great, L.grand, L.parent, L.same].flatMap((r) => [r.left.length, r.right.length]));
+          // smaller faces when a side is crowded or the tree is tall (great-grandparents too): it always fits on its page
+          const many = rowsUsed >= 4 || widest >= 3 || Math.max(count(L.great), count(L.grand), count(L.parent), count(L.same) + 1) > 5;
+          const tight = rowsUsed >= 4 && widest >= 3;
+          // a row: the first parent's side on the left, anyone not on a side in the middle, the second parent's on the right
+          const row = (r: { left: Relative[]; mid: Relative[]; right: Relative[] }, cls: string, centre: string[] = []) => {
+            const mid = [...group(r.mid.slice(0, Math.ceil(r.mid.length / 2))), ...centre, ...group(r.mid.slice(Math.ceil(r.mid.length / 2)))];
+            if (!r.left.length && !r.right.length && !mid.length) return "";
+            const side = (nodes: string[], at: string) => (nodes.length ? `<div class="nodes ${at}${nodes.length > 1 ? " linked" : ""}">${nodes.join("")}</div>` : `<div class="nodes ${at} empty"></div>`);
+            return `<div class="gen ${cls}${many ? " many" : ""}${tight ? " tight" : ""}">${L.sides ? `${side(group(r.left), "left")}${mid.length ? side(mid, "mid") : ""}${side(group(r.right), "right")}` : side([...group(r.left), ...mid, ...group(r.right)], "all")}</div>`;
+          };
+          const parts = [row(L.great, "great"), row(L.grand, "grand"), row(L.parent, "parent"), row(L.same, "same", [face(me, true)])].filter(Boolean);
+          const sideLabels = L.sides ? `<div class="side-labels" style="color:${ink(p)}"><span>${esc(L.sides[0])}</span><span>${esc(L.sides[1])}</span></div>` : "";
+          const rows = { other: L.other };
+          return `<section class="page family tree-page tree-${style}${rowsUsed >= 4 ? " tall" : ""}">
             ${corner(p, drawings ? drawings.family : "")}
             <p class="kicker" style="color:${ink(p)}">Your family tree</p>
             <h2>${esc(FAMILY_TITLES[style])}</h2>
+            ${sideLabels}
             <div class="tree" style="--line:${ink(p)}">${parts.join('<div class="stem"></div>')}</div>
             ${rows.other.length ? `<p class="others-label" style="color:${ink(p)}">And everyone else who loves you</p><div class="gen other"><div class="nodes">${rows.other.map((r) => face(r)).join("")}</div></div>` : ""}
             ${numbered(n)}
@@ -622,7 +645,18 @@ h3{font-size:${pt(M.label)};line-height:1.25;color:${look.ink};font-weight:700;m
 /* the family */
 .tree{display:flex;flex-direction:column;align-items:stretch;margin-top:${U(1.5)}}
 .tree .stem{width:0;height:${U(2.6)};border-left:${U(0.35)} solid var(--line);margin:0 auto;opacity:.55}
+.gen{display:flex;justify-content:center;align-items:flex-start;gap:${U(4)}}
 .gen .nodes{display:flex;flex-wrap:wrap;justify-content:center;gap:${U(1.6)} ${U(2.4)};position:relative;padding-top:${U(2.2)}}
+.gen .nodes.left,.gen .nodes.right{flex:1 1 0}
+.gen .nodes.left{justify-content:flex-end}
+.gen .nodes.right{justify-content:flex-start}
+.gen .nodes.all{flex:1 1 auto}
+.gen .nodes.empty{min-height:1px}
+.pair{display:flex;align-items:flex-start;gap:${U(0.6)};position:relative}
+.pair .bond{font-style:normal;color:var(--line);font-size:${U(2.6)};margin-top:${U(4.6)};opacity:.75}
+.gen.many .pair .bond{margin-top:${U(3.6)}}
+.side-labels{display:flex;justify-content:space-between;gap:${U(4)};margin-top:${U(1)};font-size:${pt(M.small)};font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.side-labels span{flex:1 1 0;text-align:center;opacity:.8}
 .tree .gen:first-child .nodes{padding-top:0}
 .gen .nodes.linked::before{content:"";position:absolute;top:0;left:14%;right:14%;border-top:${U(0.35)} solid var(--line);opacity:.55}
 .tree .gen:first-child .nodes.linked::before{display:none}
@@ -630,8 +664,28 @@ h3{font-size:${pt(M.label)};line-height:1.25;color:${look.ink};font-weight:700;m
 .tree .gen:first-child .nodes.linked .node::before{display:none}
 .node{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:${U(16)}}
 .node .face{width:${U(12.5)};height:${U(12.5)};font-size:${U(5)}}
-.nodes.many .node{width:${U(13)}}
-.nodes.many .node .face{width:${U(10)};height:${U(10)};font-size:${U(4)}}
+.gen.many .node{width:${U(12.5)}}
+.gen.many .node .face{width:${U(9.5)};height:${U(9.5)};font-size:${U(3.8)}}
+.gen.many .node.me .face{width:${U(13)};height:${U(13)}}
+.gen.tight .node{width:${U(10.5)}}
+.gen.tight .node .face{width:${U(7.6)};height:${U(7.6)};font-size:${U(3.1)}}
+.gen.tight .node.me .face{width:${U(10.5)};height:${U(10.5)}}
+.gen.tight .pair .bond{margin-top:${U(2.6)}}
+/* a tall tree (great-grandparents too): a smaller heading and closer rows, so it all fits on its page */
+.tree-page.tall h2{font-size:${pt(M.title * 0.62)};margin-bottom:0}
+.tree-page.tall .side-labels{margin-top:${U(0.4)}}
+.tree-page.tall .tree{margin-top:${U(0.6)}}
+.tree-page.tall .tree .stem{height:${U(1.2)}}
+.tree-page.tall .gen .nodes{padding-top:${U(1.4)}}
+.tree-page.tall .gen .nodes.linked .node::before{top:-${U(1.4)};height:${U(1.4)}}
+.tree-page.tall .tree .gen:first-child .nodes{padding-top:0}
+.tree-page.tall .node b{margin-top:${U(0.4)}}
+/* godparents and friends, below the tree: a little smaller */
+.tree-page .gen.other .node{width:${U(12)}}
+.tree-page .gen.other .node .face{width:${U(8.5)};height:${U(8.5)};font-size:${U(3.4)}}
+.tree-page.tall .others-label{margin-top:${U(1.4)}}
+.tree-page.tall .gen.other .node .face{width:${U(7)};height:${U(7)};font-size:${U(2.8)}}
+.gen.many .nodes{gap:${U(1.2)} ${U(1.4)}}
 .node.me .face{width:${U(16)};height:${U(16)};border-width:${U(1)};font-size:${U(6.5)}}
 .node b{font-size:${pt(M.small * 1.05)};margin-top:${U(0.8)};line-height:1.15}
 .node span{font-size:${pt(M.small * 0.85)};opacity:.7;line-height:1.15}

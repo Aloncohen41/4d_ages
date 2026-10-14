@@ -1,23 +1,15 @@
 /*
- * The family page as a family tree: the grandparents at the top, then the parents' generation (mums and dads, aunts and uncles), then the
- * child in the middle of their own row with their brothers, sisters, cousins and pets, and everyone else who loves them below. Which row
- * someone is in comes from the relationship, in the family's own words ("Nana", "Savta", "Mummy", "Our dog"). Pure, for tests.
+ * The family page's rows, from how people are related (see kinship.ts for the whole tree, with each parent's side). Kept for the simpler
+ * lists that only need the generation. Pure, for tests.
  */
+import { inferKin, kinInfo } from "./kinship";
 
 export type Generation = "grand" | "parent" | "same" | "other";
 
-const GRAND = /\b(grand\w*|great[- ]?\w+|gran|granny|nan|nana|nanna|nanny|nonna|nonno|oma|opa|savta|saba|bubbe|bubby|zayde|zaide|abuela|abuelo|yiayia|yaya|papou|grampa|grampy|gramps|grandad|granddad|poppy|pop-?pop|mimi|gigi|baba|dedushka|babushka)\b/i;
-const PARENT = /\b(mum|mummy|mom|mommy|mother|mama|mam|dad|daddy|father|papa|abba|ima|imma|parent|step\w*|guardian|aunt|aunty|auntie|uncle|godmother|godfather)\b/i;
-const SAME = /\b(sister|brother|sibling|twin|cousin|half[- ]?(sister|brother))\b|^our\s/i;
-
-/** Which row of the tree someone belongs on, from how they're related. */
+/** Which row of the tree someone belongs on, from how they're related ("Nana", "Savta", "Mummy", "Our dog"). */
 export function generationOf(relation: string): Generation {
-  const r = (relation ?? "").trim();
-  if (GRAND.test(r)) return "grand";
-  if (/god(mother|father|parent)/i.test(r)) return "other"; // godparents aren't the parents' generation of the tree
-  if (PARENT.test(r)) return "parent";
-  if (SAME.test(r)) return "same";
-  return "other";
+  const row = kinInfo(inferKin(relation)).row;
+  return row === "great" ? "grand" : row;
 }
 
 export interface TreeRows<T> { grand: T[]; parent: T[]; same: T[]; other: T[] }

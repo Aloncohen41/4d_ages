@@ -34,6 +34,7 @@ export function PetTricks({ child, open: always = false }: { child: Child; open?
     const m = learned.get(trick.toLowerCase());
     if (m) return setEntrySheet({ kind: "first", editId: m.id }); // a photo, a few words, or another day
     saveMemory({ childId: child.id, type: "first", title: trick, description: "", date: todayISO(), media: [], tagIds: [], emoji: "🎓", source: TRICK_SOURCE });
+    useStore.getState().celebrate(`🎓 ${child.name} learned “${trick}”!`);
   };
   const chip = (on: boolean) => ({ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 12, backgroundColor: on ? t.chipOn : t.bg2 } as const);
 

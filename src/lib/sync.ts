@@ -2,6 +2,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { supabase } from "./supabase";
 import { State, useStore } from "./store";
 import { personTag, relationLabel, upsertTagIn } from "./tags";
+import { kinColumns } from "./syncMerge";
 import { deleteFile } from "./media";
 import { Child, MediaItem } from "./types";
 import { classicToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow, petColumns, petFromRow } from "./syncMerge";
@@ -406,7 +407,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   const rels = relativesToPush(s.relatives, childId, known, refs); // only this child's family
   if (rels.length) {
     const { error } = await sb.from("relatives").upsert(
-      rels.map((r) => ({ child_id: childId, id: r.id, name: r.name, relation: relationLabel(r), custom_label: null, nickname: r.nickname ?? null, description: r.description ?? null, child_ref: r.childRef ?? null, client_ts: r.updatedAt ?? 0, deleted: false })),
+      rels.map((r) => ({ child_id: childId, id: r.id, name: r.name, relation: relationLabel(r), custom_label: null, nickname: r.nickname ?? null, description: r.description ?? null, child_ref: r.childRef ?? null, ...kinColumns(r), client_ts: r.updatedAt ?? 0, deleted: false })),
       { onConflict: "child_id,id" }
     );
     if (error) throw new Error(error.message);

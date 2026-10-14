@@ -139,6 +139,14 @@ export interface Relative extends SyncFields {
   childRef?: string;
   /** Their picture is their own profile's (it follows it); a picture chosen by hand for them stays. */
   photoFromProfile?: string; // the profile photo's memory id
+  /** Who they are to the child (see kinship.ts); unset = read from `relation`. */
+  kin?: import("./kinship").Kin;
+  /** Whose side of the family they're on: a parent's own entry (their id), or "mother" / "father" when that parent isn't in the family. */
+  side?: string;
+  /** Who they're together with in the family (grandma and grandpa, an aunt and her husband). */
+  partnerId?: string;
+  /** A cousin's parent (an aunt or uncle); a great-grandparent's child (a grandparent). */
+  through?: string;
 }
 
 

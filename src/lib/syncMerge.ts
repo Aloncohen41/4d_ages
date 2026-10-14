@@ -103,7 +103,7 @@ export function mergeRelatives(cur: Relative[], rows: any[], childId?: string): 
     const ts = tsOf(r);
     // relationships are free text now; a row from an older app may still carry its own wording beside a preset, which wins
     const relation = (typeof r.custom_label === "string" && r.custom_label.trim()) || (r.relation === "Other" ? "Family" : r.relation) || "Family";
-    const fromRemote: Relative = { id: r.id, name: r.name ?? "", relation, nickname: r.nickname ?? undefined, description: r.description ?? undefined, ...(r.child_ref ? { childRef: r.child_ref } : {}), updatedAt: ts, syncedTs: ts };
+    const fromRemote: Relative = { id: r.id, name: r.name ?? "", relation, nickname: r.nickname ?? undefined, description: r.description ?? undefined, ...(r.child_ref ? { childRef: r.child_ref } : {}), ...kinFromRow(r), updatedAt: ts, syncedTs: ts };
     if (i < 0) out.push(childId ? { ...fromRemote, childIds: [childId] } : fromRemote);
     else {
       const have = out[i];
@@ -113,6 +113,13 @@ export function mergeRelatives(cur: Relative[], rows: any[], childId?: string): 
     }
   }
   return out;
+}
+
+/** How a family member is related (see kinship.ts), as the cloud keeps it. */
+export const kinColumns = (r: Pick<Relative, "kin" | "side" | "partnerId" | "through">) => ({ kin: r.kin ?? null, side: r.side ?? null, partner_id: r.partnerId ?? null, through_id: r.through ?? null });
+/** …and back. A row from before these existed has none of them, and the person's words are read instead. */
+export function kinFromRow(r: { kin?: string | null; side?: string | null; partner_id?: string | null; through_id?: string | null }): Pick<Relative, "kin" | "side" | "partnerId" | "through"> {
+  return { kin: (r.kin ?? undefined) as Relative["kin"], side: r.side ?? undefined, partnerId: r.partner_id ?? undefined, through: r.through_id ?? undefined };
 }
 
 /** Which family members to send for this child: only people in that child's family, and only those the cloud doesn't have yet (or has older). */

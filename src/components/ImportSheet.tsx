@@ -12,15 +12,19 @@ import { deleteFile } from "../lib/media";
 import { defaultThumb, deleteThumb } from "../lib/videoThumbs";
 import { summarize } from "../lib/sharedMedia";
 import { buildNewPosts, PostShape } from "../lib/newPosts";
+import { ShareKind, addableProfiles, shareOptions, startDate } from "../lib/shareTargets";
+import { BUMP_SOURCE, weekOn } from "../lib/pregnancy";
+import { skippedMessage } from "../lib/sharedMedia";
 import { TYPE } from "../theme";
 import { Avatar, Btn, DateField, Input, Label, PhotoView, Sheet } from "./ui";
 import { ThumbPicker } from "./ThumbPicker";
 import { Icon } from "./Icon";
 
 /**
- * A new post from photos and videos: picked with the + button, or shared in from Google Photos, the Gallery or any other app.
- * With several: one post, or a post each? The dates come from the files (and can be changed), a description is optional, and OK saves.
- * People, places and the rest are added afterwards with the post's Edit.
+ * A new post from photos, videos and recordings: picked with the + button, or shared in from Google Photos, the Gallery, WhatsApp or any other
+ * app. Shared in, you choose whose it is (from the profiles you can add to) and what it is: just the photos, a story, a first, a milestone, a
+ * voice note, a bump photo… (the choices follow the profile and the files). Just the photos: one post or a post each, the dates from the
+ * files, and OK saves. Anything else opens its own add screen with the files and the date already in it.
  */
 export function ImportSheet() {
   const t = useTheme();
@@ -28,6 +32,7 @@ export function ImportSheet() {
   const setIncoming = useStore((s) => s.setIncoming);
   const kids = useStore((s) => s.kids);
   if (!incoming) return null;
+  const addable = addableProfiles(kids);
 
   const discard = () => {
     incoming.items.forEach((i) => { deleteFile(i.uri); if (i.thumb) deleteThumb(i.thumb); });
@@ -44,30 +49,43 @@ export function ImportSheet() {
       </Sheet>
     );
   }
-  if (!kids.length) {
+  if (!addable.length) {
     return (
-      <Sheet visible onClose={discard} title="Add your little one first">
-        <Text style={{ color: t.ink2, lineHeight: 21 }}>{APP_NAME} needs to know whose memories these are. Close this, add your child, then share the photos again.</Text>
+      <Sheet visible onClose={discard} title={kids.length ? "Nowhere to add these yet" : "Add your little one first"}>
+        <Text style={{ color: t.ink2, lineHeight: 21 }}>
+          {kids.length
+            ? `The books on this phone are shared with you to look at, so nothing can be added to them. Add your own child, bump or pet, then share these again.`
+            : `${APP_NAME} needs to know whose memories these are. Close this, add your child, bump or pet, then share them again.`}
+        </Text>
         <Btn label="Close" onPress={discard} style={{ marginTop: 18 }} />
       </Sheet>
     );
   }
-  return <NewPostForm items={incoming.items} fromShare={incoming.source !== "picker"} onDiscard={discard} />;
+  return <NewPostForm items={incoming.items} fromShare={incoming.source !== "picker"} caption={incoming.text} onDiscard={discard} />;
 }
 
-function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fromShare: boolean; onDiscard: () => void }) {
+function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedItem[]; fromShare: boolean; caption?: string; onDiscard: () => void }) {
   const t = useTheme();
-  const kids = useStore((s) => s.kids);
-  const active = useStore((s) => s.kids.find((k) => k.id === s.activeId) ?? s.kids[0]);
+  const allKids = useStore((s) => s.kids);
+  const kids = addableProfiles(allKids); // only the profiles you can add to
+  const activeId = useStore((s) => s.activeId);
+  const active = kids.find((k) => k.id === activeId) ?? kids[0];
   const setIncoming = useStore((s) => s.setIncoming);
   const setActive = useStore((s) => s.setActive);
+  const setEntrySheet = useStore((s) => s.setEntrySheet);
   const addMemories = useStore((s) => s.addMemories);
 
   const [childId, setChildId] = useState(active.id);
   const child: Child = kids.find((k) => k.id === childId) ?? active;
+  // what it is: shared in, you choose; picked with the + button's "Photo or video", it's the photos
+  const options = shareOptions(child, items);
+  const [pick, setPick] = useState<ShareKind | null>(fromShare ? null : "post");
+  const what = options.find((o) => o.id === pick) ?? (fromShare ? null : options.find((o) => o.id === "post") ?? null);
   const several = items.length > 1;
-  const [shape, setShape] = useState<PostShape | null>(several ? null : "one"); // with several, the parent chooses
-  const [note, setNote] = useState("");
+  const kindOf = what?.id === "bump" || what?.id === "ultrasound"; // a bump photo or a scan: one post each, by its own date
+  const [shape0, setShape] = useState<PostShape | null>(several ? null : "one"); // with several, the parent chooses
+  const shape: PostShape | null = kindOf && several ? "separate" : shape0;
+  const [note, setNote] = useState(caption ?? "");
   const [oneDate, setOneDate] = useState<string | null>(null); // null = from the files
   const [dates, setDates] = useState<Record<string, string>>({}); // a date changed by hand, per file
   const [err, setErr] = useState("");
@@ -109,13 +127,29 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
       onChange: (e, d) => { if (e.type === "set" && d) setDates((cur) => ({ ...cur, [uri]: toISO(d) })); },
     });
 
+  // anything but photo posts: its own add screen, with the files and their date already in it
+  const openEntry = () => {
+    if (!what?.entry) return;
+    const media = items.map((it) => ({ id: uid("mi"), uri: it.uri, kind: it.kind, ...(thumbs[it.uri] ? { thumb: thumbs[it.uri] } : {}) }));
+    setActive(child.id);
+    setIncoming(null); // the files now belong to the add screen (and are tidied away if it's cancelled)
+    setTimeout(() => setEntrySheet({
+      kind: what.entry!, media, date: startDate(items.map((it) => ({ date: fileDate(it) })), earliestDate(child.birth), today),
+      ...(what.id === "voice" ? { title: "Voice note" } : {}),
+    }), 250);
+  };
+
   const save = () => {
+    if (!what) return setErr("Choose what it is.");
+    if (what.entry) return openEntry();
     if (!shape) return setErr("Choose one post or separate posts.");
-    if (shape === "one" && postDate < earliestDate(child.birth)) return setErr("That date is too long before the birth.");
+    if (shape === "one" && postDate < earliestDate(child.birth)) return setErr(`That date is too long before ${child.expecting ? "the due date" : "the birth"}.`);
     const posts: Memory[] = buildNewPosts({
       child, shape, note,
       items: items.map((it) => ({ uri: it.uri, kind: it.kind, thumb: thumbs[it.uri], date: fileDate(it), time: dates[it.uri] ? undefined : it.time })),
       oneDate: postDate, today, newId: uid, now: Date.now(),
+      ...(what.id === "bump" ? { as: { source: BUMP_SOURCE, emoji: "🤰", title: (d: string) => `Bump, week ${weekOn(child.birth, d)}` } } : {}),
+      ...(what.id === "ultrasound" ? { as: { source: "Ultrasound", emoji: "🩻", title: (d: string) => `Ultrasound, week ${weekOn(child.birth, d)}` } } : {}),
     });
     addMemories(posts);
     setActive(child.id);
@@ -172,7 +206,7 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
           <Label>Whose memories?</Label>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {kids.map((k) => (
-              <Pressable key={k.id} onPress={() => setChildId(k.id)} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
+              <Pressable key={k.id} onPress={() => { setChildId(k.id); setErr(""); if (pick && !shareOptions(k, items).some((o) => o.id === pick)) setPick(null); }} accessibilityRole="radio" accessibilityState={{ selected: k.id === childId }} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
                 <Avatar child={k} size={28} />
                 <Text style={{ color: k.id === childId ? t.onChipOn : t.ink2, fontWeight: "700" }}>{k.name}</Text>
               </Pressable>
@@ -181,7 +215,29 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
         </>
       ) : null}
 
-      {several ? (
+      {fromShare ? (
+        <>
+          <Label>What is it?</Label>
+          <View style={{ gap: 6 }}>
+            {options.map((o) => {
+              const on = what?.id === o.id;
+              return (
+                <Pressable key={o.id} onPress={() => { setPick(o.id); setErr(""); }} accessibilityRole="radio" accessibilityState={{ selected: on }}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 11, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : t.card }}>
+                  <Text style={{ fontSize: 22 }}>{o.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[TYPE.titleSmall, { color: t.ink }]}>{o.label}</Text>
+                    <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{o.desc}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+          {what?.entry ? <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 8 }}>Next, you'll fill in the rest, with {items.length > 1 ? "these files" : "this file"} already in it.</Text> : null}
+        </>
+      ) : null}
+
+      {several && what && !what.entry && !kindOf ? (
         <>
           <Label>How should they be added?</Label>
           <View style={{ flexDirection: "row", gap: 10 }}>
@@ -191,7 +247,9 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
         </>
       ) : null}
 
-      {shape === "one" ? (
+      {what?.entry ? null : kindOf && several ? (
+        <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>One each, by the week it was taken. Tap a date above to change it.</Text>
+      ) : shape === "one" ? (
         <>
           <Label>Date</Label>
           <DateField value={postDate} onChange={setOneDate} min={earliestDate(child.birth)} max={today} />
@@ -205,7 +263,7 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
         </Text>
       ) : null}
 
-      {shape ? (
+      {shape && what && !what.entry ? (
         <>
           <Label>Description (optional)</Label>
           <Input value={note} onChangeText={setNote} multiline placeholder={shape === "separate" ? "Added to each post" : "What happened?"} accessibilityLabel="Description" />
@@ -218,7 +276,7 @@ function NewPostForm({ items, fromShare, onDiscard }: { items: SharedItem[]; fro
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 16, lineHeight: 19 }}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 22 }}>
         <Btn label="Cancel" kind="soft" onPress={confirmDiscard} />
-        <Btn label="OK" onPress={save} disabled={!shape} style={{ flex: 1 }} />
+        <Btn label={what?.entry ? "Next" : "OK"} onPress={save} disabled={!what || (!what.entry && !shape)} style={{ flex: 1 }} />
       </View>
     </Sheet>
   );

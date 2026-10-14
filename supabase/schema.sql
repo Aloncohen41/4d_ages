@@ -145,6 +145,12 @@ alter table public.children add column if not exists gotcha_day date;
 alter table public.memories add column if not exists end_date date;          -- a pregnancy symptom: the last day of the time it lasted
 -- a family member who IS one of the children or pets (a sibling, "Our dog"): which profile. Deleting that profile removes them from every family.
 alter table public.relatives add column if not exists child_ref text;
+-- how a family member is related, for the family tree: who they are to the child, whose side they're on, who they're with, and (a cousin's
+-- parent, a great-grandparent's child) who links them
+alter table public.relatives add column if not exists kin text;
+alter table public.relatives add column if not exists side text;
+alter table public.relatives add column if not exists partner_id text;
+alter table public.relatives add column if not exists through_id text;
 -- (and any left over from a profile that's gone)
 update public.relatives r set deleted = true, client_ts = (extract(epoch from now()) * 1000)::bigint
   where r.child_ref is not null and not r.deleted and not exists (select 1 from public.children c where c.id = r.child_ref);

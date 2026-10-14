@@ -16,7 +16,7 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
 
 /**
- * Lets 4D Ages appear in Android's Share sheet for photos and videos.
+ * Lets 4D Ages appear in Android's Share sheet for photos, videos and sound recordings (a WhatsApp voice note, an MP3, a recorder's file).
  * Shared files are copied into the app's own storage straight away (the permission to read them is short-lived),
  * and the date they were taken is read from the file where possible (EXIF for photos, metadata for videos).
  */
@@ -119,23 +119,26 @@ class ShareIntakeModule : Module() {
     val out = ArrayList<Map<String, Any?>>()
     uris.forEachIndexed { index, uri ->
       try {
-        val item = copy(uri, index)
-        if (item != null) out.add(item)
+        out.add(copy(uri, index))
       } catch (e: Throwable) {
-        // skip a file that can't be read, keep the rest
+        out.add(mapOf("skipped" to "a file")) // one that can't be read: the rest still come in, and the person is told
       }
     }
+    // words shared along with the files (some apps send a caption): offered as the description
+    intent.getStringExtra(Intent.EXTRA_TEXT)?.trim()?.takeIf { it.isNotEmpty() && uris.isNotEmpty() }?.let { out.add(mapOf("text" to it.take(2000))) }
     return out
   }
 
-  private fun copy(uri: Uri, index: Int): Map<String, Any?>? {
-    val resolver = ctx.contentResolver
-    val ext0 = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
-    val mime: String = resolver.getType(uri)
-      ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext0?.lowercase())
-      ?: return null
-    if (!mime.startsWith("image/") && !mime.startsWith("video/")) return null
+  /** What a file is, from its type, or from its name when the app sharing it doesn't say (or says "a file"). */
+  private fun typeOf(given: String?, ext: String?): String? {
+    val e = ext?.lowercase()
+    val vague = given == null || given == "application/octet-stream" || given == "application/ogg" || given == "*/*"
+    if (!vague) return given
+    return AUDIO_EXT[e] ?: e?.let { MimeTypeMap.getSingleton().getMimeTypeFromExtension(it) } ?: (if (given == "application/ogg") "audio/ogg" else given)
+  }
 
+  private fun copy(uri: Uri, index: Int): Map<String, Any?> {
+    val resolver = ctx.contentResolver
     var name: String? = null
     try {
       resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
@@ -144,16 +147,20 @@ class ShareIntakeModule : Module() {
     } catch (e: Throwable) {
       // some providers don't offer a name
     }
+    val fromName = name?.substringAfterLast('.', "")?.lowercase()?.takeIf { it.length in 2..5 }
+    val ext0 = fromName ?: MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+    val mime = typeOf(resolver.getType(uri), ext0)
+    // photos, videos and sound only; anything else (a PDF, a document) is left out, by name, so the person can be told
+    if (mime == null || !(mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/"))) return mapOf("skipped" to (name ?: "a file"))
 
-    val fromName = name?.substringAfterLast('.', "")?.lowercase()
-    val ext: String = (if (fromName != null && fromName.length in 2..5) fromName else null)
+    val ext: String = fromName
       ?: MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
-      ?: (if (mime.startsWith("video/")) "mp4" else "jpg")
+      ?: (if (mime.startsWith("video/")) "mp4" else if (mime.startsWith("audio/")) "m4a" else "jpg")
 
     val dir = File(ctx.filesDir, "media") // the same folder the app uses for everything it keeps
     dir.mkdirs()
     val out = File(dir, "shared-${System.currentTimeMillis()}-$index.$ext")
-    val input = resolver.openInputStream(uri) ?: return null
+    val input = resolver.openInputStream(uri) ?: return mapOf("skipped" to (name ?: "a file"))
     input.use { src -> out.outputStream().use { dst -> src.copyTo(dst) } }
 
     var exif: String? = null
@@ -189,5 +196,10 @@ class ShareIntakeModule : Module() {
 
   companion object {
     private const val HANDLED = "lc_share_handled"
+    /** Sound files some apps share without saying what they are (WhatsApp's voice notes are .opus). */
+    private val AUDIO_EXT = mapOf(
+      "opus" to "audio/ogg", "ogg" to "audio/ogg", "oga" to "audio/ogg", "m4a" to "audio/mp4", "aac" to "audio/aac", "amr" to "audio/amr",
+      "3ga" to "audio/3gpp", "wav" to "audio/wav", "mp3" to "audio/mpeg", "flac" to "audio/flac", "weba" to "audio/webm"
+    )
   }
 }

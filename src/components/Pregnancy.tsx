@@ -303,7 +303,7 @@ export function ArrivalSheet({ child, onClose }: { child: Child; onClose: () => 
     onClose();
     // the whole birth story opens over the whole app (this sheet goes: the pregnancy pages close once the baby is here)
     if (thenTell) setTimeout(() => useStore.getState().setBirthStoryFor(child.id), 300);
-    else celebrate();
+    else celebrate(`Welcome to the world, ${name.trim()}!`);
   };
   return (
     <Sheet visible onClose={onClose} title="Welcome to the world">

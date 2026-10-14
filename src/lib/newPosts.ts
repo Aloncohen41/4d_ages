@@ -19,6 +19,8 @@ const PALETTES = ["peach", "sage", "butter", "rose", "sky", "lav"];
  */
 export function buildNewPosts(i: {
   child: Child; shape: PostShape; note: string; items: NewPostFile[]; oneDate: string; today: string; newId: (prefix: string) => string; now: number;
+  /** Posts of a kind: bump photos or ultrasound pictures (their source, emoji, and a title from the date). */
+  as?: { source: string; emoji: string; title: (date: string) => string };
 }): Memory[] {
   const { child, note, today, now } = i;
   // pregnancy photos can be up to ten months before the birth; anything older is put on that day
@@ -34,9 +36,10 @@ export function buildNewPosts(i: {
     description: note.trim(),
     media: files.map(media),
     tagIds: [],
-    emoji: files.every((f) => f.kind === "video") ? "🎬" : "📷",
+    emoji: i.as?.emoji ?? (files.every((f) => f.kind === "video") ? "🎬" : "📷"),
     palette: PALETTES[k % PALETTES.length],
-    source: "Added",
+    source: i.as?.source ?? "Added",
+    ...(i.as ? { title: i.as.title(onOrAfterBirth(date)) } : {}),
     createdAt: now,
     updatedAt: now,
   });

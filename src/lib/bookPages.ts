@@ -1,5 +1,5 @@
+import { kinInfo, kinOf } from "./kinship";
 import { Child, Memory, Relative, Tag } from "./types";
-import { generationOf } from "./familyTree";
 import { byMoment } from "./display";
 import { ageBetween, daysBetween, parseISO } from "./date";
 import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, PET_HOME_ID, classicMedia, classicsFor, isFilled } from "./classics";
@@ -366,8 +366,8 @@ export interface PlanOptions {
 }
 
 /** How many people the family tree holds (anyone more is listed on the pages after it). */
-const TREE_MAX = 14;
-const ROW_ORDER = { grand: 0, parent: 1, same: 2, other: 3 } as const;
+const TREE_MAX = 18;
+const ROW_ORDER = { great: 0, grand: 1, parent: 2, same: 3, other: 4 } as const;
 
 /** How many people fit on a family page, and how many firsts on a look-back page. */
 const peoplePerPage = (s: BookSize) => (s.notesPerPage <= 2 ? 4 : s.hCm / s.wCm > 1.2 ? 6 : s.notesPerPage >= 4 ? 9 : 6);
@@ -542,10 +542,14 @@ export function planBook(child: Child, memories: Memory[], size: BookSize, opts:
     const fam = opts.family ?? [];
     const per = peoplePerPage(size);
     // the family tree first: the grandparents, the parents' generation and the child's own row before the friends of the family
-    const treeOrder = [...fam].sort((a, b) => ROW_ORDER[generationOf(a.relation)] - ROW_ORDER[generationOf(b.relation)]);
-    const inTree = treeOrder.slice(0, TREE_MAX);
+    const treeOrder = [...fam].sort((a, b) => ROW_ORDER[kinInfo(kinOf(a)).row] - ROW_ORDER[kinInfo(kinOf(b)).row]);
+    // a tall tree (great-grandparents, grandparents and parents) has no room below it: godparents and friends go on the next page
+    const rowOf = (r: Relative) => kinInfo(kinOf(r)).row;
+    const tall = (["great", "grand", "parent"] as const).every((row) => treeOrder.some((r) => rowOf(r) === row));
+    const fits = tall ? treeOrder.filter((r) => rowOf(r) !== "other") : treeOrder;
+    const inTree = fits.slice(0, TREE_MAX);
     if (inTree.length) pages.push({ key: "family-tree", kind: "family", people: inTree, part: 0, tree: true });
-    chunks(treeOrder.slice(TREE_MAX), per).forEach((people, part) => pages.push({ key: `family-${part + 1}`, kind: "family", people, part: part + 1 }));
+    chunks(treeOrder.filter((r) => !inTree.includes(r)), per).forEach((people, part) => pages.push({ key: `family-${part + 1}`, kind: "family", people, part: part + 1 }));
   }
   emit(intro ? after : rest);
 

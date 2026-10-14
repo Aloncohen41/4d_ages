@@ -44,7 +44,7 @@ const pages = storyPages(BIRTH_STORY_PARTS.map((p) => ({ label: p.label, text: "
 ok("in the book it gets pages of its own after the birth page, as many parts to a page as fit", pages.length >= 3 && pages.flat().length === BIRTH_STORY_PARTS.length && /kind: "birthStory"/.test(read("src/lib/bookPages.ts")) && /case "birthStory":/.test(read("src/lib/bookHtml.ts")));
 ok("asked like a friend who can't wait to hear it", /We can't wait to hear how it went/.test(read("src/components/BirthStory.tsx")));
 ok("it opens from “Welcome to the world” (over the whole app, so it isn't lost when the pregnancy pages close), and from the profile", /setBirthStoryFor\(child\.id\)/.test(read("src/components/Pregnancy.tsx")) && /<BirthStoryHost \/>/.test(read("app/_layout.tsx")) && /Tell us the birth story/.test(read("src/components/Screen.tsx")));
-ok("confetti when the baby is here and when the story is told", /celebrate\(\);/.test(read("src/components/BirthStory.tsx")) && /else celebrate\(\);/.test(read("src/components/Pregnancy.tsx")) && /<Confetti \/>/.test(read("app/_layout.tsx")));
+ok("confetti when the baby is here and when the story is told", /celebrate\(\);/.test(read("src/components/BirthStory.tsx")) && /else celebrate\(`Welcome to the world, /.test(read("src/components/Pregnancy.tsx")) && /<Confetti \/>/.test(read("app/_layout.tsx")));
 
 // ---- the pregnancy, told afterwards
 ok("looking back: dates end the day before the birth, and a ticked milestone is dated to its usual week", pregnancyLastDay({ birth: "2025-06-10" }, "2026-10-12") === "2025-06-09" && pregnancyLastDay({ birth: "2027-01-01", expecting: true }, "2026-10-12") === "2026-10-12" && usualDay("2025-06-10", 20) === "2025-01-21");

@@ -10,6 +10,7 @@ import { dropIndex, familyOf, importSources, moveInOrder, moveTo, orderedFamily,
 import { useShownChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { displayName, itemsWithTags, personTag, relationLine } from "../src/lib/tags";
+import { sideLabel } from "../src/lib/kinship";
 import { shrinkImage } from "../src/lib/resize";
 import { deleteFile } from "../src/lib/media";
 import { withAlpha } from "../src/lib/m3";
@@ -167,7 +168,16 @@ export default function FamilyPage() {
                 <MemberAvatar member={r} size={44} />
                 <View style={{ flex: 1 }}>
                   <Text style={[TYPE.titleSmall, { color: t.ink }]} numberOfLines={1}>{displayName(r)}</Text>
-                  <Text style={[TYPE.bodySmall, { color: t.ink2 }]} numberOfLines={1}>{relationLine(r)}</Text>
+                  {(() => {
+                    // whose side they're on, so two grandmas (or two uncles) are told apart; a gentle nudge where it isn't known yet
+                    const side = sideLabel(r, family);
+                    return (
+                      <Text style={[TYPE.bodySmall, { color: t.ink2 }]} numberOfLines={1}>
+                        {relationLine(r)}{side ? ` · ${side}` : ""}
+                        {side === null ? <Text style={{ color: t.accentDeep, fontWeight: "700" }}> · Choose whose side</Text> : null}
+                      </Text>
+                    );
+                  })()}
                   {r.description ? <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={1}>{r.description}</Text> : null}
                 </View>
                 {editing ? (

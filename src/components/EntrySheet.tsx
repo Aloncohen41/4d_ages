@@ -57,14 +57,14 @@ export function EntrySheet() {
       key={`${child.id}:${sheet.kind}:${sheet.editId ?? "new"}:${sheet.title ?? ""}`}
       kind={sheet.kind}
       editId={sheet.editId}
-      prefill={{ title: sheet.title, emoji: sheet.emoji, healthKind: sheet.healthKind, media: sheet.media }}
+      prefill={{ title: sheet.title, emoji: sheet.emoji, healthKind: sheet.healthKind, media: sheet.media, date: sheet.date }}
       child={child}
       onClose={() => setEntrySheet(null)}
     />
   );
 }
 
-function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind; editId?: string; prefill: { title?: string; emoji?: string; healthKind?: HealthKind; media?: MediaItem[] }; child: Child; onClose: () => void }) {
+function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind; editId?: string; prefill: { title?: string; emoji?: string; healthKind?: HealthKind; media?: MediaItem[]; date?: string }; child: Child; onClose: () => void }) {
   const t = useTheme();
   const memories = useStore((s) => s.memories);
   const customDefs = useStore((s) => s.customDefs);
@@ -91,8 +91,8 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
 
   const [title, setTitle] = useState(editing?.title ?? editingDef?.label ?? prefill.title ?? "");
   const [text, setText] = useState(editing?.description ?? "");
-  const [date, setDate] = useState(editing?.date ?? todayISO());
-  const [dateTouched, setDateTouched] = useState(isEdit);
+  const [date, setDate] = useState(editing?.date ?? prefill.date ?? todayISO());
+  const [dateTouched, setDateTouched] = useState(isEdit || !!prefill.date);
   const [time, setTime] = useState<string | undefined>(editing?.time);
   const [location, setLocation] = useState(editing?.location ?? "");
   const pet = isPet(child); // a pet: their own health kinds, and weight only
@@ -133,6 +133,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
     if (kind === "milestone") {
       const problem = logMilestone({ childId: child.id, defId: editingDef?.id, title, emoji, category, date, time, location: place, tagIds: finalTags, note: text, media });
       if (problem) return setErr(problem);
+      if (!isEdit) setTimeout(() => useStore.getState().celebrate(`${emoji ?? "⭐"} ${title.trim() || "A new milestone"}!`), 350);
       return onClose();
     }
 
@@ -168,6 +169,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
     }
 
     saveMemory({ id: editId, childId: child.id, type: kind, title, description: text, date, time, location: place, tagIds: finalTags, media, emoji, heightCm, weightKg, headCm, healthKind: kind === "health" ? healthKind : undefined });
+    if (!isEdit && kind === "first") setTimeout(() => useStore.getState().celebrate(`${emoji ?? "✨"} ${title.trim()}!`), 350);
     onClose();
   };
 

@@ -49,8 +49,9 @@ The latest APK is on the [Releases](https://github.com/Aloncohen41/4d_ages/relea
 - Classics pages for the traditional baby-book entries: teeth, the birth story, first haircut and monthly photos.
 
 **Family and sharing**
-- Family members for each child, who double as tags.
+- Family members for each child, who double as tags, with who they are to the child and whose side of the family they're on. The book's family tree shows each parent's side on its own half.
 - Siblings are linked automatically.
+- Share photos, videos and sound recordings from any app straight into a profile, as a post, a story, a first, a milestone, a voice note and more.
 - A child's book can be shared with the other parent (full access, at most two parents) and with family members. Family members
   can view only the posts with the people you choose, and can leave one heart and one comment per post.
 - Invites are made for one email address and expire after 7 days. Anyone with access can be removed or blocked.

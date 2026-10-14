@@ -18,6 +18,7 @@ import { FamilyPhotoSync } from "../src/components/FamilyPhotoSync";
 import { DriveAutoBackup } from "../src/components/DriveAutoBackup";
 import { Toast } from "../src/components/Toast";
 import { Confetti } from "../src/components/Confetti";
+import { BirthdayConfetti } from "../src/components/BirthdayConfetti";
 import { BirthStoryHost } from "../src/components/BirthStory";
 import { NewPasswordAfterReset } from "../src/components/AccountSheets";
 import { AppLock } from "../src/components/AppLock";
@@ -191,6 +192,7 @@ export default function RootLayout() {
       {signedIn && hasKids ? <BirthStoryHost /> : null}
       <Toast />
       <Confetti />
+      {signedIn && hasKids ? <BirthdayConfetti /> : null}
     </SafeAreaProvider>
   );
 }

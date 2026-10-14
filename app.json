@@ -30,6 +30,12 @@
             },
             {
               "mimeType": "video/*"
+            },
+            {
+              "mimeType": "audio/*"
+            },
+            {
+              "mimeType": "application/ogg"
             }
           ]
         },
@@ -44,6 +50,12 @@
             },
             {
               "mimeType": "video/*"
+            },
+            {
+              "mimeType": "audio/*"
+            },
+            {
+              "mimeType": "application/ogg"
             }
           ]
         }

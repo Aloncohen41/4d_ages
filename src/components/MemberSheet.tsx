@@ -10,10 +10,15 @@ import { deleteFile, pickMedia } from "../lib/media";
 import { shrinkImage } from "../lib/resize";
 import { Avatar, Btn, DeleteButton, Input, Label, MemberAvatar, Sheet } from "./ui";
 import { AvatarCropper } from "./AvatarCropper";
+import { KinValue, KinshipFields } from "./KinshipFields";
+import { inferKin, inferSide, kinOf } from "../lib/kinship";
+import { familyOf } from "../lib/family";
+import { isPet } from "../lib/types";
 
 /**
- * Add or edit a family member. One form for everyone, in this order: name, photo, relationship (in the family's own words), nickname,
- * a few words about who they are, and whose family they're in.
+ * Add or edit a family member. One form for everyone, in this order: name, photo, relationship (in the family's own words), how they're
+ * related for the family tree (who they are to the child, whose side, who they're with), nickname, a few words about who they are, and whose
+ * family they're in.
  */
 export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: string; onClose: () => void; pet?: boolean }) {
   const t = useTheme();
@@ -29,6 +34,18 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
   const [name, setName] = useState(existing?.name ?? "");
   const [relation, setRelation] = useState(existing ? (existing.customLabel?.trim() || existing.relation) : "");
   const [nickname, setNickname] = useState(existing?.nickname ?? "");
+  // how they're related: what was chosen before, else read from their words (and kept in step with the words until chosen by hand)
+  const relatives = useStore((s) => s.relatives);
+  const [kin, setKin] = useState<KinValue>(() => ({
+    kin: existing ? kinOf(existing) : "other", side: existing?.side ?? (existing ? inferSide(existing.relation) : undefined), partnerId: existing?.partnerId, through: existing?.through,
+  }));
+  const [kinTouched, setKinTouched] = useState(!!existing?.kin);
+  const changeRelation = (v: string) => {
+    setRelation(v);
+    if (!kinTouched) setKin((k) => ({ ...k, kin: inferKin(v), side: inferSide(v) ?? k.side }));
+  };
+  const showKin = !pet && !!active && !isPet(active) && !existing?.childRef;
+  const family = active ? familyOf(relatives, active.id) : [];
   const [description, setDescription] = useState(existing?.description ?? "");
   const [photoUri, setPhotoUri] = useState<string | undefined>(existing?.photoUri);
   const [crop, setCrop] = useState<AvatarCrop | undefined>(existing?.crop);
@@ -69,16 +86,26 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
     if (!families.length) return setErr("Choose at least one child's family, or remove this person.");
     const data: Omit<Relative, "id"> = {
       name: name.trim(), relation: relation.trim(), customLabel: undefined, nickname: nickname.trim() || undefined, description: description.trim() || undefined,
+      ...(showKin ? { kin: kin.kin, side: kin.side, partnerId: kin.partnerId, through: kin.through } : {}),
       photoUri, crop: photoUri ? crop : undefined, photoSized: photoUri ? true : undefined,
       // their own profile's picture keeps following it; a picture chosen here is theirs from now on
       photoFromProfile: existing?.photoFromProfile && photoUri === original ? existing.photoFromProfile : undefined,
     };
+    const id = existing?.id ?? uid("rel");
+    // a couple goes both ways: their partner is now with them (and no longer with anyone else)
+    if (showKin) {
+      for (const r of relatives) {
+        if (r.id === id) continue;
+        if (r.id === kin.partnerId && r.partnerId !== id) updateRelative(r.id, { partnerId: id });
+        else if (r.partnerId === id && r.id !== kin.partnerId) updateRelative(r.id, { partnerId: undefined });
+      }
+    }
     if (existing) {
       updateRelative(existing.id, data);
       if (original && original !== photoUri && !existing.photoFromProfile) deleteFile(original); // never the profile's own picture
       const before = [...startFamilies].sort().join();
       if ([...families].sort().join() !== before) setRelativeChildren(existing.id, families); // only touched when it really changed
-    } else addRelative({ id: uid("rel"), ...data, childIds: families });
+    } else addRelative({ id, ...data, childIds: families });
     onClose();
   };
 
@@ -114,7 +141,11 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
       ) : null}
 
       <Label>Relationship</Label>
-      <Input value={relation} onChangeText={setRelation} placeholder={pet ? "Example: Our dog" : "Example: Mummy"} maxLength={30} accessibilityLabel="Relationship" />
+      <Input value={relation} onChangeText={changeRelation} placeholder={pet ? "Example: Our dog" : "Example: Mummy"} maxLength={30} accessibilityLabel="Relationship" />
+      <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>In your family's own words: Mummy, Savta, Uncle Ben.</Text>
+      {showKin && active ? (
+        <KinshipFields value={kin} onChange={(v) => { setKin(v); setKinTouched(true); }} family={family} childName={active.name} selfId={existing?.id} />
+      ) : null}
       {pet && !existing ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
           {SPECIES.map((s) => (

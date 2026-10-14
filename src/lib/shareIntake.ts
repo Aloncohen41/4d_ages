@@ -1,6 +1,6 @@
 import { requireNativeModule } from "expo";
 import { SharedItem } from "./types";
-import { RawShared, normalizeShared } from "./sharedMedia";
+import { RawShared, splitShared } from "./sharedMedia";
 
 interface NativeShare {
   hasInitialShare(): boolean;
@@ -37,18 +37,20 @@ export function restartApp(): boolean {
   }
 }
 
-/** Files that opened the app from the share sheet. */
-export async function readInitialShare(): Promise<SharedItem[]> {
+export interface ShareResult { items: SharedItem[]; skipped: string[]; text?: string }
+
+/** Files that opened the app from the share sheet (and the ones that couldn't come in, and any caption). */
+export async function readInitialShare(): Promise<ShareResult> {
   const raw = await native()?.consumeInitialShare();
-  return (raw || []).map(normalizeShared);
+  return splitShared(raw || []);
 }
 
 /** Called while the app is open: first when copying starts (with the count), then with the finished files. */
-export function listenForShares(onStart: (count: number) => void, onItems: (items: SharedItem[]) => void): () => void {
+export function listenForShares(onStart: (count: number) => void, onItems: (result: ShareResult) => void): () => void {
   const mod = native();
   if (!mod) return () => undefined;
   const a = mod.addListener("onShareStart", (e) => onStart(e.count ?? 0));
-  const b = mod.addListener("onShare", () => onItems(mod.takePending().map(normalizeShared)));
+  const b = mod.addListener("onShare", () => onItems(splitShared(mod.takePending())));
   return () => {
     a.remove();
     b.remove();

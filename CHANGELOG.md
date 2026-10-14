@@ -2,6 +2,23 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.3
+
+**Share straight into 4D Ages**
+- Share photos and videos from Google Photos, the Gallery or any other app to 4D Ages. Choose whose memory it is, from the profiles you can add to, then what it is: just the photos, a story, a first, a last, a milestone, growth or health. For a bump, it can be a bump photo, an ultrasound picture or a pregnancy milestone; for a pet, a trick or first, health or weight.
+- Sound recordings can be shared in too, including WhatsApp voice notes and MP3s. They become voice notes, with any pictures shared alongside them.
+- Everything else opens the right screen with the files and their date already filled in. A caption shared with the files becomes the description.
+- Files that can't be added, such as PDFs, are named in a message, and the rest still come in.
+
+**Family relations and the family tree**
+- When adding or editing a family member, choose who they are to your child (grandparent, aunt or uncle, cousin, step-parent and more) and whose side of the family they're on, by each parent's name. You can also choose who they're together with, whose child a cousin is, and whose parent a great-grandparent is. All of this is filled in from the words you already use, such as "Mum's mum" or "Dad's sister".
+- The family tree in the book now shows each parent's side on its own half, labelled with their names, with great-grandparents, grandparents, aunts and uncles, parents and cousins in their rows and couples side by side. Two mums or two dads work just as well.
+- The Family page shows whose side each person is on, and points out anyone whose side still needs choosing.
+
+**Confetti**
+- Bigger and fuller: hundreds of pieces of paper burst out from the middle of the screen in every direction, then flutter and turn over as they fall.
+- Confetti now also celebrates birthdays and gotcha days (once, when the app opens on the day; a pet's birthday counts in human years), a new milestone, a first, a pet's new trick and the baby's arrival, with a message in the middle.
+
 ## 1.1.2
 
 **Videos, made for you**

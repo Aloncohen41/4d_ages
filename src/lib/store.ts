@@ -39,6 +39,7 @@ export interface EntrySheetState {
   emoji?: string;
   healthKind?: import("./types").HealthKind; // health: the kind to start with
   media?: import("./types").MediaItem[]; // pictures or a voice note to start with (a recording made from the + button)
+  date?: string; // the day to start on (the date of files shared in)
 }
 
 /** Photos and videos shared into the app from Android, waiting on the import screen. */
@@ -46,6 +47,7 @@ export interface Incoming {
   items: SharedItem[];
   busy?: number; // number of files still being copied
   source?: "share" | "picker"; // shared in from another app (the default), or picked with the + button
+  text?: string; // words shared with the files (a caption), offered as the description
 }
 
 export interface State {
@@ -86,6 +88,9 @@ export interface State {
   toast?: Toast;
   /** When confetti was last asked for (see Confetti.tsx). Not saved. */
   celebrateAt?: number;
+  celebrateText?: string; // the words in the middle ("Happy 2nd birthday, Maya!")
+  /** The birthdays and gotcha days already celebrated on this phone (so each bursts once). */
+  celebrated?: string[];
   /** The child whose birth story is being told (see BirthStory.tsx). Not saved. */
   birthStoryFor?: string;
   /** Backing up to Google Drive (see driveBackup.ts): whether it runs by itself after changes, and how the last one went. Kept on this phone. */
@@ -138,7 +143,8 @@ export interface State {
   showToast: (toast: Omit<Toast, "id"> | null) => void;
   setDriveBackup: (patch: Partial<DriveBackupPrefs>) => void;
   /** Confetti over the whole app. */
-  celebrate: () => void;
+  celebrate: (text?: string) => void;
+  markCelebrated: (id: string) => void;
   setBirthStoryFor: (childId: string | undefined) => void;
   setPendingRecap: (v: { childId: string; year: number } | null) => void;
   setEntrySheet: (v: EntrySheetState | null) => void;
@@ -390,7 +396,8 @@ export const useStore = create<State>()(
       setNotif: (patch) => set((s) => ({ notif: { ...s.notif, ...patch } })),
       setSync: (patch) => set((s) => ({ sync: { ...s.sync, ...patch } })),
       setShareOpen: (shareOpen) => set({ shareOpen }),
-      celebrate: () => set({ celebrateAt: Date.now() }),
+      celebrate: (text) => set({ celebrateAt: Date.now(), celebrateText: text }),
+      markCelebrated: (id) => set((s) => ({ celebrated: [...(s.celebrated ?? []).slice(-40), id] })),
       setBirthStoryFor: (birthStoryFor) => set({ birthStoryFor }),
       setDriveBackup: (patch) => set((s) => ({ driveBackup: { ...s.driveBackup, ...patch } })),
       showToast: (toast) => set({ toast: toast ? { ...toast, id: Date.now() } : undefined }),
@@ -502,6 +509,7 @@ export const useStore = create<State>()(
         preview: s.preview,
         bookPrefs: s.bookPrefs,
         videoEvents: s.videoEvents,
+        celebrated: s.celebrated,
         driveBackup: s.driveBackup,
         pendingJoin: s.pendingJoin,
       }),
