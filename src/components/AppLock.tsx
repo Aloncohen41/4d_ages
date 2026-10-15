@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { onWeb } from "../lib/onWeb";
 import { AppState, Modal, Text, View } from "react-native";
-import * as LocalAuthentication from "expo-local-authentication";
+import { canLock as canLockDevice, unlock as unlockDevice } from "../lib/deviceLock";
 import { Image } from "expo-image";
 import { useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -13,33 +12,15 @@ import { Btn } from "./ui";
 /** After this long away from the app, it asks again. */
 export const RELOCK_AFTER_MS = 60 * 1000;
 
-/** Whether this phone can lock the app: it has a fingerprint, face or screen lock set up. */
-export async function canLock(): Promise<boolean> {
-  if (onWeb) return false; // the website: the browser and computer have their own locks
-  try {
-    const level = await LocalAuthentication.getEnrolledLevelAsync();
-    return level !== LocalAuthentication.SecurityLevel.NONE;
-  } catch {
-    return false;
-  }
-}
-
-/** Ask for the fingerprint, face or the phone's PIN. True when it's you. */
-export async function unlock(reason = `Unlock ${APP_NAME}`): Promise<boolean> {
-  try {
-    const r = await LocalAuthentication.authenticateAsync({ promptMessage: reason, disableDeviceFallback: false, cancelLabel: "Cancel" });
-    return r.success;
-  } catch {
-    return false;
-  }
-}
+/** Whether this device can lock the app (a fingerprint, face or screen lock is set up), and asking for it (see deviceLock.ts). */
+export const canLock = (): Promise<boolean> => canLockDevice();
+export const unlock = (reason = `Unlock ${APP_NAME}`): Promise<boolean> => unlockDevice(reason);
 
 /**
  * App lock (Settings → Privacy): with it on, the app is covered until you unlock it with your fingerprint, face or the phone's PIN, when it opens
  * and when you come back to it after a minute away. Nothing of the book is shown behind the cover.
  */
 export function AppLock() {
-  if (onWeb) return null;
   const t = useTheme();
   const enabled = useStore((s) => s.appLock);
   const hydrated = useStore((s) => s.hydrated);

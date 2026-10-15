@@ -49,7 +49,7 @@ ok("restoring points the books at the downloaded files", moved.memories[0].media
 const ready = prepareRestore(b.data) as { kids: { shared: boolean; role?: string }[]; memories: { syncedTs?: number }[]; syncMeta: object; tombstones: unknown[] };
 ok("a restore goes back to the account too: your own children are saved again; ones shared with you stay as they are", ready.kids[0].shared === false && ready.kids[1].shared === true && ready.memories[0].syncedTs === undefined && Object.keys(ready.syncMeta).length === 0 && ready.tombstones.length === 0);
 ok("a damaged or foreign file is refused in plain words", (() => { try { parseBackup("not json"); return false; } catch (e) { return /couldn't be read/.test((e as Error).message); } })() && (() => { try { parseBackup('{"data":{}}'); return false; } catch (e) { return /isn't a 4D Ages backup/.test((e as Error).message); } })());
-const drive = read("src/lib/driveBackup.ts");
+const drive = read("src/lib/driveBackup.ts") + read("src/lib/driveAuth.ts"); // (Google sign-in and the transfers are in driveAuth.ts)
 ok("Drive access is only to the app's own files, never the rest of Drive", /drive\.file"/.test(drive) && !/auth\/drive"/.test(drive) && !/drive\.readonly/.test(drive));
 ok("the automatic backup never asks anything (it waits for a tap if Drive needs connecting again)", /backupNow\(false\)/.test(read("src/components/DriveAutoBackup.tsx")) && /if \(!interactive\) throw new NeedsGoogle\(\)/.test(drive));
 ok("big videos are streamed from disk, never read into memory", /LegacyFS\.uploadAsync\(/.test(drive) && /BINARY_CONTENT/.test(drive));

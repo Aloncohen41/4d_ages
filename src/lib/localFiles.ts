@@ -62,3 +62,11 @@ export async function saveFromUrl(url: string, name: string, ext: string): Promi
   const file = await File.downloadFileAsync(url, dest);
   return file.uri;
 }
+
+/** A finished file made by the app (an export), kept for saving or sharing; returns its uri. */
+export async function writeFile(bytes: Uint8Array, fileName: string): Promise<string> {
+  const f = new File(Paths.cache, fileName);
+  if (f.exists) f.delete();
+  f.write(bytes);
+  return f.uri;
+}

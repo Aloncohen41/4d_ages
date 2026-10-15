@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { onWeb } from "../lib/onWeb";
 import { Switch, Text, View } from "react-native";
 import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -20,7 +21,7 @@ export function RemindersCard() {
       const ok = await requestNotificationPermission();
       if (!ok) {
         setNotif({ enabled: false });
-        setMsg(`Notifications are blocked for this app. Turn them on in your phone's Settings → Apps → ${APP_NAME} → Notifications.`);
+        setMsg(onWeb ? "Notifications are blocked for this site. Allow them in your browser (the icon beside the address), then try again." : `Notifications are blocked for this app. Turn them on in your phone's Settings → Apps → ${APP_NAME} → Notifications.`);
         return;
       }
     }
@@ -29,7 +30,7 @@ export function RemindersCard() {
   const preview = (kind: "birthday" | "cheer" | "ask") => {
     if (!child) return;
     sendTestNotification(child.name, kind);
-    setMsg("Sent — it will arrive in about 5 seconds. Lock your phone or leave the app to see it.");
+    setMsg(onWeb ? "Sent: it will appear in about 5 seconds. On the website, reminders show while 4D Ages is open in your browser or installed on your home screen." : "Sent — it will arrive in about 5 seconds. Lock your phone or leave the app to see it.");
   };
   const row = (title: string, sub: string, value: boolean, onChange: (v: boolean) => void) => (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 }}>

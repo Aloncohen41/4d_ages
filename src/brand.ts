@@ -16,6 +16,10 @@ export const SITE_URL = "https://aloncohen41.github.io/4d_ages/";
 export const PRIVACY_URL = `${SITE_URL}privacy/`;
 export const TERMS_URL = `${SITE_URL}terms/`;
 export const DELETE_ACCOUNT_URL = `${SITE_URL}delete-account/`;
+export const ACCESSIBILITY_URL = `${SITE_URL}accessibility/`;
+export const LICENCES_URL = `${SITE_URL}licences/`;
+/** Where privacy questions and requests go (the legal pages say the same). Empty until the support address exists: then feedback goes to FEEDBACK_URL. */
+export const CONTACT_EMAIL = "";
 /** Where feedback and questions go. */
 export const FEEDBACK_URL = "https://github.com/Aloncohen41/4d_ages/issues";
 /** Where the app looks for a newer version when it opens (the latest GitHub release, with its APK). */

@@ -62,3 +62,14 @@ async function receiveShare(request) {
   }
   return Response.redirect("/?shared=1", 303);
 }
+
+// tapping a reminder opens 4D Ages (the open tab if there is one)
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const tabs = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const open = tabs.find((c) => new URL(c.url).origin === self.location.origin);
+    if (open) return open.focus();
+    return self.clients.openWindow("/");
+  })());
+});

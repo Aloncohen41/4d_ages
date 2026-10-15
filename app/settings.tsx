@@ -7,7 +7,11 @@ import { TYPE } from "../src/theme";
 import { accountName, isConfigured, providerOf, reauthenticate, signOut, useSession } from "../src/lib/supabase";
 import { ChangeEmailSheet, ChangePasswordSheet, NameSheet } from "../src/components/AccountSheets";
 import { Icon, IconName } from "../src/components/Icon";
-import { FEEDBACK_URL, PRIVACY_URL, TERMS_URL } from "../src/brand";
+import { ACCESSIBILITY_URL, CONTACT_EMAIL, FEEDBACK_URL, LICENCES_URL, PRIVACY_URL, TERMS_URL } from "../src/brand";
+import { exportMyData } from "../src/lib/dataExport";
+import { fileExport } from "../src/lib/fileExport";
+import { onWeb } from "../src/lib/onWeb";
+import { downloadFile } from "../src/lib/webDownload";
 import { HeightUnit, WeightUnit } from "../src/lib/growth";
 import { canLock, unlock } from "../src/components/AppLock";
 import { deleteAccountData, syncAll } from "../src/lib/sync";
@@ -93,7 +97,9 @@ export default function Settings() {
         <View style={{ marginTop: 12 }}>
           <LinkRow icon="lock" label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
           <LinkRow icon="info" label="Terms of use" onPress={() => Linking.openURL(TERMS_URL)} />
-          <LinkRow icon="message-circle" label="Send feedback or ask a question" onPress={() => Linking.openURL(FEEDBACK_URL)} />
+          <LinkRow icon="smile" label="Accessibility" onPress={() => Linking.openURL(ACCESSIBILITY_URL)} />
+          <LinkRow icon="info" label="Licences (open-source software, maps and music)" onPress={() => Linking.openURL(LICENCES_URL)} />
+          <LinkRow icon="message-circle" label={CONTACT_EMAIL ? "Contact us (privacy, questions, feedback)" : "Send feedback or ask a question"} value={CONTACT_EMAIL || undefined} onPress={() => Linking.openURL(CONTACT_EMAIL ? `mailto:${CONTACT_EMAIL}` : FEEDBACK_URL)} />
         </View>
       </Section>
 
@@ -109,6 +115,7 @@ export default function Settings() {
             <LinkRow icon="mail" label="Email" value={`${session.user.email ?? ""}${providerOf(session) === "google" ? " (Google)" : ""}`} onPress={() => setSheet("email")} />
             {providerOf(session) === "email" ? <LinkRow icon="lock" label="Change password" onPress={() => setSheet("password")} /> : null}
             <LinkRow icon="user-plus" label="Who can see your memories" value="Parents, owners and family, by email: invite, remove or block" onPress={() => router.push("/access")} />
+            <DownloadMyData />
             <View style={{ height: 14 }} />
             <Btn label={busy ? "Signing out…" : "Sign out"} kind="soft" icon="logout" disabled={busy} onPress={out} />
             <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Your books stay in your account. Sign back in to see everything again.</Text>
@@ -271,6 +278,41 @@ function AppLockChoice() {
         </View>
       </Pressable>
       {note ? <Text style={[TYPE.bodySmall, { color: t.danger, marginTop: 4 }]}>{note}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * "Download a copy of my data": everything in the account's books, with the photos and videos on this device, in one zip (see
+ * dataExport.ts). The phone asks where to save it (Downloads, Drive, a folder); the website downloads it.
+ */
+function DownloadMyData() {
+  const t = useTheme();
+  const [progress, setProgress] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const go = async () => {
+    setBusy(true);
+    setMsg("");
+    try {
+      const fx = onWeb ? null : fileExport();
+      const dest = fx ? await fx.createDocument(`4D Ages data.zip`, "application/zip") : null;
+      if (fx && !dest) return; // chose not to save
+      const { uri, fileName } = await exportMyData(setProgress);
+      if (onWeb) downloadFile(uri, fileName);
+      else if (fx && dest) await fx.copyInto(uri, dest);
+      setMsg(onWeb ? "✓ Downloaded." : "✓ Saved where you chose.");
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Couldn't make the copy. Try again.");
+    } finally {
+      setBusy(false);
+      setProgress("");
+    }
+  };
+  return (
+    <View>
+      <LinkRow icon="download" label={busy ? progress || "Making your copy…" : "Download a copy of my data"} value="Everything in your books, with the photos and videos on this device" onPress={() => !busy && go()} />
+      {msg ? <Text style={[TYPE.bodySmall, { color: msg.startsWith("✓") ? t.accentDeep : t.danger, marginTop: 4 }]}>{msg}</Text> : null}
     </View>
   );
 }

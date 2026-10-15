@@ -73,3 +73,9 @@ export async function saveFromUrl(url: string, name: string, ext: string): Promi
   if (!res.ok) throw new Error("Couldn't download it");
   return put(await res.blob(), ext, name);
 }
+
+/** A finished file made by the app (an export), kept for downloading; returns its address. */
+export async function writeFile(bytes: Uint8Array, fileName: string): Promise<string> {
+  const ext = fileName.split(".").pop() ?? "bin";
+  return put(new Blob([bytes as BlobPart]), ext, `export-${Date.now().toString(36)}`);
+}

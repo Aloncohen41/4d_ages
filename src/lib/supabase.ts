@@ -8,6 +8,7 @@ import { GOOGLE_WEB_CLIENT_ID, SUPABASE_ANON_KEY, SUPABASE_URL } from "../config
 import { classifyKey } from "../../plugins/supabaseEnv";
 import { parseAuthCallback } from "./authLink";
 import { usePasswordReset } from "./authLinkState";
+import { agreementNow } from "./consent";
 
 /** True if the key in the app is a SECRET key. It must never be inside an app (it bypasses every privacy rule), so sign-in refuses to start with it. */
 export const keyIsSecret = classifyKey(SUPABASE_ANON_KEY) === "secret";
@@ -76,7 +77,8 @@ export async function signIn(email: string, password: string): Promise<void> {
  * and nothing can be reached until then: the result is "verify". Without verification the account is signed in at once: "signed-in".
  */
 export async function signUp(email: string, password: string): Promise<"verify" | "signed-in"> {
-  const { data, error } = await need().auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: AUTH_REDIRECT } });
+  // the agreement ticked on the form is kept with the new account (see consent.ts)
+  const { data, error } = await need().auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: AUTH_REDIRECT, data: { legal: agreementNow() } } });
   if (error) throw new Error(friendly(error.message));
   // an existing, verified address comes back with no identities (Supabase hides whether it exists): treat it as "sign in instead"
   if (data.user && !data.session && (data.user.identities ?? []).length === 0) throw new Error(friendly("User already registered"));
@@ -208,4 +210,10 @@ export async function reauthenticate(password?: string): Promise<void> {
 export async function signOut(): Promise<void> {
   if (googleReady) await googleSignOut(); // so the next Google sign-in asks which account
   await supabase?.auth.signOut();
+}
+
+/** Keeps the agreement to the terms, the privacy policy and keeping health information with the account (see consent.ts). */
+export async function saveAgreement(): Promise<void> {
+  const { error } = await need().auth.updateUser({ data: { legal: agreementNow() } });
+  if (error) throw new Error(friendly(error.message));
 }

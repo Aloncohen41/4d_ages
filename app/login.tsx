@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { KeyboardAvoidingView, Linking, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import { useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { WORDMARKS } from "../src/lib/wordmark";
-import { APP_NAME, LOGIN_TAGLINE, WORDMARK_ASPECT } from "../src/brand";
+import { APP_NAME, LOGIN_TAGLINE, PRIVACY_URL, TERMS_URL, WORDMARK_ASPECT } from "../src/brand";
 import { DISPLAY_FONT, TYPE } from "../src/theme";
 import { googleReady, resendVerification, signIn, signInWithGoogle, signUp, sendPasswordReset } from "../src/lib/supabase";
+import { LegalLinks } from "../src/components/LegalLinks";
 import { useAuthLinkError } from "../src/lib/authLinkState";
 import { Btn, Input } from "../src/components/ui";
 import { Icon } from "../src/components/Icon";
@@ -26,6 +27,9 @@ export default function Login() {
   const loadSample = useStore((s) => s.loadSample);
   const linkError = useAuthLinkError((s) => s.error);
   const [mode, setMode] = useState<Mode>("in");
+  // creating an account: agreeing to the terms and the privacy policy, and to keeping health information (see consent.ts)
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeHealth, setAgreeHealth] = useState(false);
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -53,6 +57,7 @@ export default function Login() {
       if (!email.includes("@")) throw new Error("Enter your email address.");
       if (pw.length < 6) throw new Error("Enter a password of at least 6 characters.");
       if (mode === "up") {
+        if (!agreeTerms || !agreeHealth) throw new Error("Tick both boxes to create your account.");
         const result = await signUp(email, pw);
         if (result === "verify") { setMode("verify"); setPw(""); }
       } else await signIn(email, pw);
@@ -107,7 +112,20 @@ export default function Login() {
                 <Text style={[TYPE.bodySmall, { color: t.accentDeep, fontWeight: "700" }]}>Forgot password?</Text>
               </Pressable>
             ) : null}
-            <Btn label={busy ? "One moment…" : mode === "in" ? "Sign in" : "Create account"} onPress={submit} disabled={busy} />
+            {mode === "up" ? (
+              <View>
+                {[
+                  [agreeTerms, setAgreeTerms, <>I'm 18 or over, and I agree to the <Text onPress={() => Linking.openURL(TERMS_URL)} style={{ color: t.accentDeep, textDecorationLine: "underline" }}>Terms</Text> and the <Text onPress={() => Linking.openURL(PRIVACY_URL)} style={{ color: t.accentDeep, textDecorationLine: "underline" }}>Privacy policy</Text>.</>],
+                  [agreeHealth, setAgreeHealth, <>I agree that {APP_NAME} can keep the health information I add (pregnancy, growth, health notes), to run my books.</>],
+                ].map(([on, set, words], k) => (
+                  <Pressable key={k} onPress={() => (set as (v: boolean) => void)(!on)} accessibilityRole="checkbox" accessibilityState={{ checked: !!on }} style={{ flexDirection: "row", gap: 10, paddingVertical: 4 }}>
+                    <Icon name={on ? "check-square" : "square"} size={22} color={on ? t.accent : t.ink3} />
+                    <Text style={[TYPE.bodySmall, { color: t.ink2, flex: 1 }]}>{words as React.ReactNode}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            <Btn label={busy ? "One moment…" : mode === "in" ? "Sign in" : "Create account"} onPress={submit} disabled={busy || (mode === "up" && (!agreeTerms || !agreeHealth))} />
             <Pressable onPress={() => { setMode(mode === "in" ? "up" : "in"); setErr(""); setMsg(""); }} hitSlop={6} style={{ alignItems: "center", paddingVertical: 2 }}>
               <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{mode === "in" ? "New here? Create an account" : "Already have an account? Sign in"}</Text>
             </Pressable>
@@ -119,6 +137,7 @@ export default function Login() {
                   <View style={{ flex: 1, height: 1, backgroundColor: t.line }} />
                 </View>
                 <Btn label="Sign in with Google" kind="line" icon="google" disabled={busy} onPress={() => run(async () => { await signInWithGoogle(); })} />
+                <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center" }]}>New to {APP_NAME}? You'll be asked to agree to the terms first.</Text>
               </>
             ) : null}
           </View>
@@ -131,6 +150,7 @@ export default function Login() {
         <Pressable onPress={loadSample} hitSlop={8} style={{ alignSelf: "center", marginTop: compact ? 14 : 22, paddingVertical: 4 }} accessibilityRole="link">
           <Text style={[TYPE.bodySmall, { color: t.ink3, textDecorationLine: "underline" }]}>Explore with a sample family</Text>
         </Pressable>
+        <View style={{ marginTop: compact ? 8 : 12 }}><LegalLinks /></View>
       </KeyboardAvoidingView>
     </View>
   );

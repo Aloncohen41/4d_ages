@@ -19,6 +19,7 @@ import { Toast } from "../src/components/Toast";
 import { Confetti } from "../src/components/Confetti";
 import { WebToast } from "../src/components/WebToast";
 import { AppColumn } from "../src/components/AppColumn";
+import { AgreementGate } from "../src/components/AgreementGate";
 import { BirthdayConfetti } from "../src/components/BirthdayConfetti";
 import { BirthStoryHost } from "../src/components/BirthStory";
 import { NewPasswordAfterReset } from "../src/components/AccountSheets";
@@ -187,6 +188,8 @@ export default function RootLayout() {
       {signedIn ? <ImportSheet /> : null}
       {signedIn ? <ShareSheet /> : null}
       <NewPasswordAfterReset />
+      {/* the terms, the privacy policy and consent to keeping health information, before anything else */}
+      <AgreementGate />
       <AppLock />
       {/* the forms that edit memories: shared by the tabs and the pages opened from the menu */}
       {signedIn && hasKids ? <EntrySheet /> : null}

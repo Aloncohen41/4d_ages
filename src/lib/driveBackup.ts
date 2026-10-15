@@ -1,8 +1,5 @@
-import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin, isSuccessResponse } from "@react-native-google-signin/google-signin";
-import * as LegacyFS from "expo-file-system/legacy";
-import { File, Paths } from "expo-file-system";
+import { NeedsGoogle, downloadBytes, driveToken, uploadBytes } from "./driveAuth";
 import { APP_NAME, APP_VERSION } from "../brand";
 import { STORE_VERSION, useStore } from "./store";
 import { migrateStored } from "./migrate";
@@ -16,43 +13,19 @@ import { syncAll } from "./sync";
  * can only see the files it made in Drive (Google's "drive.file" access), nothing else there.
  */
 
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const API = "https://www.googleapis.com/drive/v3";
 const UPLOAD = "https://www.googleapis.com/upload/drive/v3";
 /** Set once the 1.0.8 backup folder (separate photo files) has been moved to the Drive bin. */
 const LEGACY_CLEARED_KEY = "4d-ages-drive-legacy-cleared";
 
-export class NeedsGoogle extends Error {
-  constructor() {
-    super("Connect Google Drive again: tap Back up now.");
-  }
-}
+export { NeedsGoogle };
 
-export const driveAvailable = () => googleReady && Platform.OS !== "web"; // the website keeps everything in your account already
+export const driveAvailable = () => googleReady;
 
-/** A Drive access token. Asks the parent to pick an account and allow Drive only when `interactive` (a tap); in the background it never asks. */
+/** A Drive access token (see driveAuth.ts; the website has its own). */
 async function token(interactive: boolean): Promise<{ accessToken: string; email: string } | null> {
   if (!googleReady) throw new Error("Google sign-in isn't set up in this build, so Drive backup isn't available.");
-  let user = GoogleSignin.getCurrentUser();
-  if (!user) {
-    const quiet = await GoogleSignin.signInSilently().catch(() => null);
-    if (quiet && quiet.type === "success") user = quiet.data;
-  }
-  if (!user) {
-    if (!interactive) throw new NeedsGoogle();
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    const res = await GoogleSignin.signIn();
-    if (!isSuccessResponse(res)) return null;
-    user = res.data;
-  }
-  if (!user.scopes?.includes(DRIVE_SCOPE)) {
-    if (!interactive) throw new NeedsGoogle();
-    const res = await GoogleSignin.addScopes({ scopes: [DRIVE_SCOPE] });
-    if (!res || !isSuccessResponse(res)) return null;
-    user = res.data;
-  }
-  const { accessToken } = await GoogleSignin.getTokens();
-  return { accessToken, email: user.user.email };
+  return driveToken(interactive);
 }
 
 async function api<T>(accessToken: string, path: string, init: RequestInit = {}): Promise<T> {
@@ -94,16 +67,11 @@ export function backupNow(interactive: boolean, onProgress?: (text: string) => v
       if (!auth) return; // the parent closed the account picker
       onProgress?.("Saving your books…");
       const backup = buildBackup(useStore.getState() as unknown as Record<string, unknown>, `${APP_NAME} ${APP_VERSION}`, STORE_VERSION, Date.now());
-      const zip = new File(Paths.cache, BACKUP_ZIP);
-      if (zip.exists) zip.delete();
-      zip.write(zipBackup(backup));
       const existing = await findZip(auth.accessToken);
       const id = existing?.id ?? (await api<{ id: string }>(auth.accessToken, "/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: BACKUP_ZIP, mimeType: "application/zip" }) })).id;
-      const res = await LegacyFS.uploadAsync(`${UPLOAD}/files/${id}?uploadType=media`, zip.uri, {
-        httpMethod: "PATCH", uploadType: LegacyFS.FileSystemUploadType.BINARY_CONTENT, headers: { Authorization: `Bearer ${auth.accessToken}`, "Content-Type": "application/zip" },
-      });
-      if (res.status === 401) throw new NeedsGoogle();
-      if (res.status >= 300) throw new Error(`Google Drive didn't take the backup (${res.status}).`);
+      const status = await uploadBytes(`${UPLOAD}/files/${id}?uploadType=media`, zipBackup(backup), auth.accessToken, BACKUP_ZIP);
+      if (status === 401) throw new NeedsGoogle();
+      if (status >= 300) throw new Error(`Google Drive didn't take the backup (${status}).`);
       set({ lastAt: Date.now(), account: auth.email, error: undefined });
       await clearLegacy(auth.accessToken).catch(() => undefined); // tidying up never fails a backup
     } catch (e) {
@@ -125,12 +93,10 @@ async function readBackup(accessToken: string) {
     id = old.files[0]?.id;
   }
   if (!id) return null;
-  const dest = new File(Paths.cache, "drive-restore.zip");
-  if (dest.exists) dest.delete();
-  const res = await LegacyFS.downloadAsync(`${API}/files/${id}?alt=media`, dest.uri, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (res.status === 401) throw new NeedsGoogle();
-  if (res.status >= 300) throw new Error(`Couldn't download the backup (${res.status}).`);
-  return unzipBackup(dest.bytesSync());
+  const got = await downloadBytes(`${API}/files/${id}?alt=media`, accessToken);
+  if (got === 401) throw new NeedsGoogle();
+  if (typeof got === "number") throw new Error(`Couldn't download the backup (${got}).`);
+  return unzipBackup(got);
 }
 
 /** When the backup in Drive was made, or null if there isn't one. Asks to connect Drive if needed (a tap). */

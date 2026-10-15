@@ -29,6 +29,7 @@ link page `/j/`), which are kept in `docs/`.
    - `EXPO_PUBLIC_SUPABASE_URL`
    - `EXPO_PUBLIC_SUPABASE_ANON_KEY` (the publishable key)
    - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
+   - `CONTACT_EMAIL`: the support address shown on the privacy policy, terms and accessibility pages
 
    Never add the secret key, the database connection string or the Google client secret here. The website doesn't need them, and anything
    given to the build ends up in the site.
@@ -52,6 +53,8 @@ link page `/j/`), which are kept in `docs/`.
 
 ## How the website differs from the app
 
+It does everything the app does. A few things work the way browsers work:
+
 - **Photos and videos** you add on the website are kept in that browser and in your account, like on the phone. On another computer they
   come down from your account.
 - **Books** open in the browser's print window at their exact size. Choose **Save as PDF** as the printer.
@@ -59,6 +62,9 @@ link page `/j/`), which are kept in `docs/`.
   works.
 - **Sharing in**: on a phone, add the website to the home screen (the browser's menu → *Add to Home screen* or *Install app*), and 4D Ages
   appears in the Share menu for photos, videos and recordings, like the app.
-- **Reminders and notifications** come from the phone app. A website can't send them when it's closed.
-- **Backup to Google Drive** and the **app lock** are in the phone app. On the website everything is already kept in your account, and the
-  computer has its own lock.
+- **Reminders** are the same, shown as the browser's notifications, but only while the website is open (in a tab, or installed on the home
+  screen); ones missed earlier that day show when you open it. Reminders when it's closed come from the phone app.
+- **The lock** uses the device's own check (Windows Hello, Touch ID or Face ID, a fingerprint or the screen lock).
+- **Backup to Google Drive** asks Google in a small window, and the permission lasts about an hour, so the automatic backup runs while it lasts
+  and otherwise waits for the next "Back up now".
+- **Calendar reminders** for a pet download as a calendar file, which Google Calendar, Outlook and Apple Calendar open.
