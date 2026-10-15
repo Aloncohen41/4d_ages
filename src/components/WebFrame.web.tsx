@@ -10,6 +10,8 @@ export interface WebFrameMessage { nativeEvent: { data: string } }
 
 interface Props {
   source: { html: string; baseUrl?: string };
+  /** What the frame shows, for screen readers ("The book's pages", "Map"): the frame's title. */
+  accessibilityLabel?: string;
   onMessage?: (e: WebFrameMessage) => void;
   onLoadEnd?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -24,7 +26,7 @@ export interface WebFrameHandle { injectJavaScript: (code: string) => void }
 const BRIDGE = `<script>window.ReactNativeWebView={postMessage:function(d){parent.postMessage({__webframe:window.name,data:String(d)},"*")}};</script>`;
 let next = 0;
 
-export const WebFrame = forwardRef<WebFrameHandle, Props>(function WebFrame({ source, onMessage, onLoadEnd, style, containerStyle, scrollEnabled = true }, ref) {
+export const WebFrame = forwardRef<WebFrameHandle, Props>(function WebFrame({ source, onMessage, onLoadEnd, style, containerStyle, scrollEnabled = true, accessibilityLabel: title = "Content" }, ref) {
   const frame = useRef<HTMLIFrameElement | null>(null);
   const name = useMemo(() => `webframe-${++next}`, []);
   // the bridge goes first in the page, so its own scripts can talk from the start; a base address keeps relative links as they were
@@ -52,6 +54,7 @@ export const WebFrame = forwardRef<WebFrameHandle, Props>(function WebFrame({ so
       {React.createElement("iframe", {
         ref: frame,
         name,
+        title,
         srcDoc: doc,
         onLoad: () => onLoadEnd?.(),
         scrolling: scrollEnabled ? "auto" : "no",

@@ -59,7 +59,7 @@ export function Reactions({ memory, child }: { memory: Memory; child: Child }) {
   return (
     <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: t.line, paddingTop: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Pressable onPress={() => send(!hearted, mine?.comment ?? "")} disabled={busy} accessibilityRole="button" accessibilityState={{ selected: hearted }} accessibilityLabel={hearted ? "Take back your heart" : "Leave a heart"}
+        <Pressable onPress={() => send(!hearted, mine?.comment ?? "")} disabled={busy} accessibilityRole="button" aria-pressed={hearted} accessibilityLabel={hearted ? "Take back your heart" : "Leave a heart"}
           style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: hearted ? t.accent : t.line, backgroundColor: hearted ? t.accentSoft : "transparent" }}>
           <Icon name="heart" size={18} color={hearted ? t.accent : t.ink3} />
           <Text style={[TYPE.labelLarge, { color: hearted ? t.onAccentSoft : t.ink2 }]}>{reactionCounts(list).hearts || ""} {hearted ? "Loved" : "Love"}</Text>

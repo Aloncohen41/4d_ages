@@ -208,7 +208,7 @@ export function PregnancyMilestones({ child }: { child: Child }) {
               ? `Week ${weekOn(child.birth, m.date)} · ${formatDate(m.date)}${reveal && m.description ? ` · ${m.description.split("\n")[0]}` : ""}`
               : `Usually around week ${pregnancyWeekOf(d)} · ${d.hint}`;
             return (
-              <Pressable key={d.id} onPress={() => tick(d.id)} accessibilityRole="checkbox" accessibilityState={{ checked: !!m }} accessibilityLabel={d.label}
+              <Pressable key={d.id} onPress={() => tick(d.id)} accessibilityRole="checkbox" aria-checked={!!m} accessibilityLabel={d.label}
                 style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.line }}>
                 <Icon name={m ? "check-square" : "square"} size={24} color={m ? t.accent : t.ink3} />
                 <View style={{ flex: 1 }}>

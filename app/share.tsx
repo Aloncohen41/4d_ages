@@ -232,7 +232,7 @@ function Overview({ child, onInvite, onSend }: { child: Child; onInvite: (k: Inv
 function Choice({ icon, title, text, onPress, disabled }: { icon: IconName; title: string; text: string; onPress: () => void; disabled?: boolean }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityState={{ disabled }}
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" aria-disabled={disabled}
       style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 18, borderWidth: 1, borderColor: disabled ? t.line : t.accent, backgroundColor: t.card, marginBottom: 10, opacity: disabled ? 0.6 : 1 }}>
       <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={22} color={t.onAccentSoft} /></View>
       <View style={{ flex: 1 }}>
@@ -263,7 +263,7 @@ function PeoplePicker({ child, value, onChange, single }: { child: Child; value:
       {family.map((r) => {
         const on = value.includes(r.id);
         return (
-          <Pressable key={r.id} onPress={() => onChange(single ? (on ? [] : [r.id]) : on ? value.filter((x) => x !== r.id) : [...value, r.id])} accessibilityRole={single ? "radio" : "checkbox"} accessibilityState={{ checked: on }}
+          <Pressable key={r.id} onPress={() => onChange(single ? (on ? [] : [r.id]) : on ? value.filter((x) => x !== r.id) : [...value, r.id])} accessibilityRole={single ? "radio" : "checkbox"} aria-checked={on}
             style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 }}>
             <Icon name={on ? (single ? "check" : "check-square") : single ? "plus" : "square"} size={22} color={on ? t.accent : t.ink3} />
             <MemberAvatar member={r} size={34} />

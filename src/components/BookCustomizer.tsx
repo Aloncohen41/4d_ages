@@ -10,7 +10,7 @@ import { TYPE } from "../theme";
 import { Icon } from "./Icon";
 import { BookViewInput } from "./BookPreview";
 import { BookExportSheet, ColourChoice, THEME_ICONS, themeOrder } from "./BookExportSheet";
-import { Seg } from "./ui";
+import { Seg, dialogName } from "./ui";
 
 const fileAccess = {
   originWhitelist: ["*"] as string[],
@@ -81,7 +81,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
   const shown = BOOK_STYLES.find((s) => s.id === order[centred]) ?? BOOK_STYLES[0];
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent {...dialogName("Customize the book")}>
       <View style={{ flex: 1, backgroundColor: t.bg3, paddingTop: insets.top, paddingBottom: insets.bottom + 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 6 }}>
           <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={6} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="x" size={24} color={t.ink2} /></Pressable>
@@ -96,7 +96,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
         </View>
 
         <View style={{ flex: 1 }}>
-          <WebView {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
+          <WebView accessibilityLabel="The book's pages" {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
           {loading ? <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={t.accent} /></View> : null}
         </View>
 
@@ -133,7 +133,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
                 const scale = x.interpolate({ inputRange: [(i - 1) * ITEM, i * ITEM, (i + 1) * ITEM], outputRange: [0.8, 1, 0.8], extrapolate: "clamp" });
                 const on = i === centred;
                 return (
-                  <Pressable key={id} onPress={() => pick(i)} accessibilityRole="radio" accessibilityState={{ selected: id === input.style }} accessibilityLabel={BOOK_STYLES.find((s) => s.id === id)?.label} style={{ width: ITEM, alignItems: "center" }}>
+                  <Pressable key={id} onPress={() => pick(i)} accessibilityRole="radio" aria-checked={id === input.style} accessibilityLabel={BOOK_STYLES.find((s) => s.id === id)?.label} style={{ width: ITEM, alignItems: "center" }}>
                     <Animated.View style={{ transform: [{ scale }], alignItems: "center" }}>
                       <View style={{ width: ITEM - 12, height: (ITEM - 12) * 1.25, borderRadius: 12, backgroundColor: look.paper, borderWidth: on ? 3 : 1, borderColor: on ? t.accent : t.line, alignItems: "center", justifyContent: "center", gap: 6 }}>
                         <Icon name={a} size={26} color={look.accent} />

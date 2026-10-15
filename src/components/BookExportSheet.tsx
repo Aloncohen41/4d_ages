@@ -30,7 +30,7 @@ export function ThemeCards({ value, onChange, pet = false }: { value: BookStyle;
         const on = id === value;
         const [a, b] = THEME_ICONS[id];
         return (
-          <Pressable key={id} onPress={() => onChange(id)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={`${s.label}: ${s.desc}`}
+          <Pressable key={id} onPress={() => onChange(id)} accessibilityRole="radio" aria-checked={on} accessibilityLabel={`${s.label}: ${s.desc}`}
             style={{ width: "48%", borderRadius: 16, borderWidth: on ? 3 : 1, borderColor: on ? t.accent : t.line, overflow: "hidden" }}>
             <View style={{ backgroundColor: look.paper, height: 64, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 14 }}>
               <Icon name={a} size={28} color={look.accent} />
@@ -55,7 +55,7 @@ export function ColourChoice({ value, onChange }: { value: BookColour; onChange:
       {BOOK_COLOURS.map((c) => {
         const on = c.id === value;
         return (
-          <Pressable key={c.id} onPress={() => onChange(c.id)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={c.label} style={{ alignItems: "center", width: 54 }}>
+          <Pressable key={c.id} onPress={() => onChange(c.id)} accessibilityRole="radio" aria-checked={on} accessibilityLabel={c.label} style={{ alignItems: "center", width: 54 }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: on ? 3 : 1, borderColor: on ? t.accent : t.line, padding: 3 }}>
               {c.id === "age" ? (
                 <View style={{ flex: 1, borderRadius: 20, overflow: "hidden", flexDirection: "row" }}>

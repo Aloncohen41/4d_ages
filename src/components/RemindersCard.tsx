@@ -38,7 +38,7 @@ export function RemindersCard() {
         <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }}>{title}</Text>
         <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 2 }}>{sub}</Text>
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={value ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
+      <Switch accessibilityLabel={title} value={value} onValueChange={onChange} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={value ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
     </View>
   );
 
@@ -49,7 +49,7 @@ export function RemindersCard() {
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>Reminders and cheers</Text>
           <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Birthdays, a little celebration for every new month, and a gentle nudge about milestones.</Text>
         </View>
-        <Switch value={notif.enabled} onValueChange={toggle} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={notif.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
+        <Switch accessibilityLabel="Reminders and cheers" value={notif.enabled} onValueChange={toggle} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={notif.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
       </View>
 
       {notif.enabled ? (

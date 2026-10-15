@@ -6,7 +6,7 @@ import { TYPE } from "../theme";
 import { APP_NAME, PRIVACY_URL, TERMS_URL } from "../brand";
 import { needsAgreement } from "../lib/consent";
 import { saveAgreement, signOut, useSession } from "../lib/supabase";
-import { Btn } from "./ui";
+import { Btn, dialogName } from "./ui";
 import { Icon } from "./Icon";
 import { LegalLinks } from "./LegalLinks";
 
@@ -27,7 +27,7 @@ export function AgreementGate() {
 
   if (!needed) return null;
   const box = (on: boolean, set: (v: boolean) => void, children: React.ReactNode) => (
-    <Pressable onPress={() => set(!on)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={{ flexDirection: "row", gap: 12, paddingVertical: 10 }}>
+    <Pressable onPress={() => set(!on)} accessibilityRole="checkbox" aria-checked={on} style={{ flexDirection: "row", gap: 12, paddingVertical: 10 }}>
       <Icon name={on ? "check-square" : "square"} size={24} color={on ? t.accent : t.ink3} />
       <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>{children}</Text>
     </Pressable>
@@ -46,7 +46,7 @@ export function AgreementGate() {
   };
 
   return (
-    <Modal visible animationType="fade" onRequestClose={() => undefined} statusBarTranslucent>
+    <Modal visible animationType="fade" onRequestClose={() => undefined} statusBarTranslucent {...dialogName("Before you go on")}>
       <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, maxWidth: 560, width: "100%", alignSelf: "center" }}>
           <Text style={[TYPE.headlineSmall, { color: t.ink }]}>Before you go on</Text>

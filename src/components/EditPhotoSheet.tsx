@@ -64,7 +64,7 @@ function PhotoForm({ photoId, onClose }: { photoId: string; onClose: () => void 
       <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{date < child.birth ? ageShort(child.birth, date) : `${child.name} was ${ageShort(child.birth, date).replace(" old", "")}`} on {formatDate(date)}</Text>
       <TimeField value={time} onChange={setTime} />
       <Label>Caption</Label>
-      <Input value={caption} onChangeText={setCaption} multiline />
+      <Input value={caption} onChangeText={setCaption} multiline accessibilityLabel="Caption" />
       <Label>Location</Label>
       <Input value={location} onChangeText={setLocation} placeholder="Where was this? (optional)" maxLength={80} />
       <Label>Tags</Label>

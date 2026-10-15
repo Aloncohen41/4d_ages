@@ -220,7 +220,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
 
       <Label>Title card</Label>
       <Seg options={[{ id: 1, label: "Show a title" }, { id: 0, label: "Skip it" }]} value={intro ? 1 : 0} onChange={(v) => phase !== "working" && setIntro(v === 1)} />
-      {intro ? <Input value={heading} onChangeText={setHeading} style={{ marginTop: 8 }} maxLength={50} /> : null}
+      {intro ? <Input value={heading} onChangeText={setHeading} accessibilityLabel="The video's title" style={{ marginTop: 8 }} maxLength={50} /> : null}
       {intro && usable.length > 1 ? (
         <>
           <Label>Cover — the picture the video starts with (its thumbnail)</Label>
@@ -228,7 +228,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
             {coverChoices.map((s) => {
               const on = s.id === cover?.id;
               return (
-                <Pressable key={s.id} onPress={() => phase !== "working" && setCoverId(s.id)} accessibilityLabel="Use as the cover" accessibilityState={{ selected: on }} style={{ width: 76, height: 76, borderRadius: 12, overflow: "hidden", borderWidth: 3, borderColor: on ? t.accent : "transparent", backgroundColor: t.bg3 }}>
+                <Pressable key={s.id} onPress={() => phase !== "working" && setCoverId(s.id)} accessibilityLabel="Use as the cover" aria-pressed={on} style={{ width: 76, height: 76, borderRadius: 12, overflow: "hidden", borderWidth: 3, borderColor: on ? t.accent : "transparent", backgroundColor: t.bg3 }}>
                   <PhotoView photo={slideView(s)} fit="cover" style={{ width: "100%", height: "100%" }} emojiSize={22} />
                   {on ? <Text style={{ position: "absolute", left: 0, right: 0, bottom: 0, textAlign: "center", color: t.onAccent, backgroundColor: t.accent, fontSize: 10, fontWeight: "700", paddingVertical: 1 }}>COVER</Text> : null}
                 </Pressable>
@@ -240,7 +240,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
       {!intro ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>Without a title card the video starts with its first picture.</Text> : null}
       {isPet(child) ? (
         <View style={{ marginTop: 14 }}>
-          <Pressable onPress={() => phase !== "working" && setMemorial(memorial == null ? "" : null)} accessibilityRole="checkbox" accessibilityState={{ checked: memorial != null }} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Pressable onPress={() => phase !== "working" && setMemorial(memorial == null ? "" : null)} accessibilityRole="checkbox" aria-checked={memorial != null} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Icon name={memorial != null ? "check-square" : "square"} size={22} color={t.accent} />
             <Text style={{ color: t.ink, fontSize: 15, flex: 1 }}>End with "In loving memory"</Text>
           </Pressable>

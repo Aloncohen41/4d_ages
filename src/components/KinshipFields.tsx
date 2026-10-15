@@ -24,7 +24,7 @@ export function KinshipFields({ value, onChange, family, childName, selfId }: {
   const mySide = sideIndex(me, others);
   const sameSide = (r: Relative) => !info.sided || mySide == null || sideIndex(r, others) === mySide;
   const chip = (key: string, label: string, on: boolean, press: () => void) => (
-    <Pressable key={key} onPress={press} accessibilityRole="radio" accessibilityState={{ selected: on }}
+    <Pressable key={key} onPress={press} accessibilityRole="radio" aria-checked={on}
       style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, borderColor: on ? t.chipOn : t.line, backgroundColor: on ? t.chipOn : t.card }}>
       <Text style={{ color: on ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12.5 }}>{label}</Text>
     </Pressable>

@@ -161,7 +161,7 @@ export default function FamilyPage() {
               <Pressable
                 onPress={() => (editing ? setSheet({ memberId: r.id }) : open(r.id))}
                 accessibilityRole="button"
-                accessibilityState={{ selected: on }}
+                aria-pressed={on}
                 android_ripple={{ color: withAlpha(t.ink, 0.08) }}
                 style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 16, backgroundColor: t.card, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, overflow: "hidden" }}
               >

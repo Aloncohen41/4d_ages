@@ -104,7 +104,7 @@ export default function ClassicEditor() {
             {(f.options ?? []).map((o) => {
               const on = values[f.id] === o;
               return (
-                <Pressable key={o} onPress={() => set(f.id, on ? undefined : o)} accessibilityRole="radio" accessibilityState={{ selected: on }}
+                <Pressable key={o} onPress={() => set(f.id, on ? undefined : o)} accessibilityRole="radio" aria-checked={on}
                   style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: on ? t.chipOn : t.line, backgroundColor: on ? t.chipOn : t.card }}>
                   <Text style={{ color: on ? t.onChipOn : t.ink2, fontWeight: "700" }}>{o}</Text>
                 </Pressable>
@@ -145,7 +145,7 @@ export default function ClassicEditor() {
               const key = `${f.id}.${it.id}`;
               const on = !!values[key];
               return (
-                <Pressable key={it.id} onPress={() => dated(key, `First ${it.label.toLowerCase()}`)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}
+                <Pressable key={it.id} onPress={() => dated(key, `First ${it.label.toLowerCase()}`)} accessibilityRole="checkbox" aria-checked={on}
                   style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.line }}>
                   <Icon name={on ? "check-square" : "square"} size={22} color={on ? t.accent : t.ink3} />
                   <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>{it.label}</Text>

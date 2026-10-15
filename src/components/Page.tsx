@@ -23,7 +23,7 @@ export function Page({ title, children, right, scrollRef }: { title: string; chi
         <Pressable onPress={back} accessibilityLabel="Back" accessibilityRole="button" hitSlop={4} android_ripple={{ color: withAlpha(t.ink, 0.12), borderless: true, radius: 22 }} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
           <Icon name="chevron-left" size={28} color={t.ink2} />
         </Pressable>
-        <Text style={[TYPE.titleLarge, { color: t.ink, flex: 1 }]} numberOfLines={1}>{title}</Text>
+        <Text role="heading" aria-level={1} style={[TYPE.titleLarge, { color: t.ink, flex: 1 }]} numberOfLines={1}>{title}</Text>
         {right}
       </View>
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }} keyboardShouldPersistTaps="handled">
@@ -38,7 +38,7 @@ export function Section({ title, children, first }: { title: string; children: R
   const t = useTheme();
   return (
     <View style={{ marginTop: first ? 4 : 28 }}>
-      <Text style={[TYPE.titleMedium, { color: t.ink, marginBottom: 10 }]}>{title}</Text>
+      <Text role="heading" aria-level={2} style={[TYPE.titleMedium, { color: t.ink, marginBottom: 10 }]}>{title}</Text>
       {children}
     </View>
   );

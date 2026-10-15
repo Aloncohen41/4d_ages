@@ -28,7 +28,7 @@ export function BookPostsSheet({ posts, defs, excluded, onChange, onClose }: {
         const on = !out.has(m.id);
         const head = memoryHeading(m, defs) || blurb(m) || "Photo";
         return (
-          <Pressable key={m.id} onPress={() => toggle(m.id)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${head}, ${formatDate(m.date)}`}
+          <Pressable key={m.id} onPress={() => toggle(m.id)} accessibilityRole="checkbox" aria-checked={on} accessibilityLabel={`${head}, ${formatDate(m.date)}`}
             style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: t.line, opacity: on ? 1 : 0.55 }}>
             <Icon name={on ? "check-square" : "square"} size={24} color={on ? t.accent : t.ink3} />
             <PhotoView photo={m} emojiSize={18} style={{ width: 48, height: 48, borderRadius: 8 }} />

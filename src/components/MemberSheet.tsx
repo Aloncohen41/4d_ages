@@ -170,7 +170,7 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
             {kids.filter((k) => k.id !== existing?.childRef).map((k) => {
               const on = families.includes(k.id);
               return (
-                <Pressable key={k.id} onPress={() => setFamilies((f) => (f.includes(k.id) ? f.filter((x) => x !== k.id) : [...f, k.id]))} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={{ flexDirection: "row", alignItems: "center", gap: 7, paddingVertical: 4, paddingLeft: 4, paddingRight: 12, borderRadius: 99, borderWidth: 1.5, backgroundColor: on ? t.accentSoft : t.card, borderColor: on ? t.accent : t.line }}>
+                <Pressable key={k.id} onPress={() => setFamilies((f) => (f.includes(k.id) ? f.filter((x) => x !== k.id) : [...f, k.id]))} accessibilityRole="checkbox" aria-checked={on} style={{ flexDirection: "row", alignItems: "center", gap: 7, paddingVertical: 4, paddingLeft: 4, paddingRight: 12, borderRadius: 99, borderWidth: 1.5, backgroundColor: on ? t.accentSoft : t.card, borderColor: on ? t.accent : t.line }}>
                   <Avatar child={k} size={26} />
                   <Text style={{ color: on ? t.onAccentSoft : t.ink3, fontWeight: "700", fontSize: 12.5 }}>{k.name}</Text>
                 </Pressable>

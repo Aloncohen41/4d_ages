@@ -180,12 +180,12 @@ function ReminderSheet({ child, start, isNew, onClose, onSave, onDelete }: { chi
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16 }}>
         <Icon name="bell" size={20} color={t.ink2} />
         <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>Notification from 4D Ages</Text>
-        <Switch value={r.notify} onValueChange={(v) => set({ notify: v })} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={r.notify ? t.onAccent : t.outline} />
+        <Switch accessibilityLabel="Notification from 4D Ages" value={r.notify} onValueChange={(v) => set({ notify: v })} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={r.notify ? t.onAccent : t.outline} />
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 }}>
         <Icon name="calendar" size={20} color={t.ink2} />
         <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>Add to my calendar</Text>
-        <Switch value={calendar} onValueChange={setCalendar} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={calendar ? t.onAccent : t.outline} />
+        <Switch accessibilityLabel="Add to my calendar" value={calendar} onValueChange={setCalendar} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={calendar ? t.onAccent : t.outline} />
       </View>
       <Btn label={busy ? "Saving…" : "Save reminder"} onPress={save} disabled={busy} style={{ marginTop: 18 }} />
       {!isNew ? <Btn label="Delete" kind="line" onPress={() => onDelete(r)} style={{ marginTop: 10 }} /> : null}

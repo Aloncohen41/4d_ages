@@ -267,7 +267,7 @@ function AppLockChoice() {
   };
   return (
     <View>
-      <Pressable onPress={toggle} accessibilityRole="switch" accessibilityState={{ checked: on }} style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 8 }}>
+      <Pressable onPress={toggle} accessibilityRole="switch" aria-checked={on} style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 8 }}>
         <Icon name="lock" size={22} color={t.ink2} />
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.bodyLarge, { color: t.ink }]}>App lock</Text>

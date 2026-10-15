@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import Slider from "@react-native-community/slider";
+import { AppSlider } from "./AppSlider";
 import { useTheme } from "../lib/useTheme";
 import { Child, Memory } from "../lib/types";
 import { ageShort, formatDate, todayISO } from "../lib/date";
@@ -37,7 +37,8 @@ function End({ label, child, total, committed, shown, rev, onLive, onCommit }: {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
         {nudge(-1)}
         {total > 0 ? (
-          <Slider
+          <AppSlider
+            label={`${label} date`}
             key={`${label}-${rev}` /* remounted after each release so the thumb always shows the committed (never an out-of-order) position */}
             style={{ flex: 1, height: 42 }}
             minimumValue={0}
@@ -49,7 +50,6 @@ function End({ label, child, total, committed, shown, rev, onLive, onCommit }: {
             minimumTrackTintColor={t.accent}
             maximumTrackTintColor={t.line}
             thumbTintColor={t.accent}
-            accessibilityLabel={`${label} date`}
           />
         ) : <View style={{ flex: 1 }} />}
         {nudge(1)}

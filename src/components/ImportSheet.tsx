@@ -162,7 +162,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
   const choice = (value: PostShape, title: string, sub: string) => {
     const on = shape === value;
     return (
-      <Pressable onPress={() => { setShape(value); setErr(""); }} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ flex: 1, padding: 12, borderRadius: 16, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.outline, backgroundColor: t.card }}>
+      <Pressable onPress={() => { setShape(value); setErr(""); }} accessibilityRole="radio" aria-checked={on} style={{ flex: 1, padding: 12, borderRadius: 16, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.outline, backgroundColor: t.card }}>
         <Text style={[TYPE.titleSmall, { color: t.ink }]}>{title}</Text>
         <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 2 }]}>{sub}</Text>
       </Pressable>
@@ -207,7 +207,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
           <Label>Whose memories?</Label>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {kids.map((k) => (
-              <Pressable key={k.id} onPress={() => { setChildId(k.id); setErr(""); if (pick && !shareOptions(k, items).some((o) => o.id === pick)) setPick(null); }} accessibilityRole="radio" accessibilityState={{ selected: k.id === childId }} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
+              <Pressable key={k.id} onPress={() => { setChildId(k.id); setErr(""); if (pick && !shareOptions(k, items).some((o) => o.id === pick)) setPick(null); }} accessibilityRole="radio" aria-checked={k.id === childId} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
                 <Avatar child={k} size={28} />
                 <Text style={{ color: k.id === childId ? t.onChipOn : t.ink2, fontWeight: "700" }}>{k.name}</Text>
               </Pressable>
@@ -223,7 +223,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
             {options.map((o) => {
               const on = what?.id === o.id;
               return (
-                <Pressable key={o.id} onPress={() => { setPick(o.id); setErr(""); }} accessibilityRole="radio" accessibilityState={{ selected: on }}
+                <Pressable key={o.id} onPress={() => { setPick(o.id); setErr(""); }} accessibilityRole="radio" aria-checked={on}
                   style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 11, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : t.card }}>
                   <Text style={{ fontSize: 22 }}>{o.emoji}</Text>
                   <View style={{ flex: 1 }}>

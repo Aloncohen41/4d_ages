@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
-import Slider from "@react-native-community/slider";
+import { AppSlider } from "./AppSlider";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useTheme } from "../lib/useTheme";
 import { CLIP_MAX_MS, clampClipStart } from "../lib/videoExport";
@@ -44,7 +44,9 @@ export function ClipTrim({ uri, lengthMs, startMs, onChange }: { uri: string; le
   return (
     <View style={{ marginTop: 10 }}>
       <VideoView player={player} style={{ width: "100%", aspectRatio: 16 / 9, borderRadius: 14, overflow: "hidden", backgroundColor: "#000" }} contentFit="contain" nativeControls={false} />
-      <Slider
+      <AppSlider
+        label="Where the 30 seconds start"
+        valueText={mmss(pos)}
         style={{ height: 42, marginTop: 6 }}
         minimumValue={0}
         maximumValue={last}
@@ -56,7 +58,6 @@ export function ClipTrim({ uri, lengthMs, startMs, onChange }: { uri: string; le
         minimumTrackTintColor={t.accent}
         maximumTrackTintColor={t.line}
         thumbTintColor={t.accent}
-        accessibilityLabel="Where the 30 seconds start"
       />
       <View style={{ height: 8, borderRadius: 99, backgroundColor: t.bg3, overflow: "hidden", marginHorizontal: 14 }}>
         <View style={{ position: "absolute", left: `${from}%`, width: `${span}%`, top: 0, bottom: 0, borderRadius: 99, backgroundColor: t.accent }} />

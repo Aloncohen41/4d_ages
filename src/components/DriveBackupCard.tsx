@@ -70,7 +70,7 @@ export function DriveBackupCard() {
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>Back up to Google Drive</Text>
           <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Every book in one small file, “4D Ages backup.zip”, in your own Google Drive. Photos and videos aren't copied again: they're kept safely in your account and come back with the books. When it's on, it backs up a minute after each change.</Text>
         </View>
-        <Switch value={prefs.enabled} onValueChange={toggle} disabled={!!busy} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={prefs.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
+        <Switch accessibilityLabel="Back up to Google Drive" value={prefs.enabled} onValueChange={toggle} disabled={!!busy} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={prefs.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
       </View>
       <Text style={[TYPE.bodySmall, { color: prefs.error && !busy ? t.danger : t.ink3, marginTop: 10 }]}>{status}</Text>
       <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>

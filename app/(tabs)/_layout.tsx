@@ -71,7 +71,7 @@ function BottomBar({ state, navigation, position, restoreTo, onRestored }: Mater
 
   // Material 3 navigation bar: a tonal bar (no border); the selected destination gets a pill behind its icon, which fills in and grows as the page arrives
   return (
-    <View style={{ flexDirection: "row", height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: insets.bottom, backgroundColor: t.bg2 }}>
+    <View accessibilityRole="tablist" style={{ flexDirection: "row", height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: insets.bottom, backgroundColor: t.bg2 }}>
       {state.routes.map((route: TabNavigationState<ParamListBase>["routes"][number], i: number) => {
         const tab = TABS.find((x) => x.name === route.name);
         const title = tab?.title ?? route.name;
@@ -83,7 +83,7 @@ function BottomBar({ state, navigation, position, restoreTo, onRestored }: Mater
           if (state.index !== i && !e.defaultPrevented) navigation.navigate(route.name as never); // scrolls the pager, same as a swipe
         };
         return (
-          <Pressable key={route.key} onPress={onPress} android_ripple={{ color: withAlpha(t.ink, 0.08), borderless: true, radius: 34 }} accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ selected: state.index === i }} style={{ flex: 1, alignItems: "center", paddingTop: 12 }}>
+          <Pressable key={route.key} onPress={onPress} android_ripple={{ color: withAlpha(t.ink, 0.08), borderless: true, radius: 34 }} accessibilityRole="tab" accessibilityLabel={title} aria-selected={state.index === i} style={{ flex: 1, alignItems: "center", paddingTop: 12 }}>
             <View style={{ width: 52, height: 30, alignItems: "center", justifyContent: "center" }}>
               <Animated.View pointerEvents="none" style={{ position: "absolute", width: 52, height: 30, borderRadius: 15, backgroundColor: t.chipOn, opacity: on, transform: [{ scaleX: on.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }] }} />
               <Animated.View style={{ opacity: off }}><Icon name={(tab?.icon ?? "nav-home") as IconName} size={24} color={t.ink2} /></Animated.View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions, Easing, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, Animated, Dimensions, Easing, StyleSheet, Text, View } from "react-native";
 import { useStore } from "../lib/store";
 import { CONFETTI_MS, Piece, burst } from "../lib/confetti";
 import { TYPE } from "../theme";
@@ -18,13 +18,15 @@ export function Confetti() {
     const timer = setTimeout(() => setShown(undefined), CONFETTI_MS + 300);
     return () => clearTimeout(timer);
   }, [at]);
+  const [calm, setCalm] = useState(false);
+  useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setCalm).catch(() => undefined); }, []);
   if (!shown) return null;
-  return <Burst key={shown} text={text} />;
+  return <Burst key={shown} text={text} calm={calm} />;
 }
 
-function Burst({ text }: { text?: string }) {
+function Burst({ text, calm }: { text?: string; calm: boolean }) {
   const { width, height } = Dimensions.get("window");
-  const pieces = useMemo(() => burst(width, height), [width, height]);
+  const pieces = useMemo(() => (calm ? [] : burst(width, height)), [width, height, calm]); // less motion asked for: only the words
   const clock = useRef(new Animated.Value(0)).current; // one clock for every piece, on the animation thread
   useEffect(() => {
     Animated.timing(clock, { toValue: 1, duration: CONFETTI_MS, easing: Easing.linear, useNativeDriver: true }).start();

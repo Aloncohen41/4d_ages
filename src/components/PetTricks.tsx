@@ -55,7 +55,7 @@ export function PetTricks({ child, open: always = false }: { child: Child; open?
             {tricks.map((x) => {
               const on = learned.has(x.toLowerCase());
               return (
-                <Pressable key={x} onPress={() => tick(x)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={chip(on)}>
+                <Pressable key={x} onPress={() => tick(x)} accessibilityRole="checkbox" aria-checked={on} style={chip(on)}>
                   {on ? <Icon name="check" size={14} color={t.onChipOn} /> : null}
                   <Text style={{ color: on ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12.5 }}>{x}</Text>
                 </Pressable>

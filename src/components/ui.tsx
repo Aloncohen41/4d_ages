@@ -67,7 +67,7 @@ export function Heading({ title, desc }: { title: string; desc?: string }) {
   const t = useTheme();
   return (
     <View style={{ marginBottom: 14 }}>
-      <Text style={[TYPE.headlineSmall, { color: t.ink }]}>{title}</Text>
+      <Text role="heading" aria-level={1} style={[TYPE.headlineSmall, { color: t.ink }]}>{title}</Text>
       {desc ? <Text style={[TYPE.bodyMedium, { color: t.ink3, marginTop: 4 }]}>{desc}</Text> : null}
     </View>
   );
@@ -87,6 +87,8 @@ export function Input(props: React.ComponentProps<typeof TextInput>) {
       placeholderTextColor={t.ink4}
       selectionColor={t.accent}
       cursorColor={t.accent}
+      // a box without its own label is named by its example text (the example goes as you type, the name stays)
+      accessibilityLabel={typeof props.placeholder === "string" ? props.placeholder : undefined}
       {...props}
       onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
       onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
@@ -99,15 +101,15 @@ export function Input(props: React.ComponentProps<typeof TextInput>) {
 export function Seg<T extends string | number>({ options, value, onChange }: { options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   const t = useTheme();
   return (
-    <View style={[s.seg, { borderColor: t.outline }]}>
+    <View accessibilityRole="radiogroup" style={[s.seg, { borderColor: t.outline }]}>
       {options.map((o, i) => {
         const on = o.id === value;
         return (
           <Pressable
             key={String(o.id)}
             onPress={() => onChange(o.id)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: on }}
+            accessibilityRole="radio"
+            aria-checked={on}
             android_ripple={{ color: withAlpha(t.ink, 0.1) }}
             style={[s.segItem, i > 0 && { borderLeftWidth: 1, borderLeftColor: t.outline }, on && { backgroundColor: t.chipOn }]}
           >
@@ -120,10 +122,13 @@ export function Seg<T extends string | number>({ options, value, onChange }: { o
 }
 
 /** A modal bottom sheet (Material 3): 28 dp top corners, a drag handle, a tonal surface, and the standard 32% scrim. */
+/** A pop-up's name (its title), for screen readers: on the website a pop-up is a dialog, and a dialog must say what it is. */
+export const dialogName = (title: string) => ({ "aria-label": title }) as object;
+
 export function Sheet({ visible, onClose, title, children }: { visible: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   const t = useTheme();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent {...dialogName(title)}>
       <View style={[s.scrim, { backgroundColor: t.scrim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         {/* on a computer, a sheet is the app's width, in the middle (see AppColumn) */}
@@ -354,7 +359,7 @@ function VideoBox({ uri }: { uri: string }) {
 /** Full-screen viewer for a photo or video */
 export function MediaViewer({ media, onClose }: { media: { uri: string; kind: MediaKind } | null; onClose: () => void }) {
   return (
-    <Modal visible={!!media} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={!!media} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent {...dialogName(media?.kind === "video" ? "Video" : "Photo")}>
       <View style={{ flex: 1, backgroundColor: "#000d", justifyContent: "center" }}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         {media && media.kind === "video" ? <VideoBox uri={media.uri} /> : null}
@@ -376,7 +381,7 @@ export function MediaGallery({ items, index, onClose }: { items: MediaItem[] | n
     return () => clearTimeout(id);
   }, [index, items, width]);
   return (
-    <Modal visible={!!items} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={!!items} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent {...dialogName("Photos and videos")}>
       <View style={{ flex: 1, backgroundColor: "#000" }}>
         {items ? (
           <ScrollView ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(e) => setCur(Math.round(e.nativeEvent.contentOffset.x / width))} style={{ flex: 1 }}>

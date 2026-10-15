@@ -92,17 +92,16 @@ app**) to let anyone use it.
 
 ## 6. The website
 
-The `docs/` folder is a small static site, served with GitHub Pages. It has:
-- the page a share link opens, which hands the invite code to the app;
-- the privacy policy and the terms;
+The website, 4dages.com, is the app itself built for the browser, with a few plain pages beside it in `public/`:
+- the page a share link opens (`/j/`), which hands the invite code to the app, or opens the book on the website;
+- the privacy policy, the terms, the accessibility statement and the licences;
 - the account deletion page that Google Play requires.
 
-1. In the repository's **Settings → Pages**, deploy from the `main` branch, `/docs` folder.
-2. In Supabase, add the deletion page (`https://<user>.github.io/<repo>/delete-account/`) to the Redirect URLs, so people who signed up with
-   Google can sign in there.
-3. If the site lives at a different address, update `SITE_URL` in `src/brand.ts` and the links in `docs/`.
+How it's built and put online is in [WEBSITE.md](WEBSITE.md). In Supabase, add `https://4dages.com/delete-account/` to the Redirect URLs,
+so people who signed up with Google can sign in there. The pages use only the publishable key.
 
-The pages use only the publishable key.
+The `docs/` folder is what the old address (GitHub Pages) serves: small pages that forward each old link, including invites already sent,
+to the same page on 4dages.com. Keep GitHub Pages on (Settings → Pages, `main` branch, `/docs` folder) so those links keep working.
 
 ## How sharing works
 

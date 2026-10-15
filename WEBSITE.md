@@ -12,8 +12,8 @@ npm run web          # try it locally at http://localhost:8081
 npm run build:web    # the finished site, in dist/
 ```
 
-`build:web` builds the app for the browser and adds the plain pages beside it (privacy policy, terms, deleting an account, and the invite
-link page `/j/`), which are kept in `docs/`.
+`build:web` builds the app for the browser, with the plain pages beside it (privacy policy, terms, accessibility, licences, deleting an
+account, and the invite link page `/j/`), which are kept in `public/`. The old GitHub Pages address (`docs/`) only forwards to 4dages.com.
 
 ## Two repositories
 

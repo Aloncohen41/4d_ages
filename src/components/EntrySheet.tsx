@@ -269,7 +269,7 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
       {kind === "health" ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 14 }}>
           {(pet ? PET_HEALTH_KINDS.map((k) => ({ id: k.id as HealthKind, label: `${k.emoji} ${k.label}` })) : HEALTH_KINDS).map((k) => (
-            <Pressable key={k.id} onPress={() => setHealthKind(k.id)} accessibilityRole="radio" accessibilityState={{ selected: healthKind === k.id }} style={chip(healthKind === k.id)}>
+            <Pressable key={k.id} onPress={() => setHealthKind(k.id)} accessibilityRole="radio" aria-checked={healthKind === k.id} style={chip(healthKind === k.id)}>
               <Text style={{ color: healthKind === k.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{k.label}</Text>
             </Pressable>
           ))}

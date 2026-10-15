@@ -42,7 +42,7 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
   return (
     <>
       {open ? (
-        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel="Close menu">
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel="Close menu">
           <Animated.View style={{ flex: 1, backgroundColor: t.scrim, opacity: anim }} />
         </Pressable>
       ) : null}

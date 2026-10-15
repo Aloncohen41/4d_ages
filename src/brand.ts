@@ -11,8 +11,8 @@ export const APP_VERSION = "1.1.3";
 export const TAGLINE = "A baby book that grows with them";
 /** The one line on the login page, set in the display face (see theme.ts). */
 export const LOGIN_TAGLINE = "Keepsake books for the ages.";
-/** The app's website (GitHub Pages, from docs/): the share link's page, the privacy policy, the terms, and deleting an account. */
-export const SITE_URL = "https://aloncohen41.github.io/4d_ages/";
+/** The website (the app in the browser, with its plain pages in public/): the invite link's page, the privacy policy, the terms, and more. */
+export const SITE_URL = "https://4dages.com/";
 export const PRIVACY_URL = `${SITE_URL}privacy/`;
 export const TERMS_URL = `${SITE_URL}terms/`;
 export const DELETE_ACCOUNT_URL = `${SITE_URL}delete-account/`;

@@ -104,7 +104,7 @@ export function MilestoneChecklist() {
     if (selecting) {
       // choosing which ones to date: tapping a row selects it (nothing is ticked until a date is set)
       return (
-        <Pressable key={def.id} onPress={() => toggleSelected(def.id)} accessibilityRole="checkbox" accessibilityState={{ checked: picked }} accessibilityLabel={def.label} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4, borderRadius: 12, backgroundColor: picked ? areaSoft(meta, t) : "transparent" }}>
+        <Pressable key={def.id} onPress={() => toggleSelected(def.id)} accessibilityRole="checkbox" aria-checked={picked} accessibilityLabel={def.label} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4, borderRadius: 12, backgroundColor: picked ? areaSoft(meta, t) : "transparent" }}>
           <View style={{ width: 46, height: 46, alignItems: "center", justifyContent: "center" }}>
             <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: picked ? areaInk(meta, t) : t.outline, backgroundColor: picked ? meta.color : "transparent", alignItems: "center", justifyContent: "center" }}>
               {picked ? <Icon name="check" size={15} color={meta.ink} /> : null}
@@ -119,7 +119,7 @@ export function MilestoneChecklist() {
     }
     return (
       <View key={def.id} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4 }}>
-        <Pressable onPress={() => (m ? undo(m) : reach(def))} hitSlop={8} accessibilityRole="checkbox" accessibilityState={{ checked: !!m }} accessibilityLabel={def.label} style={{ width: 46, height: 46, alignItems: "center", justifyContent: "center" }}>
+        <Pressable onPress={() => (m ? undo(m) : reach(def))} hitSlop={8} accessibilityRole="checkbox" aria-checked={!!m} accessibilityLabel={def.label} style={{ width: 46, height: 46, alignItems: "center", justifyContent: "center" }}>
           <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: m ? 1.5 : 2.5, borderColor: m ? areaInk(meta, t) : t.outline, backgroundColor: m ? meta.color : "transparent", alignItems: "center", justifyContent: "center" }}>
             {m ? <Icon name="check" size={16} color={meta.ink} /> : null}
           </View>

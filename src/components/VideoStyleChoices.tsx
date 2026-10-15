@@ -49,11 +49,11 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
         {VIDEO_TEMPLATES.map((x) => {
           const on = x.id === template;
           return (
-            <Pressable key={x.id} onPress={() => !disabled && onTemplate(x.id)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={`${x.label}: ${x.desc}`}
+            <Pressable key={x.id} onPress={() => !disabled && onTemplate(x.id)} accessibilityRole="radio" aria-checked={on} accessibilityLabel={`${x.label}: ${x.desc}`}
               style={{ width: 136, padding: 12, borderRadius: 16, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : t.card }}>
               <Text style={{ fontSize: 24 }}>{x.emoji}</Text>
               <Text style={[TYPE.titleSmall, { color: t.ink, marginTop: 4 }]}>{x.label}</Text>
-              <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={3}>{x.desc}</Text>
+              <Text style={[TYPE.bodySmall, { color: t.ink2 }]} numberOfLines={3}>{x.desc}</Text>
             </Pressable>
           );
         })}
@@ -65,7 +65,7 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
           const on = m.id === music;
           return (
             <View key={m.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: t.card }}>
-              <Pressable onPress={() => !disabled && onMusic(m.id)} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Pressable onPress={() => !disabled && onMusic(m.id)} accessibilityRole="radio" aria-checked={on} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: on ? t.accent : t.outline, alignItems: "center", justifyContent: "center" }}>
                   {on ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: t.accent }} /> : null}
                 </View>
@@ -86,7 +86,7 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
       </View>
       {listening && listening !== "none" ? <Listen key={listening} id={listening} onEnd={() => setListening(null)} /> : null}
       {hasClips ? (
-        <Pressable onPress={() => !disabled && onClipSound(!clipSound)} accessibilityRole="checkbox" accessibilityState={{ checked: clipSound }} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 }}>
+        <Pressable onPress={() => !disabled && onClipSound(!clipSound)} accessibilityRole="checkbox" aria-checked={clipSound} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 }}>
           <Icon name={clipSound ? "check-square" : "square"} size={22} color={t.accent} />
           <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>Keep the videos' own sound (the music goes quieter while they play)</Text>
         </Pressable>
@@ -106,7 +106,7 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
           {shownStories.map((s) => {
             const on = cards.includes(s.id);
             return (
-              <Pressable key={s.id} onPress={() => !disabled && toggle(s.id)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}
+              <Pressable key={s.id} onPress={() => !disabled && toggle(s.id)} accessibilityRole="checkbox" aria-checked={on}
                 style={{ flexDirection: "row", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: t.line }}>
                 <Icon name={on ? "check-square" : "square"} size={22} color={on ? t.accent : t.ink3} />
                 <View style={{ flex: 1 }}>

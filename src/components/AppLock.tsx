@@ -7,7 +7,7 @@ import { useTheme } from "../lib/useTheme";
 import { WORDMARKS } from "../lib/wordmark";
 import { APP_NAME, WORDMARK_ASPECT } from "../brand";
 import { TYPE } from "../theme";
-import { Btn } from "./ui";
+import { Btn, dialogName } from "./ui";
 
 /** After this long away from the app, it asks again. */
 export const RELOCK_AFTER_MS = 60 * 1000;
@@ -54,7 +54,7 @@ export function AppLock() {
 
   if (!hydrated || !enabled || !locked) return null;
   return (
-    <Modal visible animationType="fade" statusBarTranslucent onRequestClose={() => undefined}>
+    <Modal visible animationType="fade" statusBarTranslucent onRequestClose={() => undefined} {...dialogName(`${APP_NAME} is locked`)}>
       <View style={{ flex: 1, backgroundColor: t.bg, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 }}>
         <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: 240, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
         <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center" }]}>{APP_NAME} is locked.</Text>

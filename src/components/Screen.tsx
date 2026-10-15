@@ -16,7 +16,7 @@ import { PREGNANCY_NAME } from "../lib/pregnancy";
 export { PREGNANCY_NAME };
 import { pickMedia, toMemories } from "../lib/media";
 import { coverOf } from "../lib/display";
-import { Avatar, Btn, DateField, Input, Label, PhotoView, Seg, Sheet, ThemePicker } from "./ui";
+import { Avatar, Btn, DateField, Input, Label, PhotoView, Seg, Sheet, ThemePicker, dialogName } from "./ui";
 import { EmojiPicker } from "./EmojiPicker";
 import { AvatarCropper } from "./AvatarCropper";
 import { HScroll } from "./HScroll";
@@ -67,7 +67,7 @@ export function TopBar() {
           const a = smartAge(k.birth);
           return (
             // Material 3 filter chips: the selected child is a tonal container, the others are outlined
-            <Pressable key={k.id} onPress={() => setActive(k.id)} accessibilityRole="button" accessibilityState={{ selected: on }} android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }]}>
+            <Pressable key={k.id} onPress={() => setActive(k.id)} accessibilityRole="button" aria-pressed={on} android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }]}>
               <Avatar child={k} size={32} />
               <View>
                 <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}</Text>
@@ -99,8 +99,8 @@ function AppMenu({ visible, onClose }: { visible: boolean; onClose: () => void }
     </Pressable>
   );
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent {...dialogName("Menu")}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close menu" />
       <View style={[st.menuCard, { top: insets.top + 54, backgroundColor: t.surfaceHigh, shadowColor: "#000" }]}>
         {item("family", "Family", "/family")}
         {item("classics", "Classics", "/classics")}

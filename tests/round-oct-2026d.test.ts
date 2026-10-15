@@ -25,12 +25,12 @@ ok("a symptom lasts a stretch of days (from, to, or still going); the book and t
 ok("…and it's kept in the account too (a column of its own)", /add column if not exists end_date date/.test(read("supabase/schema.sql")) && /end_date: m\.endDate \?\? null/.test(read("src/lib/syncMerge.ts")) && /\('memories','end_date'\)/.test(read("scripts/setup-database.mjs")));
 ok("symptoms and cravings are their own sections in pregnancy, like Firsts and Lasts", /label: "Symptoms"/.test(read("app/(tabs)/milestones.tsx")) && /label: "Cravings"/.test(read("app/(tabs)/milestones.tsx")) && CRAVING_IDEAS.length >= 10);
 ok("older notes still show, sorted into symptoms or cravings", legacyIsCraving("Craving pickles") && legacyIsCraving("Can't stand the smell of coffee") && !legacyIsCraving("Heartburn") && symptomForTitle("heartburn and indigestion")?.id === "heartburn");
-ok("the terms say plainly the app isn't medical advice", /4D Ages is not a medical app/.test(read("docs/terms/index.html")) && /not a diagnosis/.test(read("docs/terms/index.html")));
+ok("the terms say plainly the app isn't medical advice", /4D Ages is not a medical app/.test(read("public/terms/index.html")) && /not a diagnosis/.test(read("public/terms/index.html")));
 
 // ---- the invite
 const msg = inviteMessage("family", "Maya", "4F9A2C1B", "https://aloncohen41.github.io/4d_ages/j/?c=4F9A2C1B", "4D Ages", "rosa@gmail.com");
 ok("the message has no separate code: it's in the link (short: …/j/?c=CODE)", !msg.split("\n").some((l) => /^Code\b/.test(l)) && msg.includes("/j/?c=4F9A2C1B") && msg.split("\n").length === 3 && /\(view only\)/.test(msg));
-ok("the link shows a 4D Ages card in WhatsApp (preview tags), and older …/join/ links still work", /og:image" content="https:\/\/aloncohen41\.github\.io\/4d_ages\/img\/share-card\.png"/.test(read("docs/j/index.html")) && /params\.get\("c"\) \|\| params\.get\("code"\)/.test(read("docs/join/index.html")));
+ok("the link shows a 4D Ages card in WhatsApp (preview tags), and older …/join/ links still work", /og:image" content="https:\/\/4dages\.com\/img\/share-card\.png"/.test(read("public/j/index.html")) && /og:image" content="https:\/\/4dages\.com\/img\/share-card\.png"/.test(read("docs/j/index.html")) && /params\.get\("c"\) \|\| params\.get\("code"\)/.test(read("public/j/index.html")));
 ok("opening an invite you already have: it says so and leaves the invite unused", /create or replace function public\.check_invite\(p_code text\)/.test(read("supabase/schema.sql")) && /'already', true/.test(read("supabase/schema.sql")) && /check\?\.already && check\.child_id/.test(read("src/lib/sync.ts")) && /You already have \$\{r\.name\}'s book/.test(read("src/components/SyncManager.tsx")));
 ok("the app's own notification instead of a system pop-up", /<Toast \/>/.test(read("app/_layout.tsx")) && /toast\(r\.outcome === "already"/.test(read("src/components/SyncManager.tsx")) && !/Alert\.alert/.test(read("src/components/SyncManager.tsx")));
 

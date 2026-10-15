@@ -118,7 +118,7 @@ export default function Login() {
                   [agreeTerms, setAgreeTerms, <>I'm 18 or over, and I agree to the <Text onPress={() => Linking.openURL(TERMS_URL)} style={{ color: t.accentDeep, textDecorationLine: "underline" }}>Terms</Text> and the <Text onPress={() => Linking.openURL(PRIVACY_URL)} style={{ color: t.accentDeep, textDecorationLine: "underline" }}>Privacy policy</Text>.</>],
                   [agreeHealth, setAgreeHealth, <>I agree that {APP_NAME} can keep the health information I add (pregnancy, growth, health notes), to run my books.</>],
                 ].map(([on, set, words], k) => (
-                  <Pressable key={k} onPress={() => (set as (v: boolean) => void)(!on)} accessibilityRole="checkbox" accessibilityState={{ checked: !!on }} style={{ flexDirection: "row", gap: 10, paddingVertical: 4 }}>
+                  <Pressable key={k} onPress={() => (set as (v: boolean) => void)(!on)} accessibilityRole="checkbox" aria-checked={!!on} style={{ flexDirection: "row", gap: 10, paddingVertical: 4 }}>
                     <Icon name={on ? "check-square" : "square"} size={22} color={on ? t.accent : t.ink3} />
                     <Text style={[TYPE.bodySmall, { color: t.ink2, flex: 1 }]}>{words as React.ReactNode}</Text>
                   </Pressable>

@@ -47,7 +47,7 @@ export default function HealthPage() {
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 18, marginBottom: 8 }}>
         {[{ id: "all" as const, label: "All" }, ...HEALTH_KINDS].map((k) => (
-          <Pressable key={k.id} onPress={() => setKind(k.id)} accessibilityRole="radio" accessibilityState={{ selected: kind === k.id }} style={pill(kind === k.id)}>
+          <Pressable key={k.id} onPress={() => setKind(k.id)} accessibilityRole="radio" aria-checked={kind === k.id} style={pill(kind === k.id)}>
             <Text style={{ color: kind === k.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{k.label}</Text>
           </Pressable>
         ))}

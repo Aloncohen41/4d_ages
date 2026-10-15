@@ -4,7 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../lib/useTheme";
 import { WORDMARKS } from "../lib/wordmark";
-import { APP_VERSION, TAGLINE, WORDMARK_ASPECT } from "../brand";
+import { APP_VERSION, TAGLINE, WORDMARK_ASPECT, APP_NAME } from "../brand";
 import { isNewer, latestRelease } from "../lib/updateCheck";
 import { offer } from "./UpdatePrompt";
 
@@ -22,7 +22,7 @@ export function AboutCard() {
   };
   return (
     <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 20, marginTop: 22, alignItems: "center" }}>
-      <Image source={WORDMARKS[t.key]} style={{ width: 230, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
+      <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} alt={APP_NAME} style={{ width: 230, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
       <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13.5, marginTop: 2 }}>{TAGLINE}</Text>
       <Text style={{ color: t.ink4, fontSize: 12, marginTop: 4 }}>Version {APP_VERSION}</Text>
       {!onWeb ? (

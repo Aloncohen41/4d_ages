@@ -1,103 +1,15 @@
 <!doctype html>
+<!-- 4D Ages has moved to https://4dages.com. This page only forwards old links (in the app and in invites already sent) to the same page there. -->
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Delete your account</title>
-<meta name="description" content="Delete your 4D Ages account and the data kept with it.">
-<link rel="stylesheet" href="../site.css">
+<title>4D Ages has moved</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://4dages.com/delete-account/">
+<meta http-equiv="refresh" content="0; url=https://4dages.com/delete-account/">
+<script>var s=location.search;location.replace("https://4dages.com/delete-account/"+s+location.hash);</script>
 </head>
-<body>
-<main>
-  <img class="logo" src="../img/wordmark.png" alt="4D Ages">
-  <h1>Delete your account and data</h1>
-  <p>This deletes your 4D Ages account and the books kept in it: photos, videos, stories, milestones and growth. A book you share with the other parent is handed over to them instead (it is their book too). <strong>This can't be undone.</strong></p>
-  <p class="muted">You can also do this in the app: menu, Settings, "Remove my data and delete my account". If you can't sign in any more, email <a href="mailto:contact@4dages.com">contact@4dages.com</a> from the address on your account and we'll delete it for you.</p>
-
-  <div class="card" id="signin">
-    <h2 style="margin-top:0">1. Sign in</h2>
-    <input id="email" type="email" autocomplete="email" placeholder="Email">
-    <input id="password" type="password" autocomplete="current-password" placeholder="Password">
-    <button class="btn solid" id="go">Sign in</button>
-    <button class="btn line" id="google">Signed up with Google? Sign in with Google</button>
-    <p class="error" id="signinError"></p>
-  </div>
-
-  <div class="card" id="confirm" hidden>
-    <h2 style="margin-top:0">2. Confirm</h2>
-    <p>Signed in as <strong id="who"></strong>. Type <strong>DELETE</strong> to confirm.</p>
-    <input id="word" autocomplete="off" placeholder="DELETE">
-    <button class="btn danger" id="delete" disabled>Delete my account and data</button>
-    <p class="muted" id="progress"></p>
-    <p class="error" id="deleteError"></p>
-  </div>
-
-  <div class="card" id="done" hidden>
-    <h2 style="margin-top:0">Your account was deleted</h2>
-    <p>Your account and the books only you could see are gone. You can uninstall the app.</p>
-  </div>
-</main>
-<footer><a href="../privacy/">Privacy policy</a> · <a href="../terms/">Terms</a> · <a href="../accessibility/">Accessibility</a> · <a href="mailto:contact@4dages.com">Contact</a></footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script>
-  // the project's public address and publishable key (made to be public; the database's privacy rules protect the data)
-  var sb = window.supabase.createClient("https://ezdxxcufdlqsnoumuihm.supabase.co", "sb_publishable_EwCMdmyFNdN_Bul-WyA9jw_flk4cOwK");
-  var $ = function (id) { return document.getElementById(id); };
-
-  function signedIn(user) {
-    $("signin").hidden = true;
-    $("confirm").hidden = false;
-    $("who").textContent = user.email || "your account";
-  }
-  sb.auth.getSession().then(function (r) { if (r.data.session) signedIn(r.data.session.user); });
-
-  $("go").onclick = async function () {
-    $("signinError").textContent = "";
-    var r = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
-    if (r.error) $("signinError").textContent = r.error.message; else signedIn(r.data.user);
-  };
-  $("google").onclick = function () {
-    sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
-  };
-  $("word").oninput = function () { $("delete").disabled = $("word").value.trim() !== "DELETE"; };
-
-  // the same steps as the app: the photos of every book only this account can see, then the account and its books
-  $("delete").onclick = async function () {
-    $("delete").disabled = true;
-    $("deleteError").textContent = "";
-    try {
-      var me = (await sb.auth.getUser()).data.user;
-      var owned = await sb.from("children").select("id").eq("owner_id", me.id);
-      if (owned.error) throw owned.error;
-      for (var i = 0; i < owned.data.length; i++) {
-        var id = owned.data[i].id;
-        var members = await sb.from("child_members").select("user_id, role").eq("child_id", id);
-        if (members.error) throw members.error;
-        var shared = members.data.some(function (m) { return m.user_id !== me.id && m.role !== "viewer"; });
-        if (shared) continue; // the other parent keeps it
-        $("progress").textContent = "Removing photos…";
-        for (var offset = 0; ; offset += 1000) {
-          var list = await sb.storage.from("media").list(id, { limit: 1000, offset: offset });
-          if (list.error) throw list.error;
-          var paths = list.data.map(function (f) { return id + "/" + f.name; });
-          for (var j = 0; j < paths.length; j += 100) {
-            var rm = await sb.storage.from("media").remove(paths.slice(j, j + 100));
-            if (rm.error) throw rm.error;
-          }
-          if (list.data.length < 1000) break;
-        }
-      }
-      $("progress").textContent = "Deleting your account…";
-      var del = await sb.rpc("delete_my_account");
-      if (del.error) throw del.error;
-      await sb.auth.signOut();
-      $("confirm").hidden = true;
-      $("done").hidden = false;
-    } catch (e) {
-      $("progress").textContent = "";
-      $("deleteError").textContent = (e && e.message) || String(e);
-      $("delete").disabled = false;
-    }
-  };
-</script>
+<body style="font:16px/1.5 system-ui,sans-serif;max-width:560px;margin:40px auto;padding:0 16px">
+<p>4D Ages has moved. <a href="https://4dages.com/delete-account/">Go to the new page</a>.</p>
 </body>
 </html>

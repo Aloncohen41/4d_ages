@@ -131,7 +131,8 @@ src/data/            Static data such as the emoji list
 modules/             Native modules: video-export, share-intake and file-export
 plugins/             Expo config plugins
 supabase/schema.sql  Database tables, row-level security policies and functions
-docs/                The website on GitHub Pages: share links, privacy policy, terms, account deletion
+public/              The website's own files: share link page, privacy policy, terms, accessibility, licences, account deletion
+docs/                Forwarding pages for the old GitHub Pages address (old links go on to 4dages.com)
 branding/            Source artwork for the icon and wordmark, and the scripts that build assets/ from it
 scripts/             Setup check, database setup, version bump, signing key
 tests/               Tests, run with npm test

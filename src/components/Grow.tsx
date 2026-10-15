@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Pressable, Text, View } from "react-native";
-import Slider from "@react-native-community/slider";
+import { AppSlider } from "./AppSlider";
 import { holdSwipe, releaseSwipe } from "../lib/swipeGuard";
 import { GROW_SPEEDS, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
@@ -152,7 +152,9 @@ export function GrowPlayer({ slides, child, title, subtitle, fileLabel }: { slid
         </Pressable>
         <View style={{ flex: 1 }} onTouchStart={holdSwipe} onTouchEnd={releaseSwipe} onTouchCancel={releaseSwipe}>
           {max > 0 ? (
-            <Slider
+            <AppSlider
+              label="Moment in the video"
+              valueText={`${idx + 1} of ${slides.length}`}
               minimumValue={0}
               maximumValue={max}
               value={Math.min(pos, max)}

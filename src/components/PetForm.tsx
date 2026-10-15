@@ -87,7 +87,7 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
       <Label>What kind of pet</Label>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {SPECIES.map((s) => (
-          <Pressable key={s.id} onPress={() => { setSpecies(s.id); setBreed(""); }} accessibilityRole="radio" accessibilityState={{ selected: species === s.id }} style={chip(species === s.id)}>
+          <Pressable key={s.id} onPress={() => { setSpecies(s.id); setBreed(""); }} accessibilityRole="radio" aria-checked={species === s.id} style={chip(species === s.id)}>
             <Text style={{ color: species === s.id ? t.onChipOn : t.ink2, fontWeight: "700" }}>{s.emoji} {s.label}</Text>
           </Pressable>
         ))}
@@ -117,7 +117,7 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
 
       <Label>Birthday</Label>
       <DateField value={birth} onChange={setBirth} max={today} />
-      <Pressable onPress={() => setApprox((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: approx }} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+      <Pressable onPress={() => setApprox((v) => !v)} accessibilityRole="checkbox" aria-checked={approx} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
         <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: approx ? t.accent : t.ink3, backgroundColor: approx ? t.accent : "transparent" }} />
         <Text style={[TYPE.bodyMedium, { color: t.ink2, flex: 1 }]}>We're not sure of the exact day (their age will say "about")</Text>
       </Pressable>

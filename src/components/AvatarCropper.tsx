@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { Image as RNImage, PanResponder, Text, View } from "react-native";
 import { Image } from "expo-image";
-import Slider from "@react-native-community/slider";
+import { AppSlider } from "./AppSlider";
 import { useTheme } from "../lib/useTheme";
 import { AvatarCrop } from "../lib/types";
 import { MAX_ZOOM, cropLayout, defaultCrop, dragCrop, faceHigh, recenter, zoomCrop } from "../lib/crop";
@@ -84,7 +84,7 @@ export function AvatarCropper({ uri, value, onChange, size = 240 }: { uri: strin
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "stretch", marginTop: 6, paddingHorizontal: 6 }}>
         <Text style={{ color: t.ink3, fontSize: 18 }}>−</Text>
         <View style={{ flex: 1 }}>
-          <Slider minimumValue={1} maximumValue={MAX_ZOOM} value={value.zoom} onValueChange={(z: number) => apply(zoomCrop(cropRef.current ?? value, z))} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.line} thumbTintColor={t.accent} />
+          <AppSlider label="Zoom" valueText={`${Math.round(value.zoom * 100)}%`} minimumValue={1} maximumValue={MAX_ZOOM} value={value.zoom} onValueChange={(z: number) => apply(zoomCrop(cropRef.current ?? value, z))} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.line} thumbTintColor={t.accent} />
         </View>
         <Text style={{ color: t.ink3, fontSize: 18 }}>＋</Text>
       </View>

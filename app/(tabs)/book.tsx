@@ -161,7 +161,7 @@ function Book() {
             {otherKids.map((k) => {
               const on = (prefs.siblings ?? []).includes(k.id);
               return (
-                <Pressable key={k.id} onPress={() => set({ siblings: on ? (prefs.siblings ?? []).filter((x) => x !== k.id) : [...(prefs.siblings ?? []), k.id] })} accessibilityRole="checkbox" accessibilityState={{ checked: on }}
+                <Pressable key={k.id} onPress={() => set({ siblings: on ? (prefs.siblings ?? []).filter((x) => x !== k.id) : [...(prefs.siblings ?? []), k.id] })} accessibilityRole="checkbox" aria-checked={on}
                   style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: on ? t.chipOn : t.line, backgroundColor: on ? t.chipOn : t.card }}>
                   <Icon name={on ? "check" : "plus"} size={16} color={on ? t.onChipOn : t.ink2} />
                   <Text style={{ color: on ? t.onChipOn : t.ink2, fontWeight: "700" }}>{k.name}</Text>
@@ -173,7 +173,7 @@ function Book() {
         </View>
       ) : null}
       {pregnancyPosts ? (
-        <Pressable onPress={() => set({ pregnancy: prefs.pregnancy === false ? undefined : false })} accessibilityRole="checkbox" accessibilityState={{ checked: prefs.pregnancy !== false }}
+        <Pressable onPress={() => set({ pregnancy: prefs.pregnancy === false ? undefined : false })} accessibilityRole="checkbox" aria-checked={prefs.pregnancy !== false}
           style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, marginBottom: 6 }}>
           <Icon name={prefs.pregnancy !== false ? "check-square" : "square"} size={24} color={prefs.pregnancy !== false ? t.accent : t.ink3} />
           <View style={{ flex: 1 }}>
@@ -184,7 +184,7 @@ function Book() {
       ) : null}
       {isPet(child) ? (
         <View style={{ marginBottom: 6 }}>
-          <Pressable onPress={() => set({ inMemory: prefs.inMemory ? undefined : true })} accessibilityRole="checkbox" accessibilityState={{ checked: !!prefs.inMemory }}
+          <Pressable onPress={() => set({ inMemory: prefs.inMemory ? undefined : true })} accessibilityRole="checkbox" aria-checked={!!prefs.inMemory}
             style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 }}>
             <Icon name={prefs.inMemory ? "check-square" : "square"} size={24} color={prefs.inMemory ? t.accent : t.ink3} />
             <View style={{ flex: 1 }}>
@@ -213,7 +213,7 @@ function Book() {
         {BOOK_SIZES.map((s) => {
           const on = s.id === size.id;
           return (
-            <Pressable key={s.id} onPress={() => set({ size: s.id })} accessibilityRole="radio" accessibilityState={{ selected: on }} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: t.card }}>
+            <Pressable key={s.id} onPress={() => set({ size: s.id })} accessibilityRole="radio" aria-checked={on} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? t.accent : t.line, backgroundColor: t.card }}>
               <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: on ? t.accent : t.outline, alignItems: "center", justifyContent: "center" }}>
                 {on ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: t.accent }} /> : null}
               </View>

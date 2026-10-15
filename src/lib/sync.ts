@@ -1,4 +1,5 @@
 import { fileBytes, fileExists, fileSize, localFilesReady, saveFromUrl } from "./localFiles";
+import { SITE_URL } from "../brand";
 import { supabase } from "./supabase";
 import { State, useStore } from "./store";
 import { personTag, relationLabel, upsertTagIn } from "./tags";
@@ -264,7 +265,7 @@ export async function inviteFor(childId: string, kind: "parent" | "family", emai
 
 /** The link that opens the app (or offers it) and joins the book: tapped in WhatsApp, email or any other app. */
 /** The share link: a short page that opens the app with the code (the older …/join/?code= links still work). */
-export const JOIN_PAGE = "https://aloncohen41.github.io/4d_ages/j/";
+export const JOIN_PAGE = `${SITE_URL}j/`; // (old links on the GitHub Pages address forward here)
 export const joinLink = (code: string) => `${JOIN_PAGE}?c=${encodeURIComponent(code)}`;
 
 /** This account's access to a child: its role, and for a viewer the people whose posts they see. */

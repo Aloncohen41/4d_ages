@@ -159,7 +159,7 @@ function JourneyVideoSheet({ child, places, onClose }: { child: Child; places: P
           <Seg options={[{ id: "square" as VideoFormat, label: "Square" }, { id: "vertical" as VideoFormat, label: "Tall (stories)" }]} value={format} onChange={setFormat} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16 }}>
             <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>End with "In loving memory"</Text>
-            <Switch value={memorial} onValueChange={setMemorial} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={memorial ? t.onAccent : t.outline} />
+            <Switch accessibilityLabel={'End with "In loving memory"'} value={memorial} onValueChange={setMemorial} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={memorial ? t.onAccent : t.outline} />
           </View>
           {memorial ? <Input value={words} onChangeText={setWords} placeholder="A few words. Example: Our best boy, forever in our hearts" multiline style={{ marginTop: 10, minHeight: 60, textAlignVertical: "top" }} /> : null}
           {progress != null ? (

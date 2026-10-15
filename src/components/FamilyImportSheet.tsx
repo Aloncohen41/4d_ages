@@ -78,7 +78,7 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
                 key={p.id}
                 onPress={() => setMarked((m) => toggleSelection(m, p.id))}
                 accessibilityRole="checkbox"
-                accessibilityState={{ checked: on }}
+                aria-checked={on}
                 accessibilityLabel={personLabel(p)}
                 style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 10, borderRadius: 18, marginTop: 8, borderWidth: 1.5, backgroundColor: on ? t.accentSoft : t.card, borderColor: on ? t.accent : t.line, opacity: on ? 1 : 0.7 }}
               >

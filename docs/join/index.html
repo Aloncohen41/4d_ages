@@ -1,56 +1,23 @@
 <!doctype html>
+<!-- 4D Ages has moved to https://4dages.com. This page only forwards old links (in the app and in invites already sent) to the same page there. -->
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Join a baby book</title>
-<meta name="description" content="Open this link on your Android phone to add a shared baby book to 4D Ages.">
+<title>4D Ages has moved</title>
 <meta name="robots" content="noindex">
-<!-- the card WhatsApp and other apps show for the link -->
+<link rel="canonical" href="https://4dages.com/j/">
+<meta http-equiv="refresh" content="0; url=https://4dages.com/j/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="4D Ages">
 <meta property="og:title" content="You're invited to a baby book">
 <meta property="og:description" content="Tap to open it in 4D Ages.">
-<meta property="og:image" content="https://aloncohen41.github.io/4d_ages/img/share-card.png">
+<meta property="og:image" content="https://4dages.com/img/share-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../site.css">
+<script>var q=new URLSearchParams(location.search);var c=q.get("code")||q.get("c");var s=c?"?c="+encodeURIComponent(c):location.search;location.replace("https://4dages.com/j/"+s+location.hash);</script>
 </head>
-<body>
-<main>
-  <img class="logo" src="../img/wordmark.png" alt="4D Ages">
-  <h1>You're invited to a baby book</h1>
-  <p>Open it in the 4D Ages app and the book is added to your phone, with everything already in it. Sign in or create an account first if the app asks.</p>
-  <div class="card">
-    <p class="muted" style="text-align:center;margin:0">Your code</p>
-    <div class="code" id="code">--------</div>
-    <a class="btn solid" id="open" href="#">Open in 4D Ages</a>
-    <a class="btn line" href="https://github.com/Aloncohen41/4d_ages/releases/latest">Don't have the app? Download it</a>
-    <p class="muted" id="hint">After installing, tap "Open in 4D Ages" again, or open the app, choose "Join a partner's baby book" and type the code.</p>
-  </div>
-</main>
-<footer><a href="../privacy/">Privacy policy</a> · <a href="../terms/">Terms</a> · <a href="../accessibility/">Accessibility</a> · <a href="mailto:contact@4dages.com">Contact</a></footer>
-<script>
-  // the code from the link (letters and numbers only), shown so it can also be typed in by hand
-  var params = new URLSearchParams(location.search);
-  var code = (params.get("c") || params.get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
-  var codeEl = document.getElementById("code");
-  var open = document.getElementById("open");
-  if (code) {
-    codeEl.textContent = code;
-    var page = location.origin + location.pathname + "?c=" + code;
-    // Android: an intent link opens the app if it's installed, and comes back to this page if it isn't
-    var android = /Android/i.test(navigator.userAgent);
-    open.href = android
-      ? "intent://join?code=" + code + "#Intent;scheme=fourdages;package=com.alonc.fourdages;S.browser_fallback_url=" + encodeURIComponent(page + "&noapp=1") + ";end"
-      : "fourdages://join?code=" + code;
-    if (/noapp=1/.test(location.search)) document.getElementById("hint").textContent = "The app isn't on this phone yet. Download it, then come back to this link and tap \"Open in 4D Ages\".";
-  } else {
-    codeEl.textContent = "No code";
-    open.setAttribute("aria-disabled", "true");
-    open.style.opacity = ".5";
-    open.addEventListener("click", function (e) { e.preventDefault(); });
-  }
-</script>
+<body style="font:16px/1.5 system-ui,sans-serif;max-width:560px;margin:40px auto;padding:0 16px">
+<p>4D Ages has moved. <a href="https://4dages.com/j/">Go to the new page</a>.</p>
 </body>
 </html>

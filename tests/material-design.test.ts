@@ -40,7 +40,7 @@ ok("buttons: filled (primary), tonal, outlined and tonal-error, 44 dp tall with 
 ok("disabled buttons follow Material: container at 12% and label at 38%", /withAlpha\(t\.ink, 0\.12\)/.test(ui) && /withAlpha\(t\.ink, 0\.38\)/.test(ui));
 ok("buttons, chips and the navigation bar ripple", (ui.match(/android_ripple/g) || []).length >= 5 && /android_ripple/.test(layout) && /android_ripple/.test(fab));
 ok("text fields are outlined, and the outline thickens in the primary colour when focused", /borderColor: focused \? t\.accent : t\.outline/.test(ui) && /onFocus=\{/.test(ui) && /onBlur=\{/.test(ui) && /props\.onFocus\?\.\(e\)/.test(ui) && /cursorColor=\{t\.accent\}/.test(ui));
-ok("segmented buttons are one outlined group with the chosen segment tonal", /borderColor: t\.outline/.test(ui) && /on && \{ backgroundColor: t\.chipOn \}/.test(ui) && /accessibilityState=\{\{ selected: on \}\}/.test(ui));
+ok("segmented buttons are one outlined group with the chosen segment tonal", /borderColor: t\.outline/.test(ui) && /on && \{ backgroundColor: t\.chipOn \}/.test(ui) && /aria-checked=\{on\}/.test(ui));
 ok("bottom sheets: 28 dp top corners, a 32×4 drag handle, the tonal surface and the standard scrim", /borderTopLeftRadius: 28/.test(ui) && /width: 32, height: 4/.test(ui) && /backgroundColor: t\.card/.test(ui) && /backgroundColor: t\.scrim/.test(ui));
 ok("the sheet's close button is an icon, and the old divider under the title is gone", /<Icon name="x"/.test(ui) && !/borderBottomWidth: 1, gap: 10/.test(ui));
 ok("the toggle switches are Material's: primary track with a light thumb on, tonal track with an outlined thumb off", (read("src/components/RemindersCard.tsx").match(/thumbColor=\{[^}]*onAccent[^}]*outline\}/g) || []).length === 2);
