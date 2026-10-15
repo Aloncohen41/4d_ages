@@ -41,7 +41,7 @@ ok("Settings: privacy, terms, accessibility, licences, contact, download a copy,
 ok("the copy of your data holds the books (as readable data), the files on the device, and a note", /\$\{APP_NAME\} data\.json/.test(read("src/lib/dataExport.ts")) && /media\/\$\{baseName\(uri\)\}/.test(read("src/lib/dataExport.ts")) && /README\.txt/.test(read("src/lib/dataExport.ts")));
 ok("the website carries the same pages (in public/, which the build copies as they are), and every page has the contact address", ["privacy/index", "terms/index", "accessibility/index", "licences/index", "delete-account/index", "j/index"].every((p) => read(`public/${p}.html`).includes("mailto:contact@4dages.com")) && read("src/brand.ts").includes('CONTACT_EMAIL = "contact@4dages.com"'));
 
-ok("the website's icons and fonts are served: Cloudflare never serves a folder named node_modules, so the build moves them to assets/vendor/", /renameSync(from, "dist/assets/vendor")/.test(read("scripts/build-web.mjs")) && /split("assets/node_modules/").join("assets/vendor/")/.test(read("scripts/build-web.mjs")));
+ok("the website's icons and fonts are served: Cloudflare never serves a folder named node_modules, so the build moves them to assets/vendor/", read("scripts/build-web.mjs").includes(`renameSync(from, "dist/assets/vendor")`) && read("scripts/build-web.mjs").includes(`.split("assets/node_modules/").join("assets/vendor/")`));
 
 console.log(fails ? `${fails} FAILED` : "all legal tests passed");
 if (fails) process.exit(1);
