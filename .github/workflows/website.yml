@@ -1,0 +1,71 @@
+# Builds the website from this repository's code (it's the app, built for the browser) and publishes the finished files to the website
+# repository, which Cloudflare Pages serves. That repository holds only the built site, never the app's code, so the two never mix.
+#
+# Set up once (see WEBSITE.md): a repository variable WEBSITE_REPO (e.g. Aloncohen41/4d_ages-website), a secret WEBSITE_DEPLOY_KEY (the
+# private half of a deploy key with write access to that repository), and a repository variable CONTACT_EMAIL. Until WEBSITE_REPO is set,
+# this does nothing.
+name: Website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: website
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: ${{ vars.WEBSITE_REPO != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+      CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the website
+        run: npm run build:web
+
+      - name: Publish to the website repository
+        env:
+          DEPLOY_KEY: ${{ secrets.WEBSITE_DEPLOY_KEY }}
+          WEBSITE_REPO: ${{ vars.WEBSITE_REPO }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/website_key
+          chmod 600 ~/.ssh/website_key
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/website_key -o StrictHostKeyChecking=accept-new"
+          git clone --depth 1 "git@github.com:${WEBSITE_REPO}.git" site
+          cd site
+          git checkout -B main
+          # the site's files only: everything from the last build goes, and this build's files come in
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R ../dist/. .
+          cat > README.md <<EOF
+          # 4D Ages website
+
+          The finished files of the 4D Ages website, served by Cloudflare Pages. They're built automatically from the app's repository
+          (https://github.com/${GITHUB_REPOSITORY}) on every change, so please don't edit them here: change the app's code instead.
+          EOF
+          git config user.name "4D Ages website"
+          git config user.email "website@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "No changes to the website."; exit 0; fi
+          git commit -m "Website from ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+          git push origin HEAD:main

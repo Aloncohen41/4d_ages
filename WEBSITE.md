@@ -3,7 +3,7 @@
 The website is the app itself, built for the browser from the same code. Everything you can do in the Android app you can do on the
 website, and anything added to the app later comes to the website at the same time.
 
-It's hosted on Cloudflare Pages, built straight from this GitHub repository, with the domain bought at GoDaddy.
+It's hosted on Cloudflare Pages, with the domain bought at GoDaddy. The finished site is published to its own repository (below).
 
 ## Build it on your computer
 
@@ -15,34 +15,49 @@ npm run build:web    # the finished site, in dist/
 `build:web` builds the app for the browser and adds the plain pages beside it (privacy policy, terms, deleting an account, and the invite
 link page `/j/`), which are kept in `docs/`.
 
+## Two repositories
+
+- **4d_ages** (this one) holds all the code: the app and the website are the same code.
+- **4d_ages-website** holds only the finished website files. Every push to `main` here builds the website and publishes it there
+  (`.github/workflows/website.yml`). Don't edit that repository by hand; it's replaced on each build.
+
+Cloudflare is connected to **4d_ages-website** only, so it never sees the app's code and never has to build anything.
+
 ## Put it online (once)
 
-### 1. Cloudflare Pages
+### 1. The website repository
 
-1. In Cloudflare, go to **Workers & Pages → Create → Pages → Connect to Git**, and choose this repository.
-2. Build settings:
-   - Framework preset: **None**
-   - Build command: `npm run build:web`
-   - Build output directory: `dist`
-   - Environment variable `NODE_VERSION` = `22`
-3. Environment variables (Settings → Variables), the same public values as in `.env`:
-   - `EXPO_PUBLIC_SUPABASE_URL`
-   - `EXPO_PUBLIC_SUPABASE_ANON_KEY` (the publishable key)
-   - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
-   - `CONTACT_EMAIL`: the support address shown on the privacy policy, terms and accessibility pages
+1. On GitHub, create a new repository named `4d_ages-website`. Private is fine. Leave it empty (no README).
+2. Make a deploy key, so this repository can publish to it. On your computer:
+   ```
+   ssh-keygen -t ed25519 -C "4d-ages website" -f website_key -N ""
+   ```
+   This makes two files: `website_key` (private) and `website_key.pub` (public).
+3. In **4d_ages-website** → Settings → Deploy keys → Add deploy key: paste `website_key.pub`, and tick **Allow write access**.
+4. In **4d_ages** → Settings → Secrets and variables → Actions:
+   - Secrets → New repository secret: `WEBSITE_DEPLOY_KEY`, paste the whole of `website_key` (the private one).
+   - Variables → New repository variable: `WEBSITE_REPO` = `Aloncohen41/4d_ages-website`.
+   - Variables → New repository variable: `CONTACT_EMAIL` = your support address (shown on the privacy policy, terms and accessibility pages).
+5. Delete both key files from your computer. Then in **4d_ages** → Actions → **Website** → Run workflow, and the first build appears in
+   **4d_ages-website** a few minutes later.
 
-   Never add the secret key, the database connection string or the Google client secret here. The website doesn't need them, and anything
-   given to the build ends up in the site.
-4. Save and deploy. You get an address like `4d-ages.pages.dev`. Every push to `main` updates the site.
+The website's Supabase and Google settings come from the secrets this repository already has for the app
+(`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`): nothing to add.
 
-### 2. Your domain (GoDaddy)
+### 2. Cloudflare Pages
+
+1. In Cloudflare, go to **Workers & Pages → Create → Pages → Connect to Git**, and choose **4d_ages-website**.
+2. Build settings: Framework preset **None**, Build command **empty**, Build output directory `/`. No environment variables are needed.
+3. Save and deploy. You get an address like `4d-ages.pages.dev`. Every time the website repository changes, the site updates.
+
+### 3. Your domain (GoDaddy)
 
 1. In Cloudflare, **Add a site** with your domain and choose the free plan. Cloudflare gives you two name servers.
 2. In GoDaddy, open the domain → **DNS → Nameservers → Change → Enter my own nameservers**, and paste Cloudflare's two. It can take a few
    hours to switch over.
 3. In Cloudflare Pages → your project → **Custom domains**, add the domain (and `www.` if you want it too).
 
-### 3. Sign-in
+### 4. Sign-in
 
 - **Supabase** → Authentication → URL Configuration: set the **Site URL** to `https://yourdomain`, and add `https://yourdomain/` and
   `https://yourdomain/**` to the **Redirect URLs** (keep `fourdages://auth-callback` there for the app).
