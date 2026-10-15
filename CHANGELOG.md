@@ -2,6 +2,22 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.4
+
+**4D Ages on the web**
+- 4D Ages now has a website, 4dages.com, which works the same as the app. Sign in with the same account to see and add to your books on a computer, make books and videos, and share photos into it from a phone's home screen.
+- Invite links now open on 4dages.com, where the book can be opened in the app or straight in the browser. Links sent before this still work.
+
+**Your privacy**
+- A new privacy policy and terms, an accessibility statement, and a page of licences, all linked from Settings and the sign-in page.
+- New accounts agree to the terms and to keeping health information when they're created. Existing accounts are asked once, the next time they open the app.
+- Settings, Account: **Download a copy of my data** saves everything in your books, with the photos and videos on your phone, as one file.
+- Settings, About: **Contact us** emails contact@4dages.com.
+
+**Accessibility**
+- Screen readers now hear which options are chosen and ticked, every switch and slider says what it does, every pop-up says what it is, and screens have headings.
+- Confetti and animations are left out when your phone is set to reduce motion.
+
 ## 1.1.3
 
 **Share straight into 4D Ages**
