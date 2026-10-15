@@ -30,7 +30,7 @@ ok("the saved-data file is written through the skip-selection-only storage", /cr
 // who may use the deferred child: page content only
 const pageFiles = ["app/(tabs)/index.tsx", "app/(tabs)/milestones.tsx", "app/(tabs)/growth.tsx", "app/family.tsx", "app/(tabs)/book.tsx", "src/components/MilestoneChecklist.tsx", "src/components/Memories.tsx"];
 ok("page content (Home, Milestones, Growth, Family, Book, the checklist, the banners) uses the deferred child", pageFiles.every((f) => /useShownChild\(\)/.test(read(f)) && !/useActiveChild/.test(read(f))));
-const heroFn = screen.slice(screen.indexOf("function Hero()"), screen.indexOf("/** Tap the age"));
+const heroFn = screen.slice(screen.indexOf("function Hero("), screen.indexOf("/** Tap the age"));
 ok("the profile card uses the deferred child", /useShownChild\(\)/.test(heroFn));
 const writers = ["src/components/EntrySheet.tsx", "src/components/EditPhotoSheet.tsx", "src/components/ShareSheet.tsx", "src/components/ImportSheet.tsx", "src/components/TagBrowser.tsx", "src/components/CollectionSheet.tsx", "src/components/ReinforceSheet.tsx", "src/components/RemindersCard.tsx", "src/components/Fab.tsx", "src/lib/addPhotos.ts", "src/lib/saveMilestone.ts"];
 ok("everything that SAVES data keeps the immediate selection: no sheet, form, import or + button can ever target a stale child", writers.every((f) => !/useShownChild/.test(read(f))));

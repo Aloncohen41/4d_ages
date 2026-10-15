@@ -17,6 +17,8 @@ import { Fab, FAB_GAP } from "../../src/components/Fab";
 import { Icon, IconName } from "../../src/components/Icon";
 import { TYPE } from "../../src/theme";
 import { withAlpha } from "../../src/lib/m3";
+import { useWide } from "../../src/lib/useWide";
+import { SiteHeader } from "../../src/components/SiteHeader";
 
 /*
  * The tabs are a native pager (react-native-pager-view), the same kind of swipe you get in a photo gallery.
@@ -48,7 +50,7 @@ const TABS: readonly { name: string; title: string; icon: string }[] = [...KID_T
 
 export const TAB_BAR_HEIGHT = 74;
 
-function BottomBar({ state, navigation, position, restoreTo, onRestored }: MaterialTopTabBarProps & { restoreTo: TabName | null; onRestored: () => void }) {
+function BottomBar({ state, navigation, position, restoreTo, onRestored, hidden }: MaterialTopTabBarProps & { restoreTo: TabName | null; onRestored: () => void; hidden?: boolean }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   // the pager's live position (0 â€¦ n-1, fractional while dragging); a plain value if a version doesn't provide one
@@ -68,6 +70,8 @@ function BottomBar({ state, navigation, position, restoreTo, onRestored }: Mater
     if (isTab(current)) resume.save({ tab: current });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, restoreTo]);
+
+  if (hidden) return null; // the website on a computer: the pages are links in the header instead
 
   // Material 3 navigation bar: a tonal bar (no border); the selected destination gets a pill behind its icon, which fills in and grows as the page arrives
   return (
@@ -105,6 +109,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const active = useActiveChild();
   const held = useSwipeHeld(); // a slider is being dragged: don't let it swipe the page
+  const wide = useWide(); // the website on a computer: a header with the pages as links, no tab bar, no swiping
 
   // Open on the tab you were last on. The pager starts on Home, so it jumps (without animating) to the saved tab while a cover that
   // looks exactly like the splash screen hides that moment; a timeout guarantees the cover can never get stuck.
@@ -119,15 +124,15 @@ export default function TabsLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <StatusBar style={t.dark ? "light" : "dark"} />
-      <TopBar />{/* above the pager, so it stays still while the tabs slide */}
+      {wide ? <SiteHeader /> : <TopBar />}{/* above the pager, so it stays still while the tabs slide */}
       <Tabs
         key={isPet(active) ? "pet" : "kid"} // a pet and a child have different tabs: the pager is made afresh when switching between them
         tabBarPosition="bottom"
-        tabBar={(props: MaterialTopTabBarProps) => <BottomBar {...props} restoreTo={restoring ? saved : null} onRestored={() => setRestoring(false)} />}
+        tabBar={(props: MaterialTopTabBarProps) => <BottomBar {...props} hidden={wide} restoreTo={restoring ? saved : null} onRestored={() => setRestoring(false)} />}
         screenOptions={{
-          swipeEnabled: !held, // off only while the player's slider is being dragged
+          swipeEnabled: !held && !wide, // off only while the player's slider is being dragged
           lazy: false, // every tab is mounted up front: neighbours are already there during the swipe
-          animationEnabled: !restoring, // the jump to the saved tab is instant; normal swipes and taps animate as usual
+          animationEnabled: !restoring && !wide, // the jump to the saved tab is instant; normal swipes and taps animate as usual
           sceneStyle: { backgroundColor: t.bg }, // never a white gap between pages
         }}
       >
@@ -137,7 +142,7 @@ export default function TabsLayout() {
       </Tabs>
 
       {/* shared by every tab, so it exists once instead of once per tab (the forms it opens live in the root layout) */}
-      {active && active.role !== "viewer" ? <Fab bottom={TAB_BAR_HEIGHT + insets.bottom + FAB_GAP} /> : null}
+      {active && active.role !== "viewer" && !wide ? <Fab bottom={TAB_BAR_HEIGHT + insets.bottom + FAB_GAP} /> : null}
       {restoring ? <View style={StyleSheet.absoluteFill}><BrandScreen /></View> : null}
     </View>
   );

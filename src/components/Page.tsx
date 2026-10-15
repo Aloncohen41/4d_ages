@@ -7,6 +7,8 @@ import { useTheme } from "../lib/useTheme";
 import { withAlpha } from "../lib/m3";
 import { TYPE } from "../theme";
 import { Icon } from "./Icon";
+import { useWide } from "../lib/useWide";
+import { SiteFooter, SiteHeader } from "./SiteHeader";
 
 /**
  * A page opened from the menu (Family, Settings, a person): a back arrow and the title, then the content scrolling below.
@@ -15,7 +17,30 @@ import { Icon } from "./Icon";
 export function Page({ title, children, right, scrollRef }: { title: string; children: React.ReactNode; right?: React.ReactNode; scrollRef?: React.RefObject<ScrollView | null> }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const wide = useWide();
   const back = () => (router.canGoBack() ? router.back() : router.replace("/"));
+  if (wide) {
+    // the website on a computer: the site's header, then the page in the middle of the window, with its title and a way back
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <SiteHeader />
+        <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled">
+          <View style={{ width: "100%", maxWidth: 880, alignSelf: "center", paddingHorizontal: 32, paddingTop: 20 }}>
+            <Pressable onPress={back} accessibilityRole="link" style={{ flexDirection: "row", alignItems: "center", gap: 2, alignSelf: "flex-start", paddingVertical: 6 }}>
+              <Icon name="chevron-left" size={20} color={t.ink2} />
+              <Text style={[TYPE.labelLarge, { color: t.ink2 }]}>Back</Text>
+            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6, marginBottom: 20 }}>
+              <Text role="heading" aria-level={1} style={[TYPE.headlineMedium, { color: t.ink, flex: 1 }]}>{title}</Text>
+              {right}
+            </View>
+            {children}
+          </View>
+          <SiteFooter />
+        </ScrollView>
+      </View>
+    );
+  }
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <StatusBar style={t.dark ? "light" : "dark"} />

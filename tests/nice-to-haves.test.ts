@@ -90,7 +90,7 @@ ok("[NTH-07] earlier app versions keep working: an invite without people gives f
 ok("[NTH-07] a viewer is never handed the book when its owner deletes their account", /m\.role <> 'viewer' order by m\.created_at limit 1\) as heir/.test(schema));
 const sync = read("src/lib/sync.ts");
 ok("[NTH-07] the app sends the chosen people, learns its own access, and a viewer's phone never sends changes", /p_people: people/.test(sync) && /myAccess\(childId\)/.test(sync) && /if \(!viewer\) await pushChild/.test(sync));
-ok("[NTH-07] view only on the phone: nothing can be changed (the store refuses it), no + button, no Edit, and a note on Home", /isViewOnly\(get\(\), input\.childId\)/.test(read("src/lib/store.ts")) && /active\.role !== "viewer" \? <Fab/.test(read("app/(tabs)/_layout.tsx")) && /child\.role !== "viewer" \? \(/.test(read("src/components/PostCard.tsx")) && /View only: you see the posts/.test(read("app/(tabs)/index.tsx")));
+ok("[NTH-07] view only on the phone: nothing can be changed (the store refuses it), no + button, no Edit, and a note on Home", /isViewOnly\(get\(\), input\.childId\)/.test(read("src/lib/store.ts")) && /active\.role !== "viewer" && !wide \? <Fab/.test(read("app/(tabs)/_layout.tsx")) && /child\.role !== "viewer" \? \(/.test(read("src/components/PostCard.tsx")) && /View only: you see the posts/.test(read("app/(tabs)/index.tsx")));
 ok("[NTH-07] the share screen invites family to view, with a tick for each family member", /A family member/.test(read("app/share.tsx")) && /accessibilityRole=\{single \? "radio" : "checkbox"\}/.test(read("app/share.tsx")) && /inviteFor\(child\.id, kind, email, kind === "family" \? people : \[\]\)/.test(read("app/share.tsx")));
 
 /* ---------------- NTH-08 tags on Home */

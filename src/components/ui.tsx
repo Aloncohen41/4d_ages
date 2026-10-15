@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useTheme } from "../lib/useTheme";
 import { useStore } from "../lib/store";
+import { useWide } from "../lib/useWide";
 import { TYPE } from "../theme";
 import { withAlpha } from "../lib/m3";
 import { Child, MediaItem, MediaKind, PALETTES, Relative } from "../lib/types";
@@ -127,21 +128,22 @@ export const dialogName = (title: string) => ({ "aria-label": title }) as object
 
 export function Sheet({ visible, onClose, title, children }: { visible: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   const t = useTheme();
+  const wide = useWide(); // the website on a computer: a window in the middle of the page, not a sheet rising from the bottom
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent {...dialogName(title)}>
-      <View style={[s.scrim, { backgroundColor: t.scrim }]}>
+    <Modal visible={visible} transparent animationType={wide ? "fade" : "slide"} onRequestClose={onClose} statusBarTranslucent {...dialogName(title)}>
+      <View style={[s.scrim, { backgroundColor: t.scrim }, wide ? { justifyContent: "center", padding: 32 } : null]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        {/* on a computer, a sheet is the app's width, in the middle (see AppColumn) */}
-        <KeyboardAvoidingView behavior="padding" style={{ maxHeight: "92%", width: "100%", maxWidth: Platform.OS === "web" ? 560 : undefined, alignSelf: "center" }}>
-          <View style={[s.sheet, { backgroundColor: t.card }]}>
-            <View style={{ alignSelf: "center", width: 32, height: 4, borderRadius: 2, marginTop: 12, marginBottom: 6, backgroundColor: withAlpha(t.ink2, 0.4) }} />
+        {/* in a narrower browser window, a sheet is the app's width, in the middle (see AppColumn) */}
+        <KeyboardAvoidingView behavior="padding" style={{ maxHeight: wide ? "100%" : "92%", width: "100%", maxWidth: wide ? 640 : Platform.OS === "web" ? 560 : undefined, alignSelf: "center" }}>
+          <View style={[s.sheet, { backgroundColor: t.card }, wide ? { borderRadius: 28, paddingTop: 20, boxShadow: "0 24px 64px rgba(0,0,0,.25)" } as object : null]}>
+            {wide ? null : <View style={{ alignSelf: "center", width: 32, height: 4, borderRadius: 2, marginTop: 12, marginBottom: 6, backgroundColor: withAlpha(t.ink2, 0.4) }} />}
             <View style={s.sheetHead}>
               <Text style={[TYPE.titleLarge, { color: t.ink, flex: 1 }]} numberOfLines={1}>{title}</Text>
               <Pressable onPress={onClose} accessibilityLabel="Close" android_ripple={{ color: withAlpha(t.ink, 0.12) }} style={[s.x, { backgroundColor: t.bg2 }]} hitSlop={6}>
                 <Icon name="x" size={20} color={t.ink2} />
               </Pressable>
             </View>
-            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 48 }}>
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: wide ? 24 : 20, paddingTop: 4, paddingBottom: wide ? 28 : 48 }}>
               {children}
             </ScrollView>
           </View>

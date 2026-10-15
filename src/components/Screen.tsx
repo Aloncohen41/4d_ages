@@ -28,6 +28,8 @@ import { AddPetForm } from "./PetForm";
 import { DogSize, petAge, speciesInfo } from "../lib/pets";
 import { deleteChild, deleteChildPlan } from "../lib/sync";
 import { friendlyShareError } from "../lib/shareFlow";
+import { useWide } from "../lib/useWide";
+import { SITE_MAX, SiteFooter } from "./SiteHeader";
 
 interface Controls { toTop: () => void; toBottom: () => void; subscribeNearEnd: (cb: () => void) => () => void }
 const ScrollControls = React.createContext<Controls>({ toTop: () => undefined, toBottom: () => undefined, subscribeNearEnd: () => () => undefined });
@@ -119,6 +121,7 @@ export function Screen({ children, hero = false }: { children: React.ReactNode; 
   const t = useTheme();
   const active = useActiveChild();
   const switching = useChildSwitching();
+  const wide = useWide();
   const scrollRef = React.useRef<ScrollView>(null);
   const nearEnd = React.useRef(new Set<() => void>());
   const viewH = React.useRef(0);
@@ -133,7 +136,7 @@ export function Screen({ children, hero = false }: { children: React.ReactNode; 
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: wide ? 0 : 120 }}
         keyboardShouldPersistTaps="handled"
         scrollEventThrottle={120}
         onLayout={(e) => { viewH.current = e.nativeEvent.layout.height; }}
@@ -143,16 +146,27 @@ export function Screen({ children, hero = false }: { children: React.ReactNode; 
         {active ? (
           // while the newly chosen child's pages are being prepared, the old ones dim and ignore taps (so nothing can be tapped on the wrong child)
           <View style={{ opacity: switching ? 0.45 : 1 }} pointerEvents={switching ? "none" : "auto"}>
-            {hero ? <Hero /> : null}
-            <ScrollControls.Provider value={controls}><View style={{ padding: 16 }}>{children}</View></ScrollControls.Provider>
+            {wide ? (
+              // the website on a computer: the page's content in the middle of the window; Home has the profile card in a column beside it
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 32, width: "100%", maxWidth: hero ? SITE_MAX : 920, alignSelf: "center", paddingHorizontal: 32, paddingTop: 28 }}>
+                {hero ? <View style={{ width: 340, position: "sticky" as "relative", top: 28 }}><Hero wide /></View> : null}
+                <ScrollControls.Provider value={controls}><View style={{ flex: 1, minWidth: 0 }}>{children}</View></ScrollControls.Provider>
+              </View>
+            ) : (
+              <>
+                {hero ? <Hero /> : null}
+                <ScrollControls.Provider value={controls}><View style={{ padding: 16 }}>{children}</View></ScrollControls.Provider>
+              </>
+            )}
           </View>
         ) : null}
+        {wide ? <SiteFooter /> : null}
       </ScrollView>
     </View>
   );
 }
 
-function Hero() {
+function Hero({ wide = false }: { wide?: boolean }) {
   const t = useTheme();
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
@@ -175,7 +189,7 @@ function Hero() {
   const box = [st.stat, { backgroundColor: t.card }];
 
   return (
-    <View style={{ backgroundColor: t.accentSoft, borderRadius: 28, padding: 16, marginHorizontal: 16, marginTop: 12 }}>
+    <View style={{ backgroundColor: t.accentSoft, borderRadius: 28, padding: wide ? 20 : 16, marginHorizontal: wide ? 0 : 16, marginTop: wide ? 0 : 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         {/* the one edit button: the pen on the picture */}
         <Pressable onPress={() => setEditOpen(true)} accessibilityLabel="Edit profile">

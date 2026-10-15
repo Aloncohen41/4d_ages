@@ -4,7 +4,8 @@ import { onWeb } from "../../src/lib/onWeb";
 import { PLACES_ID } from "../../src/lib/classics";
 import { readPlaces } from "../../src/lib/places";
 import { useWorldMap } from "../../src/lib/worldMap";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { useScreenWidth } from "../../src/lib/useWide";
 import { Screen } from "../../src/components/Screen";
 import { Btn, DateField, Heading, Input, Seg } from "../../src/components/ui";
 import { Icon } from "../../src/components/Icon";
@@ -38,7 +39,7 @@ export default function BookTab() {
  */
 function Book() {
   const t = useTheme();
-  const { width } = useWindowDimensions();
+  const width = useScreenWidth();
   const child = useShownChild();
   const memories = useStore((s) => s.memories);
   const custom = useStore((s) => s.customDefs);

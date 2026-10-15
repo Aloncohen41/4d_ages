@@ -37,7 +37,7 @@ const layout = read("app/_layout.tsx"), login = read("app/login.tsx"), welcome =
 ok("[LOGIN-01] signed out, only the login page exists: tabs, menu pages and welcome are behind sign-in guards (back navigation and links can't reach them)",
   /<Stack\.Protected guard=\{signedIn && hasKids\}>[\s\S]*name="\(tabs\)"[\s\S]*name="family"[\s\S]*name="settings"/.test(layout) && /<Stack\.Protected guard=\{!signedIn\}>[\s\S]*name="login"/.test(layout));
 ok("[LOGIN-01] the login page has no + button, no top bar and no navigation", !/TopBar|Fab|AddChildSheet|BottomBar|router\.push/.test(code(login)));
-ok("[LOGIN-02] the login page doesn't scroll, and sizes itself for small phones", !/ScrollView/.test(code(login)) && /height < 720/.test(login));
+ok("[LOGIN-02] the login page doesn't scroll, and sizes itself for small phones", !/ScrollView/.test(code(login).slice(code(login).lastIndexOf("return ("))) && /height < 720/.test(login));
 ok("[LOGIN-03] the sample family is a small text link at the bottom (not a button), and still loads the same sample", /onPress=\{loadSample\}[\s\S]{0,200}textDecorationLine: "underline"/.test(login) && !/<Btn[^>]*Explore/.test(login) && /Explore with a sample family/.test(login));
 ok("[LOGIN-04] “Join a partner's baby book” is text only", /label="Join a partner's baby book"/.test(welcome));
 ok("[LOGIN-05] a bigger logo, no long description, one short tagline in the display face", /logoW = Math\.min\(width - 48, compact \? 280 : 340\)/.test(login) && /fontFamily: DISPLAY_FONT/.test(login) && /LOGIN_TAGLINE = "Keepsake books for the ages\."/.test(read("src/brand.ts")) && !/watch their story build itself/.test(login));

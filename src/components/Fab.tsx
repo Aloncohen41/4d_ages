@@ -11,12 +11,12 @@ import { Icon, IconName } from "./Icon";
 import { VoiceRecorderSheet } from "./Voice";
 
 export const FAB_GAP = 16;
-type Action = EntryKind | "photo" | "voice";
-const ACTIONS: Action[] = ["story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
+export type Action = EntryKind | "photo" | "voice";
+export const ACTIONS: Action[] = ["story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
 /** A pet's: no milestones or lasts; weight, and health (it has its own tab). */
-const PET_ACTIONS: Action[] = ["story", "health", "measure", "first", "voice", "photo"];
-const ICON: Record<Action, IconName> = { story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", health: "health", photo: "add-photo", voice: "voice" };
-const LABEL = (a: Action, pet = false) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : pet && a === "measure" ? "Weight" : KIND_META[a].label);
+export const PET_ACTIONS: Action[] = ["story", "health", "measure", "first", "voice", "photo"];
+export const ICON: Record<Action, IconName> = { story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", health: "health", photo: "add-photo", voice: "voice" };
+export const LABEL = (a: Action, pet = false) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : pet && a === "measure" ? "Weight" : KIND_META[a].label);
 
 /** Floating "+" in the bottom-right corner. Tap to fan out the quick-add options upward. */
 export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {

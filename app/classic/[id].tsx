@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { openDatePicker } from "../../src/lib/datePicker";
-import { Alert, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
+import { useScreenWidth } from "../../src/lib/useWide";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Page } from "../../src/components/Page";
@@ -31,7 +32,7 @@ function pickDate(current: string | undefined, min: string, onSet: (d: string) =
  */
 export default function ClassicEditor() {
   const t = useTheme();
-  const { width } = useWindowDimensions();
+  const width = useScreenWidth(816); // a page of its own (see Page)
   const { id } = useLocalSearchParams<{ id: string }>();
   const child = useShownChild();
   const tpl = classicById(String(id));

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Linking, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { KeyboardAvoidingView, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
@@ -12,9 +12,18 @@ import { googleReady, resendVerification, signIn, signInWithGoogle, signUp, send
 import { LegalLinks } from "../src/components/LegalLinks";
 import { useAuthLinkError } from "../src/lib/authLinkState";
 import { Btn, Input } from "../src/components/ui";
-import { Icon } from "../src/components/Icon";
+import { Icon, IconName } from "../src/components/Icon";
+import { useWide } from "../src/lib/useWide";
 
 type Mode = "in" | "up" | "verify" | "reset";
+
+/** The website's welcome on a computer: what the app is for, beside the sign-in box. */
+const WELCOME_POINTS: [IconName, string][] = [
+  ["image", "Photos, videos and voice notes, kept in one place"],
+  ["trophy", "Milestones, firsts and growth, as they happen"],
+  ["nav-book", "A book of it all, to print or share"],
+  ["family", "Family can follow along, only who you choose"],
+];
 
 /**
  * The login page: the only thing there is before signing in. One screen, no scrolling — the logo, one line, sign-in or account creation,
@@ -24,6 +33,7 @@ export default function Login() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
+  const wide = useWide();
   const loadSample = useStore((s) => s.loadSample);
   const linkError = useAuthLinkError((s) => s.error);
   const [mode, setMode] = useState<Mode>("in");
@@ -66,15 +76,8 @@ export default function Login() {
   const field = { paddingVertical: compact ? 10 : 13 };
   const shownError = err || linkError;
 
-  return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top, paddingBottom: insets.bottom + 8 }}>
-      <StatusBar style={t.dark ? "light" : "dark"} />
-      <KeyboardAvoidingView behavior="height" style={{ flex: 1, paddingHorizontal: 24 }}>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", minHeight: compact ? 150 : 200 }}>
-          <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: logoW, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
-          <Text style={{ fontFamily: DISPLAY_FONT, fontSize: compact ? 22 : 26, lineHeight: compact ? 28 : 34, color: t.ink, textAlign: "center", marginTop: compact ? 4 : 10 }}>{LOGIN_TAGLINE}</Text>
-        </View>
-
+  const form = (
+    <>
         {mode === "reset" ? (
           <View style={{ gap: compact ? 8 : 10 }}>
             <Text style={[TYPE.titleMedium, { color: t.ink, textAlign: "center" }]}>Forgot your password?</Text>
@@ -151,6 +154,47 @@ export default function Login() {
           <Text style={[TYPE.bodySmall, { color: t.ink3, textDecorationLine: "underline" }]}>Explore with a sample family</Text>
         </Pressable>
         <View style={{ marginTop: compact ? 8 : 12 }}><LegalLinks /></View>
+    </>
+  );
+
+  if (wide) {
+    // the website on a computer: a welcome beside the sign-in box, filling the window
+    return (
+      <View style={{ flex: 1, flexDirection: "row", backgroundColor: t.bg }}>
+        <View style={{ flex: 1, backgroundColor: t.accentSoft, justifyContent: "center", paddingHorizontal: 64, paddingVertical: 48 }}>
+          <View style={{ maxWidth: 520, alignSelf: "flex-end", width: "100%" }}>
+            <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: 300, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
+            <Text role="heading" aria-level={1} style={{ fontFamily: DISPLAY_FONT, fontSize: 40, lineHeight: 50, color: t.onAccentSoft, marginTop: 20 }}>{LOGIN_TAGLINE}</Text>
+            <View style={{ gap: 14, marginTop: 28 }}>
+              {WELCOME_POINTS.map(([icon, words]) => (
+                <View key={words} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.card, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={20} color={t.accentDeep} /></View>
+                  <Text style={[TYPE.bodyLarge, { color: t.onAccentSoft, flex: 1 }]}>{words}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 64, paddingVertical: 48 }} keyboardShouldPersistTaps="handled">
+          <View style={{ width: "100%", maxWidth: 420 }}>
+            <Text style={[TYPE.headlineMedium, { color: t.ink, marginBottom: 20 }]}>{mode === "up" ? "Create your account" : mode === "reset" ? "Reset your password" : mode === "verify" ? "Almost there" : "Sign in"}</Text>
+            {form}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top, paddingBottom: insets.bottom + 8 }}>
+      <StatusBar style={t.dark ? "light" : "dark"} />
+      <KeyboardAvoidingView behavior="height" style={{ flex: 1, paddingHorizontal: 24 }}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", minHeight: compact ? 150 : 200 }}>
+          <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: logoW, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
+          <Text style={{ fontFamily: DISPLAY_FONT, fontSize: compact ? 22 : 26, lineHeight: compact ? 28 : 34, color: t.ink, textAlign: "center", marginTop: compact ? 4 : 10 }}>{LOGIN_TAGLINE}</Text>
+        </View>
+
+        {form}
       </KeyboardAvoidingView>
     </View>
   );

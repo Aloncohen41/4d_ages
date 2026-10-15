@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Switch, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Switch, Text, View } from "react-native";
+import { useScreenWidth } from "../lib/useWide";
 import { router } from "expo-router";
 import { Btn, DateField, Heading, Input, Seg, Sheet } from "./ui";
 import { Icon } from "./Icon";
@@ -27,7 +28,7 @@ import { THEMES, TYPE } from "../theme";
  */
 export function PetAdventures() {
   const t = useTheme();
-  const { width } = useWindowDimensions();
+  const width = useScreenWidth();
   const child = useShownChild();
   const entry = useStore((s) => s.classics.find((c) => c.childId === child?.id && c.id === PLACES_ID));
   const saveClassic = useStore((s) => s.saveClassic);
