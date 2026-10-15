@@ -210,4 +210,4 @@ For sign-in and sharing problems, see the table at the end of [SHARING.md](SHARI
 
 ## Feedback
 
-Bug reports and suggestions are welcome in [Issues](https://github.com/Aloncohen41/4d_ages/issues).
+Questions, feedback and privacy requests: [contact@4dages.com](mailto:contact@4dages.com). Bug reports and suggestions are also welcome in [Issues](https://github.com/Aloncohen41/4d_ages/issues).

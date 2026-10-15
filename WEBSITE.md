@@ -37,7 +37,6 @@ Cloudflare is connected to **4d_ages-website** only, so it never sees the app's 
 4. In **4d_ages** → Settings → Secrets and variables → Actions:
    - Secrets → New repository secret: `WEBSITE_DEPLOY_KEY`, paste the whole of `website_key` (the private one).
    - Variables → New repository variable: `WEBSITE_REPO` = `Aloncohen41/4d_ages-website`.
-   - Variables → New repository variable: `CONTACT_EMAIL` = your support address (shown on the privacy policy, terms and accessibility pages).
 5. Delete both key files from your computer. Then in **4d_ages** → Actions → **Website** → Run workflow, and the first build appears in
    **4d_ages-website** a few minutes later.
 

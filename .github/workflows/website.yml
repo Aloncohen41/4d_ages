@@ -2,8 +2,7 @@
 # repository, which Cloudflare Pages serves. That repository holds only the built site, never the app's code, so the two never mix.
 #
 # Set up once (see WEBSITE.md): a repository variable WEBSITE_REPO (e.g. Aloncohen41/4d_ages-website), a secret WEBSITE_DEPLOY_KEY (the
-# private half of a deploy key with write access to that repository), and a repository variable CONTACT_EMAIL. Until WEBSITE_REPO is set,
-# this does nothing.
+# private half of a deploy key with write access to that repository). Until WEBSITE_REPO is set, this does nothing.
 name: Website
 
 on:
@@ -27,7 +26,6 @@ jobs:
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
-      CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
     steps:
       - uses: actions/checkout@v7
 

@@ -12,7 +12,7 @@ const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
 const text = (f: string) => read(f).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 const privacy = text("docs/privacy/index.html");
-ok("the privacy policy says who runs 4D Ages and how to reach them", /data controller/.test(privacy) && /United Kingdom/.test(privacy) && /__CONTACT_EMAIL__|@/.test(privacy));
+ok("the privacy policy says who runs 4D Ages and how to reach them", /data controller/.test(privacy) && /United Kingdom/.test(privacy) && privacy.includes("contact@4dages.com") && !/__CONTACT_EMAIL__/.test(["privacy", "terms", "accessibility"].map((p) => read(`docs/${p}/index.html`)).join("")));
 ok("…what is kept, why, and the legal reason for each (contract, consent, legitimate interest)", /What we keep/.test(privacy) && /the contract/.test(privacy) && /explicit consent/.test(privacy) && /legitimate interest/.test(privacy));
 ok("…that health information is only kept with explicit consent, which can be withdrawn", /health information/i.test(privacy) && /withdraw that consent/.test(privacy));
 ok("…children: for adults, and a child's information is added and controlled by their parent", /18 or over/.test(privacy) && /parent or guardian/.test(privacy));
@@ -39,7 +39,7 @@ ok("the sign-in page links the terms, the privacy policy and accessibility", /<L
 const settings = read("app/settings.tsx");
 ok("Settings: privacy, terms, accessibility, licences, contact, download a copy, delete the account", ["PRIVACY_URL", "TERMS_URL", "ACCESSIBILITY_URL", "LICENCES_URL", "CONTACT_EMAIL", "<DownloadMyData />", "Remove my data and delete my account"].every((x) => settings.includes(x)));
 ok("the copy of your data holds the books (as readable data), the files on the device, and a note", /\$\{APP_NAME\} data\.json/.test(read("src/lib/dataExport.ts")) && /media\/\$\{baseName\(uri\)\}/.test(read("src/lib/dataExport.ts")) && /README\.txt/.test(read("src/lib/dataExport.ts")));
-ok("the website carries the same pages, with the contact address filled in when it's built", ["privacy", "terms", "accessibility", "licences", "delete-account"].every((p) => read("scripts/build-web.mjs").includes(`"${p}"`)) && /replaceAll\("__CONTACT_EMAIL__", contact\)/.test(read("scripts/build-web.mjs")));
+ok("the website carries the same pages, and every page has the contact address", ["privacy", "terms", "accessibility", "licences", "delete-account"].every((p) => read("scripts/build-web.mjs").includes(`"${p}"`)) && ["index", "privacy/index", "terms/index", "accessibility/index", "licences/index", "delete-account/index", "j/index", "join/index"].every((p) => read(`docs/${p}.html`).includes("mailto:contact@4dages.com")) && read("src/brand.ts").includes('CONTACT_EMAIL = "contact@4dages.com"'));
 
 console.log(fails ? `${fails} FAILED` : "all legal tests passed");
 if (fails) process.exit(1);
