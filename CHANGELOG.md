@@ -2,6 +2,24 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.6
+
+**The family tree**
+- Lines now join each family together: a line between a couple, and lines down from the parents to each of their children, from the grandparents down to the cousins.
+
+**Settings**
+- Language is now a list of languages, with a tick box to use your phone's language instead.
+
+**Hebrew**
+- Percentiles and the number of food reactions now show in Hebrew, and the names in the row of profiles have the right spacing.
+
+**On 4dages.com**
+- Home, Milestones, Growth, Book and the logo always take you to the right page.
+- Upload opens a window where you can drag in photos, videos and recordings, or choose them from your computer. A family member's photo can be dragged in too.
+- Moving people around the family tree no longer starts an upload.
+- Hebrew is shown in a new, modern font.
+- Appearance now offers Light, Dark or Automatic, which follows your computer's setting.
+
 ## 1.1.5
 
 **4D Ages in Hebrew**
