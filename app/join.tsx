@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../src/lib/useTheme";
 import { useStore } from "../src/lib/store";
 
+import { tr } from "../src/lib/i18n";
 /**
  * Where a share link lands (fourdages://join?code=…, opened from the link's web page). The code is kept, and the book is added as soon as
  * this phone is signed in: straight away if it already is, or right after signing in or creating an account (see SyncManager).
@@ -19,7 +20,7 @@ export default function JoinLink() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg, alignItems: "center", justifyContent: "center", padding: 32 }}>
       <ActivityIndicator color={t.accent} size="large" />
-      <Text style={{ color: t.ink2, marginTop: 14, textAlign: "center" }}>Opening the book…</Text>
+      <Text style={{ color: t.ink2, marginTop: 14, textAlign: "center" }}>{tr("Opening the book…")}</Text>
     </View>
   );
 }

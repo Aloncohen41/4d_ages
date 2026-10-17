@@ -1,10 +1,11 @@
 /* Switching child must be quick: the feed is windowed, the data file isn't rewritten, and the page content never blocks the tap — without ever risking a write to the wrong child. */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PAGE, windowKey, windowSize, growWindow, showAllWindow, hasMore } from "../src/lib/feedWindow";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---- the feed window
 const k1 = windowKey("maya", "all", ""), k2 = windowKey("leo", "all", "");

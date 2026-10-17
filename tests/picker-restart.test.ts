@@ -12,7 +12,8 @@ Module._resolveFilename = function (request: string, ...rest: unknown[]) { retur
 const { isPickerRegistrationError, RESTART_TITLE, RESTART_MESSAGE, restartManualMessage } = require("../src/lib/pickerErrors");
 const plugin = require("../plugins/withKeepScreenAlive");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(path.join(__dirname, "..", f), "utf8");
+const { untr } = require("./untr"); // the code as written in English
+const read = (f: string) => untr(readFileSync(path.join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---------- recognising the failure
 const real = "Call to function 'ExponentImagePicker.launchImageLibraryAsync' has been rejected.\n→ Caused by: java.lang.IllegalStateException: Attempting to launch an unregistered ActivityResultLauncher with contract expo.modules.imagepicker.contracts.ImageLibraryContract@ae96622 and input ImageLibraryContractOptions(options=expo.modules.imagepicker.ImagePickerOptions@ae7dfe). You must ensure the ActivityResultLauncher is registered before calling launch()";

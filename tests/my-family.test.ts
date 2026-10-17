@@ -1,13 +1,14 @@
 /*
  * "My family": everyone's posts in one timeline, and the children's heights side by side on the door frame, on a date or at the same age.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ageSpan, dateSpan, familyTimeline, heightAtAge, heightOnDate } from "../src/lib/familyCompare";
 import type { Memory } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 const m = (id: string, childId: string, date: string) => ({ id, childId, date, type: "story", description: "", media: [], tagIds: [], createdAt: date }) as unknown as Memory;
 const tl = familyTimeline([m("a", "maya", "2025-01-01"), m("b", "leo", "2026-05-01"), m("c", "other", "2026-06-01"), m("d", "maya", "2026-02-01")], [{ id: "maya" }, { id: "leo" }]);

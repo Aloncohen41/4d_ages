@@ -13,7 +13,8 @@ Module._resolveFilename = function (request: string, ...rest: unknown[]) { retur
 const { slidesOf } = require("../src/lib/slides");
 const { slideshowPayload, clipPlays, clampClipStart, estimateSeconds, CLIP_MAX_MS } = require("../src/lib/videoExport");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(path.join(__dirname, "..", f), "utf8");
+const { untr } = require("./untr"); // the code as written in English
+const read = (f: string) => untr(readFileSync(path.join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 const mk = (id: string, date: string, media: any[]) => ({ id, childId: "c", type: "photo", description: id, date, media, tagIds: [], createdAt: 1, emoji: "📷", palette: "peach", source: "x" });
 const mem = [

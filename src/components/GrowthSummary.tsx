@@ -10,6 +10,7 @@ import { effectiveRef, formatHeight, formatWeight } from "../lib/growth";
 import { CHART_SOURCES, IN_STEP_TEXT, Measure, Percentile, ageInMonths, atAge, inStep, percentileFor, percentileLabel } from "../lib/percentiles";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /**
  * The latest height (left), weight (right) and head circumference, each with its percentile for their age and sex on the chosen charts, and
  * whether height and weight are growing in step. A measurement past the ages a chart covers shows without a percentile.
@@ -41,10 +42,10 @@ export function GrowthSummary({ child, memories }: { child: Child; memories: Mem
         <>
           <Text style={[TYPE.titleLarge, { color: t.ink, marginTop: 2 }]}>{value}</Text>
           <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{atAge(child.birth, date)}</Text>
-          <Text style={[TYPE.labelLarge, { color: t.accentDeep, marginTop: 4 }]}>{p ? percentileLabel(p.percentile) : "Past the chart's ages"}</Text>
+          <Text style={[TYPE.labelLarge, { color: t.accentDeep, marginTop: 4 }]}>{p ? percentileLabel(p.percentile) : tr("Past the chart's ages")}</Text>
         </>
       ) : (
-        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 4 }]}>Not measured yet</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 4 }]}>{tr("Not measured yet")}</Text>
       )}
     </View>
   );
@@ -64,7 +65,7 @@ export function GrowthSummary({ child, memories }: { child: Child; memories: Mem
       ) : null}
       <Pressable onPress={() => router.push("/settings")} accessibilityRole="button" hitSlop={6} style={{ marginTop: 10 }}>
         <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>
-          {CHART_SOURCES.find((c) => c.id === source)?.label} charts, compared with {sex === "girl" ? "girls" : sex === "boy" ? "boys" : "girls and boys"}. <Text style={{ color: t.accentDeep, fontWeight: "700" }}>Change charts</Text>
+          {CHART_SOURCES.find((c) => c.id === source)?.label} {tr("charts, compared with")} {sex === "girl" ? "girls" : sex === "boy" ? "boys" : tr("girls and boys")}. <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{tr("Change charts")}</Text>
         </Text>
       </Pressable>
     </View>

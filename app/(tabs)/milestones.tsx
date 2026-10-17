@@ -21,6 +21,7 @@ import { TYPE } from "../../src/theme";
 import { Icon } from "../../src/components/Icon";
 import { formatDate, formatTime } from "../../src/lib/date";
 
+import { tr } from "../../src/lib/i18n";
 export default function MilestonesTab() {
   return (
     <Screen>
@@ -41,9 +42,9 @@ function Milestones() {
   if (child.expecting) return <PregnancySections />;
   if (isPet(child)) return <PetStories />;
   const copy: Record<Section, { title: string; desc?: string }> = {
-    milestones: { title: "Milestones" },
-    firsts: { title: "Firsts", desc: "Things they did for the very first time. Add a photo and a few words while you still remember it." },
-    lasts: { title: "Lasts", desc: "The last time for something — easy to miss when it happens, precious to look back on." },
+    milestones: { title: tr("Milestones") },
+    firsts: { title: tr("Firsts"), desc: tr("Things they did for the very first time. Add a photo and a few words while you still remember it.") },
+    lasts: { title: tr("Lasts"), desc: tr("The last time for something — easy to miss when it happens, precious to look back on.") },
   };
   return (
     <View>
@@ -53,7 +54,7 @@ function Milestones() {
       </View>
       {copy[section].desc ? <Text style={{ color: t.ink3, fontSize: 14, lineHeight: 20, marginBottom: 12 }}>{copy[section].desc}</Text> : null}
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "milestones" as Section, label: "Milestones" }, { id: "firsts" as Section, label: "Firsts" }, { id: "lasts" as Section, label: "Lasts" }]} value={section} onChange={setSection} />
+        <Seg options={[{ id: "milestones" as Section, label: tr("Milestones") }, { id: "firsts" as Section, label: tr("Firsts") }, { id: "lasts" as Section, label: tr("Lasts") }]} value={section} onChange={setSection} />
       </View>
       {section === "milestones" ? <MilestoneChecklist /> : <EntryList kind={section === "firsts" ? "first" : "last"} />}
       <ReinforceSheet visible={reinforce} onClose={() => setReinforce(false)} />
@@ -69,9 +70,9 @@ function PetStories() {
   if (!child) return null;
   return (
     <View>
-      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>Stories</Text>
+      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>{tr("Stories")}</Text>
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "tricks" as const, label: "Tricks & firsts" }, { id: "adventures" as const, label: "Adventures" }]} value={part} onChange={setPart} />
+        <Seg options={[{ id: "tricks" as const, label: tr("Tricks & firsts") }, { id: "adventures" as const, label: tr("Adventures") }]} value={part} onChange={setPart} />
       </View>
       {part === "tricks" ? <PetTricks child={child} open /> : <PetAdventures />}
     </View>
@@ -91,7 +92,7 @@ function PregnancySections() {
     <View>
       <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>{titles[section]}</Text>
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "milestones" as PregnancySection, label: "Milestones" }, { id: "symptoms" as PregnancySection, label: "Symptoms" }, { id: "cravings" as PregnancySection, label: "Cravings" }]} value={section} onChange={setSection} />
+        <Seg options={[{ id: "milestones" as PregnancySection, label: tr("Milestones") }, { id: "symptoms" as PregnancySection, label: tr("Symptoms") }, { id: "cravings" as PregnancySection, label: tr("Cravings") }]} value={section} onChange={setSection} />
       </View>
       {section === "milestones" ? <PregnancyMilestones child={child} /> : <PregnancyNotes child={child} kind={section === "symptoms" ? "symptom" : "craving"} />}
     </View>
@@ -143,11 +144,11 @@ function EntryList({ kind }: { kind: "first" | "last" }) {
 
   return (
     <View>
-      <Btn label={`Add a ${word}`} icon="plus" onPress={() => setEntrySheet({ kind })} />
+      <Btn label={tr("Add a {0}", [word])} icon="plus" onPress={() => setEntrySheet({ kind })} />
 
       {ideas.length ? (
         <View style={{ marginTop: 14 }}>
-          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>Ideas</Text>
+          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>{tr("Ideas")}</Text>
           <HScroll contentContainerStyle={{ gap: 8 }}>
             {ideas.map((i) => (
               <Pressable key={i.title} onPress={() => setEntrySheet({ kind, title: i.title, emoji: i.emoji })} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 99, backgroundColor: t.accentSoft }}>
@@ -177,8 +178,8 @@ function EntryList({ kind }: { kind: "first" | "last" }) {
       ) : (
         <View style={{ alignItems: "center", padding: 28 }}>
           <Icon name={kind === "first" ? "add-first" : "add-last"} size={40} color={t.ink3} />
-          <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>No {word}s logged yet</Text>
-          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>Tap an idea above, or “Add a {word}”, to log {child.name}'s first one.</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{tr("No {0}s logged yet", [word])}</Text>
+          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{tr("Tap an idea above, or “Add a {0}”, to log {1}'s first one.", [word, child.name])}</Text>
         </View>
       )}
     </View>

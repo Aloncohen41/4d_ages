@@ -20,6 +20,7 @@ import { withAlpha } from "../../src/lib/m3";
 import { useWide } from "../../src/lib/useWide";
 import { SiteHeader } from "../../src/components/SiteHeader";
 
+import { tr } from "../../src/lib/i18n";
 /*
  * The tabs are a native pager (react-native-pager-view), the same kind of swipe you get in a photo gallery.
  * Every tab is mounted at once ("lazy: false"), so while you drag, the next tab is already there beside the current one
@@ -31,20 +32,20 @@ const { Navigator } = createMaterialTopTabNavigator();
 const Tabs = withLayoutContext<MaterialTopTabNavigationOptions, typeof Navigator, TabNavigationState<ParamListBase>, MaterialTopTabNavigationEventMap>(Navigator);
 
 const KID_TABS = [
-  { name: "index", title: "Home", icon: "nav-home" },
-  { name: "milestones", title: "Milestones", icon: "nav-milestones" },
-  { name: "growth", title: "Growth", icon: "nav-growth" },
-  { name: "book", title: "Book", icon: "nav-book" },
+  { name: "index", get title() { return tr("Home"); }, icon: "nav-home" },
+  { name: "milestones", get title() { return tr("Milestones"); }, icon: "nav-milestones" },
+  { name: "growth", get title() { return tr("Growth"); }, icon: "nav-growth" },
+  { name: "book", get title() { return tr("Book"); }, icon: "nav-book" },
 ] as const; // Family is in the top-left menu; adding happens through the + button
 /**
  * A pet's tabs, the same four pages as a child's in a pet's way: Health (their health and weight, in Growth's place) and Stories (tricks,
  * firsts and adventures, in Milestones' place).
  */
 const PET_TABS = [
-  { name: "index", title: "Home", icon: "nav-home" },
-  { name: "growth", title: "Health", icon: "nav-health" },
-  { name: "milestones", title: "Stories", icon: "nav-paw" },
-  { name: "book", title: "Book", icon: "nav-book" },
+  { name: "index", get title() { return tr("Home"); }, icon: "nav-home" },
+  { name: "growth", get title() { return tr("Health"); }, icon: "nav-health" },
+  { name: "milestones", get title() { return tr("Stories"); }, icon: "nav-paw" },
+  { name: "book", get title() { return tr("Book"); }, icon: "nav-book" },
 ] as const;
 const TABS: readonly { name: string; title: string; icon: string }[] = [...KID_TABS, ...PET_TABS];
 

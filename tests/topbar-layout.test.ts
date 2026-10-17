@@ -2,11 +2,12 @@
  * The top bar (app name + child switcher) must stay still while tabs slide, and the child's name/picture must not repeat on every tab.
  * This reads the screens' source: the bar is rendered ONCE above the pager; the profile card is Home-only; other tabs have their own titles.
  */
+import { untr } from "./untr";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 const layout = read("app/(tabs)/_layout.tsx"), screen = read("src/components/Screen.tsx");
 const between = (src: string, from: string, to: string) => src.slice(src.indexOf(from), src.indexOf(to));
 const screenFn = between(screen, "export function Screen(", "function Hero()");

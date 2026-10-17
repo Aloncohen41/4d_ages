@@ -13,6 +13,7 @@ import { GrowPlayer } from "./Grow";
 import { VideoExportSheet } from "./VideoExportSheet";
 import { useStore } from "../lib/store";
 
+import { tr } from "../lib/i18n";
 /** One end of the range: the date, how old the child is then, a slider, and a one-day nudge each way. */
 function End({ label, child, total, committed, shown, rev, onLive, onCommit }: {
   label: string; child: Child; total: number; committed: number; shown: number; rev: number; onLive: (v: number) => void; onCommit: (v: number) => void;
@@ -30,7 +31,7 @@ function End({ label, child, total, committed, shown, rev, onLive, onCommit }: {
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 11.5, letterSpacing: 0.6 }}>{label.toUpperCase()}</Text>
         <Text style={{ backgroundColor: t.accentSoft, color: t.accentDeep, fontWeight: "700", fontSize: 12, paddingHorizontal: 11, paddingVertical: 4, borderRadius: 99, overflow: "hidden" }}>
-          {age === "birth day" ? `the day ${child.name} was born` : `${child.name} is ${age}`}
+          {age === "birth day" ? tr("the day {0} was born", [child.name]) : tr("{0} is {1}", [child.name, age])}
         </Text>
       </View>
       <Text style={{ color: t.ink, fontWeight: "700", fontSize: 18, marginTop: 4 }}>{formatDate(date)}</Text>
@@ -38,7 +39,7 @@ function End({ label, child, total, committed, shown, rev, onLive, onCommit }: {
         {nudge(-1)}
         {total > 0 ? (
           <AppSlider
-            label={`${label} date`}
+            label={tr("{0} date", [label])}
             key={`${label}-${rev}` /* remounted after each release so the thumb always shows the committed (never an out-of-order) position */}
             style={{ flex: 1, height: 42 }}
             minimumValue={0}
@@ -128,7 +129,7 @@ export function CustomReelSheet({ child, memories, initial, onClose }: { child: 
   const chip = (on: boolean) => ({ paddingHorizontal: 13, paddingVertical: 7, borderRadius: 99, backgroundColor: on ? t.accent : t.accentSoft } as const);
 
   return (
-    <Sheet visible onClose={onClose} title="Make your own video">
+    <Sheet visible onClose={onClose} title={tr("Make your own video")}>
       <HScroll contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
         {presets.map((p) => {
           const on = p.from === range.from && p.to === range.to;
@@ -142,36 +143,36 @@ export function CustomReelSheet({ child, memories, initial, onClose }: { child: 
 
       {/* what the title card will say, updating as you slide */}
       <View style={{ backgroundColor: t.accentSoft, borderRadius: 18, padding: 14, marginTop: 14 }}>
-        <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 11.5, letterSpacing: 0.6 }}>YOUR VIDEO</Text>
-        <Text style={{ color: t.ink, fontWeight: "700", fontSize: 19, marginTop: 3 }}>Here is {child.name}</Text>
+        <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 11.5, letterSpacing: 0.6 }}>{tr("YOUR VIDEO")}</Text>
+        <Text style={{ color: t.ink, fontWeight: "700", fontSize: 19, marginTop: 3 }}>{tr("Here is {0}", [child.name])}</Text>
         <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 15 }}>at {liveSpan.display} old</Text>
       </View>
 
-      <End label="From" child={child} total={total} committed={range.from} shown={live.from ?? range.from} rev={rev} onLive={(v) => setLive((l) => ({ ...l, from: v }))} onCommit={(v) => commit("from", v)} />
-      <End label="To" child={child} total={total} committed={range.to} shown={live.to ?? range.to} rev={rev} onLive={(v) => setLive((l) => ({ ...l, to: v }))} onCommit={(v) => commit("to", v)} />
+      <End label={tr("From")} child={child} total={total} committed={range.from} shown={live.from ?? range.from} rev={rev} onLive={(v) => setLive((l) => ({ ...l, from: v }))} onCommit={(v) => commit("from", v)} />
+      <End label={tr("To")} child={child} total={total} committed={range.to} shown={live.to ?? range.to} rev={rev} onLive={(v) => setLive((l) => ({ ...l, to: v }))} onCommit={(v) => commit("to", v)} />
 
       {candidates.length === 0 ? (
-        <Text style={{ color: t.ink3, textAlign: "center", padding: 26 }}>No photos or videos were added between these dates. Slide the start or end to widen it.</Text>
+        <Text style={{ color: t.ink3, textAlign: "center", padding: 26 }}>{tr("No photos or videos were added between these dates. Slide the start or end to widen it.")}</Text>
       ) : (
         <>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18, marginBottom: 10 }}>
             <Text style={{ color: t.ink, fontWeight: "700" }}>{chosen.length} of {candidates.length} chosen</Text>
             <View style={{ flexDirection: "row", gap: 16 }}>
-              <Pressable onPress={() => setPicked(new Set(candidates.map((c) => c.id)))}><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>Select all</Text></Pressable>
-              <Pressable onPress={() => setPicked(new Set())}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>None</Text></Pressable>
+              <Pressable onPress={() => setPicked(new Set(candidates.map((c) => c.id)))}><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("Select all")}</Text></Pressable>
+              <Pressable onPress={() => setPicked(new Set())}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{tr("None")}</Text></Pressable>
             </View>
           </View>
           <Gallery candidates={candidates} picked={picked} onToggle={toggle} />
 
-          <Label>Name your video (optional)</Label>
+          <Label>{tr("Name your video (optional)")}</Label>
           <Input value={name} onChangeText={setName} placeholder={titles.title} maxLength={50} />
 
           {previewing && chosen.length ? <View style={{ marginTop: 16 }}><GrowPlayer slides={chosen} child={child} title={titles.title} subtitle={titles.subtitle} fileLabel={span.file} /></View> : null}
           <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
-            <Btn label={previewing ? "Hide preview" : "▶ Preview"} kind="line" onPress={() => setPreviewing((p) => !p)} disabled={!chosen.length} style={{ flex: 1 }} />
-            <Btn label="Create video" icon="film" onPress={() => { setPreviewing(false); setExporting(true); }} disabled={!chosen.length} style={{ flex: 1.2 }} />
+            <Btn label={previewing ? tr("Hide preview") : tr("▶ Preview")} kind="line" onPress={() => setPreviewing((p) => !p)} disabled={!chosen.length} style={{ flex: 1 }} />
+            <Btn label={tr("Create video")} icon="film" onPress={() => { setPreviewing(false); setExporting(true); }} disabled={!chosen.length} style={{ flex: 1.2 }} />
           </View>
-          <Text style={{ color: t.ink4, fontSize: 11.5, textAlign: "center", marginTop: 8 }}>You'll choose the cover picture when you create it. Videos you ticked appear in the movie as their cover frame.</Text>
+          <Text style={{ color: t.ink4, fontSize: 11.5, textAlign: "center", marginTop: 8 }}>{tr("You'll choose the cover picture when you create it. Videos you ticked appear in the movie as their cover frame.")}</Text>
         </>
       )}
       <VideoExportSheet visible={exporting} onClose={() => setExporting(false)} slides={chosen} child={child} initialSpeed={speed} title={titles.title} subtitle={titles.subtitle} fileLabel={span.file} />

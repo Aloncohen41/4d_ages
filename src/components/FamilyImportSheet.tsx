@@ -10,6 +10,7 @@ import { Avatar, Btn, MemberAvatar, Sheet } from "./ui";
 import { HScroll } from "./HScroll";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /**
  * Bring family over from another child. Everyone is marked to begin with; tap someone once to leave them out of THIS child's family
  * (you wouldn't import Maya into Maya's own family as her "Sister", or a relative who is only hers). Then approve.
@@ -35,15 +36,15 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
   const approve = () => {
     if (!src || !n) return;
     importFamily(child.id, marked);
-    toast(`${n} ${n === 1 ? "person" : "people"} added to ${child.name}'s family`);
+    toast(tr("{0} {1} added to {2}'s family", [n, n === 1 ? "person" : "people", child.name]));
     onClose();
   };
-  const approveButton = <Btn label={n ? `Import ${n} ${n === 1 ? "person" : "people"}` : "Mark who to import"} onPress={approve} disabled={!n} />;
+  const approveButton = <Btn label={n ? tr("Import {0} {1}", [n, n === 1 ? "person" : "people"]) : tr("Mark who to import")} onPress={approve} disabled={!n} />;
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Import family">
+    <Sheet visible={visible} onClose={onClose} title={tr("Import family")}>
       {!src ? (
-        <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>Everyone from the other families is already in {child.name}'s family.</Text>
+        <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("Everyone from the other families is already in {0}'s family.", [child.name])}</Text>
       ) : (
         <>
           {sources.length > 1 ? (
@@ -61,13 +62,13 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
           ) : null}
 
           <Text style={{ color: t.ink2, fontSize: 14, lineHeight: 20 }}>
-            Everyone from {src.child.name}'s family is marked. <Text style={{ fontWeight: "700" }}>Tap someone to leave them out</Text> of {child.name}'s family, then approve.
+            {tr("Everyone from")} {src.child.name}{tr("'s family is marked.")} <Text style={{ fontWeight: "700" }}>{tr("Tap someone to leave them out")}</Text> of {child.name}{tr("'s family, then approve.")}
           </Text>
 
           <View style={{ marginTop: 14 }}>{approveButton}</View>
           <View style={{ flexDirection: "row", gap: 18, marginTop: 12, marginBottom: 6 }}>
-            <Pressable onPress={() => setMarked(src.people.map((p) => p.id))} hitSlop={6}><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>Mark everyone</Text></Pressable>
-            <Pressable onPress={() => setMarked([])} hitSlop={6}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>Clear all</Text></Pressable>
+            <Pressable onPress={() => setMarked(src.people.map((p) => p.id))} hitSlop={6}><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("Mark everyone")}</Text></Pressable>
+            <Pressable onPress={() => setMarked([])} hitSlop={6}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{tr("Clear all")}</Text></Pressable>
           </View>
 
           {src.people.map((p) => {
@@ -86,7 +87,7 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }} numberOfLines={1}>{p.name || relationLabel(p)}</Text>
                   <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }} numberOfLines={1}>{relationLabel(p)}</Text>
-                  {dup ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 2 }}>Looks like someone already in {child.name}'s family</Text> : null}
+                  {dup ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 2 }}>{tr("Looks like someone already in {0}'s family", [child.name])}</Text> : null}
                 </View>
                 <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2.5, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accent : "transparent", alignItems: "center", justifyContent: "center" }}>
                   {on ? <Icon name="check" size={16} color={t.onAccent} /> : null}

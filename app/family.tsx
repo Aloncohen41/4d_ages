@@ -17,6 +17,7 @@ import { deleteFile } from "../src/lib/media";
 import { withAlpha } from "../src/lib/m3";
 import { TYPE } from "../src/theme";
 
+import { tr } from "../src/lib/i18n";
 /**
  * Everyone in the child's family as one compact list: search at the top, one "Add someone" button, rows you can reorder (drag the handle, or
  * use the arrows) and remove. Tapping a person opens their page, with everything they're in.
@@ -97,9 +98,9 @@ export default function FamilyPage() {
     const r = family.find((x) => x.id === id);
     if (!r) return;
     const n = itemsWithTags(memories, [personTag(r).id]).length;
-    Alert.alert(`Remove ${displayName(r)}?`, n ? `They'll be taken off the ${n} memor${n === 1 ? "y" : "ies"} they're tagged in. The memories themselves stay.` : "This can't be undone.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => removeRelative(id) },
+    Alert.alert(tr("Remove {0}?", [displayName(r)]), n ? tr("They'll be taken off the {0} memor{1} they're tagged in. The memories themselves stay.", [n, n === 1 ? "y" : "ies"]) : tr("This can't be undone."), [
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Remove"), style: "destructive", onPress: () => removeRelative(id) },
     ]);
   };
   const open = (id: string) => {
@@ -109,40 +110,40 @@ export default function FamilyPage() {
 
   return (
     <Page
-      title={`${child.name}'s family`}
+      title={tr("{0}'s family", [child.name])}
       right={family.length ? (
         <Pressable onPress={() => setEditing((e) => !e)} hitSlop={6} accessibilityRole="button" style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-          <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{editing ? "Done" : "Edit"}</Text>
+          <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{editing ? tr("Done") : tr("Edit")}</Text>
         </Pressable>
       ) : null}
     >
       {family.length > 1 ? (
         <View style={{ marginBottom: 12 }}>
-          <Input value={query} onChangeText={setQuery} placeholder="Search by name, nickname or relationship" accessibilityLabel="Search family" autoCorrect={false} style={{ paddingLeft: 44 }} />
+          <Input value={query} onChangeText={setQuery} placeholder={tr("Search by name, nickname or relationship")} accessibilityLabel={tr("Search family")} autoCorrect={false} style={{ paddingLeft: 44 }} />
           <View pointerEvents="none" style={{ position: "absolute", left: 14, top: 0, bottom: 0, justifyContent: "center" }}><Icon name="search" size={20} color={t.ink3} /></View>
         </View>
       ) : null}
 
       <View style={{ flexDirection: "row", gap: 10 }}>
-        <Btn label="Add someone" icon="plus" onPress={() => setSheet({})} style={{ flex: 1 }} />
-        <Btn label="Add a pet" icon="paw" kind="soft" onPress={() => setSheet({ pet: true })} style={{ flex: 1 }} />
+        <Btn label={tr("Add someone")} icon="plus" onPress={() => setSheet({})} style={{ flex: 1 }} />
+        <Btn label={tr("Add a pet")} icon="paw" kind="soft" onPress={() => setSheet({ pet: true })} style={{ flex: 1 }} />
       </View>
 
       {family.length ? (
         <Pressable onPress={() => router.push("/tree")} accessibilityRole="link" style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline }}>
           <Icon name="tree" size={20} color={t.ink2} />
           <View style={{ flex: 1 }}>
-            <Text style={[TYPE.labelLarge, { color: t.ink }]}>Family tree</Text>
-            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Drag people into place and connect them</Text>
+            <Text style={[TYPE.labelLarge, { color: t.ink }]}>{tr("Family tree")}</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Drag people into place and connect them")}</Text>
           </View>
           <Icon name="chevron-right" size={20} color={t.ink3} />
         </Pressable>
       ) : null}
 
       {sources.length ? (
-        <Pressable onPress={() => setImporting(true)} accessibilityLabel={`Import family from ${importFrom}`} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline }}>
+        <Pressable onPress={() => setImporting(true)} accessibilityLabel={tr("Import family from {0}", [importFrom])} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline }}>
           <Icon name="download" size={20} color={t.ink2} />
-          <Text style={[TYPE.labelLarge, { color: t.ink, flex: 1 }]}>Import family from {importFrom}</Text>
+          <Text style={[TYPE.labelLarge, { color: t.ink, flex: 1 }]}>{tr("Import family from {0}", [importFrom])}</Text>
           <Icon name="chevron-right" size={20} color={t.ink3} />
         </Pressable>
       ) : null}
@@ -150,13 +151,13 @@ export default function FamilyPage() {
       {family.length === 0 ? (
         <View style={{ alignItems: "center", padding: 28 }}>
           <Icon name="family" size={40} color={t.ink3} />
-          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 6 }}>No one in {child.name}'s family yet. Add someone to start.</Text>
+          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 6 }}>{tr("No one in {0}'s family yet. Add someone to start.", [child.name])}</Text>
         </View>
       ) : shown.length === 0 ? (
-        <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No one matches “{query.trim()}”.</Text>
+        <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No one matches “{0}”.", [query.trim()])}</Text>
       ) : (
         <View style={{ marginTop: 16, gap: 8 }}>
-          {!editing && family.length > 1 ? <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Press and hold someone to move or remove people.</Text> : null}
+          {!editing && family.length > 1 ? <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Press and hold someone to move or remove people.")}</Text> : null}
           {shown.map((r) => {
             const on = r.id === selected;
             const i = family.findIndex((x) => x.id === r.id);
@@ -191,7 +192,7 @@ export default function FamilyPage() {
                     return (
                       <Text style={[TYPE.bodySmall, { color: t.ink2 }]} numberOfLines={1}>
                         {relationLine(r)}{side ? ` · ${side}` : ""}
-                        {side === null ? <Text style={{ color: t.accentDeep, fontWeight: "700" }}> · Choose whose side</Text> : null}
+                        {side === null ? <Text style={{ color: t.accentDeep, fontWeight: "700" }}> {tr("· Choose whose side")}</Text> : null}
                       </Text>
                     );
                   })()}
@@ -200,14 +201,14 @@ export default function FamilyPage() {
                 {editing ? (
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     {canDrag ? (
-                      <View {...handle(r.id).panHandlers} accessibilityLabel={`Drag to move ${displayName(r)}`} hitSlop={8} style={{ padding: 6 }}>
+                      <View {...handle(r.id).panHandlers} accessibilityLabel={tr("Drag to move {0}", [displayName(r)])} hitSlop={8} style={{ padding: 6 }}>
                         <Icon name="drag" size={22} color={held ? t.accent : t.ink2} />
                       </View>
                     ) : null}
                     {!query.trim() ? (
                       <>
-                        <Pressable onPress={() => move(r.id, -1)} disabled={i === 0} accessibilityLabel={`Move ${displayName(r)} up`} hitSlop={4} style={{ padding: 6, opacity: i === 0 ? 0.3 : 1 }}><Icon name="arrow-up" size={20} color={t.ink2} /></Pressable>
-                        <Pressable onPress={() => move(r.id, 1)} disabled={i === family.length - 1} accessibilityLabel={`Move ${displayName(r)} down`} hitSlop={4} style={{ padding: 6, opacity: i === family.length - 1 ? 0.3 : 1 }}><Icon name="arrow-down" size={20} color={t.ink2} /></Pressable>
+                        <Pressable onPress={() => move(r.id, -1)} disabled={i === 0} accessibilityLabel={tr("Move {0} up", [displayName(r)])} hitSlop={4} style={{ padding: 6, opacity: i === 0 ? 0.3 : 1 }}><Icon name="arrow-up" size={20} color={t.ink2} /></Pressable>
+                        <Pressable onPress={() => move(r.id, 1)} disabled={i === family.length - 1} accessibilityLabel={tr("Move {0} down", [displayName(r)])} hitSlop={4} style={{ padding: 6, opacity: i === family.length - 1 ? 0.3 : 1 }}><Icon name="arrow-down" size={20} color={t.ink2} /></Pressable>
                       </>
                     ) : null}
                   </View>
@@ -217,7 +218,7 @@ export default function FamilyPage() {
               </Pressable>
               {/* the remove badge in the corner, like an app's on the home screen */}
               {editing ? (
-                <Pressable onPress={() => remove(r.id)} accessibilityRole="button" accessibilityLabel={`Remove ${displayName(r)}`} hitSlop={8}
+                <Pressable onPress={() => remove(r.id)} accessibilityRole="button" accessibilityLabel={tr("Remove {0}", [displayName(r)])} hitSlop={8}
                   style={{ position: "absolute", top: -6, left: -6, width: 26, height: 26, borderRadius: 13, backgroundColor: t.danger, borderWidth: 2, borderColor: t.bg, alignItems: "center", justifyContent: "center" }}>
                   <Icon name="minus" size={14} color="#fff" />
                 </Pressable>
@@ -227,7 +228,7 @@ export default function FamilyPage() {
               </View>
             );
           })}
-          {editing ? <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 4 }]}>Drag a handle (or use the arrows) to change the order, tap someone to edit them, or the red badge to remove them. Done when you're finished.</Text> : null}
+          {editing ? <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 4 }]}>{tr("Drag a handle (or use the arrows) to change the order, tap someone to edit them, or the red badge to remove them. Done when you're finished.")}</Text> : null}
         </View>
       )}
 

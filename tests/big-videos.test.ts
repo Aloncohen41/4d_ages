@@ -2,11 +2,12 @@
  * Videos too big for the account (over its 50 MB limit per file) are copied smaller on the phone (720p, H.264) and the copy uploaded, so
  * they reach the other parent, the website and books made there; the original on the phone stays full size.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 const kt = read("modules/video-export/android/src/main/java/expo/modules/videoexport/VideoShrinker.kt");
 const sync = read("src/lib/sync.ts");
 

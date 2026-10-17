@@ -13,6 +13,7 @@ import { BookViewInput } from "./BookPreview";
 import { BookExportSheet, ColourChoice, THEME_ICONS, themeOrder } from "./BookExportSheet";
 import { Btn, Seg, dialogName } from "./ui";
 
+import { tr } from "../lib/i18n";
 const fileAccess = {
   originWhitelist: ["*"] as string[],
   allowFileAccess: true,
@@ -105,7 +106,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
     const arrow = (dir: -1 | 1) => {
       const off = dir < 0 ? index <= 0 : index >= pages - 1;
       return (
-        <Pressable onPress={() => turn(index + dir)} disabled={off} accessibilityRole="button" accessibilityLabel={dir < 0 ? "Previous page" : "Next page"}
+        <Pressable onPress={() => turn(index + dir)} disabled={off} accessibilityRole="button" accessibilityLabel={dir < 0 ? tr("Previous page") : tr("Next page")}
           style={{ position: "absolute", top: "50%", [dir < 0 ? "left" : "right"]: 16, marginTop: -26, width: 52, height: 52, borderRadius: 26, backgroundColor: t.surfaceHigh, alignItems: "center", justifyContent: "center", opacity: off ? 0.35 : 1, boxShadow: "0 4px 16px rgba(0,0,0,.18)" } as object}>
           <Icon name={dir < 0 ? "chevron-left" : "chevron-right"} size={28} color={t.ink} />
         </Pressable>
@@ -115,7 +116,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
       <Modal visible animationType="fade" onRequestClose={onClose} {...dialogName("Customize the book")}>
         <View style={{ flex: 1, flexDirection: "row", backgroundColor: t.bg3 }}>
           <View style={{ flex: 1 }}>
-            <WebView ref={frame as never} accessibilityLabel="The book's pages" {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
+            <WebView ref={frame as never} accessibilityLabel={tr("The book's pages")} {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
             {loading ? <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={t.accent} /></View> : null}
             {arrow(-1)}
             {arrow(1)}
@@ -123,16 +124,16 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
           <View style={{ width: 380, backgroundColor: t.bg, borderLeftWidth: 1, borderLeftColor: t.line }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text role="heading" aria-level={1} style={[TYPE.headlineSmall, { color: t.ink }]}>Customize</Text>
-                <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Page {index + 1} of {pages} · the arrow keys turn the pages</Text>
+                <Text role="heading" aria-level={1} style={[TYPE.headlineSmall, { color: t.ink }]}>{tr("Customize")}</Text>
+                <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Page {0} of {1} · the arrow keys turn the pages", [index + 1, pages])}</Text>
               </View>
-              <Pressable onPress={onClose} accessibilityLabel="Close" accessibilityRole="button" style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: t.bg2 }}><Icon name="x" size={22} color={t.ink2} /></Pressable>
+              <Pressable onPress={onClose} accessibilityLabel={tr("Close")} accessibilityRole="button" style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: t.bg2 }}><Icon name="x" size={22} color={t.ink2} /></Pressable>
             </View>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-              <Seg options={[{ id: "theme" as const, label: "Theme" }, { id: "colour" as const, label: "Colour" }]} value={part} onChange={setPart} />
+              <Seg options={[{ id: "theme" as const, label: tr("Theme") }, { id: "colour" as const, label: tr("Colour") }]} value={part} onChange={setPart} />
               {part === "theme" ? (
                 <>
-                  <View accessibilityRole="radiogroup" accessibilityLabel="Theme" style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 16 }}>
+                  <View accessibilityRole="radiogroup" accessibilityLabel={tr("Theme")} style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 16 }}>
                     {order.map((id) => {
                       const look = STYLE_LOOK[id];
                       const [a, b] = THEME_ICONS[id];
@@ -155,7 +156,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
               )}
             </ScrollView>
             <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: t.line }}>
-              <Btn label="Download the book" icon="download" onPress={() => setExporting(true)} />
+              <Btn label={tr("Download the book")} icon="download" onPress={() => setExporting(true)} />
             </View>
           </View>
         </View>
@@ -168,24 +169,24 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
     <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent {...dialogName("Customize the book")}>
       <View style={{ flex: 1, backgroundColor: t.bg3, paddingTop: insets.top, paddingBottom: insets.bottom + 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 6 }}>
-          <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={6} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="x" size={24} color={t.ink2} /></Pressable>
+          <Pressable onPress={onClose} accessibilityLabel={tr("Close")} hitSlop={6} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="x" size={24} color={t.ink2} /></Pressable>
           <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={[TYPE.titleMedium, { color: t.ink }]}>Customize</Text>
-            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Page {index + 1} of {pages}</Text>
+            <Text style={[TYPE.titleMedium, { color: t.ink }]}>{tr("Customize")}</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Page {0} of {1}", [index + 1, pages])}</Text>
           </View>
-          <Pressable onPress={() => setExporting(true)} accessibilityRole="button" accessibilityLabel="Export the book" hitSlop={6}
+          <Pressable onPress={() => setExporting(true)} accessibilityRole="button" accessibilityLabel={tr("Export the book")} hitSlop={6}
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" }}>
             <Icon name="download" size={22} color={t.onAccent} />
           </Pressable>
         </View>
 
         <View style={{ flex: 1 }}>
-          <WebView accessibilityLabel="The book's pages" {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
+          <WebView accessibilityLabel={tr("The book's pages")} {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
           {loading ? <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={t.accent} /></View> : null}
         </View>
 
         <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-          <Seg options={[{ id: "theme" as const, label: "Theme" }, { id: "colour" as const, label: "Colour" }]} value={part} onChange={setPart} />
+          <Seg options={[{ id: "theme" as const, label: tr("Theme") }, { id: "colour" as const, label: tr("Colour") }]} value={part} onChange={setPart} />
         </View>
         {part === "theme" ? (
           <View style={{ paddingTop: 10 }}>

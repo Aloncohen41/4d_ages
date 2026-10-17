@@ -7,6 +7,7 @@ import { KINS, Kin, kinInfo, kinOf, sideChoices, sideIndex } from "../lib/kinshi
 import { displayName } from "../lib/tags";
 import { Label } from "./ui";
 
+import { tr } from "../lib/i18n";
 export interface KinValue { kin: Kin; side?: string; partnerId?: string; through?: string }
 
 /**
@@ -39,23 +40,23 @@ export function KinshipFields({ value, onChange, family, childName, selfId }: {
 
   return (
     <View>
-      <Label>{`Who are they to ${childName}?`}</Label>
+      <Label>{tr("Who are they to {0}?", [childName])}</Label>
       {row(KINS.filter((k) => k.id !== "pet").map((k) => chip(k.id, k.label, value.kin === k.id, () => onChange({ ...value, kin: k.id, through: undefined }))))}
 
       {info.sided ? (
         <>
-          <Label>Whose side of the family?</Label>
+          <Label>{tr("Whose side of the family?")}</Label>
           {row([
             ...sideChoices(others).map((c) => chip(c.id, c.label, value.side === c.id, () => onChange({ ...value, side: c.id, through: undefined }))),
             chip("unsure", "Not sure", !value.side, () => onChange({ ...value, side: undefined })),
           ])}
-          <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 6 }]}>So the family tree puts {value.kin === "grandparent" ? "each grandparent" : "them"} with the right parent.</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 6 }]}>{tr("So the family tree puts {0} with the right parent.", [value.kin === "grandparent" ? "each grandparent" : "them"])}</Text>
         </>
       ) : null}
 
       {partners.length ? (
         <>
-          <Label>Together with (optional)</Label>
+          <Label>{tr("Together with (optional)")}</Label>
           {row([
             ...partners.map((r) => chip(r.id, displayName(r), value.partnerId === r.id, () => onChange({ ...value, partnerId: value.partnerId === r.id ? undefined : r.id }))),
           ])}
@@ -64,7 +65,7 @@ export function KinshipFields({ value, onChange, family, childName, selfId }: {
 
       {links.length ? (
         <>
-          <Label>{value.kin === "cousin" ? "Whose child? (optional)" : "Whose parent? (optional)"}</Label>
+          <Label>{value.kin === "cousin" ? tr("Whose child? (optional)") : tr("Whose parent? (optional)")}</Label>
           {row(links.map((r) => chip(r.id, displayName(r), value.through === r.id, () => onChange({ ...value, through: value.through === r.id ? undefined : r.id }))))}
         </>
       ) : null}

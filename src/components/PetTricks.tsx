@@ -8,6 +8,7 @@ import { PET_FIRST_IDEAS, TRICK_IDEAS, speciesInfo } from "../lib/pets";
 import { TYPE } from "../theme";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /** Tricks are kept as firsts with this source, so they're in the story, the videos and the book like any first. */
 export const TRICK_SOURCE = "Trick";
 
@@ -44,13 +45,13 @@ export function PetTricks({ child, open: always = false }: { child: Child; open?
         <Text style={{ fontSize: 24 }}>🎓</Text>
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.titleSmall, { color: t.ink }]}>Tricks & firsts</Text>
-          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{done} of {tricks.length} tricks · {firsts.size} {firsts.size === 1 ? "first" : "firsts"}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("{0} of {1} tricks · {2} {3}", [done, tricks.length, firsts.size, firsts.size === 1 ? "first" : "firsts"])}</Text>
         </View>
         {!always ? <Icon name={open ? "chevron-up" : "chevron-down"} size={22} color={t.ink2} /> : null}
       </Pressable>
       {open ? (
         <>
-          <Text style={[TYPE.labelMedium, { color: t.ink3, marginTop: 12, marginBottom: 6 }]}>Tricks (tap when they've learned one)</Text>
+          <Text style={[TYPE.labelMedium, { color: t.ink3, marginTop: 12, marginBottom: 6 }]}>{tr("Tricks (tap when they've learned one)")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {tricks.map((x) => {
               const on = learned.has(x.toLowerCase());
@@ -64,7 +65,7 @@ export function PetTricks({ child, open: always = false }: { child: Child; open?
           </View>
           {ideas.length ? (
             <>
-              <Text style={[TYPE.labelMedium, { color: t.ink3, marginTop: 14, marginBottom: 6 }]}>Firsts to remember</Text>
+              <Text style={[TYPE.labelMedium, { color: t.ink3, marginTop: 14, marginBottom: 6 }]}>{tr("Firsts to remember")}</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                 {ideas.map((x) => (
                   <Pressable key={x} onPress={() => setEntrySheet({ kind: "first", title: x })} style={{ paddingHorizontal: 11, paddingVertical: 7, borderRadius: 99, backgroundColor: t.accentSoft }}>

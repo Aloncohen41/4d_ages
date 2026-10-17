@@ -9,13 +9,14 @@ import { todayISO } from "../lib/date";
 import { Btn, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /** The button beside the Milestones title that opens the Reinforce view. */
 export function ReinforceButton({ onPress }: { onPress: () => void }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} accessibilityLabel="Reinforce" style={{ flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 99, paddingLeft: 6, paddingRight: 13, paddingVertical: 6 }}>
+    <Pressable onPress={onPress} accessibilityLabel={tr("Reinforce")} style={{ flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 99, paddingLeft: 6, paddingRight: 13, paddingVertical: 6 }}>
       <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.accentDeep, alignItems: "center", justifyContent: "center" }}><Icon name="arrow-up-right" size={16} color={t.onAccent} /></View>
-      <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>Reinforce</Text>
+      <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>{tr("Reinforce")}</Text>
     </Pressable>
   );
 }
@@ -54,10 +55,10 @@ export function ReinforceSheet({ visible, onClose }: { visible: boolean; onClose
             {r.reached > 0 ? <Text style={{ color: t.ink3, fontSize: 12.5 }}>{reachedText(r.reached)}</Text> : null}
           </View>
         </View>
-        {r.status === "outstanding" && r.ahead.length ? <Text style={{ color: t.ink2, fontSize: 13, lineHeight: 19, marginTop: 8 }}>Already reached {r.ahead.slice(0, 2).map((d) => `“${d.label}”`).join(" and ")}{r.ahead.length > 2 ? ` and ${r.ahead.length - 2} more` : ""}, ahead of the usual timing.</Text> : null}
+        {r.status === "outstanding" && r.ahead.length ? <Text style={{ color: t.ink2, fontSize: 13, lineHeight: 19, marginTop: 8 }}>{tr("Already reached {0}{1}, ahead of the usual timing.", [r.ahead.slice(0, 2).map((d) => `“${d.label}”`).join(" and "), r.ahead.length > 2 ? ` and ${r.ahead.length - 2} more` : ""])}</Text> : null}
         {r.status === "reinforce" ? (
           <View style={{ marginTop: 10, backgroundColor: t.bg2, borderRadius: 14, padding: 12 }}>
-            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>Try this together <Text style={{ color: t.ink3, fontWeight: "600" }}>· {bandLabel(band)} ideas</Text></Text>
+            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>{tr("Try this together")} <Text style={{ color: t.ink3, fontWeight: "600" }}>· {bandLabel(band)} ideas</Text></Text>
             {activitiesFor(r.area, band).map((a) => (
               <View key={a} style={{ flexDirection: "row", gap: 8, marginTop: 7 }}>
                 <Text style={{ color: areaInk(meta, t), fontWeight: "700" }}>•</Text>
@@ -66,13 +67,13 @@ export function ReinforceSheet({ visible, onClose }: { visible: boolean; onClose
             ))}
           </View>
         ) : null}
-        {r.status === "unanswered" && r.toCheck.length ? <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>Worth a look: {r.toCheck.slice(0, 2).map((d) => d.label).join(", ")}</Text> : null}
+        {r.status === "unanswered" && r.toCheck.length ? <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{tr("Worth a look: {0}", [r.toCheck.slice(0, 2).map((d) => d.label).join(", ")])}</Text> : null}
       </View>
     );
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title={`${child.name}'s Development Journey`}>
+    <Sheet visible={visible} onClose={onClose} title={tr("{0}'s Development Journey", [child.name])}>
       <Text style={{ color: t.ink3, fontStyle: "italic", marginTop: -6, marginBottom: 12 }}>{ageLabel(months)}</Text>
 
       {/* the headline: wow, they're good at … */}
@@ -82,12 +83,12 @@ export function ReinforceSheet({ visible, onClose }: { visible: boolean; onClose
           {dev.highlight ? (
             <>
               <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15.5, lineHeight: 21 }}>{highlightText(child.name, dev.highlight)}</Text>
-              {dev.reinforce.length ? <Text style={{ color: t.ink2, fontSize: 13.5, lineHeight: 19, marginTop: 8 }}>Here's how to give {list(phrases)} a little boost — a few ideas to play with below.</Text> : <Text style={{ color: t.ink2, fontSize: 13.5, lineHeight: 19, marginTop: 8 }}>Everything you've ticked looks right where it should be. 🎉</Text>}
+              {dev.reinforce.length ? <Text style={{ color: t.ink2, fontSize: 13.5, lineHeight: 19, marginTop: 8 }}>{tr("Here's how to give {0} a little boost — a few ideas to play with below.", [list(phrases)])}</Text> : <Text style={{ color: t.ink2, fontSize: 13.5, lineHeight: 19, marginTop: 8 }}>{tr("Everything you've ticked looks right where it should be. 🎉")}</Text>}
             </>
           ) : dev.reinforce.length ? (
-            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15.5, lineHeight: 21 }}>Here's how to give {list(phrases)} a little boost — a few ideas to play with below.</Text>
+            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15.5, lineHeight: 21 }}>{tr("Here's how to give {0} a little boost — a few ideas to play with below.", [list(phrases)])}</Text>
           ) : (
-            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15.5, lineHeight: 21 }}>Tick a few milestones and I'll tell you what {child.name} is brilliant at.</Text>
+            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15.5, lineHeight: 21 }}>{tr("Tick a few milestones and I'll tell you what {0} is brilliant at.", [child.name])}</Text>
           )}
         </View>
       </View>
@@ -111,10 +112,9 @@ export function ReinforceSheet({ visible, onClose }: { visible: boolean; onClose
         );
       })}
 
-      <Btn label="Back to the checklist" kind="line" onPress={onClose} style={{ marginTop: 18 }} />
+      <Btn label={tr("Back to the checklist")} kind="line" onPress={onClose} style={{ marginTop: 18 }} />
       <Text style={{ color: t.ink4, fontSize: 11.5, lineHeight: 17, marginTop: 14, textAlign: "center" }}>
-        Every child develops at their own pace. Milestones are a roadmap, not rigid expectations. If you have questions or concerns, talk with your pediatrician.{"\n"}
-        Milestone ages follow ZERO TO THREE's “Developmental Milestones by Age” (birth to 36 months). Always supervise play.
+        {tr("Every child develops at their own pace. Milestones are a roadmap, not rigid expectations. If you have questions or concerns, talk with your pediatrician. Milestone ages follow ZERO TO THREE's “Developmental Milestones by Age” (birth to 36 months). Always supervise play.", [])}
       </Text>
     </Sheet>
   );

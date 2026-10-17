@@ -6,6 +6,7 @@ import { withAlpha } from "../lib/m3";
 import { TYPE } from "../theme";
 import { dialogName } from "./ui";
 
+import { tr } from "../lib/i18n";
 /*
  * On the website, Alert.alert did nothing at all (the website's library leaves it empty), so every "Delete this post?" and every
  * other question asked that way never appeared, and nothing it guarded could be done. Here it opens a dialog in the page instead,
@@ -15,7 +16,7 @@ interface Asked { title: string; message?: string; buttons: AlertButton[] }
 const useAsked = create<{ queue: Asked[] }>(() => ({ queue: [] }));
 
 Alert.alert = (title: string, message?: string, buttons?: AlertButton[]) => {
-  useAsked.setState((s) => ({ queue: [...s.queue, { title, message, buttons: buttons?.length ? buttons : [{ text: "OK" }] }] }));
+  useAsked.setState((s) => ({ queue: [...s.queue, { title, message, buttons: buttons?.length ? buttons : [{ text: tr("OK") }] }] }));
 };
 
 export function WebAlert() {

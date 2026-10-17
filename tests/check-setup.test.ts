@@ -2,13 +2,14 @@
  * "Is this project ready to build?" â€” the check that runs before `npm run android`, and the fixes behind the failures seen when building on Windows:
  * libraries missing because `npm run setup` was skipped, an invalid link scheme, picture files that didn't come across, and noisy warnings.
  */
+import { untr } from "./untr";
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 (async () => {
   const m = await import("../scripts/check-setup.mjs");

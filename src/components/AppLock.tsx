@@ -9,6 +9,7 @@ import { APP_NAME, WORDMARK_ASPECT } from "../brand";
 import { TYPE } from "../theme";
 import { Btn, dialogName } from "./ui";
 
+import { tr } from "../lib/i18n";
 /** After this long away from the app, it asks again. */
 export const RELOCK_AFTER_MS = 60 * 1000;
 
@@ -57,8 +58,8 @@ export function AppLock() {
     <Modal visible animationType="fade" statusBarTranslucent onRequestClose={() => undefined} {...dialogName(`${APP_NAME} is locked`)}>
       <View style={{ flex: 1, backgroundColor: t.bg, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 }}>
         <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: 240, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
-        <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center" }]}>{APP_NAME} is locked.</Text>
-        <Btn label="Unlock" icon="lock" onPress={tryUnlock} style={{ alignSelf: "stretch" }} />
+        <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center" }]}>{tr("{0} is locked.", [APP_NAME])}</Text>
+        <Btn label={tr("Unlock")} icon="lock" onPress={tryUnlock} style={{ alignSelf: "stretch" }} />
       </View>
     </Modal>
   );

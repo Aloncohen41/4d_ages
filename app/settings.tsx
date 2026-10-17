@@ -23,6 +23,7 @@ import { DriveBackupCard } from "../src/components/DriveBackupCard";
 import { Btn, Input, Label, Seg, Sheet } from "../src/components/ui";
 import { CHART_SOURCES } from "../src/lib/percentiles";
 
+import { tr } from "../src/lib/i18n";
 /** The three tips that used to sit on the Add page, in order. */
 export const PHOTO_STEPS = [
   "In the picker, search a name — if you've named them in Google Photos, their photos come up together.",
@@ -55,8 +56,8 @@ export default function Settings() {
   };
 
   return (
-    <Page title="Settings">
-      <Section title="How to add photos" first>
+    <Page title={tr("Settings")}>
+      <Section title={tr("How to add photos")} first>
         <View style={{ gap: 10 }}>
           {PHOTO_STEPS.map((text, i) => (
             <View key={text} style={{ flexDirection: "row", gap: 12, alignItems: "flex-start", backgroundColor: t.bg2, borderRadius: 16, borderWidth: 1, borderColor: t.line, padding: 14 }}>
@@ -69,63 +70,63 @@ export default function Settings() {
         </View>
       </Section>
 
-      <Section title="Backup">
+      <Section title={tr("Backup")}>
         <DriveBackupCard />
       </Section>
 
-      <Section title="Notifications">
+      <Section title={tr("Notifications")}>
         <RemindersCard />
       </Section>
 
-      <Section title="Appearance">
+      <Section title={tr("Appearance")}>
         <AppearanceChoice />
       </Section>
 
-      <Section title="Growth charts">
+      <Section title={tr("Growth charts")}>
         <GrowthChartChoice />
       </Section>
 
-      <Section title="Privacy">
+      <Section title={tr("Privacy")}>
         <AppLockChoice />
       </Section>
 
-      <Section title="Units">
+      <Section title={tr("Units")}>
         <UnitsChoice />
       </Section>
 
-      <Section title="About">
+      <Section title={tr("About")}>
         <AboutCard />
         <View style={{ marginTop: 12 }}>
-          <LinkRow icon="lock" label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
-          <LinkRow icon="info" label="Terms of use" onPress={() => Linking.openURL(TERMS_URL)} />
-          <LinkRow icon="smile" label="Accessibility" onPress={() => Linking.openURL(ACCESSIBILITY_URL)} />
-          <LinkRow icon="info" label="Licences (open-source software, maps and music)" onPress={() => Linking.openURL(LICENCES_URL)} />
-          {onWeb ? <LinkRow icon="lock" label="Cookie policy" onPress={() => Linking.openURL(COOKIES_URL)} /> : null}
-          {onWeb ? <LinkRow icon="settings" label="Cookie settings" onPress={openCookieSettings} /> : null}
-          <LinkRow icon="message-circle" label="Contact us (questions, feedback, privacy)" value={CONTACT_EMAIL} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)} />
+          <LinkRow icon="lock" label={tr("Privacy policy")} onPress={() => Linking.openURL(PRIVACY_URL)} />
+          <LinkRow icon="info" label={tr("Terms of use")} onPress={() => Linking.openURL(TERMS_URL)} />
+          <LinkRow icon="smile" label={tr("Accessibility")} onPress={() => Linking.openURL(ACCESSIBILITY_URL)} />
+          <LinkRow icon="info" label={tr("Licences (open-source software, maps and music)")} onPress={() => Linking.openURL(LICENCES_URL)} />
+          {onWeb ? <LinkRow icon="lock" label={tr("Cookie policy")} onPress={() => Linking.openURL(COOKIES_URL)} /> : null}
+          {onWeb ? <LinkRow icon="settings" label={tr("Cookie settings")} onPress={openCookieSettings} /> : null}
+          <LinkRow icon="message-circle" label={tr("Contact us (questions, feedback, privacy)")} value={CONTACT_EMAIL} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)} />
         </View>
       </Section>
 
-      <Section title="Account">
+      <Section title={tr("Account")}>
         {preview ? (
           <>
-            <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 12 }]}>You're exploring the sample family. Leave it to sign in and start your own book.</Text>
-            <Btn label="Leave the sample family" kind="soft" icon="logout" onPress={clearSample} />
+            <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 12 }]}>{tr("You're exploring the sample family. Leave it to sign in and start your own book.")}</Text>
+            <Btn label={tr("Leave the sample family")} kind="soft" icon="logout" onPress={clearSample} />
           </>
         ) : isConfigured && session ? (
           <>
-            <LinkRow icon="smile" label="Your name" value={accountName(session)} onPress={() => setSheet("name")} />
-            <LinkRow icon="mail" label="Email" value={`${session.user.email ?? ""}${providerOf(session) === "google" ? " (Google)" : ""}`} onPress={() => setSheet("email")} />
-            {providerOf(session) === "email" ? <LinkRow icon="lock" label="Change password" onPress={() => setSheet("password")} /> : null}
-            <LinkRow icon="user-plus" label="Who can see your memories" value="Parents, owners and family, by email: invite, remove or block" onPress={() => router.push("/access")} />
+            <LinkRow icon="smile" label={tr("Your name")} value={accountName(session)} onPress={() => setSheet("name")} />
+            <LinkRow icon="mail" label={tr("Email")} value={`${session.user.email ?? ""}${providerOf(session) === "google" ? " (Google)" : ""}`} onPress={() => setSheet("email")} />
+            {providerOf(session) === "email" ? <LinkRow icon="lock" label={tr("Change password")} onPress={() => setSheet("password")} /> : null}
+            <LinkRow icon="user-plus" label={tr("Who can see your memories")} value="Parents, owners and family, by email: invite, remove or block" onPress={() => router.push("/access")} />
             <DownloadMyData />
             <View style={{ height: 14 }} />
-            <Btn label={busy ? "Signing out…" : "Sign out"} kind="soft" icon="logout" disabled={busy} onPress={out} />
-            <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Your books stay in your account. Sign back in to see everything again.</Text>
-            <Btn label="Remove my data and delete my account" kind="danger" icon="delete-account" onPress={() => setDeleting(true)} style={{ marginTop: 22 }} />
+            <Btn label={busy ? tr("Signing out…") : tr("Sign out")} kind="soft" icon="logout" disabled={busy} onPress={out} />
+            <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("Your books stay in your account. Sign back in to see everything again.")}</Text>
+            <Btn label={tr("Remove my data and delete my account")} kind="danger" icon="delete-account" onPress={() => setDeleting(true)} style={{ marginTop: 22 }} />
           </>
         ) : (
-          <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>This build has no sign-in set up, so everything stays on this phone.</Text>
+          <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{tr("This build has no sign-in set up, so everything stays on this phone.")}</Text>
         )}
       </Section>
 
@@ -164,28 +165,27 @@ function DeleteAccountSheet({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Sheet visible onClose={busy ? () => undefined : onClose} title="Delete your account">
+    <Sheet visible onClose={busy ? () => undefined : onClose} title={tr("Delete your account")}>
       <View style={{ backgroundColor: t.dangerSoft, borderRadius: 16, padding: 14 }}>
-        <Text style={[TYPE.titleSmall, { color: t.danger }]}>This cannot be undone.</Text>
+        <Text style={[TYPE.titleSmall, { color: t.danger }]}>{tr("This cannot be undone.")}</Text>
         <Text style={[TYPE.bodyMedium, { color: t.ink, marginTop: 4 }]}>
-          Your account and your books are deleted: every photo, story, milestone and measurement. You will lose access to the book. A book you share
-          with another parent stays with them.
+          {tr("Your account and your books are deleted: every photo, story, milestone and measurement. You will lose access to the book. A book you share with another parent stays with them.")}
         </Text>
       </View>
       {google ? (
-        <Text style={[TYPE.bodyMedium, { color: t.ink2, marginTop: 16 }]}>To confirm it's you, Google will ask you to choose your account.</Text>
+        <Text style={[TYPE.bodyMedium, { color: t.ink2, marginTop: 16 }]}>{tr("To confirm it's you, Google will ask you to choose your account.")}</Text>
       ) : (
         <>
-          <Label>Your password</Label>
-          <Input value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" placeholder="Password" accessibilityLabel="Your password" />
+          <Label>{tr("Your password")}</Label>
+          <Input value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" placeholder={tr("Password")} accessibilityLabel={tr("Your password")} />
         </>
       )}
-      <Label>{`Type ${DELETE_WORD} to confirm`}</Label>
-      <Input value={word} onChangeText={setWord} autoCapitalize="characters" autoCorrect={false} placeholder={DELETE_WORD} accessibilityLabel={`Type ${DELETE_WORD} to confirm`} />
+      <Label>{tr("Type {0} to confirm", [DELETE_WORD])}</Label>
+      <Input value={word} onChangeText={setWord} autoCapitalize="characters" autoCorrect={false} placeholder={DELETE_WORD} accessibilityLabel={tr("Type {0} to confirm", [DELETE_WORD])} />
       {err ? <Text style={[TYPE.bodyMedium, { color: t.danger, marginTop: 12 }]}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
-        <Btn label="Cancel" kind="soft" onPress={onClose} disabled={busy} style={{ flex: 1 }} />
-        <Btn label={busy ? "Deleting…" : "Delete forever"} kind="danger" onPress={confirm} disabled={!ready || busy} style={{ flex: 1.4 }} />
+        <Btn label={tr("Cancel")} kind="soft" onPress={onClose} disabled={busy} style={{ flex: 1 }} />
+        <Btn label={busy ? tr("Deleting…") : tr("Delete forever")} kind="danger" onPress={confirm} disabled={!ready || busy} style={{ flex: 1.4 }} />
       </View>
     </Sheet>
   );
@@ -199,7 +199,7 @@ function GrowthChartChoice() {
   return (
     <View>
       <Seg options={CHART_SOURCES.map((c) => ({ id: c.id, label: c.label }))} value={chart} onChange={setChart} />
-      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{CHART_SOURCES.find((c) => c.id === chart)?.desc}. Percentiles are for information only: ask your health visitor or doctor about growth.</Text>
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("{0}. Percentiles are for information only: ask your health visitor or doctor about growth.", [CHART_SOURCES.find((c) => c.id === chart)?.desc])}</Text>
     </View>
   );
 }
@@ -211,8 +211,8 @@ function AppearanceChoice() {
   const setAppearance = useStore((s) => s.setAppearance);
   return (
     <View>
-      <Seg options={[{ id: "system" as const, label: "Same as phone" }, { id: "light" as const, label: "Light" }, { id: "dark" as const, label: "Dark" }]} value={appearance} onChange={setAppearance} />
-      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{appearance === "system" ? "Dark mode turns on and off with your phone's setting." : appearance === "dark" ? "Always dark, whatever the phone is set to." : "Always light, whatever the phone is set to."}</Text>
+      <Seg options={[{ id: "system" as const, label: tr("Same as phone") }, { id: "light" as const, label: tr("Light") }, { id: "dark" as const, label: tr("Dark") }]} value={appearance} onChange={setAppearance} />
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{appearance === "system" ? tr("Dark mode turns on and off with your phone's setting.") : appearance === "dark" ? tr("Always dark, whatever the phone is set to.") : tr("Always light, whatever the phone is set to.")}</Text>
     </View>
   );
 }
@@ -242,12 +242,12 @@ function UnitsChoice() {
   return (
     <View style={{ gap: 10 }}>
       <View>
-        <Text style={[TYPE.labelLarge, { color: t.ink2, marginBottom: 6 }]}>Height and head</Text>
-        <Seg options={[{ id: "cm" as HeightUnit, label: "Centimetres" }, { id: "in" as HeightUnit, label: "Inches" }]} value={heightUnit} onChange={setHeightUnit} />
+        <Text style={[TYPE.labelLarge, { color: t.ink2, marginBottom: 6 }]}>{tr("Height and head")}</Text>
+        <Seg options={[{ id: "cm" as HeightUnit, label: tr("Centimetres") }, { id: "in" as HeightUnit, label: tr("Inches") }]} value={heightUnit} onChange={setHeightUnit} />
       </View>
       <View>
-        <Text style={[TYPE.labelLarge, { color: t.ink2, marginBottom: 6 }]}>Weight</Text>
-        <Seg options={[{ id: "kg" as WeightUnit, label: "Kilograms" }, { id: "lb" as WeightUnit, label: "Pounds" }]} value={weightUnit} onChange={setWeightUnit} />
+        <Text style={[TYPE.labelLarge, { color: t.ink2, marginBottom: 6 }]}>{tr("Weight")}</Text>
+        <Seg options={[{ id: "kg" as WeightUnit, label: tr("Kilograms") }, { id: "lb" as WeightUnit, label: tr("Pounds") }]} value={weightUnit} onChange={setWeightUnit} />
       </View>
     </View>
   );
@@ -265,7 +265,7 @@ function AppLockChoice() {
       if (await unlock("Turn off the app lock")) setAppLock(false);
       return;
     }
-    if (!(await canLock())) return setNote("Set up a fingerprint, face or screen lock on this phone first (in the phone's Settings).");
+    if (!(await canLock())) return setNote(tr("Set up a fingerprint, face or screen lock on this phone first (in the phone's Settings)."));
     if (await unlock("Turn on the app lock")) setAppLock(true);
   };
   return (
@@ -273,8 +273,8 @@ function AppLockChoice() {
       <Pressable onPress={toggle} accessibilityRole="switch" aria-checked={on} style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 8 }}>
         <Icon name="lock" size={22} color={t.ink2} />
         <View style={{ flex: 1 }}>
-          <Text style={[TYPE.bodyLarge, { color: t.ink }]}>App lock</Text>
-          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Ask for your fingerprint, face or the phone's PIN to open the app, and again after a minute away.</Text>
+          <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{tr("App lock")}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Ask for your fingerprint, face or the phone's PIN to open the app, and again after a minute away.")}</Text>
         </View>
         <View style={{ width: 52, height: 32, borderRadius: 16, backgroundColor: on ? t.accent : t.bg3, borderWidth: on ? 0 : 2, borderColor: t.outline, justifyContent: "center", paddingHorizontal: 4 }}>
           <View style={{ width: on ? 24 : 16, height: on ? 24 : 16, borderRadius: 12, backgroundColor: on ? t.onAccent : t.outline, alignSelf: on ? "flex-end" : "flex-start", marginHorizontal: on ? 0 : 2 }} />
@@ -304,9 +304,9 @@ function DownloadMyData() {
       const { uri, fileName } = await exportMyData(setProgress);
       if (onWeb) downloadFile(uri, fileName);
       else if (fx && dest) await fx.copyInto(uri, dest);
-      setMsg(onWeb ? "✓ Downloaded." : "✓ Saved where you chose.");
+      setMsg(onWeb ? tr("✓ Downloaded.") : tr("✓ Saved where you chose."));
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Couldn't make the copy. Try again.");
+      setMsg(e instanceof Error ? e.message : tr("Couldn't make the copy. Try again."));
     } finally {
       setBusy(false);
       setProgress("");
@@ -314,7 +314,7 @@ function DownloadMyData() {
   };
   return (
     <View>
-      <LinkRow icon="download" label={busy ? progress || "Making your copy…" : "Download a copy of my data"} value="Everything in your books, with the photos and videos on this device" onPress={() => !busy && go()} />
+      <LinkRow icon="download" label={busy ? progress || "Making your copy…" : tr("Download a copy of my data")} value="Everything in your books, with the photos and videos on this device" onPress={() => !busy && go()} />
       {msg ? <Text style={[TYPE.bodySmall, { color: msg.startsWith("✓") ? t.accentDeep : t.danger, marginTop: 4 }]}>{msg}</Text> : null}
     </View>
   );

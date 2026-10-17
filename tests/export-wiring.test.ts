@@ -14,7 +14,8 @@ const { withFriendlyName } = require("../src/lib/exportFiles");
 const { slideshowPayload } = require("../src/lib/videoExport");
 const fsStub = require("./stubs/file-system.js");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(path.join(__dirname, "..", f), "utf8");
+const { untr } = require("./untr"); // the code as written in English
+const read = (f: string) => untr(readFileSync(path.join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---------- renaming an exported file (copying finishes a moment later, as on the phone: the original must not be removed before it does)
 const renaming = (async () => {

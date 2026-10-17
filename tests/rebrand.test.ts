@@ -1,9 +1,10 @@
 /* The rename to "4D Ages": nothing visible still says the old name, and the two identifiers that must NOT change are intact. */
+import { untr } from "./untr";
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 const app = JSON.parse(read("app.json")).expo;
 const pkg = JSON.parse(read("package.json"));
 

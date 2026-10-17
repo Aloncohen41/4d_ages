@@ -12,6 +12,7 @@ import { withAlpha } from "../src/lib/m3";
 import { Child, Relative } from "../src/lib/types";
 import { TYPE } from "../src/theme";
 
+import { tr } from "../src/lib/i18n";
 /*
  * The family tree, built by hand. Press and hold someone and drag them:
  *  - next to another person, to join them ("Ruth is Dana's… mother or father / partner / brother or sister / son or daughter"), which sets
@@ -130,11 +131,11 @@ export default function TreePage() {
   const carried = carry ? family.find((r) => r.id === carry.id) : undefined;
 
   const node = (r: Relative) => (
-    <View key={r.id} ref={(v) => { nodes.current.set(r.id, v); }} {...handler(r.id).panHandlers} accessible accessibilityRole="button" accessibilityLabel={`${displayName(r)}, ${relationLine(r)}. Press to connect or move`}
+    <View key={r.id} ref={(v) => { nodes.current.set(r.id, v); }} {...handler(r.id).panHandlers} accessible accessibilityRole="button" accessibilityLabel={tr("{0}, {1}. Press to connect or move", [displayName(r), relationLine(r)])}
       style={{ alignItems: "center", width: 84, opacity: carry?.id === r.id ? 0.3 : 1, cursor: "grab" } as object}>
       <MemberAvatar member={r} size={52} />
       <Text style={[TYPE.labelMedium, { color: t.ink, marginTop: 4, textAlign: "center" }]} numberOfLines={1}>{displayName(r)}</Text>
-      <Text style={[TYPE.labelSmall, { color: t.ink3, textAlign: "center" }]} numberOfLines={1}>{kinOf(r) === "pet" ? "Pet" : relationLine(r)}</Text>
+      <Text style={[TYPE.labelSmall, { color: t.ink3, textAlign: "center" }]} numberOfLines={1}>{kinOf(r) === "pet" ? tr("Pet") : relationLine(r)}</Text>
     </View>
   );
   // couples side by side with a ♥ between them; a long press on the ♥ separates them
@@ -146,7 +147,7 @@ export default function TreePage() {
         out.push(
           <View key={a.id} style={{ flexDirection: "row", alignItems: "flex-start" }}>
             {node(a)}
-            <Pressable onLongPress={() => apply(separate(a, b))} delayLongPress={450} accessibilityRole="button" accessibilityLabel={`${displayName(a)} and ${displayName(b)} are together. Press and hold to separate them`}
+            <Pressable onLongPress={() => apply(separate(a, b))} delayLongPress={450} accessibilityRole="button" accessibilityLabel={tr("{0} and {1} are together. Press and hold to separate them", [displayName(a), displayName(b)])}
               style={{ marginTop: 16, width: 26, height: 22, alignItems: "center", justifyContent: "center" }}>
               <View style={{ position: "absolute", left: -6, right: -6, top: 10, height: 2, backgroundColor: withAlpha(t.accent, 0.5) }} />
               <Text style={{ color: t.accent, fontSize: 14 }}>♥</Text>
@@ -169,7 +170,7 @@ export default function TreePage() {
   const rowView = (row: Exclude<Row, "other">) => {
     const r = L[row];
     const me = row === "same" ? (
-      <View key="me" ref={(v) => { nodes.current.set(ME, v); }} style={{ alignItems: "center", width: 84 }} accessible accessibilityLabel={`${child.name}, that's who the tree is for`}>
+      <View key="me" ref={(v) => { nodes.current.set(ME, v); }} style={{ alignItems: "center", width: 84 }} accessible accessibilityLabel={tr("{0}, that's who the tree is for", [child.name])}>
         <Avatar child={child as Child} size={60} ring />
         <Text style={[TYPE.labelMedium, { color: t.ink, marginTop: 4, fontWeight: "700" }]} numberOfLines={1}>{child.name}</Text>
       </View>
@@ -178,7 +179,7 @@ export default function TreePage() {
     // the two parents sit at the inner edge of their own sides: what joins them is shown in the middle, between them
     const ps = family.filter((x) => kinOf(x) === "parent");
     const bond = row === "parent" && sided && ps.length === 2 && isCouple(ps[0], ps[1], family) ? (
-      <Pressable key="bond" onLongPress={() => apply(separate(ps[0], ps[1]))} delayLongPress={450} accessibilityRole="button" accessibilityLabel={`${displayName(ps[0])} and ${displayName(ps[1])} are together. Press and hold to separate them`}
+      <Pressable key="bond" onLongPress={() => apply(separate(ps[0], ps[1]))} delayLongPress={450} accessibilityRole="button" accessibilityLabel={tr("{0} and {1} are together. Press and hold to separate them", [displayName(ps[0]), displayName(ps[1])])}
         style={{ alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
         <View style={{ width: 40, height: 2, backgroundColor: withAlpha(t.accent, 0.5) }} />
         <Text style={{ color: t.accent, fontSize: 16 }}>♥</Text>
@@ -202,10 +203,10 @@ export default function TreePage() {
   };
 
   return (
-    <Page title={`${child.name}'s family tree`}>
+    <Page title={tr("{0}'s family tree", [child.name])}>
       <View ref={root}>
         <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 14 }]}>
-          Press and hold someone, then drag them next to a person to connect them, or onto an empty spot in a row to move them there. Tap someone for the same choices. Press and hold the ♥ between two people to separate them.
+          {tr("Press and hold someone, then drag them next to a person to connect them, or onto an empty spot in a row to move them there. Tap someone for the same choices. Press and hold the ♥ between two people to separate them.")}
         </Text>
         {sided ? (
           <View style={{ flexDirection: "row", marginBottom: 8 }}>
@@ -217,11 +218,11 @@ export default function TreePage() {
         {(["great", "grand", "parent", "same"] as const).map(rowView)}
         {L.other.length ? (
           <View>
-            <Text role="heading" aria-level={2} style={[TYPE.titleSmall, { color: t.ink2, marginBottom: 6 }]}>Godparents, friends and others</Text>
+            <Text role="heading" aria-level={2} style={[TYPE.titleSmall, { color: t.ink2, marginBottom: 6 }]}>{tr("Godparents, friends and others")}</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>{group(L.other)}</View>
           </View>
         ) : null}
-        {family.length === 0 ? <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No one in {child.name}'s family yet. Add people in Family first.</Text> : null}
+        {family.length === 0 ? <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No one in {0}'s family yet. Add people in Family first.", [child.name])}</Text> : null}
 
         {carry && carried ? (
           <View pointerEvents="none" style={{ position: "absolute", left: carry.x - origin.current.x - 42, top: carry.y - origin.current.y - 40, width: 84, alignItems: "center", transform: [{ scale: 1.12 }], zIndex: 10 }}>
@@ -247,19 +248,19 @@ function ConnectSheet({ who, target: dropped, family, child, onDone }: { who: Re
   const people = family.filter((r) => r.id !== who.id && linkChoices(r, family).length);
   const sides = sideChoices(family);
   return (
-    <Sheet visible onClose={() => onDone()} title={target ? `${name} is ${tName}'s…` : name}>
+    <Sheet visible onClose={() => onDone()} title={target ? tr("{0} is {1}'s…", [name, tName]) : name}>
       {pet ? (
-        <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>Pets always sit at the end of {child.name}'s row.</Text>
+        <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>{tr("Pets always sit at the end of {0}'s row.", [child.name])}</Text>
       ) : target ? (
         <View style={{ gap: 8 }}>
           {choices.map((l: Link) => (
             <Btn key={l} label={LINK_WORDS[l]} kind="line" onPress={() => onDone(connect(who, target, l, family))} />
           ))}
-          {!dropped ? <Btn label="Back" kind="soft" onPress={() => setTarget(undefined)} /> : <Btn label="Cancel" kind="soft" onPress={() => onDone()} />}
+          {!dropped ? <Btn label={tr("Back")} kind="soft" onPress={() => setTarget(undefined)} /> : <Btn label={tr("Cancel")} kind="soft" onPress={() => onDone()} />}
         </View>
       ) : (
         <View>
-          <Text style={[TYPE.titleSmall, { color: t.ink, marginBottom: 6 }]}>Connect {name} to…</Text>
+          <Text style={[TYPE.titleSmall, { color: t.ink, marginBottom: 6 }]}>{tr("Connect {0} to…", [name])}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {linkChoices(ME, family).length ? (
               <Pressable onPress={() => setTarget(ME)} accessibilityRole="button" style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 4, paddingLeft: 4, paddingRight: 12, borderRadius: 20, borderWidth: 1, borderColor: t.outline }}>
@@ -272,7 +273,7 @@ function ConnectSheet({ who, target: dropped, family, child, onDone }: { who: Re
               </Pressable>
             ))}
           </View>
-          <Text style={[TYPE.titleSmall, { color: t.ink, marginTop: 18, marginBottom: 6 }]}>Or move {name} to a row</Text>
+          <Text style={[TYPE.titleSmall, { color: t.ink, marginTop: 18, marginBottom: 6 }]}>{tr("Or move {0} to a row", [name])}</Text>
           <View style={{ gap: 8 }}>
             {PLACES.map(([r, side, label]) => {
               const sideName = side == null ? "" : ` · ${sides[side]?.label ?? (side === 0 ? "first side" : "second side")}`;

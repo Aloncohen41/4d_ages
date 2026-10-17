@@ -11,6 +11,7 @@ import { Btn, DateField, DeleteButton, Input, Label, Sheet, TimeField } from "./
 import { MediaEditor } from "./MediaEditor";
 import { TagPicker } from "./TagPicker";
 
+import { tr } from "../lib/i18n";
 /** Edit a plain photo: date, time, note, location and tags. (Stories, milestones etc. use the "+" form.) */
 export function EditPhotoSheet() {
   const id = useStore((s) => s.photoEdit);
@@ -49,34 +50,34 @@ function PhotoForm({ photoId, onClose }: { photoId: string; onClose: () => void 
     onClose();
   };
   const remove = () =>
-    Alert.alert("Delete this photo?", "This can't be undone.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => { removeMemory(photo.id); onClose(); } },
+    Alert.alert(tr("Delete this photo?"), tr("This can't be undone."), [
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Delete"), style: "destructive", onPress: () => { removeMemory(photo.id); onClose(); } },
     ]);
 
   return (
-    <Sheet visible onClose={cancel} title="Edit this post">
+    <Sheet visible onClose={cancel} title={tr("Edit this post")}>
       <MediaEditor media={media} onChange={setMedia} protectedFiles={original} />
-      <Text style={{ color: t.ink3, fontSize: 12, lineHeight: 17 }}>Photo dates are often wrong. Fix it here and the timeline re-orders itself.</Text>
+      <Text style={{ color: t.ink3, fontSize: 12, lineHeight: 17 }}>{tr("Photo dates are often wrong. Fix it here and the timeline re-orders itself.")}</Text>
 
-      <Label>Date taken</Label>
+      <Label>{tr("Date taken")}</Label>
       <DateField value={date} onChange={setDate} min={earliestDate(child.birth)} />
-      <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{date < child.birth ? ageShort(child.birth, date) : `${child.name} was ${ageShort(child.birth, date).replace(" old", "")}`} on {formatDate(date)}</Text>
+      <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{date < child.birth ? ageShort(child.birth, date) : tr("{0} was {1}", [child.name, ageShort(child.birth, date).replace(" old", "")])} on {formatDate(date)}</Text>
       <TimeField value={time} onChange={setTime} />
-      <Label>Caption</Label>
-      <Input value={caption} onChangeText={setCaption} multiline accessibilityLabel="Caption" />
-      <Label>Location</Label>
-      <Input value={location} onChangeText={setLocation} placeholder="Where was this? (optional)" maxLength={80} />
-      <Label>Tags</Label>
+      <Label>{tr("Caption")}</Label>
+      <Input value={caption} onChangeText={setCaption} multiline accessibilityLabel={tr("Caption")} />
+      <Label>{tr("Location")}</Label>
+      <Input value={location} onChangeText={setLocation} placeholder={tr("Where was this? (optional)")} maxLength={80} />
+      <Label>{tr("Tags")}</Label>
       <TagPicker value={tags} onChange={setTags} location={location} />
 
       {canAvatar ? (
-        <Btn kind="soft" disabled={isAvatar} icon={isAvatar ? "check" : undefined} label={isAvatar ? "This is the profile picture" : `Use as ${child.name}'s profile picture`} onPress={() => { updateChild(child.id, { avatarPhotoId: photo.id, avatarCrop: undefined }); Alert.alert("Profile picture set", "Tap the picture at the top of the screen to move and zoom it."); }} style={{ marginTop: 16 }} />
+        <Btn kind="soft" disabled={isAvatar} icon={isAvatar ? "check" : undefined} label={isAvatar ? tr("This is the profile picture") : tr("Use as {0}'s profile picture", [child.name])} onPress={() => { updateChild(child.id, { avatarPhotoId: photo.id, avatarCrop: undefined }); Alert.alert(tr("Profile picture set"), tr("Tap the picture at the top of the screen to move and zoom it.")); }} style={{ marginTop: 16 }} />
       ) : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
         <DeleteButton onPress={remove} />
-        <Btn label="Cancel" kind="soft" onPress={cancel} style={{ flex: 1 }} />
-        <Btn label="Save" onPress={save} style={{ flex: 1 }} />
+        <Btn label={tr("Cancel")} kind="soft" onPress={cancel} style={{ flex: 1 }} />
+        <Btn label={tr("Save")} onPress={save} style={{ flex: 1 }} />
       </View>
     </Sheet>
   );

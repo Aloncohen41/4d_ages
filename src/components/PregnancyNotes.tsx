@@ -16,6 +16,7 @@ import { Icon } from "./Icon";
 import { localEmergency } from "../lib/region";
 import { callLine } from "../lib/emergency";
 
+import { tr } from "../lib/i18n";
 export type NoteKind = "symptom" | "craving";
 
 /** A symptom's days: "5 Mar 2026 – 2 Apr 2026", "Since 5 Mar 2026" while it's still going, or one day. */
@@ -51,12 +52,12 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
   return (
     <View>
       <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>
-        {symptom ? (past ? "The hard parts too, and how long they lasted." : "The hard parts too, and how long they lasted. Tap one for a few tips that can help.") : "The midnight snacks and the smells you couldn't stand, to laugh about later."}
+        {symptom ? (past ? tr("The hard parts too, and how long they lasted.") : tr("The hard parts too, and how long they lasted. Tap one for a few tips that can help.")) : tr("The midnight snacks and the smells you couldn't stand, to laugh about later.")}
       </Text>
       {!viewOnly ? (
         <>
-          <Btn label={symptom ? "Add a symptom" : "Add a craving"} icon="plus" onPress={() => setOpen({ title: "" })} />
-          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 14, marginBottom: 6 }}>{symptom ? "Common symptoms" : "Ideas"}</Text>
+          <Btn label={symptom ? tr("Add a symptom") : tr("Add a craving")} icon="plus" onPress={() => setOpen({ title: "" })} />
+          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 14, marginBottom: 6 }}>{symptom ? tr("Common symptoms") : tr("Ideas")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {symptom ? SYMPTOMS.map((s) => chip(s.label, s.emoji, () => setOpen({ title: s.label }))) : CRAVING_IDEAS.map((c) => chip(c, undefined, () => setOpen({ title: c.endsWith("…") ? c.slice(0, -1) : c })))}
             {chip("Something else", undefined, () => setOpen({ title: "" }), true)}
@@ -65,7 +66,7 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
       ) : null}
       {!symptom && !past ? (
         <Pressable onPress={() => Linking.openURL(FOODS_TO_AVOID_URL)} style={{ marginTop: 12 }}>
-          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{CRAVING_NOTE} <Text style={{ color: t.accentDeep, fontWeight: "700" }}>Foods to avoid (NHS)</Text></Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{CRAVING_NOTE} <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{tr("Foods to avoid (NHS)")}</Text></Text>
         </Pressable>
       ) : null}
 
@@ -79,7 +80,7 @@ export function PregnancyNotes({ child, kind }: { child: Child; kind: NoteKind }
                 <Text style={{ fontSize: 24 }}>{guide?.emoji ?? m.emoji}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[TYPE.titleSmall, { color: t.ink }]}>{m.title}</Text>
-                  <Text style={[TYPE.labelMedium, { color: t.accentDeep, marginTop: 2 }]}>{noteDays(m, symptom && !m.endDate)} · week {weekOn(child.birth, m.date)}</Text>
+                  <Text style={[TYPE.labelMedium, { color: t.accentDeep, marginTop: 2 }]}>{tr("{0} · week {1}", [noteDays(m, symptom && !m.endDate), weekOn(child.birth, m.date)])}</Text>
                   {m.description ? <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 4 }]} numberOfLines={3}>{m.description}</Text> : null}
                 </View>
               </Pressable>
@@ -104,23 +105,23 @@ function Tips({ guide }: { guide: SymptomGuide }) {
   ));
   return (
     <View style={{ backgroundColor: t.bg2, borderRadius: 16, padding: 14, marginTop: 14 }}>
-      <Text style={[TYPE.titleSmall, { color: t.ink }]}>What can help</Text>
+      <Text style={[TYPE.titleSmall, { color: t.ink }]}>{tr("What can help")}</Text>
       {list(guide.tips, t.accentDeep)}
       {guide.callIf?.length ? (
         <>
-          <Text style={[TYPE.titleSmall, { color: t.ink, marginTop: 12 }]}>Give your midwife or GP a ring if</Text>
+          <Text style={[TYPE.titleSmall, { color: t.ink, marginTop: 12 }]}>{tr("Give your midwife or GP a ring if")}</Text>
           {list(guide.callIf, t.accentDeep)}
         </>
       ) : null}
       {guide.urgentIf?.length ? (
         <View style={{ borderLeftWidth: 3, borderLeftColor: t.danger, paddingLeft: 10, marginTop: 12 }}>
-          <Text style={[TYPE.titleSmall, { color: t.danger }]}>Get help straight away if you have</Text>
+          <Text style={[TYPE.titleSmall, { color: t.danger }]}>{tr("Get help straight away if you have")}</Text>
           {list(guide.urgentIf, t.danger)}
-          <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 4 }]}>Call your maternity unit, midwife or doctor. In an emergency, {callLine(emergency)}.</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink2, marginTop: 4 }]}>{tr("Call your maternity unit, midwife or doctor. In an emergency, {0}.", [callLine(emergency)])}</Text>
         </View>
       ) : null}
       <Pressable onPress={() => Linking.openURL(guide.source)} hitSlop={6} style={{ marginTop: 12 }}>
-        <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Read more on the NHS website</Text>
+        <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Read more on the NHS website")}</Text>
       </Pressable>
       <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10, fontSize: 11.5, lineHeight: 16 }]}>{symptomDisclaimer(emergency)}</Text>
     </View>
@@ -152,39 +153,39 @@ function NoteSheet({ child, kind, start, edit, onClose }: { child: Child; kind: 
     });
     onClose();
   };
-  const remove = () => edit && Alert.alert("Delete this note?", edit.title ?? "", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => { removeMemory(edit.id); onClose(); } }]);
+  const remove = () => edit && Alert.alert(tr("Delete this note?"), edit.title ?? "", [{ text: tr("Cancel"), style: "cancel" }, { text: tr("Delete"), style: "destructive", onPress: () => { removeMemory(edit.id); onClose(); } }]);
 
   return (
-    <Sheet visible onClose={onClose} title={symptom ? (edit ? "Symptom" : "Add a symptom") : edit ? "Craving" : "Add a craving"}>
-      <Input value={title} onChangeText={setTitle} placeholder={symptom ? "What was it? Example: Heartburn" : "Example: Pickles at midnight"} />
+    <Sheet visible onClose={onClose} title={symptom ? (edit ? tr("Symptom") : tr("Add a symptom")) : edit ? tr("Craving") : tr("Add a craving")}>
+      <Input value={title} onChangeText={setTitle} placeholder={symptom ? tr("What was it? Example: Heartburn") : tr("Example: Pickles at midnight")} />
       {symptom ? (
         <>
-          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>Started</Text>
+          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("Started")}</Text>
           <DateField value={from} onChange={setFrom} max={today} />
           <View style={{ marginTop: 12 }}>
-            <Seg options={[{ id: "on" as const, label: "Still going" }, { id: "ended" as const, label: "It stopped" }]} value={ongoing} onChange={setOngoing} />
+            <Seg options={[{ id: "on" as const, label: tr("Still going") }, { id: "ended" as const, label: tr("It stopped") }]} value={ongoing} onChange={setOngoing} />
           </View>
           {ongoing === "ended" ? (
             <>
-              <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>Stopped</Text>
+              <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>{tr("Stopped")}</Text>
               <DateField value={to < from ? from : to} onChange={setTo} min={from} max={today} />
             </>
           ) : null}
-          <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>From week {weekOn(child.birth, from)}{ongoing === "ended" ? ` to week ${weekOn(child.birth, to < from ? from : to)}` : ""}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("From week {0}{1}", [weekOn(child.birth, from), ongoing === "ended" ? ` to week ${weekOn(child.birth, to < from ? from : to)}` : ""])}</Text>
         </>
       ) : (
         <>
-          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>When</Text>
+          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("When")}</Text>
           <DateField value={from} onChange={setFrom} max={today} />
         </>
       )}
-      <Input value={text} onChangeText={setText} placeholder="A few words, to remember it by (optional)" multiline style={{ marginTop: 12, minHeight: 70, textAlignVertical: "top" }} />
+      <Input value={text} onChangeText={setText} placeholder={tr("A few words, to remember it by (optional)")} multiline style={{ marginTop: 12, minHeight: 70, textAlignVertical: "top" }} />
 
       {guide ? (
         <>
           <Pressable onPress={() => setShowTips((v) => !v)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 14 }}>
             <Icon name="health" size={18} color={t.accentDeep} />
-            <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{showTips ? "Hide the tips" : "Tips that can help"}</Text>
+            <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{showTips ? tr("Hide the tips") : tr("Tips that can help")}</Text>
           </Pressable>
           {showTips ? <Tips guide={guide} /> : null}
         </>
@@ -195,9 +196,9 @@ function NoteSheet({ child, kind, start, edit, onClose }: { child: Child; kind: 
         </View>
       ) : null}
 
-      <Btn label="Save" disabled={!title.trim()} onPress={save} style={{ marginTop: 16 }} />
-      {edit ? <Btn label="Delete" kind="line" onPress={remove} style={{ marginTop: 10 }} /> : null}
-      {guide || custom ? <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 10, textAlign: "center" }]}>The tips stay here: they aren't saved with your note or put in the book.</Text> : null}
+      <Btn label={tr("Save")} disabled={!title.trim()} onPress={save} style={{ marginTop: 16 }} />
+      {edit ? <Btn label={tr("Delete")} kind="line" onPress={remove} style={{ marginTop: 10 }} /> : null}
+      {guide || custom ? <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 10, textAlign: "center" }]}>{tr("The tips stay here: they aren't saved with your note or put in the book.")}</Text> : null}
     </Sheet>
   );
 }

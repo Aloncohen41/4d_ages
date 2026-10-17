@@ -2,6 +2,7 @@
  * Sharing into the app (whose it is, what it is, sound files too), confetti (a real burst, birthdays and big moments), and family relations
  * (who someone is, whose side, couples) with the family tree that follows from them.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { addableProfiles, contents, shareOptions, startDate } from "../src/lib/shareTargets";
@@ -14,7 +15,7 @@ import { buildBookHtml } from "../src/lib/bookHtml";
 import { Child, Relative } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 /* ---------------- sharing in */
 const kid = { id: "k", name: "Maya", birth: "2024-01-01", theme: "green", emoji: "👶" } as Child;
@@ -97,7 +98,7 @@ const tall = planBook(kid, [], BOOK_SIZES[2], { family: [...fam, R("gg", "Esther
 ok("a tall tree (great-grandparents too) leaves godparents and friends for the next page, so it fits", tall[0].kind === "family" && !tall[0].people.some((r) => r.name === "Ruth") && tall.some((p) => p.kind === "family" && p.people.some((r) => r.name === "Ruth")));
 ok("how they're related goes to the cloud and comes back", JSON.stringify(kinColumns({ kin: "cousin", side: "mum", partnerId: undefined, through: "a1" })) === JSON.stringify({ kin: "cousin", side: "mum", partner_id: null, through_id: "a1" }) && kinFromRow({ kin: "grandparent", side: "father" }).side === "father"
   && /add column if not exists through_id text/.test(read("supabase/schema.sql")) && /\.\.\.kinColumns\(r\)/.test(read("src/lib/sync.ts")));
-ok("the add-a-family-member form asks who they are, whose side, and who they're with", /Who are they to \$\{childName\}\?/.test(read("src/components/KinshipFields.tsx")) && /Whose side of the family\?/.test(read("src/components/KinshipFields.tsx")) && /Together with \(optional\)/.test(read("src/components/KinshipFields.tsx")) && /<KinshipFields /.test(read("src/components/MemberSheet.tsx")));
+ok("the add-a-family-member form asks who they are, whose side, and who they're with", /Who are they to \$?\{childName\}\?/.test(read("src/components/KinshipFields.tsx")) && /Whose side of the family\?/.test(read("src/components/KinshipFields.tsx")) && /Together with \(optional\)/.test(read("src/components/KinshipFields.tsx")) && /<KinshipFields /.test(read("src/components/MemberSheet.tsx")));
 
 console.log(fails ? `${fails} FAILED` : "all share, confetti and family tests passed");
 if (fails) process.exit(1);

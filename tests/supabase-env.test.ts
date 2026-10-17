@@ -1,10 +1,11 @@
 ﻿/* Only the two PUBLIC Supabase values can reach the app: a secret key and the database connection string never can. */
+import { untr } from "./untr";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 const { classifyKey, projectUrl, pickSupabase, build } = require("../plugins/supabaseEnv");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 // fake keys, made the way Supabase makes them
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");

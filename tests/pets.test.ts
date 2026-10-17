@@ -3,6 +3,7 @@
  * reminders as notifications or calendar events, the places they've been and the journey video, their own book themes and pages, up to six
  * owners, and the height and weight comparisons (for children too).
  */
+import { untr } from "./untr";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PET_FIRST_IDEAS, TRICK_IDEAS, lifeStage, ownYears, petAge, petRelation, speciesInfo } from "../src/lib/pets";
@@ -19,7 +20,7 @@ import { Child, Memory, Relative } from "../src/lib/types";
 import { ClassicEntry } from "../src/lib/classics";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---- age in their own years
 ok("dogs: 15 at one, 24 at two, then 4, 5 or 6 a year by size (the AVMA guideline)", ownYears("dog", 12) === 15 && ownYears("dog", 24) === 24 && ownYears("dog", 36, "small") === 28 && ownYears("dog", 36, "medium") === 29 && ownYears("dog", 36, "large") === 30);

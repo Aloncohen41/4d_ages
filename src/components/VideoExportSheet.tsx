@@ -28,6 +28,7 @@ import { formatDate } from "../lib/date";
 import { Btn, Input, Label, PhotoView, Seg, Sheet } from "./ui";
 import { HScroll } from "./HScroll";
 
+import { tr } from "../lib/i18n";
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
 function Preview({ uri }: { uri: string }) {
@@ -43,7 +44,7 @@ function Preview({ uri }: { uri: string }) {
   return (
     <View style={{ marginTop: 14 }}>
       <VideoView player={player} style={{ width: "100%", aspectRatio: 1, borderRadius: 16, overflow: "hidden", backgroundColor: "#000" }} nativeControls contentFit="contain" />
-      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 10, marginBottom: 6 }}>Preview speed</Text>
+      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 10, marginBottom: 6 }}>{tr("Preview speed")}</Text>
       <Seg options={[0.5, 1, 1.5, 2].map((v) => ({ id: v, label: `${v}×` }))} value={rate} onChange={setRate} />
     </View>
   );
@@ -132,7 +133,7 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
     } catch (e) {
       setPhase("idle");
       const m = e instanceof Error ? e.message : String(e);
-      setMsg(m.includes("cancelled") ? "Cancelled." : m);
+      setMsg(m.includes("cancelled") ? tr("Cancelled.") : m);
     }
   };
 
@@ -140,19 +141,19 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   const webName = uri && /.webm$/i.test(uri) ? fileName.replace(/.mp4$/, ".webm") : fileName;
   const share = async () => {
     if (!uri) return;
-    if (onWeb) { if ((await shareFile(uri, webName, /.webm$/i.test(webName) ? "video/webm" : "video/mp4")) === "downloaded") setMsg("✓ Downloaded."); return; }
+    if (onWeb) { if ((await shareFile(uri, webName, /.webm$/i.test(webName) ? "video/webm" : "video/mp4")) === "downloaded") setMsg(tr("✓ Downloaded.")); return; }
     const fx = fileExport(); // the share menu without waiting for an answer (see modules/file-export)
     if (fx) return fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, ""));
     if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "video/mp4", dialogTitle: fileName.replace(/\.mp4$/, "") });
   };
   const save = async () => {
     if (!uri) return;
-    if (onWeb) { downloadFile(uri, webName); setMsg("✓ Downloaded."); return; }
+    if (onWeb) { downloadFile(uri, webName); setMsg(tr("✓ Downloaded.")); return; }
     try {
       await saveVideoToGallery(uri, fileName);
-      setMsg(`✓ Saved to Movies / ${APP_NAME} on your phone.`);
+      setMsg(tr("✓ Saved to Movies / {0} on your phone.", [APP_NAME]));
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Couldn't save the video.");
+      setMsg(e instanceof Error ? e.message : tr("Couldn't save the video."));
     }
   };
 
@@ -162,10 +163,10 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
   };
 
   return (
-    <Sheet visible={visible} onClose={close} title="Save as a video">
+    <Sheet visible={visible} onClose={close} title={tr("Save as a video")}>
       {!isVideoExportAvailable() ? (
         <Text style={{ color: t.danger, fontWeight: "700", lineHeight: 20 }}>
-          Video export needs a one-time rebuild of the app. On your computer run: npm run android — then try again.
+          {tr("Video export needs a one-time rebuild of the app. On your computer run: npm run android — then try again.")}
         </Text>
       ) : null}
 
@@ -177,31 +178,31 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
         hasClips={clips.length > 0} clipSound={clipSound} onClipSound={setClipSound}
         disabled={phase === "working"}
       />
-      {!usable.length ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 8 }}>No pictures match "{who === "alone" ? `Only ${child.name}` : "With family"}". Choose Everyone, or tag people in your posts.</Text> : null}
+      {!usable.length ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 8 }}>{tr("No pictures match \"{0}\". Choose Everyone, or tag people in your posts.", [who === "alone" ? `Only ${child.name}` : "With family"])}</Text> : null}
 
-      <Label>Speed — how long each photo stays on screen</Label>
+      <Label>{tr("Speed — how long each photo stays on screen")}</Label>
       <Seg options={GROW_SPEEDS.map((v) => ({ id: v, label: `${v}×` }))} value={speed} onChange={(v) => phase !== "working" && setSpeed(v)} />
       <Text style={{ color: t.ink3, fontSize: 12, marginTop: 6 }}>
-        {secondsPerPhoto(speed).toFixed(1)}s per photo · {photoCount} photo{photoCount === 1 ? "" : "s"}{clips.length ? ` · ${clips.length} video${clips.length === 1 ? "" : "s"}` : ""} · video is about {mmss(secs)} long
+        {tr("{0}s per photo · {1} photo{2}{3} · video is about {4} long", [secondsPerPhoto(speed).toFixed(1), photoCount, photoCount === 1 ? "" : "s", clips.length ? ` · ${clips.length} video${clips.length === 1 ? "" : "s"}` : "", mmss(secs)])}
       </Text>
       {clips.length ? (
-        <Text style={{ color: t.ink3, fontSize: 12, marginTop: 4 }}>Videos play in it as they are, without their sound{longClips.length ? ", up to 30 seconds each" : ""}.</Text>
+        <Text style={{ color: t.ink3, fontSize: 12, marginTop: 4 }}>{tr("Videos play in it as they are, without their sound{0}.", [longClips.length ? ", up to 30 seconds each" : ""])}</Text>
       ) : null}
       {longClips.length ? (
         <>
-          <Label>Long videos: choose the 30 seconds to show</Label>
+          <Label>{tr("Long videos: choose the 30 seconds to show")}</Label>
           {longClips.map((s) => {
             const open = trimming === s.id;
             const start = clipStarts[s.id] ?? 0;
             return (
               <View key={s.id} style={{ marginBottom: 10, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: open ? t.accent : t.line }}>
-                <Pressable onPress={() => phase !== "working" && setTrimming(open ? null : s.id)} accessibilityRole="button" accessibilityLabel="Choose the 30 seconds" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Pressable onPress={() => phase !== "working" && setTrimming(open ? null : s.id)} accessibilityRole="button" accessibilityLabel={tr("Choose the 30 seconds")} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <View style={{ width: 52, height: 52, borderRadius: 10, overflow: "hidden", backgroundColor: t.bg3 }}>
                     <PhotoView photo={slideView(s)} fit="cover" style={{ width: "100%", height: "100%" }} emojiSize={18} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>{s.caption || "A video"}</Text>
-                    <Text style={{ color: t.ink3, fontSize: 12 }}>Shows {mmss(start / 1000)} – {mmss(Math.min(lengths[s.id], start + CLIP_MAX_MS) / 1000)} of {mmss(lengths[s.id] / 1000)}</Text>
+                    <Text style={{ color: t.ink3, fontSize: 12 }}>{tr("Shows {0} – {1} of {2}", [mmss(start / 1000), mmss(Math.min(lengths[s.id], start + CLIP_MAX_MS) / 1000), mmss(lengths[s.id] / 1000)])}</Text>
                   </View>
                   <Icon name={open ? "chevron-up" : "chevron-down"} size={20} color={t.accent} />
                 </Pressable>
@@ -212,39 +213,39 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
         </>
       ) : null}
 
-      <Label>Shape</Label>
-      <Seg options={[{ id: "square" as VideoFormat, label: "Square" }, { id: "vertical" as VideoFormat, label: "Vertical (stories)" }]} value={format} onChange={(v) => phase !== "working" && setFormat(v)} />
-      <Label>Quality</Label>
-      <Seg options={[{ id: "720" as VideoQuality, label: "720p · faster" }, { id: "1080" as VideoQuality, label: "1080p · sharper" }]} value={quality} onChange={(v) => phase !== "working" && setQuality(v)} />
+      <Label>{tr("Shape")}</Label>
+      <Seg options={[{ id: "square" as VideoFormat, label: tr("Square") }, { id: "vertical" as VideoFormat, label: tr("Vertical (stories)") }]} value={format} onChange={(v) => phase !== "working" && setFormat(v)} />
+      <Label>{tr("Quality")}</Label>
+      <Seg options={[{ id: "720" as VideoQuality, label: tr("720p · faster") }, { id: "1080" as VideoQuality, label: tr("1080p · sharper") }]} value={quality} onChange={(v) => phase !== "working" && setQuality(v)} />
       <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>{w}×{h}</Text>
 
-      <Label>Title card</Label>
-      <Seg options={[{ id: 1, label: "Show a title" }, { id: 0, label: "Skip it" }]} value={intro ? 1 : 0} onChange={(v) => phase !== "working" && setIntro(v === 1)} />
-      {intro ? <Input value={heading} onChangeText={setHeading} accessibilityLabel="The video's title" style={{ marginTop: 8 }} maxLength={50} /> : null}
+      <Label>{tr("Title card")}</Label>
+      <Seg options={[{ id: 1, label: tr("Show a title") }, { id: 0, label: tr("Skip it") }]} value={intro ? 1 : 0} onChange={(v) => phase !== "working" && setIntro(v === 1)} />
+      {intro ? <Input value={heading} onChangeText={setHeading} accessibilityLabel={tr("The video's title")} style={{ marginTop: 8 }} maxLength={50} /> : null}
       {intro && usable.length > 1 ? (
         <>
-          <Label>Cover — the picture the video starts with (its thumbnail)</Label>
+          <Label>{tr("Cover — the picture the video starts with (its thumbnail)")}</Label>
           <HScroll contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
             {coverChoices.map((s) => {
               const on = s.id === cover?.id;
               return (
-                <Pressable key={s.id} onPress={() => phase !== "working" && setCoverId(s.id)} accessibilityLabel="Use as the cover" aria-pressed={on} style={{ width: 76, height: 76, borderRadius: 12, overflow: "hidden", borderWidth: 3, borderColor: on ? t.accent : "transparent", backgroundColor: t.bg3 }}>
+                <Pressable key={s.id} onPress={() => phase !== "working" && setCoverId(s.id)} accessibilityLabel={tr("Use as the cover")} aria-pressed={on} style={{ width: 76, height: 76, borderRadius: 12, overflow: "hidden", borderWidth: 3, borderColor: on ? t.accent : "transparent", backgroundColor: t.bg3 }}>
                   <PhotoView photo={slideView(s)} fit="cover" style={{ width: "100%", height: "100%" }} emojiSize={22} />
-                  {on ? <Text style={{ position: "absolute", left: 0, right: 0, bottom: 0, textAlign: "center", color: t.onAccent, backgroundColor: t.accent, fontSize: 10, fontWeight: "700", paddingVertical: 1 }}>COVER</Text> : null}
+                  {on ? <Text style={{ position: "absolute", left: 0, right: 0, bottom: 0, textAlign: "center", color: t.onAccent, backgroundColor: t.accent, fontSize: 10, fontWeight: "700", paddingVertical: 1 }}>{tr("COVER")}</Text> : null}
                 </Pressable>
               );
             })}
           </HScroll>
         </>
       ) : null}
-      {!intro ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>Without a title card the video starts with its first picture.</Text> : null}
+      {!intro ? <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>{tr("Without a title card the video starts with its first picture.")}</Text> : null}
       {isPet(child) ? (
         <View style={{ marginTop: 14 }}>
           <Pressable onPress={() => phase !== "working" && setMemorial(memorial == null ? "" : null)} accessibilityRole="checkbox" aria-checked={memorial != null} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Icon name={memorial != null ? "check-square" : "square"} size={22} color={t.accent} />
-            <Text style={{ color: t.ink, fontSize: 15, flex: 1 }}>End with "In loving memory"</Text>
+            <Text style={{ color: t.ink, fontSize: 15, flex: 1 }}>{tr("End with \"In loving memory\"")}</Text>
           </Pressable>
-          {memorial != null ? <Input value={memorial} onChangeText={setMemorial} placeholder="A few words. Example: Forever in our hearts" style={{ marginTop: 8 }} maxLength={120} /> : null}
+          {memorial != null ? <Input value={memorial} onChangeText={setMemorial} placeholder={tr("A few words. Example: Forever in our hearts")} style={{ marginTop: 8 }} maxLength={120} /> : null}
         </View>
       ) : null}
 
@@ -254,22 +255,22 @@ export function VideoExportSheet({ visible, onClose, slides, child, initialSpeed
             <View style={{ width: `${Math.round(progress * 100)}%`, height: "100%", backgroundColor: t.accent, borderRadius: 99 }} />
           </View>
           <Text style={{ color: t.ink3, textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
-            Making your video… {Math.round(progress * 100)}% — keep the app open (about {mmss(eta)} in total)
+            {tr("Making your video… {0}% — keep the app open (about {1} in total)", [Math.round(progress * 100), mmss(eta)])}
           </Text>
-          <Btn label="Cancel" kind="soft" onPress={cancelGrowVideo} style={{ marginTop: 12 }} />
+          <Btn label={tr("Cancel")} kind="soft" onPress={cancelGrowVideo} style={{ marginTop: 12 }} />
         </View>
       ) : (
-        <Btn icon="film" label={phase === "done" ? "Make it again with these settings" : "Create video"} onPress={create} disabled={!usable.length || !isVideoExportAvailable()} style={{ marginTop: 20 }} />
+        <Btn icon="film" label={phase === "done" ? tr("Make it again with these settings") : tr("Create video")} onPress={create} disabled={!usable.length || !isVideoExportAvailable()} style={{ marginTop: 20 }} />
       )}
 
-      <Text style={{ color: t.ink4, fontSize: 11.5, textAlign: "center", marginTop: 8 }}>Saved as “{fileName}”</Text>
+      <Text style={{ color: t.ink4, fontSize: 11.5, textAlign: "center", marginTop: 8 }}>{tr("Saved as “{0}”", [fileName])}</Text>
 
       {phase === "done" && uri ? (
         <>
           <Preview uri={uri} />
           <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-            <Btn label="Share…" onPress={share} style={{ flex: 1 }} />
-            <Btn label={onWeb ? "Download" : "Save to phone"} kind="line" onPress={save} style={{ flex: 1 }} />
+            <Btn label={tr("Share…")} onPress={share} style={{ flex: 1 }} />
+            <Btn label={onWeb ? tr("Download") : tr("Save to phone")} kind="line" onPress={save} style={{ flex: 1 }} />
           </View>
         </>
       ) : null}

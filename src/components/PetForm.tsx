@@ -13,6 +13,7 @@ import { Btn, DateField, Input, Label, PhotoView, Seg, ThemePicker } from "./ui"
 import { AvatarCropper } from "./AvatarCropper";
 import { PlacePicker } from "./PlacePicker";
 
+import { tr } from "../lib/i18n";
 /**
  * Adding a pet: their name and photo, what kind of pet and the breed, boy or girl, the birthday (or a guess), the day they came home, and
  * where they came from (who, the place, photos of the day, and the place on the map). Saved as their own book, with the "Coming home" page
@@ -55,9 +56,9 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
   };
 
   const create = () => {
-    if (!name.trim()) return setErr("What's their name?");
-    if (birth > today) return setErr("The birthday can't be in the future.");
-    if (gotcha > today) return setErr("The day they came home can't be in the future.");
+    if (!name.trim()) return setErr(tr("What's their name?"));
+    if (birth > today) return setErr(tr("The birthday can't be in the future."));
+    if (gotcha > today) return setErr(tr("The day they came home can't be in the future."));
     const pet = {
       id: uid("pet"), name: name.trim(), birth, theme, emoji: info.emoji, gender, kind: "pet" as const, species, ...(breed.trim() ? { breed: breed.trim() } : {}),
       ...(species === "dog" ? { dogSize } : {}), ...(approx ? { birthApprox: true } : {}), gotchaDay: gotcha < birth ? birth : gotcha,
@@ -81,10 +82,10 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
   const chip = (on: boolean) => ({ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: on ? t.chipOn : t.line, backgroundColor: on ? t.chipOn : t.card } as const);
   return (
     <View>
-      <Label>Name</Label>
-      <Input value={name} onChangeText={setName} placeholder="Example: Rex" />
+      <Label>{tr("Name")}</Label>
+      <Input value={name} onChangeText={setName} placeholder={tr("Example: Rex")} />
 
-      <Label>What kind of pet</Label>
+      <Label>{tr("What kind of pet")}</Label>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {SPECIES.map((s) => (
           <Pressable key={s.id} onPress={() => { setSpecies(s.id); setBreed(""); }} accessibilityRole="radio" aria-checked={species === s.id} style={chip(species === s.id)}>
@@ -93,8 +94,8 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
         ))}
       </View>
 
-      <Label>Breed (optional)</Label>
-      <Input value={breed} onChangeText={setBreed} placeholder={`Example: ${info.breeds[1] ?? info.breeds[0]}`} />
+      <Label>{tr("Breed (optional)")}</Label>
+      <Input value={breed} onChangeText={setBreed} placeholder={tr("Example: {0}", [info.breeds[1] ?? info.breeds[0]])} />
       {breedIdeas.length && !info.breeds.includes(breed) ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
           {breedIdeas.map((b) => (
@@ -107,26 +108,26 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
 
       {species === "dog" ? (
         <>
-          <Label>Size (for the age in dog years)</Label>
-          <Seg options={[{ id: "small" as DogSize, label: "Small" }, { id: "medium" as DogSize, label: "Medium" }, { id: "large" as DogSize, label: "Large" }]} value={dogSize} onChange={setDogSize} />
+          <Label>{tr("Size (for the age in dog years)")}</Label>
+          <Seg options={[{ id: "small" as DogSize, label: tr("Small") }, { id: "medium" as DogSize, label: tr("Medium") }, { id: "large" as DogSize, label: tr("Large") }]} value={dogSize} onChange={setDogSize} />
         </>
       ) : null}
 
-      <Label>Boy or girl</Label>
-      <Seg options={[{ id: "boy" as Gender, label: "Boy" }, { id: "girl" as Gender, label: "Girl" }, { id: "unspecified" as Gender, label: "Not sure" }]} value={gender} onChange={setGender} />
+      <Label>{tr("Boy or girl")}</Label>
+      <Seg options={[{ id: "boy" as Gender, label: tr("Boy") }, { id: "girl" as Gender, label: tr("Girl") }, { id: "unspecified" as Gender, label: tr("Not sure") }]} value={gender} onChange={setGender} />
 
-      <Label>Birthday</Label>
+      <Label>{tr("Birthday")}</Label>
       <DateField value={birth} onChange={setBirth} max={today} />
       <Pressable onPress={() => setApprox((v) => !v)} accessibilityRole="checkbox" aria-checked={approx} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
         <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: approx ? t.accent : t.ink3, backgroundColor: approx ? t.accent : "transparent" }} />
-        <Text style={[TYPE.bodyMedium, { color: t.ink2, flex: 1 }]}>We're not sure of the exact day (their age will say "about")</Text>
+        <Text style={[TYPE.bodyMedium, { color: t.ink2, flex: 1 }]}>{tr("We're not sure of the exact day (their age will say \"about\")")}</Text>
       </Pressable>
 
-      <Label>The day they came home (gotcha day)</Label>
+      <Label>{tr("The day they came home (gotcha day)")}</Label>
       <DateField value={gotcha} onChange={setGotcha} min={birth} max={today} />
 
       <Pressable onPress={() => setShowWhere((v) => !v)} accessibilityRole="button" style={{ marginTop: 18 }}>
-        <Text style={[TYPE.titleSmall, { color: t.accentDeep }]}>{showWhere ? "▾" : "▸"} Where they came from (optional)</Text>
+        <Text style={[TYPE.titleSmall, { color: t.accentDeep }]}>{tr("{0} Where they came from (optional)", [showWhere ? "▾" : "▸"])}</Text>
       </Pressable>
       {showWhere ? (
         <View style={{ backgroundColor: t.bg2, borderRadius: 16, padding: 14, marginTop: 8 }}>
@@ -137,27 +138,27 @@ export function AddPetForm({ onDone }: { onDone: () => void }) {
               </Pressable>
             ))}
           </View>
-          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>The place's name</Text>
-          <Input value={placeName} onChangeText={setPlaceName} placeholder="Example: Happy Paws Rescue" />
-          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>Where it is</Text>
+          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>{tr("The place's name")}</Text>
+          <Input value={placeName} onChangeText={setPlaceName} placeholder={tr("Example: Happy Paws Rescue")} />
+          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>{tr("Where it is")}</Text>
           <PlacePicker value={where} onChange={setWhere} />
-          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>Photos from that day</Text>
+          <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 12, marginBottom: 6 }]}>{tr("Photos from that day")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {dayPhotos.map((p) => <PhotoView key={p.uri} photo={{ uri: p.uri, kind: "photo", emoji: "📷", palette: "peach" }} style={{ width: 64, height: 64, borderRadius: 12 }} />)}
-            <Btn label="Add photos" icon="image" kind="line" onPress={chooseDayPhotos} style={{ alignSelf: "flex-start" }} />
+            <Btn label={tr("Add photos")} icon="image" kind="line" onPress={chooseDayPhotos} style={{ alignSelf: "flex-start" }} />
           </View>
         </View>
       ) : null}
 
-      <Label>Colour for their pages</Label>
+      <Label>{tr("Colour for their pages")}</Label>
       <ThemePicker value={theme} onChange={setTheme} order={THEME_ORDER} themes={THEMES} />
 
-      <Label>Profile photo (optional)</Label>
-      <Btn label={photoUri ? "Change photo" : "Choose a photo"} icon="image" kind="line" onPress={choosePhoto} />
+      <Label>{tr("Profile photo (optional)")}</Label>
+      <Btn label={photoUri ? tr("Change photo") : tr("Choose a photo")} icon="image" kind="line" onPress={choosePhoto} />
       {photoUri ? <View style={{ marginTop: 14 }}><AvatarCropper uri={photoUri} value={crop} onChange={setCrop} /></View> : null}
 
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 12 }}>{err}</Text> : null}
-      <Btn label={`Start ${name.trim() ? `${name.trim()}'s` : "their"} book ${info.emoji}`} onPress={create} style={{ marginTop: 20 }} />
+      <Btn label={tr("Start {0} book {1}", [name.trim() ? `${name.trim()}'s` : "their", info.emoji])} onPress={create} style={{ marginTop: 20 }} />
     </View>
   );
 }

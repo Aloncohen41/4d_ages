@@ -7,6 +7,7 @@ import { Input, Seg } from "./ui";
 import { OsmMap } from "./OsmMap";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /**
  * Choosing a place: type an address or a name (OpenStreetMap finds it), or drop a pin on the map. Reports the place, with its point on the
  * map, as soon as one is chosen.
@@ -37,10 +38,10 @@ export function PlacePicker({ value, onChange }: { value?: FoundPlace | null; on
 
   return (
     <View>
-      <Seg options={[{ id: "search" as const, label: "Address or name" }, { id: "map" as const, label: "Pin on a map" }]} value={how} onChange={setHow} />
+      <Seg options={[{ id: "search" as const, label: tr("Address or name") }, { id: "map" as const, label: tr("Pin on a map") }]} value={how} onChange={setHow} />
       {how === "search" ? (
         <View style={{ marginTop: 10 }}>
-          <Input value={query} onChangeText={setQuery} placeholder="Example: Battersea Dogs Home, London" />
+          <Input value={query} onChangeText={setQuery} placeholder={tr("Example: Battersea Dogs Home, London")} />
           {busy ? <ActivityIndicator color={t.accent} style={{ marginTop: 8 }} /> : null}
           {results.map((r) => (
             <Pressable key={`${r.lat},${r.lon}`} onPress={() => { onChange(r); setResults([]); setQuery(r.name); }} accessibilityRole="button"
@@ -55,7 +56,7 @@ export function PlacePicker({ value, onChange }: { value?: FoundPlace | null; on
         </View>
       ) : (
         <View style={{ marginTop: 10 }}>
-          <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 6 }]}>Move the map and tap where it is.</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 6 }]}>{tr("Move the map and tap where it is.")}</Text>
           <OsmMap pins={[]} onPick={dropped} start={value ? { lat: value.lat, lon: value.lon } : undefined} />
         </View>
       )}
@@ -66,7 +67,7 @@ export function PlacePicker({ value, onChange }: { value?: FoundPlace | null; on
             <Text style={[TYPE.titleSmall, { color: t.onAccentSoft }]}>{value.name}</Text>
             {value.detail ? <Text style={[TYPE.bodySmall, { color: t.onAccentSoft }]}>{value.detail}</Text> : null}
           </View>
-          <Pressable onPress={() => onChange(null)} accessibilityLabel="Clear the place" hitSlop={8}><Icon name="x" size={18} color={t.onAccentSoft} /></Pressable>
+          <Pressable onPress={() => onChange(null)} accessibilityLabel={tr("Clear the place")} hitSlop={8}><Icon name="x" size={18} color={t.onAccentSoft} /></Pressable>
         </View>
       ) : null}
     </View>

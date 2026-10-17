@@ -1,10 +1,11 @@
 /* "Open where I left off": the remembered child and tab, restored on launch; and an old notification tap can't override them. */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TAB_NAMES, RESUME_KEY, isTab, tabPath, parseResume, createResume, pickChild, shouldHandleNotification, KeyValueStorage } from "../src/lib/resume";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 /** an in-memory phone: shared between "launches" so we can close and reopen the app */
 const phone = (): KeyValueStorage & { data: Record<string, string>; writes: number; fail?: boolean } => {

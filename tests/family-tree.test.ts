@@ -2,6 +2,7 @@
  * The book's family page as a family tree, and family lists without deleted profiles: a child's or pet's sibling entry ("Sister", "Our dog")
  * leaves every family when that profile is deleted, on every phone.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { familyRows, generationOf } from "../src/lib/familyTree";
@@ -10,7 +11,7 @@ import { BOOK_SIZES, planBook } from "../src/lib/bookPages";
 import { Relative } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---- who goes on which row
 ok("grandparents, in the family's own words (Nana, Savta, Opa, Great-grandma)", ["Nana", "Savta", "Opa", "Great-grandma", "Grandpa Joe"].every((r) => generationOf(r) === "grand"));

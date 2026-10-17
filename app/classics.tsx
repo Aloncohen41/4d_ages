@@ -9,6 +9,7 @@ import { classicsFor, filledCount } from "../src/lib/classics";
 import { isPet } from "../src/lib/types";
 import { TYPE } from "../src/theme";
 
+import { tr } from "../src/lib/i18n";
 /**
  * Classics: the fill-in pages of a printed baby book (teeth, the birth story, food, favourite toys, the first haircut…). Each one is filled in
  * whenever you like, and the filled ones are added to the keepsake book.
@@ -20,9 +21,9 @@ export default function ClassicsPage() {
   if (!child) return null;
   const viewOnly = child.role === "viewer";
   return (
-    <Page title="Classics">
+    <Page title={tr("Classics")}>
       <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 14 }]}>
-        {viewOnly ? `These pages are kept by ${child.name}'s parents.` : `${isPet(child) ? "Pages about" : "The pages of a classic baby book, for"} ${child.name}. Fill in any of them, any time. The ones you fill in are added to ${child.name}'s book.`}
+        {viewOnly ? tr("These pages are kept by {0}'s parents.", [child.name]) : tr("{0} {1}. Fill in any of them, any time. The ones you fill in are added to {2}'s book.", [isPet(child) ? "Pages about" : "The pages of a classic baby book, for", child.name, child.name])}
       </Text>
       {viewOnly ? null : classicsFor(child).map((tpl) => {
         const entry = classics.find((c) => c.childId === child.id && c.id === tpl.id);
@@ -35,7 +36,7 @@ export default function ClassicsPage() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[TYPE.titleSmall, { color: t.ink }]}>{tpl.title}</Text>
-              <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={2}>{filled ? `${filled} of ${tpl.fields.length} filled in` : tpl.desc}</Text>
+              <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={2}>{filled ? tr("{0} of {1} filled in", [filled, tpl.fields.length]) : tpl.desc}</Text>
             </View>
             <Icon name={filled ? "check" : "chevron-right"} size={20} color={filled ? t.accentDeep : t.ink3} />
           </Pressable>

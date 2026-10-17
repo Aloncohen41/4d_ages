@@ -2,6 +2,7 @@
  * The pregnancy stage: a date still to come makes a pregnancy profile; Milestones has the pregnancy milestones (the first kick…) and the
  * symptoms and cravings; Growth has the week, the baby's size as a fruit (changing week by week), ultrasound pictures and scan measurements.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FRUIT_WEEKS, PREGNANCY_MILESTONES, sizeForWeek, trimesterOf, weekOn } from "../src/lib/pregnancy";
@@ -11,7 +12,7 @@ import { heightSeries, weightSeries } from "../src/lib/selectors";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 ok("a fruit for every week from 4 to 40, the baby growing every week", FRUIT_WEEKS.length === 37 && FRUIT_WEEKS.every((w, i) => w.week === 4 + i && (i === 0 || w.cm >= FRUIT_WEEKS[i - 1].cm)) && FRUIT_WEEKS.filter((w) => w.g).every((w, i, a) => i === 0 || w.g! >= a[i - 1].g!));
 ok("the size this week: week 20 is a banana, week 12 a lime, before week 4 a poppy seed, after 40 a small pumpkin", sizeForWeek(20).fruit === "a banana" && sizeForWeek(12).fruit === "a lime" && sizeForWeek(2).week === 4 && sizeForWeek(41).week === 40);

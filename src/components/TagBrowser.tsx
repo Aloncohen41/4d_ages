@@ -11,6 +11,7 @@ import { openMemory } from "../lib/openMemory";
 import { Btn, Input, PhotoView, Seg, Sheet } from "./ui";
 import { TagChip } from "./TagChip";
 
+import { tr } from "../lib/i18n";
 const typeLabel = (p: Memory) => KIND_META[p.type].label;
 
 /** The child's memories (photos, stories, milestones, firsts, lasts, measurements…) as one list. */
@@ -24,7 +25,7 @@ export function TagResults({ keys, childId }: { keys: string[]; childId: string 
   const t = useTheme();
   const all = useMemories(childId);
   const found = useMemo(() => itemsWithTags(all, keys).sort((a, b) => byMoment(b, a)), [all, keys]);
-  if (!found.length) return <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>Nothing is tagged with this yet.</Text>;
+  if (!found.length) return <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("Nothing is tagged with this yet.")}</Text>;
   const counts = new Map<string, number>();
   found.forEach((p) => counts.set(typeLabel(p), (counts.get(typeLabel(p)) || 0) + 1));
   return (
@@ -79,25 +80,25 @@ function Browser({ initial, forHome, childId, childName, onClose }: { initial: s
   }, [all, query, shown.length]);
 
   return (
-    <Sheet visible onClose={onClose} title={selected.length ? "Tagged memories" : "Tags & search"}>
+    <Sheet visible onClose={onClose} title={selected.length ? tr("Tagged memories") : tr("Tags & search")}>
       {selected.length ? (
         <>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
             {selectedTags.map((tg) => <TagChip key={tg.id} tag={tg} onRemove={() => setSelected((c) => c.filter((x) => x !== tg.id))} />)}
           </View>
-          {forHome ? <Btn label="Show these on the timeline" icon="check" onPress={() => { setHomeTags(selected); onClose(); }} style={{ marginBottom: 8 }} /> : null}
-          <Btn label="All tags" icon="chevron-left" kind="soft" onPress={() => setSelected([])} style={{ paddingVertical: 9, marginBottom: 14 }} />
+          {forHome ? <Btn label={tr("Show these on the timeline")} icon="check" onPress={() => { setHomeTags(selected); onClose(); }} style={{ marginBottom: 8 }} /> : null}
+          <Btn label={tr("All tags")} icon="chevron-left" kind="soft" onPress={() => setSelected([])} style={{ paddingVertical: 9, marginBottom: 14 }} />
           <TagResults keys={selected} childId={childId} />
         </>
       ) : (
         <>
-          <Input value={query} onChangeText={setQuery} placeholder="Search tags — try “Grandma”, a place or an event" returnKeyType="search" />
+          <Input value={query} onChangeText={setQuery} placeholder={tr("Search tags — try “Grandma”, a place or an event")} returnKeyType="search" />
           <View style={{ marginTop: 10 }}>
-            <Seg options={[{ id: "all" as const, label: "All" }, ...TAG_CATEGORIES.map((k) => ({ id: k.id, label: k.short }))]} value={kind} onChange={setKind} />
+            <Seg options={[{ id: "all" as const, label: tr("All") }, ...TAG_CATEGORIES.map((k) => ({ id: k.id, label: k.short }))]} value={kind} onChange={setKind} />
           </View>
 
           {query.trim() && shown.filter((s) => s.category === "person").length > 1 ? (
-            <Btn label={`Show all ${shown.filter((s) => s.category === "person").length} matching people together`} kind="line" onPress={() => setSelected(shown.filter((s) => s.category === "person").map((s) => s.id))} style={{ marginTop: 12, paddingVertical: 10 }} />
+            <Btn label={tr("Show all {0} matching people together", [shown.filter((s) => s.category === "person").length])} kind="line" onPress={() => setSelected(shown.filter((s) => s.category === "person").map((s) => s.id))} style={{ marginTop: 12, paddingVertical: 10 }} />
           ) : null}
 
           <View style={{ marginTop: 14, gap: 8 }}>
@@ -111,13 +112,13 @@ function Browser({ initial, forHome, childId, childName, onClose }: { initial: s
 
           {!shown.length && !textHits.length ? (
             <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>
-              {stats.length ? "No tags match that." : `No tags yet. Add people, events and places to ${childName}'s memories and they'll show up here.`}
+              {stats.length ? tr("No tags match that.") : tr("No tags yet. Add people, events and places to {0}'s memories and they'll show up here.", [childName])}
             </Text>
           ) : null}
 
           {textHits.length ? (
             <View style={{ marginTop: 8 }}>
-              <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12, marginBottom: 8 }}>No tag matches — memories mentioning “{query.trim()}”:</Text>
+              <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12, marginBottom: 8 }}>{tr("No tag matches — memories mentioning “{0}”:", [query.trim()])}</Text>
               {textHits.map((p) => (
                 <Pressable key={p.id} onPress={() => openMemory(p)} style={{ backgroundColor: t.card, borderRadius: 12, borderWidth: 1, borderColor: t.line, padding: 10, marginBottom: 8 }}>
                   <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11 }}>{typeLabel(p)} · {formatDate(p.date)}</Text>

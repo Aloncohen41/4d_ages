@@ -9,6 +9,7 @@ import { TYPE } from "../theme";
 import { Btn, PhotoView, Sheet } from "./ui";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /** Every post the book could hold, ticked when it's in. Untick one to leave it out of the book; tick it again to bring it back. */
 export function BookPostsSheet({ posts, defs, excluded, onChange, onClose }: {
   posts: Memory[]; defs: MilestoneDef[]; excluded: string[]; onChange: (excluded: string[]) => void; onClose: () => void;
@@ -18,11 +19,11 @@ export function BookPostsSheet({ posts, defs, excluded, onChange, onClose }: {
   const inCount = posts.filter((m) => !out.has(m.id)).length;
   const toggle = (id: string) => onChange(out.has(id) ? excluded.filter((x) => x !== id) : [...excluded, id]);
   return (
-    <Sheet visible onClose={onClose} title="Choose posts">
-      <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{inCount} of {posts.length} posts are in the book. Untick a post to leave it out.</Text>
+    <Sheet visible onClose={onClose} title={tr("Choose posts")}>
+      <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{tr("{0} of {1} posts are in the book. Untick a post to leave it out.", [inCount, posts.length])}</Text>
       <View style={{ flexDirection: "row", gap: 8, marginTop: 10, marginBottom: 6 }}>
-        <Btn label="Include all" kind="line" onPress={() => onChange(excluded.filter((x) => !posts.some((m) => m.id === x)))} style={{ flex: 1 }} />
-        <Btn label="Leave all out" kind="line" onPress={() => onChange([...new Set([...excluded, ...posts.map((m) => m.id)])])} style={{ flex: 1 }} />
+        <Btn label={tr("Include all")} kind="line" onPress={() => onChange(excluded.filter((x) => !posts.some((m) => m.id === x)))} style={{ flex: 1 }} />
+        <Btn label={tr("Leave all out")} kind="line" onPress={() => onChange([...new Set([...excluded, ...posts.map((m) => m.id)])])} style={{ flex: 1 }} />
       </View>
       {posts.map((m) => {
         const on = !out.has(m.id);

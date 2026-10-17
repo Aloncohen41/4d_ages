@@ -10,6 +10,7 @@ import { Btn, dialogName } from "./ui";
 import { Icon } from "./Icon";
 import { LegalLinks } from "./LegalLinks";
 
+import { tr } from "../lib/i18n";
 /**
  * Before anything else, once signed in: agreeing to the terms and the privacy policy, and consenting to keeping health information. Asked
  * once (for accounts made before this, or with Google), and again only when the terms change. "Create account" asks on its own form and
@@ -39,7 +40,7 @@ export function AgreementGate() {
     try {
       await saveAgreement();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Couldn't save that. Check your connection and try again.");
+      setErr(e instanceof Error ? e.message : tr("Couldn't save that. Check your connection and try again."));
     } finally {
       setBusy(false);
     }
@@ -49,20 +50,20 @@ export function AgreementGate() {
     <Modal visible animationType="fade" onRequestClose={() => undefined} statusBarTranslucent {...dialogName("Before you go on")}>
       <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, maxWidth: 560, width: "100%", alignSelf: "center" }}>
-          <Text style={[TYPE.headlineSmall, { color: t.ink }]}>Before you go on</Text>
+          <Text style={[TYPE.headlineSmall, { color: t.ink }]}>{tr("Before you go on")}</Text>
           <Text style={[TYPE.bodyMedium, { color: t.ink2, marginTop: 10 }]}>
-            {APP_NAME} keeps your family's book private: only you and the people you invite can see it. No advertising, no tracking, and we never sell your information.
+            {tr("{0} keeps your family's book private: only you and the people you invite can see it. No advertising, no tracking, and we never sell your information.", [APP_NAME])}
           </Text>
           <Text style={[TYPE.bodyMedium, { color: t.ink2, marginTop: 10 }]}>
-            Some of what you can add is health information (pregnancy symptoms and scans, growth measurements, health notes). The law asks for your clear agreement before we keep it. You can delete it, or your account, at any time.
+            {tr("Some of what you can add is health information (pregnancy symptoms and scans, growth measurements, health notes). The law asks for your clear agreement before we keep it. You can delete it, or your account, at any time.")}
           </Text>
           <View style={{ marginTop: 14 }}>
-            {box(terms, setTerms, <>I'm 18 or over, and I agree to the {link("Terms", TERMS_URL)} and the {link("Privacy policy", PRIVACY_URL)}.</>)}
-            {box(health, setHealth, <>I agree that {APP_NAME} can keep the health information I add, to run my books.</>)}
+            {box(terms, setTerms, <>{tr("I'm 18 or over, and I agree to the")} {link("Terms", TERMS_URL)} {tr("and the")} {link("Privacy policy", PRIVACY_URL)}.</>)}
+            {box(health, setHealth, <>{tr("I agree that")} {APP_NAME} {tr("can keep the health information I add, to run my books.")}</>)}
           </View>
           {err ? <Text style={[TYPE.bodyMedium, { color: t.danger, marginTop: 8 }]}>{err}</Text> : null}
-          <Btn label={busy ? "One moment…" : "Agree and continue"} onPress={agree} disabled={!terms || !health || busy} style={{ marginTop: 16 }} />
-          <Btn label="Sign out" kind="soft" onPress={() => signOut()} disabled={busy} style={{ marginTop: 10 }} />
+          <Btn label={busy ? tr("One moment…") : tr("Agree and continue")} onPress={agree} disabled={!terms || !health || busy} style={{ marginTop: 16 }} />
+          <Btn label={tr("Sign out")} kind="soft" onPress={() => signOut()} disabled={busy} style={{ marginTop: 10 }} />
           <View style={{ marginTop: 18 }}><LegalLinks /></View>
         </ScrollView>
       </View>

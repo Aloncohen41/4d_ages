@@ -10,6 +10,7 @@ import { Btn, Input, MemberAvatar, Seg } from "./ui";
 import { TagChip } from "./TagChip";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /**
  * The one tag editor used everywhere (photos, stories, milestones, firsts, lasts, measurements, imports).
  * It edits a list of tag ids; the tags themselves live in the central list.
@@ -90,14 +91,14 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
             })}
             <Pressable onPress={() => setNewPerson((v) => !v)} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 9, paddingHorizontal: 13, borderRadius: 99, borderWidth: 1.5, borderStyle: "dashed", borderColor: t.accent }}>
               <Icon name="user-plus" size={14} color={t.accentDeep} />
-              <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>New person</Text>
+              <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("New person")}</Text>
             </Pressable>
           </View>
           {newPerson ? (
             <View style={{ marginTop: 10, backgroundColor: t.bg2, borderRadius: 14, padding: 12, gap: 8 }}>
-              <Input value={personName} onChangeText={setPersonName} placeholder="Their name" maxLength={40} returnKeyType="done" onSubmitEditing={addPerson} />
-              <Input value={personRel} onChangeText={setPersonRel} placeholder="Relationship. Example: Mummy" maxLength={30} returnKeyType="done" onSubmitEditing={addPerson} />
-              <Btn label="Add to the family and tag them" onPress={addPerson} disabled={!personName.trim() || !personRel.trim()} style={{ paddingVertical: 11 }} />
+              <Input value={personName} onChangeText={setPersonName} placeholder={tr("Their name")} maxLength={40} returnKeyType="done" onSubmitEditing={addPerson} />
+              <Input value={personRel} onChangeText={setPersonRel} placeholder={tr("Relationship. Example: Mummy")} maxLength={30} returnKeyType="done" onSubmitEditing={addPerson} />
+              <Btn label={tr("Add to the family and tag them")} onPress={addPerson} disabled={!personName.trim() || !personRel.trim()} style={{ paddingVertical: 11 }} />
             </View>
           ) : null}
         </View>
@@ -109,12 +110,12 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
                 value={draft}
                 onChangeText={(v) => (/[,\n]$/.test(v) ? add(v) : setDraft(v))}
                 onSubmitEditing={() => add(draft)}
-                placeholder={category === "event" ? "Example: First birthday party" : category === "place" ? "Example: Grandma's house" : "Example: Beach"}
+                placeholder={category === "event" ? tr("Example: First birthday party") : category === "place" ? tr("Example: Grandma's house") : tr("Example: Beach")}
                 returnKeyType="done"
                 blurOnSubmit={false}
               />
             </View>
-            <Btn label="Add" onPress={() => add(draft)} disabled={!draft.trim()} style={{ paddingVertical: 12, paddingHorizontal: 16 }} />
+            <Btn label={tr("Add")} onPress={() => add(draft)} disabled={!draft.trim()} style={{ paddingVertical: 12, paddingHorizontal: 16 }} />
           </View>
           {suggestions.length ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>

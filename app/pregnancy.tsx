@@ -10,6 +10,7 @@ import { useTheme } from "../src/lib/useTheme";
 import { formatDate } from "../src/lib/date";
 import { TYPE } from "../src/theme";
 
+import { tr } from "../src/lib/i18n";
 type Section = "milestones" | "symptoms" | "cravings" | "growth";
 
 /**
@@ -24,13 +25,12 @@ export default function PregnancyPage() {
   const [section, setSection] = useState<Section>("milestones");
   if (!child) return null;
   return (
-    <Page title={`Your pregnancy with ${child.name}`}>
+    <Page title={tr("Your pregnancy with {0}", [child.name])}>
       <Text style={[TYPE.bodyMedium, { color: t.ink2, marginBottom: 12 }]}>
-        Looking back on the months before {child.name} arrived on {formatDate(child.birth)}. Add as much or as little as you remember: it all goes
-        into the book, before the day they were born.
+        {tr("Looking back on the months before {0} arrived on {1}. Add as much or as little as you remember: it all goes into the book, before the day they were born.", [child.name, formatDate(child.birth)])}
       </Text>
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "milestones" as Section, label: "Milestones" }, { id: "symptoms" as Section, label: "Symptoms" }, { id: "cravings" as Section, label: "Cravings" }, { id: "growth" as Section, label: "Scans" }]} value={section} onChange={setSection} />
+        <Seg options={[{ id: "milestones" as Section, label: tr("Milestones") }, { id: "symptoms" as Section, label: tr("Symptoms") }, { id: "cravings" as Section, label: tr("Cravings") }, { id: "growth" as Section, label: tr("Scans") }]} value={section} onChange={setSection} />
       </View>
       {section === "milestones" ? <PregnancyMilestones child={child} /> : section === "growth" ? <PregnancyGrowth child={child} /> : <PregnancyNotes child={child} kind={section === "symptoms" ? "symptom" : "craving"} />}
     </Page>

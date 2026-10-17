@@ -12,6 +12,7 @@ import { TYPE } from "../theme";
 import { Icon, IconName } from "./Icon";
 import { VoiceRecorderSheet } from "./Voice";
 
+import { tr } from "../lib/i18n";
 export const FAB_GAP = 16;
 export type Action = EntryKind | "photo" | "voice" | "food";
 export const ACTIONS: Action[] = ["food", "story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
@@ -53,7 +54,7 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
   return (
     <>
       {open ? (
-        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel="Close menu">
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel={tr("Close menu")}>
           <Animated.View style={{ flex: 1, backgroundColor: t.scrim, opacity: anim }} />
         </Pressable>
       ) : null}
@@ -64,7 +65,7 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
             const progress = anim.interpolate({ inputRange: [delay, Math.min(1, delay + 0.45)], outputRange: [0, 1], extrapolate: "clamp" });
             return (
               <Animated.View key={kind} style={{ opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }, { scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
-                <Pressable onPress={() => choose(kind)} android_ripple={{ color: withAlpha(t.onChipOn, 0.14) }} style={[styles.item, { backgroundColor: t.chipOn }]} accessibilityLabel={`Add ${LABEL(kind, pet)}`}>
+                <Pressable onPress={() => choose(kind)} android_ripple={{ color: withAlpha(t.onChipOn, 0.14) }} style={[styles.item, { backgroundColor: t.chipOn }]} accessibilityLabel={tr("Add {0}", [LABEL(kind, pet)])}>
                   <Icon name={ICON[kind]} size={22} color={t.onChipOn} />
                   <Text style={[TYPE.labelLarge, { color: t.onChipOn }]}>{LABEL(kind, pet)}</Text>
                 </Pressable>
@@ -72,12 +73,12 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
             );
           })}
         </View>
-        <Pressable onPress={() => setOpen((v) => !v)} accessibilityLabel={open ? "Close menu" : "Add something"} android_ripple={{ color: withAlpha(t.onAccent, 0.2) }} style={[styles.fab, { backgroundColor: t.accent }]}>
+        <Pressable onPress={() => setOpen((v) => !v)} accessibilityLabel={open ? tr("Close menu") : tr("Add something")} android_ripple={{ color: withAlpha(t.onAccent, 0.2) }} style={[styles.fab, { backgroundColor: t.accent }]}>
           <Animated.View style={{ transform: [{ rotate: anim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "45deg"] }) }] }}><Icon name="plus" size={28} color={t.onAccent} /></Animated.View>
         </Pressable>
       </View>
       {recording ? (
-        <VoiceRecorderSheet onClose={() => setRecording(false)} onDone={(item) => { setRecording(false); setTimeout(() => setEntrySheet({ kind: "story", title: "Voice note", media: [item] }), 250); }} />
+        <VoiceRecorderSheet onClose={() => setRecording(false)} onDone={(item) => { setRecording(false); setTimeout(() => setEntrySheet({ kind: "story", title: tr("Voice note"), media: [item] }), 250); }} />
       ) : null}
     </>
   );

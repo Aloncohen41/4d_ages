@@ -15,6 +15,7 @@ import { addDays, ageShort, daysBetween, formatDate } from "../src/lib/date";
 import { Child, MediaItem, Memory, isPet } from "../src/lib/types";
 import { TYPE } from "../src/theme";
 
+import { tr } from "../src/lib/i18n";
 /*
  * "My family": every profile together. The timeline is everyone's posts (children, pets, pregnancies) in date order, each marked with whose
  * it is. The door frame puts the children's heights side by side, without the everyday objects: on a date (the slider goes from the first
@@ -33,7 +34,7 @@ export default function MyFamily() {
   const kids = useStore((s) => s.kids);
   const [view, setView] = useState<"timeline" | "door">("timeline");
   return (
-    <Page title="My family">
+    <Page title={tr("My family")}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
         {kids.map((k) => (
           <View key={k.id} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingRight: 10, borderRadius: 18, backgroundColor: t.bg2 }}>
@@ -41,7 +42,7 @@ export default function MyFamily() {
           </View>
         ))}
       </View>
-      <Seg options={[{ id: "timeline" as const, label: "Timeline" }, { id: "door" as const, label: "Door frame" }]} value={view} onChange={setView} />
+      <Seg options={[{ id: "timeline" as const, label: tr("Timeline") }, { id: "door" as const, label: tr("Door frame") }]} value={view} onChange={setView} />
       <View style={{ marginTop: 16 }}>{view === "timeline" ? <Timeline kids={kids} /> : <Heights kids={kids.filter((k) => !isPet(k))} />}</View>
     </Page>
   );
@@ -57,7 +58,7 @@ function Timeline({ kids }: { kids: Child[] }) {
   const [viewing, setViewing] = useState<Memory | null>(null);
   const [gallery, setGallery] = useState<{ items: MediaItem[]; index: number } | null>(null);
   const byId = new Map(kids.map((k) => [k.id, k]));
-  if (!all.length) return <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No posts yet. Everyone's posts will show here, in date order.</Text>;
+  if (!all.length) return <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No posts yet. Everyone's posts will show here, in date order.")}</Text>;
   let lastMonth = "";
   return (
     <View style={{ gap: 12 }}>
@@ -78,7 +79,7 @@ function Timeline({ kids }: { kids: Child[] }) {
           </View>
         );
       })}
-      {n < all.length ? <Btn label="Show more" kind="soft" onPress={() => setN(n + PAGE)} /> : null}
+      {n < all.length ? <Btn label={tr("Show more")} kind="soft" onPress={() => setN(n + PAGE)} /> : null}
       {viewing ? <PostViewer p={viewing} child={byId.get(viewing.childId)!} onClose={() => setViewing(null)} onOpenMedia={(items, index) => setGallery({ items: items.filter((m) => m.uri), index })} onEdit={() => { setActive(viewing.childId); edit(viewing); setViewing(null); }} /> : null}
       <MediaGallery items={gallery?.items ?? null} index={gallery?.index ?? 0} onClose={() => setGallery(null)} />
     </View>
@@ -97,7 +98,7 @@ function Heights({ kids }: { kids: Child[] }) {
   const days = dates ? Math.max(0, daysBetween(dates.from, dates.to)) : 0;
   const [day, setDay] = useState(days); // starts at the latest
   const [age, setAge] = useState(ages ? Math.min(12, ages.to) : 0);
-  if (!dates || !ages) return <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No heights measured yet. Add a measurement for each child to see them side by side.</Text>;
+  if (!dates || !ages) return <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No heights measured yet. Add a measurement for each child to see them side by side.")}</Text>;
 
   const date = addDays(dates.from, Math.min(day, days));
   const marks = measured.flatMap((s) => {
@@ -112,16 +113,16 @@ function Heights({ kids }: { kids: Child[] }) {
           <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: "#fff", marginLeft: sameAge ? 18 : 0 }} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[TYPE.titleSmall, { color: t.ink }]}>Same age</Text>
-          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{sameAge ? "How tall each of them was at the same age (worked out between measurements)." : "Turn on to compare them at the same age, instead of on the same day."}</Text>
+          <Text style={[TYPE.titleSmall, { color: t.ink }]}>{tr("Same age")}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{sameAge ? tr("How tall each of them was at the same age (worked out between measurements).") : tr("Turn on to compare them at the same age, instead of on the same day.")}</Text>
         </View>
       </Pressable>
 
-      <Text style={[TYPE.titleMedium, { color: t.ink, textAlign: "center" }]}>{sameAge ? `At ${ageWords(age)}` : formatDate(date)}</Text>
+      <Text style={[TYPE.titleMedium, { color: t.ink, textAlign: "center" }]}>{sameAge ? tr("At {0}", [ageWords(age)]) : formatDate(date)}</Text>
       {sameAge ? (
-        <AppSlider label="Age" valueText={ageWords(age)} minimumValue={ages.from} maximumValue={Math.max(ages.from + 1, ages.to)} step={1} value={age} onValueChange={setAge} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.outline} thumbTintColor={t.accent} style={{ marginVertical: 8 }} />
+        <AppSlider label={tr("Age")} valueText={ageWords(age)} minimumValue={ages.from} maximumValue={Math.max(ages.from + 1, ages.to)} step={1} value={age} onValueChange={setAge} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.outline} thumbTintColor={t.accent} style={{ marginVertical: 8 }} />
       ) : (
-        <AppSlider label="Date" valueText={formatDate(date)} minimumValue={0} maximumValue={Math.max(1, days)} step={1} value={Math.min(day, days)} onValueChange={setDay} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.outline} thumbTintColor={t.accent} style={{ marginVertical: 8 }} />
+        <AppSlider label={tr("Date")} valueText={formatDate(date)} minimumValue={0} maximumValue={Math.max(1, days)} step={1} value={Math.min(day, days)} onValueChange={setDay} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.outline} thumbTintColor={t.accent} style={{ marginVertical: 8 }} />
       )}
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
         <Text style={[TYPE.labelSmall, { color: t.ink3 }]}>{sameAge ? ageWords(ages.from) : formatDate(dates.from)}</Text>
@@ -129,8 +130,8 @@ function Heights({ kids }: { kids: Child[] }) {
       </View>
 
       <FamilyDoorFrame marks={marks} unit={unit} />
-      {missing.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 8 }]}>{missing.join(", ")}: {sameAge ? "not measured around this age" : "not measured yet by this date"}.</Text> : null}
-      {series.length > measured.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 4 }]}>No heights yet for {series.filter((s) => !s.entries.length).map((s) => s.child.name).join(", ")}.</Text> : null}
+      {missing.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 8 }]}>{missing.join(", ")}: {sameAge ? tr("not measured around this age") : tr("not measured yet by this date")}.</Text> : null}
+      {series.length > measured.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 4 }]}>{tr("No heights yet for {0}.", [series.filter((s) => !s.entries.length).map((s) => s.child.name).join(", ")])}</Text> : null}
     </View>
   );
 }

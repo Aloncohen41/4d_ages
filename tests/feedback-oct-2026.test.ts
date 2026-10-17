@@ -2,6 +2,7 @@
  * The changes from the feedback session of 10 October 2026 (requirement IDs in brackets). The logic is tested directly; screens are read as
  * source, so their structure is pinned down even though they can't be seen without a phone.
  */
+import { untr } from "./untr";
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { parseAuthCallback } from "../src/lib/authLink";
@@ -20,7 +21,7 @@ import { Child, Memory } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 const walk = (d: string): string[] => readdirSync(join(root, d)).flatMap((n) => { const p = `${d}/${n}`; return statSync(join(root, p)).isDirectory() ? walk(p) : /\.tsx?$/.test(n) ? [p] : []; });
 const screens = [...walk("app"), ...walk("src/components")];
 const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1"); // without comments

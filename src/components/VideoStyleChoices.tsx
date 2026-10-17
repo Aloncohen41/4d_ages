@@ -11,6 +11,7 @@ import { formatDate } from "../lib/date";
 import { Icon } from "./Icon";
 import { Input, Label, Seg } from "./ui";
 
+import { tr } from "../lib/i18n";
 /** A few seconds of a track, to hear it before choosing it. */
 function Listen(props: { id: Exclude<MusicId, "none">; onEnd: () => void }) {
   return onWeb ? <ListenWeb {...props} /> : <ListenPhone {...props} />;
@@ -64,7 +65,7 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
 
   return (
     <View>
-      <Label>Look</Label>
+      <Label>{tr("Look")}</Label>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 2 }}>
         {VIDEO_TEMPLATES.map((x) => {
           const on = x.id === template;
@@ -79,7 +80,7 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
         })}
       </ScrollView>
 
-      <Label>Music</Label>
+      <Label>{tr("Music")}</Label>
       <View style={{ gap: 6 }}>
         {MUSIC.map((m) => {
           const on = m.id === music;
@@ -95,7 +96,7 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
                 </View>
               </Pressable>
               {m.id !== "none" ? (
-                <Pressable onPress={() => setListening(listening === m.id ? null : m.id)} accessibilityLabel={listening === m.id ? `Stop ${m.label}` : `Listen to ${m.label}`} hitSlop={8}
+                <Pressable onPress={() => setListening(listening === m.id ? null : m.id)} accessibilityLabel={listening === m.id ? tr("Stop {0}", [m.label]) : tr("Listen to {0}", [m.label])} hitSlop={8}
                   style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: listening === m.id ? t.accent : t.bg2, alignItems: "center", justifyContent: "center" }}>
                   <Icon name={listening === m.id ? "pause" : "play"} size={16} color={listening === m.id ? t.onAccent : t.ink2} />
                 </Pressable>
@@ -108,21 +109,21 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
       {hasClips ? (
         <Pressable onPress={() => !disabled && onClipSound(!clipSound)} accessibilityRole="checkbox" aria-checked={clipSound} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 }}>
           <Icon name={clipSound ? "check-square" : "square"} size={22} color={t.accent} />
-          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>Keep the videos' own sound (the music goes quieter while they play)</Text>
+          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>{tr("Keep the videos' own sound (the music goes quieter while they play)")}</Text>
         </Pressable>
       ) : null}
 
-      <Label>Who's in it</Label>
-      <Seg options={[{ id: "all" as WhoMode, label: "Everyone" }, { id: "alone" as WhoMode, label: `Only ${childName}` }, { id: "family" as WhoMode, label: "With family" }]} value={who} onChange={(v) => !disabled && onWho(v)} />
+      <Label>{tr("Who's in it")}</Label>
+      <Seg options={[{ id: "all" as WhoMode, label: tr("Everyone") }, { id: "alone" as WhoMode, label: tr("Only {0}", [childName]) }, { id: "family" as WhoMode, label: tr("With family") }]} value={who} onChange={(v) => !disabled && onWho(v)} />
       <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>
-        {who === "alone" ? `Only the posts no one else is tagged in.` : who === "family" ? "Only the posts with someone from the family tagged in them." : "Every picture."}
+        {who === "alone" ? tr("Only the posts no one else is tagged in.") : who === "family" ? tr("Only the posts with someone from the family tagged in them.") : tr("Every picture.")}
       </Text>
 
-      <Label>Words</Label>
-      <Input value={ownWords} onChangeText={onOwnWords} placeholder="A few words to open the video (optional)" maxLength={180} multiline />
+      <Label>{tr("Words")}</Label>
+      <Input value={ownWords} onChangeText={onOwnWords} placeholder={tr("A few words to open the video (optional)")} maxLength={180} multiline />
       {stories.length ? (
         <>
-          <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10, marginBottom: 6 }]}>Add the stories you've written, each on a card at its date:</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10, marginBottom: 6 }]}>{tr("Add the stories you've written, each on a card at its date:")}</Text>
           {shownStories.map((s) => {
             const on = cards.includes(s.id);
             return (
@@ -138,12 +139,12 @@ export function VideoStyleChoices({ template, onTemplate, music, onMusic, who, o
           })}
           {stories.length > 5 ? (
             <Pressable onPress={() => setAllStories((v) => !v)} style={{ paddingVertical: 8 }}>
-              <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{allStories ? "Show fewer" : `Show all ${stories.length} stories`}</Text>
+              <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{allStories ? tr("Show fewer") : tr("Show all {0} stories", [stories.length])}</Text>
             </Pressable>
           ) : null}
         </>
       ) : (
-        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Stories you write show up here, to add to the video as cards of words.</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("Stories you write show up here, to add to the video as cards of words.")}</Text>
       )}
     </View>
   );

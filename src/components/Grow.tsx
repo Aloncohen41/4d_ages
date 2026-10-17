@@ -12,6 +12,7 @@ import { Btn, PhotoView, Seg } from "./ui";
 import { VideoExportSheet } from "./VideoExportSheet";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 const BASE_MS = 2400; // time per memory at 1×
 
 /**
@@ -153,8 +154,8 @@ export function GrowPlayer({ slides, child, title, subtitle, fileLabel }: { slid
         <View style={{ flex: 1 }} onTouchStart={holdSwipe} onTouchEnd={releaseSwipe} onTouchCancel={releaseSwipe}>
           {max > 0 ? (
             <AppSlider
-              label="Moment in the video"
-              valueText={`${idx + 1} of ${slides.length}`}
+              label={tr("Moment in the video")}
+              valueText={tr("{0} of {1}", [idx + 1, slides.length])}
               minimumValue={0}
               maximumValue={max}
               value={Math.min(pos, max)}
@@ -173,14 +174,14 @@ export function GrowPlayer({ slides, child, title, subtitle, fileLabel }: { slid
       </View>
 
       <View style={{ marginTop: 16, alignItems: "center", gap: 10 }}>
-        <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>Speed · {(per / 1000).toFixed(1)}s per photo</Text>
+        <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>{tr("Speed · {0}s per photo", [(per / 1000).toFixed(1)])}</Text>
         <View style={{ alignSelf: "stretch" }}>
           <Seg options={GROW_SPEEDS.map((v) => ({ id: v, label: `${v}×` }))} value={speed} onChange={setSpeed} />
         </View>
         <Pressable onPress={() => setLoop((l) => !l)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: loop ? t.accent : t.line, backgroundColor: loop ? t.accentSoft : t.card }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}><Icon name="loop" size={14} color={loop ? t.accentDeep : t.ink3} /><Text style={{ color: loop ? t.accentDeep : t.ink3, fontWeight: "700", fontSize: 12 }}>Loop</Text></View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}><Icon name="loop" size={14} color={loop ? t.accentDeep : t.ink3} /><Text style={{ color: loop ? t.accentDeep : t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Loop")}</Text></View>
         </Pressable>
-        <Btn label="Save as video" icon="film" onPress={() => { setPlaying(false); setExporting(true); }} style={{ alignSelf: "stretch", marginTop: 4 }} />
+        <Btn label={tr("Save as video")} icon="film" onPress={() => { setPlaying(false); setExporting(true); }} style={{ alignSelf: "stretch", marginTop: 4 }} />
       </View>
       <VideoExportSheet visible={exporting} onClose={() => setExporting(false)} slides={slides} child={child} initialSpeed={speed} title={title} subtitle={subtitle} fileLabel={fileLabel} />
     </View>

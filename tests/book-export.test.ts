@@ -4,6 +4,7 @@
  * four kids' themes with page backgrounds chosen just before exporting, and who can see a child managed by email (invites for one email,
  * remove, block, unblock).
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { planBook, sizeById, inBook, KIDS_THEMES, BOOK_SIZES, chapterOf } from "../src/lib/bookPages";
@@ -12,7 +13,7 @@ import { Child, Memory, MILESTONE_DEFS } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 const child: Child = { id: "c", name: "Maya", birth: "2024-01-10", theme: "pink", emoji: "🌸" };
 let n = 0;

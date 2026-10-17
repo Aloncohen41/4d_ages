@@ -13,6 +13,7 @@ import { Btn, Seg } from "./ui";
 import { Icon, IconName } from "./Icon";
 import { TYPE } from "../theme";
 
+import { tr } from "../lib/i18n";
 type View3 = "earlier" | "now" | "next";
 
 /**
@@ -55,7 +56,7 @@ export function MilestoneChecklist() {
   const tick = (def: MilestoneDef, date: string) => {
     const problem = logMilestone({ childId: child.id, defId: def.id, title: def.label, emoji: def.emoji, date, tagIds: [], note: "", media: [] });
     if (problem) toast(problem);
-    else toast(`${def.label}: added to ${child.name}'s story`);
+    else toast(tr("{0}: added to {1}'s story", [def.label, child.name]));
   };
   // ticking is instant and uses today's date; tap the date afterwards to change it
   const reach = (def: MilestoneDef) => tick(def, today);
@@ -67,7 +68,7 @@ export function MilestoneChecklist() {
       maximumDate: new Date(),
       onChange: (e, d) => { if (e.type === "set" && d) onPick(toISO(d)); },
     });
-  const changeDate = (m: Memory) => pickDate(m.date, (date) => { updateMemory(m.id, { date }); toast(`Date changed to ${formatDate(date)}`); });
+  const changeDate = (m: Memory) => pickDate(m.date, (date) => { updateMemory(m.id, { date }); toast(tr("Date changed to {0}", [formatDate(date)])); });
   const toggleSelected = (id: string) => setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const endSelecting = () => { setSelecting(false); setSelected([]); };
   /** One date for every selected milestone: ticked ones move to it, the others are ticked on it. */
@@ -79,19 +80,19 @@ export function MilestoneChecklist() {
         if (m) updateMemory(m.id, { date });
         else logMilestone({ childId: child.id, defId: d.id, title: d.label, emoji: d.emoji, date, tagIds: [], note: "", media: [] });
       }
-      toast(`${defs.length} milestone${defs.length === 1 ? "" : "s"} dated ${formatDate(date)}`);
+      toast(tr("{0} milestone{1} dated {2}", [defs.length, defs.length === 1 ? "" : "s", formatDate(date)]));
       endSelecting();
     });
   const undo = (m: Memory) => {
     const rich = !!(m.description || m.media.length || m.tagIds.length || m.location || m.time);
     if (!rich) {
       removeMemory(m.id);
-      toast("Unticked");
+      toast(tr("Unticked"));
       return;
     }
-    Alert.alert("Untick this milestone?", "The notes, photos and tags you added to it will be removed too.", [
-      { text: "Keep it", style: "cancel" },
-      { text: "Untick", style: "destructive", onPress: () => { removeMemory(m.id); toast("Unticked"); } },
+    Alert.alert(tr("Untick this milestone?"), tr("The notes, photos and tags you added to it will be removed too."), [
+      { text: tr("Keep it"), style: "cancel" },
+      { text: tr("Untick"), style: "destructive", onPress: () => { removeMemory(m.id); toast(tr("Unticked")); } },
     ]);
   };
   const edit = (def: MilestoneDef) => setEntrySheet({ kind: "milestone", editId: def.id });
@@ -129,7 +130,7 @@ export function MilestoneChecklist() {
             <Text style={{ color: t.ink, fontWeight: m ? "800" : "600", fontSize: 14.5, lineHeight: 19 }}>{def.label}</Text>
           </Pressable>
           {m ? (
-            <Pressable onPress={() => changeDate(m)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Reached ${formatDate(m.date)}. Change the date`} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2, alignSelf: "flex-start" }}>
+            <Pressable onPress={() => changeDate(m)} hitSlop={6} accessibilityRole="button" accessibilityLabel={tr("Reached {0}. Change the date", [formatDate(m.date)])} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2, alignSelf: "flex-start" }}>
               <Icon name="calendar" size={13} color={areaInk(meta, t)} />
               <Text style={{ color: areaInk(meta, t), fontSize: 12, fontWeight: "700", textDecorationLine: "underline" }}>{formatDate(m.date)}</Text>
               {m.description ? <Text style={{ color: t.ink3, fontSize: 12 }} numberOfLines={1}> · {m.description}</Text> : null}
@@ -137,7 +138,7 @@ export function MilestoneChecklist() {
           ) : null}
         </View>
         {m ? (
-          <Pressable onPress={() => edit(def)} hitSlop={8} accessibilityLabel={`Edit ${def.label}`} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: areaSoft(meta, t), alignItems: "center", justifyContent: "center" }}>
+          <Pressable onPress={() => edit(def)} hitSlop={8} accessibilityLabel={tr("Edit {0}", [def.label])} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: areaSoft(meta, t), alignItems: "center", justifyContent: "center" }}>
             <Icon name="edit-2" size={15} color={areaInk(meta, t)} />
           </Pressable>
         ) : null}
@@ -158,40 +159,40 @@ export function MilestoneChecklist() {
       </View>
 
       <View style={{ marginTop: 14 }}>
-        <Seg options={[{ id: "earlier" as View3, label: "Earlier" }, { id: "now" as View3, label: `Now · ${ageChip(months)}` }, { id: "next" as View3, label: "Coming up" }]} value={view} onChange={setView} />
+        <Seg options={[{ id: "earlier" as View3, label: tr("Earlier") }, { id: "now" as View3, label: tr("Now · {0}", [ageChip(months)]) }, { id: "next" as View3, label: tr("Coming up") }]} value={view} onChange={setView} />
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-        <Text style={{ color: t.ink3, fontSize: 12.5, flex: 1 }}>{selecting ? "Tap the milestones to date together." : "Tap a circle to tick it with today's date."}</Text>
+        <Text style={{ color: t.ink3, fontSize: 12.5, flex: 1 }}>{selecting ? tr("Tap the milestones to date together.") : tr("Tap a circle to tick it with today's date.")}</Text>
         <Pressable onPress={() => (selecting ? endSelecting() : setSelecting(true))} hitSlop={6} accessibilityRole="button" style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 6, paddingHorizontal: 10 }}>
           <Icon name={selecting ? "x" : "select"} size={16} color={t.accentDeep} />
-          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 13 }}>{selecting ? "Cancel" : "Select"}</Text>
+          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 13 }}>{selecting ? tr("Cancel") : tr("Select")}</Text>
         </Pressable>
       </View>
       {selecting ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6, backgroundColor: t.surfaceHigh, borderRadius: 16, padding: 10 }}>
           <Text style={[TYPE.labelLarge, { color: t.ink, flex: 1, paddingLeft: 6 }]}>{selected.length} selected</Text>
-          <Btn label="Set date" icon="calendar" onPress={dateSelected} disabled={!selected.length} />
+          <Btn label={tr("Set date")} icon="calendar" onPress={dateSelected} disabled={!selected.length} />
         </View>
       ) : null}
 
       {suggestions.length ? (
         <View style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 14, marginTop: 14 }}>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>Is this happening?</Text>
-          <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 2, marginBottom: 6 }}>Tap Yes if you've seen it. No pressure either way.</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>{tr("Is this happening?")}</Text>
+          <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 2, marginBottom: 6 }}>{tr("Tap Yes if you've seen it. No pressure either way.")}</Text>
           {suggestions.map((d) => (
             <View key={d.id} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 7, borderTopWidth: 1, borderTopColor: t.line }}>
               <Text style={{ flex: 1, color: t.ink, fontWeight: "700", fontSize: 14 }}>{d.label}</Text>
-              <Pressable onPress={() => reach(d)} style={{ backgroundColor: AREA_META[areaOf(d)].color, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}><Text style={{ color: AREA_META[areaOf(d)].ink, fontWeight: "700", fontSize: 12.5 }}>Yes!</Text></Pressable>
-              <Pressable onPress={() => answerNotYet(child.id, d.id, today)} style={{ backgroundColor: t.bg2, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 8 }}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>Not yet</Text></Pressable>
+              <Pressable onPress={() => reach(d)} style={{ backgroundColor: AREA_META[areaOf(d)].color, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}><Text style={{ color: AREA_META[areaOf(d)].ink, fontWeight: "700", fontSize: 12.5 }}>{tr("Yes!")}</Text></Pressable>
+              <Pressable onPress={() => answerNotYet(child.id, d.id, today)} style={{ backgroundColor: t.bg2, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 8 }}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{tr("Not yet")}</Text></Pressable>
             </View>
           ))}
         </View>
       ) : null}
 
       {view === "now" && beyond ? (
-        <Text style={{ color: t.ink3, textAlign: "center", padding: 24, lineHeight: 20 }}>{child.name} has grown past the 0–36 month chart.{"\n"}Everything you ticked is under Earlier, and you can add your own milestones below.</Text>
+        <Text style={{ color: t.ink3, textAlign: "center", padding: 24, lineHeight: 20 }}>{tr("{0} has grown past the 0–36 month chart. Everything you ticked is under Earlier, and you can add your own milestones below.", [child.name])}</Text>
       ) : null}
-      {view === "next" && (beyond || !inView.length) ? <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>Nothing further along the chart.</Text> : null}
+      {view === "next" && (beyond || !inView.length) ? <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("Nothing further along the chart.")}</Text> : null}
 
       {AREAS.map((area) => {
         const list = inView.filter((d) => areaOf(d) === area).sort((a, b) => bandOfDef(a) - bandOfDef(b));
@@ -219,7 +220,7 @@ export function MilestoneChecklist() {
 
       {others.length ? (
         <View style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, marginTop: 14, padding: 14 }}>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15, marginBottom: 4 }}>Your other milestones</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15, marginBottom: 4 }}>{tr("Your other milestones")}</Text>
           {others.map((m) => {
             const meta = AREA_META[areaOf([...MILESTONE_DEFS, ...custom].find((d) => d.id === m.milestoneId) ?? {})];
             return (
@@ -236,7 +237,7 @@ export function MilestoneChecklist() {
         </View>
       ) : null}
 
-      <Btn label="Add a milestone of your own" icon="plus" kind="line" onPress={() => setEntrySheet({ kind: "milestone" })} style={{ marginTop: 16 }} />
+      <Btn label={tr("Add a milestone of your own")} icon="plus" kind="line" onPress={() => setEntrySheet({ kind: "milestone" })} style={{ marginTop: 16 }} />
     </View>
   );
 }

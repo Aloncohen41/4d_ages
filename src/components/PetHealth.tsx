@@ -14,6 +14,7 @@ import { HealthReminder, REMINDER_IDEAS, REPEATS, Repeat, nextDates, readReminde
 import { addToCalendar, removeFromCalendar } from "../lib/calendarEvents";
 import { TYPE } from "../theme";
 
+import { tr } from "../lib/i18n";
 const kindOf = (id?: string) => PET_HEALTH_KINDS.find((k) => k.id === id) ?? PET_HEALTH_KINDS[PET_HEALTH_KINDS.length - 1];
 
 /** A pet's health, instead of development: their details (microchip, insurance, the vet), reminders, and every visit and treatment. */
@@ -30,14 +31,14 @@ export function PetCare() {
 
   return (
     <View>
-      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{`${child.name}'s vet visits, vaccinations and treatments, with reminders so nothing is missed.`}</Text>
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{tr("{0}'s vet visits, vaccinations and treatments, with reminders so nothing is missed.", [child.name])}</Text>
       <DetailsCard child={child} />
       <RemindersCard child={child} />
 
-      <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22, marginBottom: 8 }]}>Visits and treatments</Text>
-      {!viewOnly ? <Btn label="Add a health entry" icon="plus" onPress={() => setEntrySheet({ kind: "health" })} /> : null}
+      <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22, marginBottom: 8 }]}>{tr("Visits and treatments")}</Text>
+      {!viewOnly ? <Btn label={tr("Add a health entry")} icon="plus" onPress={() => setEntrySheet({ kind: "health" })} /> : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
-        {[{ id: "all", label: "All", emoji: "" }, ...PET_HEALTH_KINDS].map((k) => (
+        {[{ id: "all", label: tr("All"), emoji: "" }, ...PET_HEALTH_KINDS].map((k) => (
           <Pressable key={k.id} onPress={() => setFilter(k.id)} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, borderColor: filter === k.id ? t.chipOn : t.line, backgroundColor: filter === k.id ? t.chipOn : t.card }}>
             <Text style={{ color: filter === k.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{k.emoji ? `${k.emoji} ` : ""}{k.label}</Text>
           </Pressable>
@@ -53,7 +54,7 @@ export function PetCare() {
           </View>
         </Pressable>
       ))}
-      {!shown.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10 }]}>Nothing here yet. An operation can have its whole story: what happened and how they recovered.</Text> : null}
+      {!shown.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 10 }]}>{tr("Nothing here yet. An operation can have its whole story: what happened and how they recovered.")}</Text> : null}
       <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 16 }]}>{PET_HEALTH_NOTE}</Text>
     </View>
   );
@@ -69,10 +70,10 @@ function DetailsCard({ child }: { child: Child }) {
   return (
     <View style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 16, marginTop: 6 }}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text style={[TYPE.titleMedium, { color: t.ink, flex: 1 }]}>{child.name}'s details</Text>
+        <Text style={[TYPE.titleMedium, { color: t.ink, flex: 1 }]}>{tr("{0}'s details", [child.name])}</Text>
         {child.role !== "viewer" ? (
           <Pressable onPress={() => router.push({ pathname: "/classic/[id]", params: { id: PET_DETAILS_ID } })} hitSlop={8} accessibilityRole="button">
-            <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{filled.length ? "Edit" : "Add"}</Text>
+            <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{filled.length ? tr("Edit") : tr("Add")}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -85,10 +86,10 @@ function DetailsCard({ child }: { child: Child }) {
       {v.vetPhone?.trim() ? (
         <Pressable onPress={() => Linking.openURL(`tel:${v.vetPhone!.replace(/[^\d+]/g, "")}`)} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
           <Icon name="phone" size={18} color={t.accentDeep} />
-          <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Call the vet: {v.vetPhone}</Text>
+          <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Call the vet: {0}", [v.vetPhone])}</Text>
         </Pressable>
       ) : null}
-      {!filled.length && !v.vetPhone ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Their microchip number, insurance and the vet, in one place for when you need them.</Text> : null}
+      {!filled.length && !v.vetPhone ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("Their microchip number, insurance and the vet, in one place for when you need them.")}</Text> : null}
     </View>
   );
 }
@@ -106,10 +107,10 @@ function RemindersCard({ child }: { child: Child }) {
   return (
     <View style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 16, marginTop: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text style={[TYPE.titleMedium, { color: t.ink, flex: 1 }]}>Reminders</Text>
+        <Text style={[TYPE.titleMedium, { color: t.ink, flex: 1 }]}>{tr("Reminders")}</Text>
         {child.role !== "viewer" ? (
           <Pressable onPress={() => setEditing({ id: uid("rem"), title: "", kind: "vaccination", date: today, time: "09:00", repeat: "yearly", notify: true })} hitSlop={8} accessibilityRole="button">
-            <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Add</Text>
+            <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Add")}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -118,13 +119,13 @@ function RemindersCard({ child }: { child: Child }) {
           <Text style={{ fontSize: 20 }}>{kindOf(r.kind).emoji}</Text>
           <View style={{ flex: 1 }}>
             <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{r.title}</Text>
-            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{next ? `Next: ${formatDate(next)}, ${formatTime(r.time)}` : "Done"} · {REPEATS.find((x) => x.id === r.repeat)?.label}</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{next ? tr("Next: {0}, {1}", [formatDate(next), formatTime(r.time)]) : tr("Done")} · {REPEATS.find((x) => x.id === r.repeat)?.label}</Text>
           </View>
           {r.notify ? <Icon name="bell" size={18} color={t.ink3} /> : null}
           {r.calendar ? <Icon name="calendar" size={18} color={t.ink3} /> : null}
         </Pressable>
       ))}
-      {!list.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Vaccines on the dates your vet gave you, flea and worm treatments, the yearly check-up. As a notification, in your calendar, or both.</Text> : null}
+      {!list.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("Vaccines on the dates your vet gave you, flea and worm treatments, the yearly check-up. As a notification, in your calendar, or both.")}</Text> : null}
       {editing ? (
         <ReminderSheet child={child} start={editing} isNew={!list.some((x) => x.id === editing.id)} onClose={() => setEditing(null)}
           onSave={(r) => { save(list.some((x) => x.id === r.id) ? list.map((x) => (x.id === r.id ? r : x)) : [...list, r]); setEditing(null); }}
@@ -141,7 +142,7 @@ function ReminderSheet({ child, start, isNew, onClose, onSave, onDelete }: { chi
   const [calendar, setCalendar] = useState(!!start.calendar);
   const set = (patch: Partial<HealthReminder>) => setR((cur) => ({ ...cur, ...patch }));
   const save = async () => {
-    if (!r.title.trim()) return Alert.alert("Give it a name", "For example: Rabies booster.");
+    if (!r.title.trim()) return Alert.alert(tr("Give it a name"), tr("For example: Rabies booster."));
     setBusy(true);
     let next = { ...r, title: r.title.trim(), calendar };
     try {
@@ -152,7 +153,7 @@ function ReminderSheet({ child, start, isNew, onClose, onSave, onDelete }: { chi
       }
       if (calendar && !next.calendarEventId) next = { ...next, calendarEventId: await addToCalendar(next, child.name) };
     } catch (e) {
-      Alert.alert("Couldn't add it to the calendar", e instanceof Error ? e.message : String(e));
+      Alert.alert(tr("Couldn't add it to the calendar"), e instanceof Error ? e.message : String(e));
       next = { ...next, calendar: false, calendarEventId: undefined };
     } finally {
       setBusy(false);
@@ -160,7 +161,7 @@ function ReminderSheet({ child, start, isNew, onClose, onSave, onDelete }: { chi
     onSave(next);
   };
   return (
-    <Sheet visible onClose={onClose} title={isNew ? "New reminder" : "Reminder"}>
+    <Sheet visible onClose={onClose} title={isNew ? tr("New reminder") : tr("Reminder")}>
       {isNew ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
           {REMINDER_IDEAS.filter((i) => child.species === "horse" || i.title !== "Farrier").map((i) => (
@@ -170,25 +171,25 @@ function ReminderSheet({ child, start, isNew, onClose, onSave, onDelete }: { chi
           ))}
         </View>
       ) : null}
-      <Input value={r.title} onChangeText={(v) => set({ title: v })} placeholder="Example: Rabies booster" />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>When (the date your vet gave you)</Text>
+      <Input value={r.title} onChangeText={(v) => set({ title: v })} placeholder={tr("Example: Rabies booster")} />
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("When (the date your vet gave you)")}</Text>
       <DateField value={r.date} onChange={(d) => set({ date: d })} />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>Time</Text>
-      <Seg options={[{ id: "08:00", label: "8 am" }, { id: "09:00", label: "9 am" }, { id: "12:00", label: "Noon" }, { id: "18:00", label: "6 pm" }]} value={r.time} onChange={(v) => set({ time: v })} />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>Repeat</Text>
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("Time")}</Text>
+      <Seg options={[{ id: "08:00", label: tr("8 am") }, { id: "09:00", label: tr("9 am") }, { id: "12:00", label: tr("Noon") }, { id: "18:00", label: tr("6 pm") }]} value={r.time} onChange={(v) => set({ time: v })} />
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("Repeat")}</Text>
       <Seg options={REPEATS.map((x) => ({ id: x.id as Repeat, label: x.label.replace("Every ", "") }))} value={r.repeat} onChange={(v) => set({ repeat: v })} />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16 }}>
         <Icon name="bell" size={20} color={t.ink2} />
-        <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>Notification from 4D Ages</Text>
-        <Switch accessibilityLabel="Notification from 4D Ages" value={r.notify} onValueChange={(v) => set({ notify: v })} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={r.notify ? t.onAccent : t.outline} />
+        <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>{tr("Notification from 4D Ages")}</Text>
+        <Switch accessibilityLabel={tr("Notification from 4D Ages")} value={r.notify} onValueChange={(v) => set({ notify: v })} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={r.notify ? t.onAccent : t.outline} />
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 }}>
         <Icon name="calendar" size={20} color={t.ink2} />
-        <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>Add to my calendar</Text>
-        <Switch accessibilityLabel="Add to my calendar" value={calendar} onValueChange={setCalendar} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={calendar ? t.onAccent : t.outline} />
+        <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>{tr("Add to my calendar")}</Text>
+        <Switch accessibilityLabel={tr("Add to my calendar")} value={calendar} onValueChange={setCalendar} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={calendar ? t.onAccent : t.outline} />
       </View>
-      <Btn label={busy ? "Saving…" : "Save reminder"} onPress={save} disabled={busy} style={{ marginTop: 18 }} />
-      {!isNew ? <Btn label="Delete" kind="line" onPress={() => onDelete(r)} style={{ marginTop: 10 }} /> : null}
+      <Btn label={busy ? tr("Saving…") : tr("Save reminder")} onPress={save} disabled={busy} style={{ marginTop: 18 }} />
+      {!isNew ? <Btn label={tr("Delete")} kind="line" onPress={() => onDelete(r)} style={{ marginTop: 10 }} /> : null}
     </Sheet>
   );
 }

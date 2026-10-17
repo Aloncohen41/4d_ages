@@ -15,6 +15,7 @@ import { addMonths, formatDate, parseISO, toISO, todayISO } from "../../src/lib/
 import { MediaItem } from "../../src/lib/types";
 import { TYPE } from "../../src/theme";
 
+import { tr } from "../../src/lib/i18n";
 /** Pick a date with the phone's calendar. */
 function pickDate(current: string | undefined, min: string, onSet: (d: string) => void) {
   openDatePicker({
@@ -47,7 +48,7 @@ export default function ClassicEditor() {
     return v;
   });
   const [photos, setPhotos] = useState<Record<string, MediaItem[]>>(() => ({ ...(entry?.photos ?? {}) }));
-  if (!child || !tpl) return <Page title="Classics"><Text style={{ color: t.ink3, padding: 24, textAlign: "center" }}>This page isn't available.</Text></Page>;
+  if (!child || !tpl) return <Page title={tr("Classics")}><Text style={{ color: t.ink3, padding: 24, textAlign: "center" }}>{tr("This page isn't available.")}</Text></Page>;
 
   const set = (k: string, v: string | undefined) => setValues((cur) => {
     const next = { ...cur };
@@ -68,17 +69,17 @@ export default function ClassicEditor() {
     router.back();
   };
   const clear = () =>
-    Alert.alert(`Clear ${tpl.title}?`, "Everything on this page is removed, pictures included.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Clear", style: "destructive", onPress: () => { removeClassic(child.id, tpl.id); router.back(); } },
+    Alert.alert(tr("Clear {0}?", [tpl.title]), tr("Everything on this page is removed, pictures included."), [
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Clear"), style: "destructive", onPress: () => { removeClassic(child.id, tpl.id); router.back(); } },
     ]);
   // a tooth or a first: tap to give it a date, tap again to change or remove it
   const dated = (key: string, label: string) => {
     if (!values[key]) return pickDate(undefined, child.birth, (d) => set(key, d));
     Alert.alert(label, formatDate(values[key]), [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => set(key, undefined) },
-      { text: "Change date", onPress: () => pickDate(values[key], child.birth, (d) => set(key, d)) },
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Remove"), style: "destructive", onPress: () => set(key, undefined) },
+      { text: tr("Change date"), onPress: () => pickDate(values[key], child.birth, (d) => set(key, d)) },
     ]);
   };
 
@@ -94,9 +95,9 @@ export default function ClassicEditor() {
         return values[f.id] ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <View style={{ flex: 1 }}><DateField value={values[f.id]} min={child.birth} max={todayISO()} onChange={(d) => set(f.id, d)} /></View>
-            <Pressable onPress={() => set(f.id, undefined)} accessibilityLabel={`Remove the ${f.label.toLowerCase()}`} hitSlop={8}><Icon name="x" size={20} color={t.ink3} /></Pressable>
+            <Pressable onPress={() => set(f.id, undefined)} accessibilityLabel={tr("Remove the {0}", [f.label.toLowerCase()])} hitSlop={8}><Icon name="x" size={20} color={t.ink3} /></Pressable>
           </View>
-        ) : <Btn label="Add a date" icon="calendar" kind="line" onPress={() => pickDate(undefined, child.birth, (d) => set(f.id, d))} />;
+        ) : <Btn label={tr("Add a date")} icon="calendar" kind="line" onPress={() => pickDate(undefined, child.birth, (d) => set(f.id, d))} />;
       case "time":
         return <TimeField value={values[f.id]} onChange={(v) => set(f.id, v)} />;
       case "choice":
@@ -122,16 +123,16 @@ export default function ClassicEditor() {
             {list.map((m) => (
               <View key={m.id} style={{ width: size, height: size, borderRadius: 12, overflow: "hidden", backgroundColor: t.bg2 }}>
                 {m.uri ? <Image source={{ uri: m.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" /> : null}
-                <Pressable onPress={() => removePhoto(f.id, m.id)} accessibilityLabel="Remove photo" hitSlop={6} style={{ position: "absolute", top: 4, right: 4, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" }}>
+                <Pressable onPress={() => removePhoto(f.id, m.id)} accessibilityLabel={tr("Remove photo")} hitSlop={6} style={{ position: "absolute", top: 4, right: 4, width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" }}>
                   <Icon name="x" size={16} color="#fff" />
                 </Pressable>
               </View>
             ))}
             {f.kind === "photos" || !list.length ? (
-              <Pressable onPress={() => addPhotos(f)} accessibilityRole="button" accessibilityLabel={`Add ${f.label.toLowerCase()}`}
+              <Pressable onPress={() => addPhotos(f)} accessibilityRole="button" accessibilityLabel={tr("Add {0}", [f.label.toLowerCase()])}
                 style={{ width: size, height: size, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", borderColor: t.outline, alignItems: "center", justifyContent: "center", gap: 4 }}>
                 <Icon name="image" size={24} color={t.ink2} />
-                <Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{list.length ? "Add more" : "Add photo"}</Text>
+                <Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{list.length ? tr("Add more") : tr("Add photo")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -168,8 +169,8 @@ export default function ClassicEditor() {
           {field(f)}
         </View>
       ))}
-      <Btn label="Save" icon="check" onPress={save} style={{ marginTop: 24 }} />
-      {entry ? <Btn label="Clear this page" icon="trash-2" kind="line" onPress={clear} style={{ marginTop: 10 }} /> : null}
+      <Btn label={tr("Save")} icon="check" onPress={save} style={{ marginTop: 24 }} />
+      {entry ? <Btn label={tr("Clear this page")} icon="trash-2" kind="line" onPress={clear} style={{ marginTop: 10 }} /> : null}
     </Page>
   );
 }
@@ -191,8 +192,8 @@ function Mouth({ values, fieldId, onTooth, width }: { values: Record<string, str
   return (
     <View>
       <View style={{ width: w, height: h, alignSelf: "center" }}>
-        <Text style={[TYPE.labelMedium, { position: "absolute", top: h * 0.4, width: w, textAlign: "center", color: t.ink3 }]}>Upper</Text>
-        <Text style={[TYPE.labelMedium, { position: "absolute", top: h * 0.53, width: w, textAlign: "center", color: t.ink3 }]}>Lower</Text>
+        <Text style={[TYPE.labelMedium, { position: "absolute", top: h * 0.4, width: w, textAlign: "center", color: t.ink3 }]}>{tr("Upper")}</Text>
+        <Text style={[TYPE.labelMedium, { position: "absolute", top: h * 0.53, width: w, textAlign: "center", color: t.ink3 }]}>{tr("Lower")}</Text>
         {TEETH.map((x) => {
           const on = !!values[`${fieldId}.${x.id}`];
           const pos = place(x.upper, x.slot);
@@ -202,7 +203,7 @@ function Mouth({ values, fieldId, onTooth, width }: { values: Record<string, str
           );
         })}
       </View>
-      <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center" }]}>{done} of 20 teeth</Text>
+      <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center" }]}>{tr("{0} of 20 teeth", [done])}</Text>
       {TEETH.filter((x) => values[`${fieldId}.${x.id}`]).sort((a, b) => values[`${fieldId}.${a.id}`].localeCompare(values[`${fieldId}.${b.id}`])).map((x) => (
         <View key={x.id} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: t.line }}>
           <Text style={[TYPE.bodyMedium, { color: t.ink }]}>{x.label.replace(/^./, (c) => c.toUpperCase())}</Text>

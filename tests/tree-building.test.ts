@@ -2,13 +2,14 @@
  * Building the family tree by hand: joining someone to the person they're dropped next to, moving them to a row, couples taken for granted
  * (and separated), and pets at the end of the child's row. Plus the Family page's long press.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { APART, ME, connect, isCouple, linkChoices, placeInRow, separate, treeLayout } from "../src/lib/kinship";
 import type { Relative } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 const p = (id: string, relation: string, extra: Partial<Relative> = {}): Relative => ({ id, name: id, relation, ...extra });
 const mum = p("sarah", "Mummy"), dad = p("tom", "Daddy");

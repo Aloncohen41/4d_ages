@@ -3,6 +3,7 @@
  * saved file was missing or cut short), the Drive backup as one small zip with no extra copies of photos, the emergency number for where the
  * phone is, the whole birth story with confetti, the pregnancy told afterwards, and leaving the pregnancy out of the book.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { unzipBackup, zipBackup, buildBackup, BACKUP_ZIP } from "../src/lib/backupData";
@@ -14,7 +15,7 @@ import { pregnancyLastDay, usualDay } from "../src/lib/pregnancy";
 import { Memory } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---- the exports: every file copy is waited for
 const code = ["src/lib/exportFiles.ts", "src/lib/media.ts", "src/lib/localFiles.ts", "src/lib/pdf.ts", "src/components/VideoExportSheet.tsx", "src/components/Voice.tsx", "src/lib/resize.ts"].map(read).join("\n");

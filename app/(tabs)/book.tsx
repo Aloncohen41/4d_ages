@@ -24,6 +24,7 @@ import { familyOf, orderedFamily } from "../../src/lib/family";
 import { displayName } from "../../src/lib/tags";
 import { formatDate, todayISO } from "../../src/lib/date";
 
+import { tr } from "../../src/lib/i18n";
 export default function BookTab() {
   return (
     <Screen>
@@ -116,10 +117,10 @@ function Book() {
     setProgress("");
     try {
       const done = await exportBook({ child, defs, memories: chosen, style, colour, size: size.id, relatives, family, classics, siblings, places, mapUri, memorial: memorialPage, together, tags: tagList, weightUnit, heightUnit, intro, title, subtitle }, to, setProgress);
-      if (done === "saved") setMsg(onWeb ? "" : "Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
+      if (done === "saved") setMsg(onWeb ? "" : tr("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder)."));
       if (done === "shared") setMsg("");
     } catch (e) {
-      setMsg(e instanceof Error && e.message ? e.message : "Couldn't build the PDF. Try again.");
+      setMsg(e instanceof Error && e.message ? e.message : tr("Couldn't build the PDF. Try again."));
     } finally {
       setBusy(null);
       setProgress("");
@@ -130,13 +131,13 @@ function Book() {
 
   return (
     <View>
-      <Heading title={bookName(child, todayISO())} desc="Their book, ready made from their photos and milestones, in date order from the day they were born." />
+      <Heading title={bookName(child, todayISO())} desc={tr("Their book, ready made from their photos and milestones, in date order from the day they were born.")} />
 
       {person ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: t.accent, marginBottom: 12 }}>
           <Icon name="family" size={20} color={t.accent} />
-          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>A book about {displayName(person)}: only the posts they are in.</Text>
-          <Pressable onPress={() => set({ personId: undefined })} accessibilityLabel="Make the whole book again" hitSlop={8}><Icon name="x" size={20} color={t.ink2} /></Pressable>
+          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>{tr("A book about {0}: only the posts they are in.", [displayName(person)])}</Text>
+          <Pressable onPress={() => set({ personId: undefined })} accessibilityLabel={tr("Make the whole book again")} hitSlop={8}><Icon name="x" size={20} color={t.ink2} /></Pressable>
         </View>
       ) : null}
 
@@ -148,15 +149,15 @@ function Book() {
         <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{plan.pictures} photo{plan.pictures === 1 ? "" : "s"}</Text>
       </View>
       {plan.available > plan.pictures ? (
-        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2 }]}>Up to {BOOK_PHOTO_LIMIT} photos fit in one book, chosen evenly across the years. The rest of those memories are in it as words.</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2 }]}>{tr("Up to {0} photos fit in one book, chosen evenly across the years. The rest of those memories are in it as words.", [BOOK_PHOTO_LIMIT])}</Text>
       ) : null}
-      <Btn label="Customize the book" icon="t-star" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 12 }} />
-      <Btn label={`Preview all ${plan.pages.length} pages`} icon="nav-book" kind="line" onPress={() => setPreviewAt(0)} style={{ marginTop: 8 }} />
+      <Btn label={tr("Customize the book")} icon="t-star" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 12 }} />
+      <Btn label={tr("Preview all {0} pages", [plan.pages.length])} icon="nav-book" kind="line" onPress={() => setPreviewAt(0)} style={{ marginTop: 8 }} />
 
       {label("What's in the book")}
       {otherKids.length ? (
         <View style={{ marginBottom: 10 }}>
-          <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 6 }]}>Children in this book</Text>
+          <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 6 }]}>{tr("Children in this book")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             <View style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: t.chipOn }}><Text style={{ color: t.onChipOn, fontWeight: "700" }}>{child.name}</Text></View>
             {otherKids.map((k) => {
@@ -170,7 +171,7 @@ function Book() {
               );
             })}
           </View>
-          {siblings.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>One book for {[child, ...siblings].map((k) => k.name).join(" and ")}, in date order, with chapters by year.</Text> : null}
+          {siblings.length ? <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("One book for {0}, in date order, with chapters by year.", [[child, ...siblings].map((k) => k.name).join(" and ")])}</Text> : null}
         </View>
       ) : null}
       {pregnancyPosts ? (
@@ -178,8 +179,8 @@ function Book() {
           style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, marginBottom: 6 }}>
           <Icon name={prefs.pregnancy !== false ? "check-square" : "square"} size={24} color={prefs.pregnancy !== false ? t.accent : t.ink3} />
           <View style={{ flex: 1 }}>
-            <Text style={[TYPE.bodyLarge, { color: t.ink }]}>Include the pregnancy</Text>
-            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{pregnancyPosts} {pregnancyPosts === 1 ? "post" : "posts"} from before the birth: scans, the bump, cravings and milestones</Text>
+            <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{tr("Include the pregnancy")}</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("{0} {1} from before the birth: scans, the bump, cravings and milestones", [pregnancyPosts, pregnancyPosts === 1 ? "post" : "posts"])}</Text>
           </View>
         </Pressable>
       ) : null}
@@ -189,25 +190,25 @@ function Book() {
             style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 }}>
             <Icon name={prefs.inMemory ? "check-square" : "square"} size={24} color={prefs.inMemory ? t.accent : t.ink3} />
             <View style={{ flex: 1 }}>
-              <Text style={[TYPE.bodyLarge, { color: t.ink }]}>In loving memory</Text>
-              <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Makes it a book to remember {child.name} by: "In loving memory of {child.name}" on the cover, and a page for them after it</Text>
+              <Text style={[TYPE.bodyLarge, { color: t.ink }]}>{tr("In loving memory")}</Text>
+              <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Makes it a book to remember {0} by: \"In loving memory of {1}\" on the cover, and a page for them after it", [child.name, child.name])}</Text>
             </View>
           </Pressable>
-          {prefs.inMemory ? <Input value={prefs.memorialWords ?? ""} onChangeText={(v) => set({ memorialWords: v })} placeholder="A few words. Example: Our best friend, forever in our hearts" multiline style={{ minHeight: 60, textAlignVertical: "top" }} /> : null}
+          {prefs.inMemory ? <Input value={prefs.memorialWords ?? ""} onChangeText={(v) => set({ memorialWords: v })} placeholder={tr("A few words. Example: Our best friend, forever in our hearts")} multiline style={{ minHeight: 60, textAlignVertical: "top" }} /> : null}
         </View>
       ) : null}
       <View style={{ flexDirection: "row", gap: 10 }}>
         <View style={{ flex: 1 }}>
-          <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 4 }]}>From</Text>
+          <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 4 }]}>{tr("From")}</Text>
           <DateField value={prefs.from || child.birth} min={child.birth} max={prefs.to || todayISO()} onChange={(d) => set({ from: d <= child.birth ? undefined : d })} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 4 }]}>To</Text>
+          <Text style={[TYPE.labelMedium, { color: t.ink3, marginBottom: 4 }]}>{tr("To")}</Text>
           <DateField value={prefs.to || todayISO()} min={prefs.from || child.birth} max={todayISO()} onChange={(d) => set({ to: d >= todayISO() ? undefined : d })} />
         </View>
       </View>
-      {prefs.from || prefs.to ? <Btn label="From birth to today" kind="line" onPress={() => set({ from: undefined, to: undefined })} style={{ marginTop: 8 }} /> : null}
-      <Btn label={leftOut ? `Choose posts (${leftOut} left out)` : "Choose posts"} icon="select" kind="line" onPress={() => setChoosing(true)} style={{ marginTop: 8 }} />
+      {prefs.from || prefs.to ? <Btn label={tr("From birth to today")} kind="line" onPress={() => set({ from: undefined, to: undefined })} style={{ marginTop: 8 }} /> : null}
+      <Btn label={leftOut ? tr("Choose posts ({0} left out)", [leftOut]) : tr("Choose posts")} icon="select" kind="line" onPress={() => setChoosing(true)} style={{ marginTop: 8 }} />
 
       {label("Page size", 18)}
       <View style={{ gap: 6 }}>
@@ -225,7 +226,7 @@ function Book() {
       </View>
 
       {/* the theme and colour are chosen in the Customize view, and the book is exported from there (its share button, top right) */}
-      <Btn label="Customize and export" icon="pdf" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 18 }} />
+      <Btn label={tr("Customize and export")} icon="pdf" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 18 }} />
       <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>{size.label} · {plan.pages.length} pages</Text>
       {customizing ? (
         <BookCustomizer input={input} pages={plan.pages.length} pet={isPet(child)} onStyle={(v) => set({ style: v })} onColour={(c) => set({ colour: c })}

@@ -2,13 +2,14 @@
  * The Material 3 look: colour roles, type, icons, and the shared components (buttons, text fields, segmented buttons, sheets, navigation bar,
  * top bar, FAB, switches). Reads the source, so the structure is pinned down even though it can't be seen without a phone.
  */
+import { untr } from "./untr";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { withAlpha } from "../src/lib/m3";
 import { THEMES } from "../src/theme";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 const walk = (d: string): string[] => readdirSync(join(root, d)).flatMap((n) => { const p = `${d}/${n}`; return statSync(join(root, p)).isDirectory() ? walk(p) : p.endsWith(".tsx") || p.endsWith(".ts") ? [p] : []; });
 const tsx = [...walk("app"), ...walk("src")].filter((f) => f.endsWith(".tsx"));
 const all = [...walk("app"), ...walk("src")];

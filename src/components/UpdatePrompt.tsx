@@ -4,6 +4,7 @@ import { Alert, AppState, Linking } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CURRENT_VERSION, Release, latestRelease, shouldOffer } from "../lib/updateCheck";
 
+import { tr } from "../lib/i18n";
 const LATER_KEY = "4d-ages-update-later";
 /** Back in the app after this long, it looks again. */
 const RECHECK_MS = 6 * 60 * 60 * 1000;
@@ -39,11 +40,11 @@ export function UpdatePrompt() {
 /** "Version 1.0.7 is available": Update downloads the APK, which installs over this version and keeps everything. */
 export function offer(release: Release) {
   Alert.alert(
-    `Version ${release.version} is available`,
-    `You have ${CURRENT_VERSION}. The update installs over this version and keeps everything on your phone. After it downloads, open the file to install it.`,
+    tr("Version {0} is available", [release.version]),
+    tr("You have {0}. The update installs over this version and keeps everything on your phone. After it downloads, open the file to install it.", [CURRENT_VERSION]),
     [
-      { text: "Later", style: "cancel", onPress: () => { AsyncStorage.setItem(LATER_KEY, JSON.stringify({ version: release.version, at: Date.now() })).catch(() => undefined); } },
-      { text: "Update", onPress: () => { Linking.openURL(release.apkUrl).catch(() => Linking.openURL(release.pageUrl).catch(() => undefined)); } },
+      { text: tr("Later"), style: "cancel", onPress: () => { AsyncStorage.setItem(LATER_KEY, JSON.stringify({ version: release.version, at: Date.now() })).catch(() => undefined); } },
+      { text: tr("Update"), onPress: () => { Linking.openURL(release.apkUrl).catch(() => Linking.openURL(release.pageUrl).catch(() => undefined)); } },
     ],
   );
 }

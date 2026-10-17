@@ -21,19 +21,20 @@ import { MediaItem, Memory, MemoryType } from "../../src/lib/types";
 import { ageBucket } from "../../src/lib/date";
 import { TYPE } from "../../src/theme";
 
+import { tr } from "../../src/lib/i18n";
 type TypeFilter = "all" | MemoryType;
 // the categories a post can have
 const CATEGORIES: { id: TypeFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "story", label: "Stories" },
-  { id: "photo", label: "Pictures" },
-  { id: "first", label: "Firsts" },
-  { id: "last", label: "Lasts" },
-  { id: "milestone", label: "Milestones" },
-  { id: "measure", label: "Growth" },
+  { id: "all", get label() { return tr("All"); } },
+  { id: "story", get label() { return tr("Stories"); } },
+  { id: "photo", get label() { return tr("Pictures"); } },
+  { id: "first", get label() { return tr("Firsts"); } },
+  { id: "last", get label() { return tr("Lasts"); } },
+  { id: "milestone", get label() { return tr("Milestones"); } },
+  { id: "measure", get label() { return tr("Growth"); } },
 ];
 /** A pet's: no lasts or milestones (they have tricks and firsts), and their growth is their weight. */
-const PET_CATEGORIES: { id: TypeFilter; label: string }[] = CATEGORIES.filter((c) => c.id !== "last" && c.id !== "milestone").map((c) => (c.id === "measure" ? { ...c, label: "Weight" } : c));
+const PET_CATEGORIES: { id: TypeFilter; label: string }[] = CATEGORIES.filter((c) => c.id !== "last" && c.id !== "milestone").map((c) => (c.id === "measure" ? { ...c, label: tr("Weight") } : c));
 
 export default function HomeTab() {
   return (
@@ -104,17 +105,17 @@ function Home() {
     <View>
       {/* title, with the tools beside it; the feed below is for reading */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <Text style={[TYPE.headlineSmall, { color: t.ink, flex: 1 }]} numberOfLines={1}>{child.name}'s Story</Text>
+        <Text style={[TYPE.headlineSmall, { color: t.ink, flex: 1 }]} numberOfLines={1}>{tr("{0}'s Story", [child.name])}</Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
-          <IconButton name="search" label="Search" onPress={() => setSearching(true)} active={!!period} />
-          <IconButton name="tag" label="Filter by tags" onPress={() => setTagSheet({ keys: homeTags, forHome: true })} active={homeTags.length > 0} />
+          <IconButton name="search" label={tr("Search")} onPress={() => setSearching(true)} active={!!period} />
+          <IconButton name="tag" label={tr("Filter by tags")} onPress={() => setTagSheet({ keys: homeTags, forHome: true })} active={homeTags.length > 0} />
         </View>
       </View>
 
       {child.role === "viewer" ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, backgroundColor: t.bg2, marginBottom: 12 }}>
           <Icon name="eye" size={20} color={t.ink2} />
-          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>View only: you see the posts {child.name}'s family shared with you.</Text>
+          <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>{tr("View only: you see the posts {0}'s family shared with you.", [child.name])}</Text>
         </View>
       ) : null}
 
@@ -122,7 +123,7 @@ function Home() {
       <HomeCards child={child} onView={setViewing} />
 
       <View style={{ marginBottom: 12 }}>
-        <Seg options={[{ id: "story", label: "Stories" }, { id: "grow", label: "Watch them grow" }]} value={view} onChange={setView} />
+        <Seg options={[{ id: "story", label: tr("Stories") }, { id: "grow", label: tr("Watch them grow") }]} value={view} onChange={setView} />
       </View>
 
       {view === "grow" ? (
@@ -155,7 +156,7 @@ function Home() {
             {list.length > 3 ? (
               <Pressable onPress={jumpToStart} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                 <Icon name="arrow-down" size={14} color={t.ink3} />
-                <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>Jump to the beginning</Text>
+                <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Jump to the beginning")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -163,8 +164,8 @@ function Home() {
           {list.length === 0 ? (
             <View style={{ alignItems: "center", padding: 30 }}>
               <Icon name={typeFilter !== "all" || period || homeTags.length ? "search" : "images"} size={40} color={t.ink3} />
-              <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{typeFilter !== "all" || period || homeTags.length ? "Nothing here" : "No stories yet"}</Text>
-              <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{typeFilter !== "all" || period || homeTags.length ? "Try another category, date or tag." : "Tap + to add the first one."}</Text>
+              <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{typeFilter !== "all" || period || homeTags.length ? tr("Nothing here") : tr("No stories yet")}</Text>
+              <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{typeFilter !== "all" || period || homeTags.length ? tr("Try another category, date or tag.") : tr("Tap + to add the first one.")}</Text>
             </View>
           ) : (
             groups.map((g) => (
@@ -181,14 +182,14 @@ function Home() {
 
           {hasMore ? (
             <Pressable onPress={more} style={{ alignSelf: "center", paddingVertical: 12, paddingHorizontal: 18, borderRadius: 99, backgroundColor: t.bg2, marginTop: 4 }}>
-              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13 }}>Show older posts</Text>
+              <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13 }}>{tr("Show older posts")}</Text>
             </Pressable>
           ) : null}
 
           {list.length > 3 ? (
             <Pressable onPress={scroll.toTop} style={{ alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 10 }}>
               <Icon name="arrow-up" size={14} color={t.ink3} />
-              <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>Back to the newest</Text>
+              <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Back to the newest")}</Text>
             </Pressable>
           ) : null}
         </>

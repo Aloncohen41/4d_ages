@@ -9,6 +9,7 @@ import { useTheme } from "../lib/useTheme";
 import { TYPE } from "../theme";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /*
  * The book's pages on the phone, drawn from the very same HTML the PDF is printed from (bookHtml.ts), so every page — the layout, the drawings,
  * each picture's crop — looks exactly as it will in the book. Pictures are read straight from the phone (not copied in), and only as you reach them.
@@ -48,7 +49,7 @@ export function BookOverview({ input, count, width, onOpen }: { input: BookViewI
   };
   return (
     <View style={{ width, height }}>
-      <WebView accessibilityLabel="The book's pages" {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} scrollEnabled={false} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
+      <WebView accessibilityLabel={tr("The book's pages")} {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} scrollEnabled={false} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
     </View>
   );
 }
@@ -78,17 +79,17 @@ export function BookPreviewModal({ input, pages, start = 0, onClose }: { input: 
     <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent {...dialogName("The book, page by page")}>
       <View style={{ flex: 1, backgroundColor: t.bg3, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 6 }}>
-          <Pressable onPress={onClose} accessibilityLabel="Close preview" hitSlop={6} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="x" size={24} color={t.ink2} /></Pressable>
-          <Text style={[TYPE.titleMedium, { color: t.ink, flex: 1, textAlign: "center" }]}>Page {index + 1} of {pages}</Text>
+          <Pressable onPress={onClose} accessibilityLabel={tr("Close preview")} hitSlop={6} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="x" size={24} color={t.ink2} /></Pressable>
+          <Text style={[TYPE.titleMedium, { color: t.ink, flex: 1, textAlign: "center" }]}>{tr("Page {0} of {1}", [index + 1, pages])}</Text>
           <View style={{ width: 44 }} />
         </View>
         <View style={{ flex: 1, minHeight: height * 0.4 }}>
-          <WebView accessibilityLabel="The book's pages" ref={web} {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
+          <WebView accessibilityLabel={tr("The book's pages")} ref={web} {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
           {loading ? <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={t.accent} /></View> : null}
         </View>
         <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 28, paddingVertical: 14 }}>
-          <Pressable onPress={() => go(index - 1)} disabled={index === 0} accessibilityLabel="Previous page" style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: t.card, alignItems: "center", justifyContent: "center", opacity: index === 0 ? 0.4 : 1 }}><Icon name="chevron-left" size={28} color={t.ink} /></Pressable>
-          <Pressable onPress={() => go(index + 1)} disabled={index === pages - 1} accessibilityLabel="Next page" style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: t.card, alignItems: "center", justifyContent: "center", opacity: index === pages - 1 ? 0.4 : 1 }}><Icon name="chevron-right" size={28} color={t.ink} /></Pressable>
+          <Pressable onPress={() => go(index - 1)} disabled={index === 0} accessibilityLabel={tr("Previous page")} style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: t.card, alignItems: "center", justifyContent: "center", opacity: index === 0 ? 0.4 : 1 }}><Icon name="chevron-left" size={28} color={t.ink} /></Pressable>
+          <Pressable onPress={() => go(index + 1)} disabled={index === pages - 1} accessibilityLabel={tr("Next page")} style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: t.card, alignItems: "center", justifyContent: "center", opacity: index === pages - 1 ? 0.4 : 1 }}><Icon name="chevron-right" size={28} color={t.ink} /></Pressable>
         </View>
       </View>
     </Modal>

@@ -22,6 +22,7 @@ import { videoFileName } from "../lib/fileNames";
 import { fileExport } from "../lib/fileExport";
 import { THEMES, TYPE } from "../theme";
 
+import { tr } from "../lib/i18n";
 /**
  * The places a pet has been, on a map: parks, beaches, holidays, home. Then their pack, their favourite things and the page for their kind
  * of pet, and at the bottom, the journey year by year (as a video too, and a page in their book).
@@ -45,7 +46,7 @@ export function PetAdventures() {
 
   return (
     <View>
-      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{`Everywhere ${child.name} has been: the park, the beach, holidays, and home.`}</Text>
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{tr("Everywhere {0} has been: the park, the beach, holidays, and home.", [child.name])}</Text>
       {places.length ? (
         <>
           <Text style={[TYPE.titleSmall, { color: t.accentDeep, marginBottom: 8 }]}>{placesSummary(places)}</Text>
@@ -54,17 +55,17 @@ export function PetAdventures() {
       ) : (
         <View style={{ backgroundColor: t.bg2, borderRadius: 18, padding: 18, alignItems: "center" }}>
           <Text style={{ fontSize: 40 }}>🗺️</Text>
-          <Text style={[TYPE.bodyMedium, { color: t.ink2, textAlign: "center", marginTop: 6 }]}>Add the places {child.name} has been, and watch the map fill up.</Text>
+          <Text style={[TYPE.bodyMedium, { color: t.ink2, textAlign: "center", marginTop: 6 }]}>{tr("Add the places {0} has been, and watch the map fill up.", [child.name])}</Text>
         </View>
       )}
-      {!viewOnly ? <Btn label="Add a place" icon="place" onPress={() => setEditing({ id: uid("place"), name: "", lat: 0, lon: 0, date: todayISO() })} style={{ marginTop: 12 }} /> : null}
+      {!viewOnly ? <Btn label={tr("Add a place")} icon="place" onPress={() => setEditing({ id: uid("place"), name: "", lat: 0, lon: 0, date: todayISO() })} style={{ marginTop: 12 }} /> : null}
 
       {years.slice().reverse().map(({ year, places: list }) => (
         <View key={year} style={{ marginTop: 16 }}>
           <Text style={[TYPE.titleMedium, { color: t.ink, marginBottom: 4 }]}>{year}</Text>
           {list.slice().reverse().map((p) => (
             <Pressable key={p.id} onPress={() => !viewOnly && setEditing(p)}
-              onLongPress={() => !viewOnly && Alert.alert("Remove this place?", p.name, [{ text: "Cancel", style: "cancel" }, { text: "Remove", style: "destructive", onPress: () => save(places.filter((x) => x.id !== p.id)) }])}
+              onLongPress={() => !viewOnly && Alert.alert(tr("Remove this place?"), p.name, [{ text: tr("Cancel"), style: "cancel" }, { text: tr("Remove"), style: "destructive", onPress: () => save(places.filter((x) => x.id !== p.id)) }])}
               style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.line }}>
               <Icon name="place" size={20} color={t.accent} />
               <View style={{ flex: 1 }}>
@@ -78,7 +79,7 @@ export function PetAdventures() {
       ))}
 
       {/* their pack, their favourite things, and the page for their kind of pet */}
-      <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 24, marginBottom: 8 }]}>About {child.name}</Text>
+      <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 24, marginBottom: 8 }]}>{tr("About {0}", [child.name])}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
         {pages.map((tpl) => {
           const done = filledCount(tpl, allClassics.find((c) => c.childId === child.id && c.id === tpl.id));
@@ -87,7 +88,7 @@ export function PetAdventures() {
               style={{ width: "48.5%", backgroundColor: t.card, borderRadius: 18, borderWidth: 1, borderColor: t.line, padding: 14 }}>
               <Icon name={tpl.icon} size={22} color={t.accentDeep} />
               <Text style={[TYPE.titleSmall, { color: t.ink, marginTop: 6 }]}>{tpl.title}</Text>
-              <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={2}>{done ? `${done} filled in` : tpl.desc}</Text>
+              <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={2}>{done ? tr("{0} filled in", [done]) : tpl.desc}</Text>
             </Pressable>
           );
         })}
@@ -96,10 +97,10 @@ export function PetAdventures() {
       {/* the journey, year by year (with more than one place) */}
       {places.length > 1 ? (
         <View style={{ marginTop: 26 }}>
-          <Text style={[TYPE.titleMedium, { color: t.ink }]}>The journey, year by year</Text>
-          <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2, marginBottom: 10 }]}>Where {child.name} has been, a year at a time. The map is in their book too.</Text>
+          <Text style={[TYPE.titleMedium, { color: t.ink }]}>{tr("The journey, year by year")}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2, marginBottom: 10 }]}>{tr("Where {0} has been, a year at a time. The map is in their book too.", [child.name])}</Text>
           <JourneyMap places={places} width={width - 32} />
-          <Btn label="Make it a video" icon="film" kind="soft" onPress={() => setVideo(true)} style={{ marginTop: 12 }} />
+          <Btn label={tr("Make it a video")} icon="film" kind="soft" onPress={() => setVideo(true)} style={{ marginTop: 12 }} />
         </View>
       ) : null}
 
@@ -117,18 +118,18 @@ function PlaceSheet({ child, start, isNew, onClose, onSave }: { child: Child; st
   const [date, setDate] = useState(start.date);
   const [note, setNote] = useState(start.note ?? "");
   const save = () => {
-    if (!where) return Alert.alert("Where was it?", "Search for it, or drop a pin on the map.");
+    if (!where) return Alert.alert(tr("Where was it?"), tr("Search for it, or drop a pin on the map."));
     onSave({ ...start, name: name.trim() || where.name, detail: where.detail || undefined, lat: where.lat, lon: where.lon, country: where.country, countryCode: where.countryCode, date, note: note.trim() || undefined });
   };
   return (
-    <Sheet visible onClose={onClose} title={isNew ? "Add a place" : "Place"}>
+    <Sheet visible onClose={onClose} title={isNew ? tr("Add a place") : tr("Place")}>
       <PlacePicker value={where} onChange={(p) => { setWhere(p); if (p && !name.trim()) setName(p.name); }} />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>What you call it</Text>
-      <Input value={name} onChangeText={setName} placeholder="Example: The big beach" />
-      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>When</Text>
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("What you call it")}</Text>
+      <Input value={name} onChangeText={setName} placeholder={tr("Example: The big beach")} />
+      <Text style={[TYPE.labelLarge, { color: t.ink2, marginTop: 14, marginBottom: 6 }]}>{tr("When")}</Text>
       <DateField value={date} onChange={setDate} min={child.birth} max={todayISO()} />
-      <Input value={note} onChangeText={setNote} placeholder="A few words (optional)" multiline style={{ marginTop: 12, minHeight: 60, textAlignVertical: "top" }} />
-      <Btn label="Save" onPress={save} style={{ marginTop: 16 }} />
+      <Input value={note} onChangeText={setNote} placeholder={tr("A few words (optional)")} multiline style={{ marginTop: 12, minHeight: 60, textAlignVertical: "top" }} />
+      <Btn label={tr("Save")} onPress={save} style={{ marginTop: 16 }} />
     </Sheet>
   );
 }
@@ -148,30 +149,30 @@ function JourneyVideoSheet({ child, places, onClose }: { child: Child; places: P
       const out = await createJourneyVideo(child, places, THEMES[child.theme], format, setProgress, memorial ? (words.trim() || "Forever in our hearts") : undefined);
       setUri(await withFriendlyName(out, fileName));
     } catch (e) {
-      Alert.alert("Couldn't make the video", e instanceof Error ? e.message : String(e));
+      Alert.alert(tr("Couldn't make the video"), e instanceof Error ? e.message : String(e));
     } finally {
       setProgress(null);
     }
   };
   return (
-    <Sheet visible onClose={onClose} title="The journey as a video">
+    <Sheet visible onClose={onClose} title={tr("The journey as a video")}>
       {!uri ? (
         <>
-          <Seg options={[{ id: "square" as VideoFormat, label: "Square" }, { id: "vertical" as VideoFormat, label: "Tall (stories)" }]} value={format} onChange={setFormat} />
+          <Seg options={[{ id: "square" as VideoFormat, label: tr("Square") }, { id: "vertical" as VideoFormat, label: tr("Tall (stories)") }]} value={format} onChange={setFormat} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16 }}>
-            <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>End with "In loving memory"</Text>
-            <Switch accessibilityLabel={'End with "In loving memory"'} value={memorial} onValueChange={setMemorial} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={memorial ? t.onAccent : t.outline} />
+            <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>{tr("End with \"In loving memory\"")}</Text>
+            <Switch accessibilityLabel={tr("End with \"In loving memory\"")} value={memorial} onValueChange={setMemorial} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={memorial ? t.onAccent : t.outline} />
           </View>
-          {memorial ? <Input value={words} onChangeText={setWords} placeholder="A few words. Example: Our best boy, forever in our hearts" multiline style={{ marginTop: 10, minHeight: 60, textAlignVertical: "top" }} /> : null}
+          {memorial ? <Input value={words} onChangeText={setWords} placeholder={tr("A few words. Example: Our best boy, forever in our hearts")} multiline style={{ marginTop: 10, minHeight: 60, textAlignVertical: "top" }} /> : null}
           {progress != null ? (
-            <View style={{ alignItems: "center", marginTop: 18 }}><ActivityIndicator color={t.accent} /><Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>Making the video… {Math.round(progress * 100)}%</Text></View>
-          ) : <Btn label="Make the video" icon="film" onPress={make} style={{ marginTop: 18 }} />}
+            <View style={{ alignItems: "center", marginTop: 18 }}><ActivityIndicator color={t.accent} /><Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("Making the video… {0}%", [Math.round(progress * 100)])}</Text></View>
+          ) : <Btn label={tr("Make the video")} icon="film" onPress={make} style={{ marginTop: 18 }} />}
         </>
       ) : (
         <>
-          <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>{child.name}'s adventures are ready.</Text>
-          <Btn label="Share" icon="share" onPress={() => { if (onWeb) { shareFile(uri, /\.webm$/i.test(uri) ? fileName.replace(/\.mp4$/, ".webm") : fileName, "video/mp4"); return; } const fx = fileExport(); if (fx) fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, "")); }} style={{ marginTop: 14 }} />
-          <Btn label="Save to phone" icon="download" kind="line" onPress={async () => { try { await saveVideoToGallery(uri, fileName); Alert.alert("Saved", "It's in your phone's gallery."); } catch (e) { Alert.alert("Couldn't save it", e instanceof Error ? e.message : String(e)); } }} style={{ marginTop: 10 }} />
+          <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>{tr("{0}'s adventures are ready.", [child.name])}</Text>
+          <Btn label={tr("Share")} icon="share" onPress={() => { if (onWeb) { shareFile(uri, /\.webm$/i.test(uri) ? fileName.replace(/\.mp4$/, ".webm") : fileName, "video/mp4"); return; } const fx = fileExport(); if (fx) fx.share(uri, "video/mp4", fileName.replace(/\.mp4$/, "")); }} style={{ marginTop: 14 }} />
+          <Btn label={tr("Save to phone")} icon="download" kind="line" onPress={async () => { try { await saveVideoToGallery(uri, fileName); Alert.alert(tr("Saved"), tr("It's in your phone's gallery.")); } catch (e) { Alert.alert(tr("Couldn't save it"), e instanceof Error ? e.message : String(e)); } }} style={{ marginTop: 10 }} />
         </>
       )}
     </Sheet>

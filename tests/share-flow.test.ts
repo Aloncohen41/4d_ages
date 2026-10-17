@@ -2,12 +2,13 @@
  * The share flow: codes and emails cleaned up, plain-language errors, the invite message, and the one database rule that blocked sharing
  * (you must always see your own membership, or the first one can never be added).
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanEmail, friendlyShareError, inviteMessage, isEmail, kindSummary, normalizeCode } from "../src/lib/shareFlow";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 ok("codes: typed with spaces or dashes, in lower case, or pasted inside the whole message", normalizeCode(" 4f9a-2c1b ") === "4F9A2C1B" && normalizeCode("Or open 4D Ages and enter 4F9A2C1B. It's valid for 7 days.") === "4F9A2C1B" && normalizeCode("abc") === "ABC");
 ok("emails: checked, and compared without spaces or capitals", isEmail("rosa@gmail.com") && !isEmail("rosa@") && !isEmail("rosa gmail.com") && cleanEmail("  Rosa@Gmail.com ") === "rosa@gmail.com");

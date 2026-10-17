@@ -8,6 +8,7 @@ import { Icon, IconName } from "./Icon";
 import { Btn, MediaGallery, PhotoView } from "./ui";
 import { ThumbPicker } from "./ThumbPicker";
 
+import { tr } from "../lib/i18n";
 /**
  * The pictures and videos of a post. The first one is the main picture (shown big everywhere); tap one to move it,
  * make it the main one, replace it, remove it — or add more. Nothing is deleted from the phone until you save.
@@ -79,22 +80,22 @@ export function MediaEditor({ media, onChange, onAdded, protectedFiles, videos =
     <View>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 18, marginBottom: 8 }}>
         <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>{label} {media.length ? `(${media.length})` : ""}</Text>
-        <Btn icon={busy ? undefined : "plus"} label={busy ? "Adding…" : media.length ? "Add more" : "Add"} onPress={add} disabled={busy} style={{ paddingVertical: 8, paddingHorizontal: 14 }} />
+        <Btn icon={busy ? undefined : "plus"} label={busy ? tr("Adding…") : media.length ? tr("Add more") : tr("Add")} onPress={add} disabled={busy} style={{ paddingVertical: 8, paddingHorizontal: 14 }} />
       </View>
 
       {!media.length ? (
         <Pressable onPress={add} style={{ borderWidth: 2, borderStyle: "dashed", borderColor: t.line, borderRadius: 14, padding: 18, alignItems: "center", backgroundColor: t.bg2 }}>
           <Icon name="image" size={24} color={t.ink3} />
-          <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5, marginTop: 6 }}>Add a photo or video. The first one is the main picture.</Text>
+          <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5, marginTop: 6 }}>{tr("Add a photo or video. The first one is the main picture.")}</Text>
         </Pressable>
       ) : (
         <>
           <Pressable onPress={() => setViewing(0)}>
             <PhotoView photo={{ media: [media[0]], emoji: "📷", palette: "peach" }} fit="auto" minRatio={0.75} maxRatio={1.6} style={{ width: "100%", borderRadius: 16, overflow: "hidden" }} emojiSize={36} />
-            <Text style={{ position: "absolute", left: 10, top: 10, backgroundColor: t.gold, color: "#2c1f15", fontWeight: "700", fontSize: 11, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, overflow: "hidden" }}>★ Main picture</Text>
+            <Text style={{ position: "absolute", left: 10, top: 10, backgroundColor: t.gold, color: "#2c1f15", fontWeight: "700", fontSize: 11, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, overflow: "hidden" }}>{tr("★ Main picture")}</Text>
           </Pressable>
 
-          {media.length > 1 ? <Text style={{ color: t.ink3, fontSize: 12, marginTop: 12, marginBottom: 6 }}>Tap a picture to move it, make it the main one, replace or remove it.</Text> : null}
+          {media.length > 1 ? <Text style={{ color: t.ink3, fontSize: 12, marginTop: 12, marginBottom: 6 }}>{tr("Tap a picture to move it, make it the main one, replace or remove it.")}</Text> : null}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: media.length > 1 ? 0 : 12 }}>
             {media.map((m, i) => (
               <Pressable key={`${m.id}-${i}`} onPress={() => setSel(i)} style={{ width: "31.5%", aspectRatio: 1, borderRadius: 12, overflow: "hidden", borderWidth: 3, borderColor: i === sel ? t.accent : "transparent" }}>
@@ -106,12 +107,12 @@ export function MediaEditor({ media, onChange, onAdded, protectedFiles, videos =
 
           {cur ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-              <Tool icon="chevron-left" text="Earlier" onPress={() => move(sel, sel - 1)} disabled={sel === 0} />
-              <Tool icon="chevron-right" text="Later" onPress={() => move(sel, sel + 1)} disabled={sel === media.length - 1} />
-              <Tool icon="star" text="Make main" onPress={() => move(sel, 0)} disabled={sel === 0} />
-              <Tool icon="refresh-cw" text="Replace" onPress={() => replace(sel)} disabled={busy} />
-              {cur.kind === "video" ? <Tool icon="film" text="Cover frame" onPress={() => setCoverFor(sel)} /> : null}
-              <Tool icon="trash-2" text="Remove" onPress={() => remove(sel)} danger />
+              <Tool icon="chevron-left" text={tr("Earlier")} onPress={() => move(sel, sel - 1)} disabled={sel === 0} />
+              <Tool icon="chevron-right" text={tr("Later")} onPress={() => move(sel, sel + 1)} disabled={sel === media.length - 1} />
+              <Tool icon="star" text={tr("Make main")} onPress={() => move(sel, 0)} disabled={sel === 0} />
+              <Tool icon="refresh-cw" text={tr("Replace")} onPress={() => replace(sel)} disabled={busy} />
+              {cur.kind === "video" ? <Tool icon="film" text={tr("Cover frame")} onPress={() => setCoverFor(sel)} /> : null}
+              <Tool icon="trash-2" text={tr("Remove")} onPress={() => remove(sel)} danger />
             </View>
           ) : null}
         </>

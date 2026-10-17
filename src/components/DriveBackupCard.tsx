@@ -7,6 +7,7 @@ import { formatDate, formatTime, toHHMM } from "../lib/date";
 import { TYPE } from "../theme";
 import { Btn } from "./ui";
 
+import { tr } from "../lib/i18n";
 const when = (ms: number) => { const d = new Date(ms); return `${formatDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)}, ${formatTime(toHHMM(d))}`; };
 
 /**
@@ -27,14 +28,14 @@ export function DriveBackupCard() {
     try {
       await what();
     } catch (e) {
-      Alert.alert("Google Drive", e instanceof Error ? e.message : String(e));
+      Alert.alert(tr("Google Drive"), e instanceof Error ? e.message : String(e));
     } finally {
       setBusy("");
     }
   };
   const backup = () => run(async () => {
     await backupNow(true, setBusy);
-    if (!useStore.getState().driveBackup.error) showToast({ title: "Backed up to Google Drive", body: "Your books are saved in “4D Ages backup.zip” in your Drive." });
+    if (!useStore.getState().driveBackup.error) showToast({ title: tr("Backed up to Google Drive"), body: tr("Your books are saved in “4D Ages backup.zip” in your Drive.") });
   });
   const toggle = (on: boolean) => {
     setPrefs({ enabled: on });
@@ -43,14 +44,14 @@ export function DriveBackupCard() {
   const restore = () => run(async () => {
     setBusy("Looking for your backup…");
     const found = await findBackup();
-    if (!found) return Alert.alert("No backup yet", "There's no 4D Ages backup in this Google account's Drive yet.");
+    if (!found) return Alert.alert(tr("No backup yet"), tr("There's no 4D Ages backup in this Google account's Drive yet."));
     await new Promise<void>((resolve, reject) => Alert.alert(
-      "Restore from Google Drive?",
-      `The backup from ${when(found.savedAt)} (${found.kids} ${found.kids === 1 ? "child" : "children"}, ${found.memories} memories) replaces the books on this phone, and goes back to your account too. Anything added since that backup is lost.`,
-      [{ text: "Cancel", style: "cancel", onPress: () => reject(new Error("Restoring was cancelled.")) }, { text: "Restore", style: "destructive", onPress: () => resolve() }],
+      tr("Restore from Google Drive?"),
+      tr("The backup from {0} ({1} {2}, {3} memories) replaces the books on this phone, and goes back to your account too. Anything added since that backup is lost.", [when(found.savedAt), found.kids, found.kids === 1 ? "child" : "children", found.memories]),
+      [{ text: tr("Cancel"), style: "cancel", onPress: () => reject(new Error(tr("Restoring was cancelled."))) }, { text: tr("Restore"), style: "destructive", onPress: () => resolve() }],
     ));
     const kids = await restoreFromDrive(setBusy);
-    showToast({ title: "Restored from Google Drive", body: `${kids} ${kids === 1 ? "book is" : "books are"} back on this phone.` });
+    showToast({ title: tr("Restored from Google Drive"), body: tr("{0} {1} back on this phone.", [kids, kids === 1 ? "book is" : "books are"]) });
   }).catch(() => undefined);
 
   const status = busy
@@ -67,15 +68,15 @@ export function DriveBackupCard() {
     <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>Back up to Google Drive</Text>
-          <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Every book in one small file, “4D Ages backup.zip”, in your own Google Drive. Photos and videos aren't copied again: they're kept safely in your account and come back with the books. When it's on, it backs up a minute after each change.</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>{tr("Back up to Google Drive")}</Text>
+          <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{tr("Every book in one small file, “4D Ages backup.zip”, in your own Google Drive. Photos and videos aren't copied again: they're kept safely in your account and come back with the books. When it's on, it backs up a minute after each change.")}</Text>
         </View>
-        <Switch accessibilityLabel="Back up to Google Drive" value={prefs.enabled} onValueChange={toggle} disabled={!!busy} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={prefs.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
+        <Switch accessibilityLabel={tr("Back up to Google Drive")} value={prefs.enabled} onValueChange={toggle} disabled={!!busy} trackColor={{ true: t.accent, false: t.bg3 }} thumbColor={prefs.enabled ? t.onAccent : t.outline} ios_backgroundColor={t.bg3} />
       </View>
       <Text style={[TYPE.bodySmall, { color: prefs.error && !busy ? t.danger : t.ink3, marginTop: 10 }]}>{status}</Text>
       <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
-        <Btn label="Back up now" icon="upload" kind="soft" onPress={backup} disabled={!!busy} style={{ flex: 1 }} />
-        <Btn label="Restore" icon="download" kind="line" onPress={restore} disabled={!!busy} style={{ flex: 1 }} />
+        <Btn label={tr("Back up now")} icon="upload" kind="soft" onPress={backup} disabled={!!busy} style={{ flex: 1 }} />
+        <Btn label={tr("Restore")} icon="download" kind="line" onPress={restore} disabled={!!busy} style={{ flex: 1 }} />
       </View>
     </View>
   );

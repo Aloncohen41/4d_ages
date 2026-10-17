@@ -15,6 +15,7 @@ import { inferKin, inferSide, kinOf } from "../lib/kinship";
 import { familyOf } from "../lib/family";
 import { isPet } from "../lib/types";
 
+import { tr } from "../lib/i18n";
 /**
  * Add or edit a family member. One form for everyone, in this order: name, photo, relationship (in the family's own words), how they're
  * related for the family tree (who they are to the child, whose side, who they're with), nickname, a few words about who they are, and whose
@@ -81,9 +82,9 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
   };
 
   const save = () => {
-    if (!name.trim()) return setErr("Add their name.");
-    if (!relation.trim()) return setErr("Add how they're related. Example: Mummy");
-    if (!families.length) return setErr("Choose at least one child's family, or remove this person.");
+    if (!name.trim()) return setErr(tr("Add their name."));
+    if (!relation.trim()) return setErr(tr("Add how they're related. Example: Mummy"));
+    if (!families.length) return setErr(tr("Choose at least one child's family, or remove this person."));
     const data: Omit<Relative, "id"> = {
       name: name.trim(), relation: relation.trim(), customLabel: undefined, nickname: nickname.trim() || undefined, description: description.trim() || undefined,
       ...(showKin ? { kin: kin.kin, side: kin.side, partnerId: kin.partnerId, through: kin.through } : {}),
@@ -113,26 +114,26 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
     if (!existing) return;
     const n = itemsWithTags(memories, [personTag(existing).id]).length;
     const shared = (existing.childIds ?? everyone).length > 1 ? " They'll be removed from every child's family. To take them out of just one, untick that child under “In the family of” and save instead." : "";
-    Alert.alert(`Remove ${displayName(existing)}?`, (n ? `They'll be taken off the ${n} memor${n === 1 ? "y" : "ies"} they're tagged in. The memories themselves stay.` : "This can't be undone.") + shared, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => { removeRelative(existing.id); onClose(); } },
+    Alert.alert(tr("Remove {0}?", [displayName(existing)]), (n ? `They'll be taken off the ${n} memor${n === 1 ? "y" : "ies"} they're tagged in. The memories themselves stay.` : "This can't be undone.") + shared, [
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Remove"), style: "destructive", onPress: () => { removeRelative(existing.id); onClose(); } },
     ]);
   };
 
   return (
-    <Sheet visible onClose={discard} title={existing ? "Edit family member" : pet ? "Add a pet to the family" : "Add a family member"}>
+    <Sheet visible onClose={discard} title={existing ? tr("Edit family member") : pet ? tr("Add a pet to the family") : tr("Add a family member")}>
       {pet && !existing ? (
-        <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 6 }]}>A pet in the family, to tag in photos. Want them to have their own book too? Add them with + at the top, then My pet.</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 6 }]}>{tr("A pet in the family, to tag in photos. Want them to have their own book too? Add them with + at the top, then My pet.")}</Text>
       ) : null}
-      <Label>Name</Label>
-      <Input value={name} onChangeText={setName} placeholder="Their name" maxLength={40} accessibilityLabel="Name" />
+      <Label>{tr("Name")}</Label>
+      <Input value={name} onChangeText={setName} placeholder={tr("Their name")} maxLength={40} accessibilityLabel={tr("Name")} />
 
-      <Label>Photo (optional)</Label>
+      <Label>{tr("Photo (optional)")}</Label>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <MemberAvatar member={{ photoUri, crop, name: nickname || name, relation }} size={56} />
         {/* Remove on the left, Change photo on the right */}
-        {photoUri ? <Btn label="Remove" kind="soft" onPress={removePhoto} style={{ flex: 0.8 }} /> : null}
-        <Btn label={preparing ? "Preparing…" : photoUri ? "Change photo" : "Choose a photo"} icon="image" kind="line" onPress={choosePhoto} disabled={preparing} style={{ flex: 1 }} />
+        {photoUri ? <Btn label={tr("Remove")} kind="soft" onPress={removePhoto} style={{ flex: 0.8 }} /> : null}
+        <Btn label={preparing ? tr("Preparing…") : photoUri ? tr("Change photo") : tr("Choose a photo")} icon="image" kind="line" onPress={choosePhoto} disabled={preparing} style={{ flex: 1 }} />
       </View>
       {photoUri ? (
         <View style={{ marginTop: 14 }}>
@@ -140,9 +141,9 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
         </View>
       ) : null}
 
-      <Label>Relationship</Label>
-      <Input value={relation} onChangeText={changeRelation} placeholder={pet ? "Example: Our dog" : "Example: Mummy"} maxLength={30} accessibilityLabel="Relationship" />
-      <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>In your family's own words: Mummy, Savta, Uncle Ben.</Text>
+      <Label>{tr("Relationship")}</Label>
+      <Input value={relation} onChangeText={changeRelation} placeholder={pet ? tr("Example: Our dog") : tr("Example: Mummy")} maxLength={30} accessibilityLabel={tr("Relationship")} />
+      <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>{tr("In your family's own words: Mummy, Savta, Uncle Ben.")}</Text>
       {showKin && active ? (
         <KinshipFields value={kin} onChange={(v) => { setKin(v); setKinTouched(true); }} family={family} childName={active.name} selfId={existing?.id} />
       ) : null}
@@ -156,16 +157,16 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
         </View>
       ) : null}
 
-      <Label>Nickname (optional)</Label>
-      <Input value={nickname} onChangeText={setNickname} placeholder="Example: Nana" maxLength={30} accessibilityLabel="Nickname" />
+      <Label>{tr("Nickname (optional)")}</Label>
+      <Input value={nickname} onChangeText={setNickname} placeholder={tr("Example: Nana")} maxLength={30} accessibilityLabel={tr("Nickname")} />
 
-      <Label>Description (optional)</Label>
-      <Input value={description} onChangeText={setDescription} placeholder="Example: Lives abroad and visits every summer" multiline maxLength={200} accessibilityLabel="Description" />
-      <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>Helps your child understand who this person is when they're older.</Text>
+      <Label>{tr("Description (optional)")}</Label>
+      <Input value={description} onChangeText={setDescription} placeholder={tr("Example: Lives abroad and visits every summer")} multiline maxLength={200} accessibilityLabel={tr("Description")} />
+      <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>{tr("Helps your child understand who this person is when they're older.")}</Text>
 
       {kids.filter((k) => k.id !== existing?.childRef).length > 1 ? (
         <>
-          <Label>In the family of</Label>
+          <Label>{tr("In the family of")}</Label>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {kids.filter((k) => k.id !== existing?.childRef).map((k) => {
               const on = families.includes(k.id);
@@ -182,8 +183,8 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
 
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 14 }}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
-        {existing ? <DeleteButton onPress={remove} /> : <Btn label="Cancel" kind="soft" onPress={discard} />}
-        <Btn label={existing ? "Save" : "Add to the family"} onPress={save} style={{ flex: 1 }} />
+        {existing ? <DeleteButton onPress={remove} /> : <Btn label={tr("Cancel")} kind="soft" onPress={discard} />}
+        <Btn label={existing ? tr("Save") : tr("Add to the family")} onPress={save} style={{ flex: 1 }} />
       </View>
     </Sheet>
   );

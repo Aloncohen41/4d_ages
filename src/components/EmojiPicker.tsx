@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import EMOJI from "../data/emoji.json";
 import { useTheme } from "../lib/useTheme";
 
+import { tr } from "../lib/i18n";
 type Entry = [string, string] | [string, string, string];
 interface Cat { id: string; label: string; emojis: Entry[] }
 const CATS = EMOJI as unknown as Cat[];
@@ -31,7 +32,7 @@ export function EmojiPicker({ value, onChange }: { value: string; onChange: (e: 
     <View style={{ backgroundColor: t.card, borderColor: t.line, borderWidth: 1, borderRadius: 16, overflow: "hidden" }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: t.line, gap: 8 }}>
         <Text>🔎</Text>
-        <TextInput value={q} onChangeText={setQ} placeholder="Search 1,900+ emojis (tooth, cake…)" placeholderTextColor={t.ink4} style={{ flex: 1, paddingVertical: 10, color: t.ink, fontSize: 14 }} />
+        <TextInput value={q} onChangeText={setQ} placeholder={tr("Search 1,900+ emojis (tooth, cake…)")} placeholderTextColor={t.ink4} style={{ flex: 1, paddingVertical: 10, color: t.ink, fontSize: 14 }} />
       </View>
       <View style={{ flexDirection: "row", gap: 6, padding: 8, borderBottomWidth: 1, borderBottomColor: t.line, justifyContent: "center" }}>
         {SWATCH.map((c, i) => (
@@ -48,7 +49,7 @@ export function EmojiPicker({ value, onChange }: { value: string; onChange: (e: 
         </ScrollView>
       ) : null}
       <ScrollView nestedScrollEnabled style={{ height: 230 }} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", padding: 6 }}>
-        {list.length === 0 ? <Text style={{ color: t.ink3, padding: 16 }}>No match — try a simpler word.</Text> : null}
+        {list.length === 0 ? <Text style={{ color: t.ink3, padding: 16 }}>{tr("No match — try a simpler word.")}</Text> : null}
         {list.map((e) => {
           const ch = withTone(e, tone);
           return (

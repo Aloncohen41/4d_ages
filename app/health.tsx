@@ -13,6 +13,7 @@ import { TYPE } from "../src/theme";
 import { router } from "expo-router";
 import { foodById } from "../src/lib/foods";
 
+import { tr } from "../src/lib/i18n";
 /** Reactions noted in First foods, at the top of Health: what, when, and how bad. */
 function FoodReactions({ childId }: { childId: string }) {
   const t = useTheme();
@@ -23,7 +24,7 @@ function FoodReactions({ childId }: { childId: string }) {
     <Pressable onPress={() => router.push("/foods")} accessibilityRole="link" style={{ marginBottom: 16, padding: 14, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.danger }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Icon name="alert-triangle" size={18} color={t.danger} />
-        <Text style={[TYPE.titleSmall, { color: t.ink, flex: 1 }]}>Food reactions</Text>
+        <Text style={[TYPE.titleSmall, { color: t.ink, flex: 1 }]}>{tr("Food reactions")}</Text>
         <Icon name="chevron-right" size={18} color={t.ink3} />
       </View>
       {list.slice(0, 5).map((x) => (
@@ -55,15 +56,15 @@ export default function HealthPage() {
   const pill = (on: boolean) => ({ paddingHorizontal: 13, paddingVertical: 7, borderRadius: 12, backgroundColor: on ? t.chipOn : t.card, borderWidth: 1, borderColor: on ? t.chipOn : t.line } as const);
 
   return (
-    <Page title={`${child.name}'s health`}>
+    <Page title={tr("{0}'s health", [child.name])}>
       <FoodReactions childId={child.id} />
       {viewOnly ? null : (
         <>
-          <Btn label="Add a health entry" icon="health" onPress={() => setEntrySheet({ kind: "health", healthKind: kind === "all" ? "checkup" : kind })} />
+          <Btn label={tr("Add a health entry")} icon="health" onPress={() => setEntrySheet({ kind: "health", healthKind: kind === "all" ? "checkup" : kind })} />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
             {HEALTH_KINDS.filter((k) => k.id !== "other").map((k) => (
               <Pressable key={k.id} onPress={() => setEntrySheet({ kind: "health", healthKind: k.id })} accessibilityRole="button" style={pill(false)}>
-                <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>Add {k.label.toLowerCase()}</Text>
+                <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12 }}>{tr("Add {0}", [k.label.toLowerCase()])}</Text>
               </Pressable>
             ))}
           </View>
@@ -71,7 +72,7 @@ export default function HealthPage() {
       )}
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 18, marginBottom: 8 }}>
-        {[{ id: "all" as const, label: "All" }, ...HEALTH_KINDS].map((k) => (
+        {[{ id: "all" as const, label: tr("All") }, ...HEALTH_KINDS].map((k) => (
           <Pressable key={k.id} onPress={() => setKind(k.id)} accessibilityRole="radio" aria-checked={kind === k.id} style={pill(kind === k.id)}>
             <Text style={{ color: kind === k.id ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{k.label}</Text>
           </Pressable>
@@ -81,7 +82,7 @@ export default function HealthPage() {
       {entries.length === 0 ? (
         <View style={{ alignItems: "center", padding: 28 }}>
           <Icon name="health" size={40} color={t.ink3} />
-          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 6 }}>{kind === "all" ? "Nothing here yet. Add check-ups, vaccinations, illnesses and medicines to keep them in one place." : `No ${label(kind).toLowerCase()} entries yet.`}</Text>
+          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 6 }}>{kind === "all" ? tr("Nothing here yet. Add check-ups, vaccinations, illnesses and medicines to keep them in one place.") : tr("No {0} entries yet.", [label(kind).toLowerCase()])}</Text>
         </View>
       ) : (
         entries.map((m) => (
@@ -97,7 +98,7 @@ export default function HealthPage() {
           </Pressable>
         ))
       )}
-      <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 12 }]}>Health notes stay out of the story and the book. For information only: always follow your doctor's advice.</Text>
+      <Text style={[TYPE.bodySmall, { color: t.ink4, marginTop: 12 }]}>{tr("Health notes stay out of the story and the book. For information only: always follow your doctor's advice.")}</Text>
     </Page>
   );
 }

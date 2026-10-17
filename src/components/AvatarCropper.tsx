@@ -8,6 +8,7 @@ import { MAX_ZOOM, cropLayout, defaultCrop, dragCrop, faceHigh, recenter, zoomCr
 import { Btn } from "./ui";
 import { CropAvatar } from "./ui";
 
+import { tr } from "../lib/i18n";
 /**
  * Choose which part of a photo appears inside a round profile picture.
  * Drag the photo to move it, pinch or use the slider to zoom, and tap the buttons to recentre.
@@ -79,23 +80,23 @@ export function AvatarCropper({ uri, value, onChange, size = 240 }: { uri: strin
         <View pointerEvents="none" style={{ position: "absolute", left: -band, top: -band, width: size + 2 * band, height: size + 2 * band, borderRadius: (size + 2 * band) / 2, borderWidth: band, borderColor: "rgba(30,15,20,0.55)" }} />
         <View pointerEvents="none" style={{ position: "absolute", left: 0, top: 0, width: size, height: size, borderRadius: size / 2, borderWidth: 2, borderColor: "#ffffffcc" }} />
       </View>
-      <Text style={{ color: t.ink3, fontSize: 12, marginTop: 8, textAlign: "center" }}>Drag the photo to move it · pinch or use the slider to zoom</Text>
+      <Text style={{ color: t.ink3, fontSize: 12, marginTop: 8, textAlign: "center" }}>{tr("Drag the photo to move it · pinch or use the slider to zoom")}</Text>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "stretch", marginTop: 6, paddingHorizontal: 6 }}>
         <Text style={{ color: t.ink3, fontSize: 18 }}>−</Text>
         <View style={{ flex: 1 }}>
-          <AppSlider label="Zoom" valueText={`${Math.round(value.zoom * 100)}%`} minimumValue={1} maximumValue={MAX_ZOOM} value={value.zoom} onValueChange={(z: number) => apply(zoomCrop(cropRef.current ?? value, z))} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.line} thumbTintColor={t.accent} />
+          <AppSlider label={tr("Zoom")} valueText={`${Math.round(value.zoom * 100)}%`} minimumValue={1} maximumValue={MAX_ZOOM} value={value.zoom} onValueChange={(z: number) => apply(zoomCrop(cropRef.current ?? value, z))} minimumTrackTintColor={t.accent} maximumTrackTintColor={t.line} thumbTintColor={t.accent} />
         </View>
         <Text style={{ color: t.ink3, fontSize: 18 }}>＋</Text>
       </View>
 
       <View style={{ flexDirection: "row", gap: 8, alignSelf: "stretch", marginTop: 4 }}>
-        <Btn label="⊕ Centre" kind="soft" onPress={() => apply(recenter(value))} style={{ flex: 1, paddingVertical: 10 }} />
-        <Btn label="Face higher" icon="smile" kind="soft" onPress={() => apply(faceHigh(value))} style={{ flex: 1, paddingVertical: 10 }} />
+        <Btn label={tr("⊕ Centre")} kind="soft" onPress={() => apply(recenter(value))} style={{ flex: 1, paddingVertical: 10 }} />
+        <Btn label={tr("Face higher")} icon="smile" kind="soft" onPress={() => apply(faceHigh(value))} style={{ flex: 1, paddingVertical: 10 }} />
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginTop: 14 }}>
-        <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>How it will look</Text>
+        <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("How it will look")}</Text>
         <CropAvatar uri={uri} crop={value} size={64} ring />
         <CropAvatar uri={uri} crop={value} size={36} />
       </View>

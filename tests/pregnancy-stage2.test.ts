@@ -3,6 +3,7 @@
  * child's gender); the milestones by trimester; "Welcome to the world", which sets the birthday and makes it the child's own profile; and the
  * weekly bump photo (a reminder, tips, and the video of the bump growing).
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { BORN_ID, BUMP_SOURCE, BUMP_TIPS, GENDER_REVEAL_ID, PREGNANCY_MILESTONES, milestonesByTrimester, planBumpPhotoNotifications, pregnancyWeekOf, weekLabel } from "../src/lib/pregnancy";
@@ -11,7 +12,7 @@ import { buildBumpReel } from "../src/lib/reels";
 import { Memory } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 const preg = read("src/components/Pregnancy.tsx"), screen = read("src/components/Screen.tsx");
 
 // Week xx (fruit), wherever an age would be shown

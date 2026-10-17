@@ -3,6 +3,7 @@
  * go into the book), a shorter invite link with a preview card, "you already have this book" instead of using an invite up, the app's own
  * notifications, Google Drive backup and restore, and saving and sharing the PDF through Android itself.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CRAVING_IDEAS, OTHER_SYMPTOM_NOTE, SYMPTOMS, SYMPTOM_DISCLAIMER, legacyIsCraving, symptomForTitle } from "../src/lib/symptoms";
@@ -11,7 +12,7 @@ import { formatSpan } from "../src/lib/date";
 import { BACKUP_FORMAT, baseName, buildBackup, filesIn, parseBackup, prepareRestore, remapFiles } from "../src/lib/backupData";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 // ---- symptoms and cravings
 ok("plenty of symptoms from the NHS pages, each with tips and its NHS page", SYMPTOMS.length >= 20 && SYMPTOMS.every((s) => s.tips.length > 0 && /^https:\/\/www\.nhs\.uk\/pregnancy\//.test(s.source)) && new Set(SYMPTOMS.map((s) => s.id)).size === SYMPTOMS.length);

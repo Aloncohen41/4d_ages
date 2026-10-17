@@ -14,6 +14,7 @@ import { audioMedia, visualMedia } from "../lib/display";
 import { MediaCarousel } from "./MediaCarousel";
 import { TagRow } from "./TagChip";
 
+import { tr } from "../lib/i18n";
 /** Opens the right form to edit a memory: a plain photo has its own; stories, milestones, firsts, lasts and measurements use the "+" form. */
 export function useEditMemory() {
   const setEntrySheet = useStore((s) => s.setEntrySheet);
@@ -89,7 +90,7 @@ export function PostCard({ p, child, onView, onOpenMedia, onEdit }: {
           <Text style={{ backgroundColor: t.accentSoft, color: t.onAccentSoft, fontWeight: "700", fontSize: 11, paddingHorizontal: 9, paddingVertical: 2, borderRadius: 99, overflow: "hidden" }}>{ageShort(child.birth, p.date)}</Text>
           <View style={{ flex: 1 }} />
           {child.role !== "viewer" ? (
-            <Pressable onPress={onEdit} hitSlop={10} accessibilityLabel="Edit" style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.bg2, alignItems: "center", justifyContent: "center" }}>
+            <Pressable onPress={onEdit} hitSlop={10} accessibilityLabel={tr("Edit")} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.bg2, alignItems: "center", justifyContent: "center" }}>
               <Icon name="edit-2" size={14} color={t.ink3} />
             </Pressable>
           ) : null}
@@ -130,7 +131,7 @@ export function PostViewer({ p, child, onClose, onOpenMedia, onEdit }: {
       {p.location ? <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 2 }}>{p.location}</Text> : null}
       <View style={{ gap: 10, marginTop: 12 }}>
         {items.map((m, i) => (
-          <Pressable key={m.id} onPress={() => onOpenMedia(items, i)} accessibilityLabel={m.kind === "video" ? "Play video" : "Open photo"}>
+          <Pressable key={m.id} onPress={() => onOpenMedia(items, i)} accessibilityLabel={m.kind === "video" ? tr("Play video") : tr("Open photo")}>
             <PhotoView photo={{ media: [m], emoji: p.emoji, palette: p.palette }} fit="auto" style={{ width: "100%", borderRadius: 16, overflow: "hidden", aspectRatio: 4 / 3 }} emojiSize={48} />
           </Pressable>
         ))}
@@ -140,8 +141,8 @@ export function PostViewer({ p, child, onClose, onOpenMedia, onEdit }: {
       <View style={{ marginTop: 12 }}><TagRow item={p} skipPlace /></View>
       <Reactions memory={p} child={child} />
       <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
-        <Btn label="Close" kind="soft" onPress={onClose} style={{ flex: 1 }} />
-        {child.role !== "viewer" ? <Btn label="Edit" icon="edit-2" kind="line" onPress={onEdit} style={{ flex: 1 }} /> : null}
+        <Btn label={tr("Close")} kind="soft" onPress={onClose} style={{ flex: 1 }} />
+        {child.role !== "viewer" ? <Btn label={tr("Edit")} icon="edit-2" kind="line" onPress={onEdit} style={{ flex: 1 }} /> : null}
       </View>
     </Sheet>
   );

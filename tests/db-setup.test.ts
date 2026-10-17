@@ -2,13 +2,14 @@
  * npm run db:setup: reads a Supabase connection string whose password contains characters that break URLs (% ? @ # /), reports it without
  * ever printing the password, and applies the schema. (Everything here uses a made-up password and never touches a network.)
  */
+import { untr } from "./untr";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 (async () => {
   const { parseConnection, describeConnection, findConnectionString, parseEnvText, projectRef, friendlyError } = await import("../scripts/dbConnection.mjs");

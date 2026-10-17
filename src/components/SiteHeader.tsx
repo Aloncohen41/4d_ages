@@ -21,6 +21,7 @@ import { Action, ICON, LABEL, actionsFor } from "./Fab";
 import { VoiceRecorderSheet } from "./Voice";
 import { AddChildSheet } from "./Screen";
 
+import { tr } from "../lib/i18n";
 /*
  * The website on a computer: a header across the top of every page, like any website's, in place of the phone's top bar, bottom tabs and
  * "+" button. The pages are links (the current one underlined), and the profile, "Add" and account menus drop down from their buttons.
@@ -79,9 +80,9 @@ export function SiteHeader() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 16, width: "100%", maxWidth: SITE_MAX, alignSelf: "center", paddingHorizontal: 32, height: 72 }}>
         <Pressable onPress={() => goTo("/")} accessibilityRole="link">
           {/* the website always shows the original logo (a child's colours recolour it in the app) */}
-          <Image source={WORDMARKS.pink} accessibilityLabel={`${APP_NAME}, home`} style={{ height: 44, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
+          <Image source={WORDMARKS.pink} accessibilityLabel={tr("{0}, home", [APP_NAME])} style={{ height: 44, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
         </Pressable>
-        <View role="navigation" aria-label="Pages" style={{ flexDirection: "row", alignItems: "center", gap: 2, flex: 1 }}>
+        <View role="navigation" aria-label={tr("Pages")} style={{ flexDirection: "row", alignItems: "center", gap: 2, flex: 1 }}>
           {(pet ? PET_LINKS : KID_LINKS).map(([href, label]) => link(href, label))}
           <View style={{ flex: 1 }} />
           {/* the pages that are in the phone's menu, in the same order */}
@@ -92,11 +93,11 @@ export function SiteHeader() {
         </View>
         {preview ? (
           <Pressable onPress={clearSample} accessibilityRole="button" style={quiet}>
-            <Icon name="logout" size={18} color={t.ink2} /><Text style={[TYPE.labelLarge, { fontSize: 15, color: t.ink2 }]}>Leave the sample</Text>
+            <Icon name="logout" size={18} color={t.ink2} /><Text style={[TYPE.labelLarge, { fontSize: 15, color: t.ink2 }]}>{tr("Leave the sample")}</Text>
           </Pressable>
         ) : session ? (
           <Pressable onPress={out} accessibilityRole="button" style={quiet}>
-            <Icon name="logout" size={18} color={t.ink2} /><Text style={[TYPE.labelLarge, { fontSize: 15, color: t.ink2 }]}>Sign out</Text>
+            <Icon name="logout" size={18} color={t.ink2} /><Text style={[TYPE.labelLarge, { fontSize: 15, color: t.ink2 }]}>{tr("Sign out")}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -109,7 +110,7 @@ export function SiteHeader() {
             <View>
               <Pressable onPress={() => setAdding((v) => !v)} accessibilityRole="button" aria-haspopup="menu" aria-expanded={adding} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: t.accent }, { opacity: 0.9 })}>
                 <Icon name="plus" size={20} color={t.onAccent} />
-                <Text style={[TYPE.labelLarge, { color: t.onAccent, fontSize: 15 }]}>Add</Text>
+                <Text style={[TYPE.labelLarge, { color: t.onAccent, fontSize: 15 }]}>{tr("Add")}</Text>
               </Pressable>
               {adding ? <AddMenu pet={pet} onClose={() => setAdding(false)} /> : null}
             </View>
@@ -139,12 +140,12 @@ function Profiles() {
   const active = useActiveChild();
   const [adding, setAdding] = useState(false);
   return (
-    <View role="group" aria-label="Profiles" style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+    <View role="group" aria-label={tr("Profiles")} style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
       {kids.length > 1 ? (
         // everyone together (app/my-family.tsx)
         <Pressable onPress={() => router.navigate("/my-family")} accessibilityRole="link" aria-current={path === "/my-family" ? "page" : undefined} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, path === "/my-family" ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], { backgroundColor: withAlpha(t.ink, 0.05) })}>
           <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name="family" size={18} color={t.onAccentSoft} /></View>
-          <Text style={[TYPE.labelLarge, { color: path === "/my-family" ? t.onChipOn : t.ink }]}>My family</Text>
+          <Text style={[TYPE.labelLarge, { color: path === "/my-family" ? t.onChipOn : t.ink }]}>{tr("My family")}</Text>
         </Pressable>
       ) : null}
       {kids.map((k) => {
@@ -162,7 +163,7 @@ function Profiles() {
       })}
       <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1.5, borderStyle: "dashed", borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
         <Icon name="plus" size={18} color={t.accentDeep} />
-        <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Add a profile</Text>
+        <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Add a profile")}</Text>
       </Pressable>
       <AddChildSheet visible={adding} onClose={() => setAdding(false)} />
     </View>
@@ -211,11 +212,11 @@ function AddMenu({ pet, onClose }: { pet: boolean; onClose: () => void }) {
   };
   return (
     <>
-      <Dropdown label="Add">
+      <Dropdown label={tr("Add")}>
         {[...actionsFor(active, tries)].reverse().map((a) => <Item key={a} icon={ICON[a]} label={LABEL(a, pet)} onPress={() => choose(a)} />)}
       </Dropdown>
       {recording ? (
-        <VoiceRecorderSheet onClose={() => { setRecording(false); onClose(); }} onDone={(item) => { setRecording(false); onClose(); setTimeout(() => setEntrySheet({ kind: "story", title: "Voice note", media: [item] }), 250); }} />
+        <VoiceRecorderSheet onClose={() => { setRecording(false); onClose(); }} onDone={(item) => { setRecording(false); onClose(); setTimeout(() => setEntrySheet({ kind: "story", title: tr("Voice note"), media: [item] }), 250); }} />
       ) : null}
     </>
   );
@@ -236,7 +237,7 @@ export function SiteFooter() {
         {link("Accessibility", ACCESSIBILITY_URL)}
         {link("Licences", LICENCES_URL)}
         {link("Cookie policy", COOKIES_URL)}
-        <Text accessibilityRole="button" onPress={openCookieSettings} style={[TYPE.bodyMedium, { color: t.ink2, textDecorationLine: "underline" }]}>Cookie settings</Text>
+        <Text accessibilityRole="button" onPress={openCookieSettings} style={[TYPE.bodyMedium, { color: t.ink2, textDecorationLine: "underline" }]}>{tr("Cookie settings")}</Text>
         {link("Contact", `mailto:${CONTACT_EMAIL}`)}
       </View>
     </View>

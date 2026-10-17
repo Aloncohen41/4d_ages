@@ -20,6 +20,7 @@ import { HeightUnit, WeightUnit, effectiveRef, formatHeight, formatWeight, funCo
 import { WeightComparisons } from "../../src/components/WeightComparisons";
 import { TYPE } from "../../src/theme";
 
+import { tr } from "../../src/lib/i18n";
 export default function GrowthTab() {
   return (
     <Screen>
@@ -34,9 +35,9 @@ function PetHealthTab() {
   const [part, setPart] = useState<"health" | "weight">("health");
   return (
     <View>
-      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>Health</Text>
+      <Text style={[TYPE.headlineSmall, { color: t.ink, marginBottom: 12 }]}>{tr("Health")}</Text>
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "health" as const, label: "Health" }, { id: "weight" as const, label: "Weight" }]} value={part} onChange={setPart} />
+        <Seg options={[{ id: "health" as const, label: tr("Health") }, { id: "weight" as const, label: tr("Weight") }]} value={part} onChange={setPart} />
       </View>
       {part === "health" ? <PetCare /> : <PetWeight />}
     </View>
@@ -50,16 +51,16 @@ function Comparisons({ cm, unit }: { cm: number; unit: HeightUnit }) {
   const list = funComparisons(cm, 3, offset);
   const next = nextUp(cm);
   const stack = heightInThings(cm, offset); // "As tall as 104 pencils, end to end"
-  if (!list.length) return <Text style={{ color: t.ink3, marginTop: 10 }}>Comparisons start once they're 20 cm — a banana!</Text>;
+  if (!list.length) return <Text style={{ color: t.ink3, marginTop: 10 }}>{tr("Comparisons start once they're 20 cm — a banana!")}</Text>;
   return (
     <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: t.line, paddingTop: 12 }}>
-      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 8 }}>How tall is that?</Text>
+      <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 8 }}>{tr("How tall is that?")}</Text>
       {list.map(({ ref, phrase }) => (
         <View key={ref.name} style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 8 }}>
           <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: t.bg2, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 24 }}>{ref.emoji}</Text></View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 14 }}>{phrase} {ref.name}</Text>
-            <Text style={{ color: t.ink4, fontSize: 11.5 }}>{ref.category} · about {formatHeight(ref.cm, unit)}</Text>
+            <Text style={{ color: t.ink4, fontSize: 11.5 }}>{tr("{0} · about {1}", [ref.category, formatHeight(ref.cm, unit)])}</Text>
           </View>
         </View>
       ))}
@@ -70,8 +71,8 @@ function Comparisons({ cm, unit }: { cm: number; unit: HeightUnit }) {
         </View>
       ) : null}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
-        {next ? <Text style={{ color: t.ink3, fontSize: 12, flex: 1 }}>Next up: {next.ref.name}, {formatHeight(next.gap, unit)} to go</Text> : <View />}
-        <Pressable onPress={() => setOffset((o) => o + 1)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="refresh-cw" size={14} color={t.accentDeep} /><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>More</Text></Pressable>
+        {next ? <Text style={{ color: t.ink3, fontSize: 12, flex: 1 }}>{tr("Next up: {0}, {1} to go", [next.ref.name, formatHeight(next.gap, unit)])}</Text> : <View />}
+        <Pressable onPress={() => setOffset((o) => o + 1)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="refresh-cw" size={14} color={t.accentDeep} /><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("More")}</Text></Pressable>
       </View>
     </View>
   );
@@ -98,7 +99,7 @@ function Growth() {
   if (child.expecting) {
     return (
       <View>
-        <Heading title="Growth" />
+        <Heading title={tr("Growth")} />
         <PregnancyGrowth child={child} />
       </View>
     );
@@ -116,9 +117,9 @@ function Growth() {
   const confirmDelete = (id: string, label: string) => {
     const m = memories.find((x) => x.id === id);
     const both = [m?.heightCm, m?.weightKg, m?.headCm].filter((x) => x != null).length > 1;
-    Alert.alert("Remove this measurement?", `${label}${both ? ". This removes everything measured together that day." : ""}`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => removeMemory(id) },
+    Alert.alert(tr("Remove this measurement?"), `${label}${both ? ". This removes everything measured together that day." : ""}`, [
+      { text: tr("Cancel"), style: "cancel" },
+      { text: tr("Remove"), style: "destructive", onPress: () => removeMemory(id) },
     ]);
   };
 
@@ -134,7 +135,7 @@ function Growth() {
           {card?.description || card?.title ? <Text style={{ color: t.ink2, fontSize: 12.5, marginTop: 2 }} numberOfLines={2}>{card.title ? `${card.title}${card.description ? " — " : ""}` : ""}{card.description}</Text> : null}
           {card ? <View style={{ marginTop: 4 }}><TagRow item={card} small /></View> : null}
         </View>
-        <Pressable onPress={() => confirmDelete(id, `${main} on ${formatDate(date)}`)} hitSlop={10} accessibilityLabel="Delete"><Icon name="trash-2" size={19} color={t.danger} /></Pressable>
+        <Pressable onPress={() => confirmDelete(id, `${main} on ${formatDate(date)}`)} hitSlop={10} accessibilityLabel={tr("Delete")}><Icon name="trash-2" size={19} color={t.danger} /></Pressable>
       </Pressable>
     );
   };
@@ -143,57 +144,57 @@ function Growth() {
 
   return (
     <View>
-      <Heading title="Growth" />
-      <Btn label="Add a measurement" icon="add-measure" onPress={() => setEntrySheet({ kind: "measure" })} />
+      <Heading title={tr("Growth")} />
+      <Btn label={tr("Add a measurement")} icon="add-measure" onPress={() => setEntrySheet({ kind: "measure" })} />
       <GrowthSummary child={child} memories={memories} />
       <FirstFoodsCard child={child} />
       <View style={{ marginTop: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
         {/* units (cm or in, kg or lb) are chosen in Settings */}
-        <View style={{ flex: 1 }}><Seg options={[{ id: "height" as const, label: "Height" }, { id: "weight" as const, label: "Weight" }, { id: "head" as const, label: "Head" }]} value={mode} onChange={setMode} /></View>
+        <View style={{ flex: 1 }}><Seg options={[{ id: "height" as const, label: tr("Height") }, { id: "weight" as const, label: tr("Weight") }, { id: "head" as const, label: tr("Head") }]} value={mode} onChange={setMode} /></View>
       </View>
 
       {empty ? (
         <View style={{ alignItems: "center", padding: 30 }}>
           <Icon name={mode === "weight" ? "scale" : "add-measure"} size={44} color={t.ink3} />
-          <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>No {mode === "head" ? "head measurement" : mode} logged yet</Text>
-          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{mode === "height" ? `Measure ${child.name} lying down (before 2) or standing, then tap “Add a measurement”.` : mode === "head" ? "Measure around the widest part of the head, then tap “Add a measurement”." : "Tap “Add a measurement” after the next weigh-in."}</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", marginTop: 6 }}>{tr("No {0} logged yet", [mode === "head" ? "head measurement" : mode])}</Text>
+          <Text style={{ color: t.ink3, textAlign: "center", marginTop: 4 }}>{mode === "height" ? tr("Measure {0} lying down (before 2) or standing, then tap “Add a measurement”.", [child.name]) : mode === "head" ? tr("Measure around the widest part of the head, then tap “Add a measurement”.") : tr("Tap “Add a measurement” after the next weigh-in.")}</Text>
         </View>
       ) : mode === "height" && latest ? (
         <>
           <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 18, marginTop: 16 }}>
-            <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>Latest height · {formatDate(latest.date)}</Text>
+            <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Latest height · {0}", [formatDate(latest.date)])}</Text>
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 34, marginTop: 2 }}>{formatHeight(latest.cm, unit)}</Text>
             {prev ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{latest.cm >= prev.cm ? "+" : ""}{formatHeight(latest.cm - prev.cm, unit)} since {formatDate(prev.date)}</Text> : null}
             <Comparisons cm={latest.cm} unit={unit} />
-            {status ? <Text style={{ color: t.ink3, marginTop: 10, fontSize: 12.5 }}>Height is {statusText[status]} for {ref === "boy" ? "boys" : ref === "girl" ? "girls" : "children"} this age. Every child grows in their own way.</Text> : null}
+            {status ? <Text style={{ color: t.ink3, marginTop: 10, fontSize: 12.5 }}>{tr("Height is {0} for {1} this age. Every child grows in their own way.", [statusText[status], ref === "boy" ? "boys" : ref === "girl" ? "girls" : "children"])}</Text> : null}
           </View>
 
-          <Label>Compare with a typical range</Label>
-          <Seg options={[{ id: "girl" as GrowthRef, label: "Girls" }, { id: "boy" as GrowthRef, label: "Boys" }, { id: "all" as GrowthRef, label: "All" }]} value={ref} onChange={(v) => updateChild(child.id, { growthRef: v })} />
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>Height curve</Text>
+          <Label>{tr("Compare with a typical range")}</Label>
+          <Seg options={[{ id: "girl" as GrowthRef, label: tr("Girls") }, { id: "boy" as GrowthRef, label: tr("Boys") }, { id: "all" as GrowthRef, label: tr("All") }]} value={ref} onChange={(v) => updateChild(child.id, { growthRef: v })} />
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>{tr("Height curve")}</Text>
           <LineChart child={child} entries={heights} unit={unit} />
-          <Text style={{ color: t.ink4, fontSize: 11, marginTop: 6 }}>Lines: the 3rd, 50th and 97th percentiles for their age and sex, from the charts chosen in Settings. For information only. Ask your doctor or health visitor about growth.</Text>
-          <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22, marginBottom: 8 }]}>The door frame</Text>
+          <Text style={{ color: t.ink4, fontSize: 11, marginTop: 6 }}>{tr("Lines: the 3rd, 50th and 97th percentiles for their age and sex, from the charts chosen in Settings. For information only. Ask your doctor or health visitor about growth.")}</Text>
+          <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 22, marginBottom: 8 }]}>{tr("The door frame")}</Text>
           <DoorFrame child={child} entries={heights} unit={unit} />
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>History</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>{tr("History")}</Text>
           {[...heights].reverse().map((e) => row(e.id, formatHeight(e.cm, unit), e.date))}
         </>
       ) : mode === "head" ? (
         <>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>History</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>{tr("History")}</Text>
           {[...heads].reverse().map((e) => row(e.id, formatHeight(e.cm, unit), e.date))}
         </>
       ) : latestW ? (
         <>
           <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 18, marginTop: 16 }}>
-            <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>Latest weight · {formatDate(latestW.date)}</Text>
+            <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Latest weight · {0}", [formatDate(latestW.date)])}</Text>
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 34, marginTop: 2 }}>{formatWeight(latestW.kg, wUnit)}</Text>
             {prevW ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{latestW.kg >= prevW.kg ? "+" : ""}{formatWeight(latestW.kg - prevW.kg, wUnit)} since {formatDate(prevW.date)}</Text> : null}
           </View>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>Weight curve</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>{tr("Weight curve")}</Text>
           <LineChart child={child} entries={weights} unit={unit} mode="weight" weightUnit={wUnit} />
           {latestW ? <WeightComparisons kg={latestW.kg} /> : null}
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>History</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 22, marginBottom: 8 }}>{tr("History")}</Text>
           {[...weights].reverse().map((e) => row(e.id, formatWeight(e.kg, wUnit), e.date))}
         </>
       ) : null}

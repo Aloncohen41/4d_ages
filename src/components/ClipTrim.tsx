@@ -5,6 +5,7 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { useTheme } from "../lib/useTheme";
 import { CLIP_MAX_MS, clampClipStart } from "../lib/videoExport";
 
+import { tr } from "../lib/i18n";
 const mmss = (ms: number) => { const s = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 /**
@@ -45,7 +46,7 @@ export function ClipTrim({ uri, lengthMs, startMs, onChange }: { uri: string; le
     <View style={{ marginTop: 10 }}>
       <VideoView player={player} style={{ width: "100%", aspectRatio: 16 / 9, borderRadius: 14, overflow: "hidden", backgroundColor: "#000" }} contentFit="contain" nativeControls={false} />
       <AppSlider
-        label="Where the 30 seconds start"
+        label={tr("Where the 30 seconds start")}
         valueText={mmss(pos)}
         style={{ height: 42, marginTop: 6 }}
         minimumValue={0}

@@ -3,6 +3,7 @@
  * in each theme's words, "Maya's Days" / "Maya's Years", dates read from inside picked files, the update check, more than one account on a
  * phone, and deleting a child's profile.
  */
+import { untr } from "./untr";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FRUIT_WEEKS } from "../src/lib/pregnancy";
@@ -15,7 +16,7 @@ import { ACCOUNT_FIELDS, accountKey, swapAccounts } from "../src/lib/accounts";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 (async () => {
   // ---- pregnancy weeks: a photo of the real fruit

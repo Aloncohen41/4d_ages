@@ -21,6 +21,7 @@ import { Avatar, Btn, DateField, Input, Label, PhotoView, Sheet } from "./ui";
 import { ThumbPicker } from "./ThumbPicker";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /**
  * A new post from photos, videos and recordings: picked with the + button, or shared in from Google Photos, the Gallery, WhatsApp or any other
  * app. Shared in, you choose whose it is (from the profiles you can add to) and what it is: just the photos, a story, a first, a milestone, a
@@ -42,23 +43,21 @@ export function ImportSheet() {
 
   if (!incoming.items.length) {
     return (
-      <Sheet visible onClose={() => setIncoming(null)} title="Getting your photos ready…">
+      <Sheet visible onClose={() => setIncoming(null)} title={tr("Getting your photos ready…")}>
         <View style={{ alignItems: "center", padding: 30 }}>
           <ActivityIndicator color={t.accent} size="large" />
-          <Text style={{ color: t.ink3, marginTop: 14, textAlign: "center" }}>Copying {incoming.busy && incoming.busy > 1 ? `${incoming.busy} files` : "your files"} into {APP_NAME}. Big videos can take a moment.</Text>
+          <Text style={{ color: t.ink3, marginTop: 14, textAlign: "center" }}>{tr("Copying {0} into {1}. Big videos can take a moment.", [incoming.busy && incoming.busy > 1 ? `${incoming.busy} files` : "your files", APP_NAME])}</Text>
         </View>
       </Sheet>
     );
   }
   if (!addable.length) {
     return (
-      <Sheet visible onClose={discard} title={kids.length ? "Nowhere to add these yet" : "Add your little one first"}>
+      <Sheet visible onClose={discard} title={kids.length ? tr("Nowhere to add these yet") : tr("Add your little one first")}>
         <Text style={{ color: t.ink2, lineHeight: 21 }}>
-          {kids.length
-            ? `The books on this phone are shared with you to look at, so nothing can be added to them. Add your own child, bump or pet, then share these again.`
-            : `${APP_NAME} needs to know whose memories these are. Close this, add your child, bump or pet, then share them again.`}
+          {kids.length ? tr("The books on this phone are shared with you to look at, so nothing can be added to them. Add your own child, bump or pet, then share these again.") : tr("{0} needs to know whose memories these are. Close this, add your child, bump or pet, then share them again.", [APP_NAME])}
         </Text>
-        <Btn label="Close" onPress={discard} style={{ marginTop: 18 }} />
+        <Btn label={tr("Close")} onPress={discard} style={{ marginTop: 18 }} />
       </Sheet>
     );
   }
@@ -114,9 +113,9 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
   };
 
   const confirmDiscard = () =>
-    Alert.alert(fromShare ? "Discard these photos?" : "Don't add these?", `Nothing will be added to ${APP_NAME}. The originals stay where they are.`, [
-      { text: "Keep editing", style: "cancel" },
-      { text: "Discard", style: "destructive", onPress: () => { Object.values(thumbs).forEach(deleteThumb); onDiscard(); } },
+    Alert.alert(fromShare ? tr("Discard these photos?") : tr("Don't add these?"), tr("Nothing will be added to {0}. The originals stay where they are.", [APP_NAME]), [
+      { text: tr("Keep editing"), style: "cancel" },
+      { text: tr("Discard"), style: "destructive", onPress: () => { Object.values(thumbs).forEach(deleteThumb); onDiscard(); } },
     ]);
 
   const changeDate = (uri: string, current: string) =>
@@ -136,15 +135,15 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
     setIncoming(null); // the files now belong to the add screen (and are tidied away if it's cancelled)
     setTimeout(() => setEntrySheet({
       kind: what.entry!, media, date: startDate(items.map((it) => ({ date: fileDate(it) })), earliestDate(child.birth), today),
-      ...(what.id === "voice" ? { title: "Voice note" } : {}),
+      ...(what.id === "voice" ? { title: tr("Voice note") } : {}),
     }), 250);
   };
 
   const save = () => {
-    if (!what) return setErr("Choose what it is.");
+    if (!what) return setErr(tr("Choose what it is."));
     if (what.entry) return openEntry();
-    if (!shape) return setErr("Choose one post or separate posts.");
-    if (shape === "one" && postDate < earliestDate(child.birth)) return setErr(`That date is too long before ${child.expecting ? "the due date" : "the birth"}.`);
+    if (!shape) return setErr(tr("Choose one post or separate posts."));
+    if (shape === "one" && postDate < earliestDate(child.birth)) return setErr(tr("That date is too long before {0}.", [child.expecting ? "the due date" : "the birth"]));
     const posts: Memory[] = buildNewPosts({
       child, shape, note,
       items: items.map((it) => ({ uri: it.uri, kind: it.kind, thumb: thumbs[it.uri], date: fileDate(it), time: dates[it.uri] ? undefined : it.time })),
@@ -155,7 +154,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
     addMemories(posts);
     setActive(child.id);
     setIncoming(null);
-    toast(`Added ${posts.length === 1 ? "a post" : `${posts.length} posts`} to ${child.name}'s story. Tap the pencil on a post to tag people.`, true);
+    toast(tr("Added {0} to {1}'s story. Tap the pencil on a post to tag people.", [posts.length === 1 ? "a post" : `${posts.length} posts`, child.name]), true);
     router.navigate("/");
   };
 
@@ -170,7 +169,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
   };
 
   return (
-    <Sheet visible onClose={confirmDiscard} title={several ? `New post${shape === "separate" ? "s" : ""} from ${items.length} files` : "New post"}>
+    <Sheet visible onClose={confirmDiscard} title={several ? tr("New post{0} from {1} files", [shape === "separate" ? "s" : "", items.length]) : tr("New post")}>
       <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 13.5 }}>{summarize(items, formatDate)}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
         {items.map((it) => {
@@ -179,23 +178,23 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
             <View key={it.uri} style={{ width: "31.5%" }}>
               <View style={{ aspectRatio: 1, borderRadius: 12, overflow: "hidden" }}>
                 <PhotoView photo={{ media: [{ id: it.uri, uri: it.uri, kind: it.kind, thumb: thumbs[it.uri] }], emoji: "", palette: "peach" }} fit="contain" style={{ width: "100%", height: "100%" }} emojiSize={24} />
-                <Pressable onPress={() => removeItem(it.uri)} hitSlop={6} accessibilityLabel="Leave this one out" style={{ position: "absolute", right: 4, top: 4, width: 26, height: 26, borderRadius: 13, backgroundColor: "#000a", alignItems: "center", justifyContent: "center" }}>
+                <Pressable onPress={() => removeItem(it.uri)} hitSlop={6} accessibilityLabel={tr("Leave this one out")} style={{ position: "absolute", right: 4, top: 4, width: 26, height: 26, borderRadius: 13, backgroundColor: "#000a", alignItems: "center", justifyContent: "center" }}>
                   <Icon name="x" size={15} color="#fff" />
                 </Pressable>
                 {it.kind === "video" ? (
-                  <Pressable onPress={() => setCoverFor(it.uri)} hitSlop={6} accessibilityLabel="Choose the cover frame" style={{ position: "absolute", left: 4, bottom: 4, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#000b", borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 }}>
+                  <Pressable onPress={() => setCoverFor(it.uri)} hitSlop={6} accessibilityLabel={tr("Choose the cover frame")} style={{ position: "absolute", left: 4, bottom: 4, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#000b", borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 }}>
                     <Icon name="film" size={11} color="#fff" />
-                    <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Cover</Text>
+                    <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>{tr("Cover")}</Text>
                   </Pressable>
                 ) : null}
               </View>
               {/* each post keeps its own file's date; tap it to change it */}
               {shape === "separate" ? (
-                <Pressable onPress={() => changeDate(it.uri, d ?? today)} hitSlop={4} accessibilityLabel="Change this date">
-                  <Text style={{ color: d ? t.accentDeep : t.danger, fontSize: 11, fontWeight: "700", marginTop: 3, textDecorationLine: "underline" }} numberOfLines={1}>{d ? formatDate(d) : "No date: today"}</Text>
+                <Pressable onPress={() => changeDate(it.uri, d ?? today)} hitSlop={4} accessibilityLabel={tr("Change this date")}>
+                  <Text style={{ color: d ? t.accentDeep : t.danger, fontSize: 11, fontWeight: "700", marginTop: 3, textDecorationLine: "underline" }} numberOfLines={1}>{d ? formatDate(d) : tr("No date: today")}</Text>
                 </Pressable>
               ) : (
-                <Text style={{ color: d ? t.ink3 : t.danger, fontSize: 10.5, fontWeight: "700", marginTop: 3 }} numberOfLines={1}>{d ? formatDate(d) : "no date found"}</Text>
+                <Text style={{ color: d ? t.ink3 : t.danger, fontSize: 10.5, fontWeight: "700", marginTop: 3 }} numberOfLines={1}>{d ? formatDate(d) : tr("no date found")}</Text>
               )}
             </View>
           );
@@ -204,7 +203,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
 
       {fromShare && kids.length > 1 ? (
         <>
-          <Label>Whose memories?</Label>
+          <Label>{tr("Whose memories?")}</Label>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {kids.map((k) => (
               <Pressable key={k.id} onPress={() => { setChildId(k.id); setErr(""); if (pick && !shareOptions(k, items).some((o) => o.id === pick)) setPick(null); }} accessibilityRole="radio" aria-checked={k.id === childId} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
@@ -218,7 +217,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
 
       {fromShare ? (
         <>
-          <Label>What is it?</Label>
+          <Label>{tr("What is it?")}</Label>
           <View style={{ gap: 6 }}>
             {options.map((o) => {
               const on = what?.id === o.id;
@@ -234,13 +233,13 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
               );
             })}
           </View>
-          {what?.entry ? <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 8 }}>Next, you'll fill in the rest, with {items.length > 1 ? "these files" : "this file"} already in it.</Text> : null}
+          {what?.entry ? <Text style={{ color: t.ink3, fontSize: 12.5, marginTop: 8 }}>{tr("Next, you'll fill in the rest, with {0} already in it.", [items.length > 1 ? "these files" : "this file"])}</Text> : null}
         </>
       ) : null}
 
       {several && what && !what.entry && !kindOf ? (
         <>
-          <Label>How should they be added?</Label>
+          <Label>{tr("How should they be added?")}</Label>
           <View style={{ flexDirection: "row", gap: 10 }}>
             {choice("one", "One post", "All of them together, on one date.")}
             {choice("separate", "Separate posts", "One post each, on the day it was taken.")}
@@ -249,25 +248,25 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
       ) : null}
 
       {what?.entry ? null : kindOf && several ? (
-        <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>One each, by the week it was taken. Tap a date above to change it.</Text>
+        <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>{tr("One each, by the week it was taken. Tap a date above to change it.")}</Text>
       ) : shape === "one" ? (
         <>
-          <Label>Date</Label>
+          <Label>{tr("Date")}</Label>
           <DateField value={postDate} onChange={setOneDate} min={earliestDate(child.birth)} max={today} />
           <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 5 }}>
-            {oneDate !== null ? "Chosen by you." : earliest ? `From the ${several ? "earliest file" : "file"}. Tap to change it.` : "No date in the files, so today's date is used. Tap to change it."}
+            {oneDate !== null ? tr("Chosen by you.") : earliest ? tr("From the {0}. Tap to change it.", [several ? "earliest file" : "file"]) : tr("No date in the files, so today's date is used. Tap to change it.")}
           </Text>
         </>
       ) : shape === "separate" ? (
         <Text style={{ color: t.ink3, fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>
-          Each post keeps the date its file was taken. Tap a date above to change it.{undated ? ` ${undated} ${undated === 1 ? "has" : "have"} no date and will be dated today.` : ""}
+          {tr("Each post keeps the date its file was taken. Tap a date above to change it.{0}", [undated ? ` ${undated} ${undated === 1 ? "has" : "have"} no date and will be dated today.` : ""])}
         </Text>
       ) : null}
 
       {shape && what && !what.entry ? (
         <>
-          <Label>Description (optional)</Label>
-          <Input value={note} onChangeText={setNote} multiline placeholder={shape === "separate" ? "Added to each post" : "What happened?"} accessibilityLabel="Description" />
+          <Label>{tr("Description (optional)")}</Label>
+          <Input value={note} onChangeText={setNote} multiline placeholder={shape === "separate" ? tr("Added to each post") : tr("What happened?")} accessibilityLabel={tr("Description")} />
         </>
       ) : null}
 
@@ -276,8 +275,8 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
       ) : null}
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 16, lineHeight: 19 }}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 22 }}>
-        <Btn label="Cancel" kind="soft" onPress={confirmDiscard} />
-        <Btn label={what?.entry ? "Next" : "OK"} onPress={save} disabled={!what || (!what.entry && !shape)} style={{ flex: 1 }} />
+        <Btn label={tr("Cancel")} kind="soft" onPress={confirmDiscard} />
+        <Btn label={what?.entry ? tr("Next") : tr("OK")} onPress={save} disabled={!what || (!what.entry && !shape)} style={{ flex: 1 }} />
       </View>
     </Sheet>
   );

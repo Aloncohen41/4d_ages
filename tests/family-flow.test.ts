@@ -19,7 +19,8 @@ const { mergeRelatives, relativesToPush } = require("../src/lib/syncMerge");
 const { personTag } = require("../src/lib/tags");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const st = () => useStore.getState();
-const read = (f: string) => readFileSync(path.join(__dirname, "..", f), "utf8");
+const { untr } = require("./untr"); // the code as written in English
+const read = (f: string) => untr(readFileSync(path.join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 const child = (id: string, name: string, theme = "pink", emoji = "🌸") => ({ id, name, birth: "2025-01-01", theme, emoji });
 const names = (kidId: string) => familyOf(st().relatives, kidId).map((r: any) => r.name).sort().join(",");
 

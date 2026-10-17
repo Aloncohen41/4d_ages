@@ -1,9 +1,10 @@
 /* Icons must always show: the "missing glyph → dot" safety net can never turn good icons into dots. */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolveGlyph, usableGlyphMap, SANITY_GLYPHS } from "../src/lib/iconGlyph";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 const real = Object.fromEntries([...SANITY_GLYPHS, "home-outline", "star-outline", "chart-line", "account-group"].map((g, i) => [g, 61000 + i]));
 ok("a normal glyph list: a name that exists is used as it is", resolveGlyph("home-outline", real) === "home-outline" && resolveGlyph("star", real) === "star");

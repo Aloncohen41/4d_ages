@@ -4,6 +4,7 @@
  * dates, the website (join link, account deletion, privacy policy, terms), percentile lines, On this day, the monthly photo, the health log,
  * hearts and comments, the sibling book, pregnancy, and voice notes.
  */
+import { untr } from "./untr";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { formatDate, formatTime, pregnancy, shortDate, ageShort, ageBucket } from "../src/lib/date";
@@ -22,7 +23,7 @@ import { ClassicEntry } from "../src/lib/classics";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 const schema = read("supabase/schema.sql"), sync = read("src/lib/sync.ts"), share = read("app/share.tsx"), settings = read("app/settings.tsx");
 
 const child: Child = { id: "c", name: "Maya", birth: "2024-01-10", theme: "pink", emoji: "🌸" };

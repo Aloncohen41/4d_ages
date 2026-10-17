@@ -16,6 +16,7 @@ import { AvatarCrop } from "../lib/types";
 import { cropLayout } from "../lib/crop";
 import { formatDate, formatTime, parseISO, toHHMM, toISO } from "../lib/date";
 
+import { tr } from "../lib/i18n";
 /* ---------- buttons & text ---------- */
 export function Btn({ label, onPress, kind = "solid", style, disabled, icon }: {
   label: string; onPress: () => void; kind?: "solid" | "soft" | "line" | "danger"; style?: StyleProp<ViewStyle>; disabled?: boolean; icon?: IconName;
@@ -139,7 +140,7 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
             {wide ? null : <View style={{ alignSelf: "center", width: 32, height: 4, borderRadius: 2, marginTop: 12, marginBottom: 6, backgroundColor: withAlpha(t.ink2, 0.4) }} />}
             <View style={s.sheetHead}>
               <Text style={[TYPE.titleLarge, { color: t.ink, flex: 1 }]} numberOfLines={1}>{title}</Text>
-              <Pressable onPress={onClose} accessibilityLabel="Close" android_ripple={{ color: withAlpha(t.ink, 0.12) }} style={[s.x, { backgroundColor: t.bg2 }]} hitSlop={6}>
+              <Pressable onPress={onClose} accessibilityLabel={tr("Close")} android_ripple={{ color: withAlpha(t.ink, 0.12) }} style={[s.x, { backgroundColor: t.bg2 }]} hitSlop={6}>
                 <Icon name="x" size={20} color={t.ink2} />
               </Pressable>
             </View>
@@ -206,21 +207,21 @@ export function TimeField({ value, onChange }: { value?: string; onChange: (v?: 
 
   if (!shown && !value) {
     return (
-      <Pressable onPress={() => { setShown(true); pick(); }} accessibilityLabel="Add a time" style={{ alignSelf: "flex-start", marginTop: 14, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: t.accentSoft }}>
+      <Pressable onPress={() => { setShown(true); pick(); }} accessibilityLabel={tr("Add a time")} style={{ alignSelf: "flex-start", marginTop: 14, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, backgroundColor: t.accentSoft }}>
         <Icon name="clock" size={16} color={t.onAccentSoft} />
-        <Text style={[TYPE.labelLarge, { color: t.onAccentSoft }]}>Add time</Text>
+        <Text style={[TYPE.labelLarge, { color: t.onAccentSoft }]}>{tr("Add time")}</Text>
       </Pressable>
     );
   }
   return (
     <View>
-      <Label>Time</Label>
+      <Label>{tr("Time")}</Label>
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
         <Pressable onPress={pick} style={[s.input, { flex: 1, backgroundColor: "transparent", borderColor: t.outline, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}>
-          <Text style={[TYPE.bodyLarge, { color: value ? t.ink : t.ink4 }]}>{value ? formatTime(value) : "Choose a time"}</Text>
+          <Text style={[TYPE.bodyLarge, { color: value ? t.ink : t.ink4 }]}>{value ? formatTime(value) : tr("Choose a time")}</Text>
           <Icon name="clock" size={22} color={t.ink2} />
         </Pressable>
-        <Pressable onPress={() => { onChange(undefined); setShown(false); }} hitSlop={8} style={[s.x, { backgroundColor: t.bg2 }]} accessibilityLabel="Remove the time">
+        <Pressable onPress={() => { onChange(undefined); setShown(false); }} hitSlop={8} style={[s.x, { backgroundColor: t.bg2 }]} accessibilityLabel={tr("Remove the time")}>
           <Icon name="x" size={20} color={t.ink2} />
         </Pressable>
       </View>
@@ -366,7 +367,7 @@ export function MediaViewer({ media, onClose }: { media: { uri: string; kind: Me
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         {media && media.kind === "video" ? <VideoBox uri={media.uri} /> : null}
         {media && media.kind === "photo" ? <Image source={{ uri: media.uri }} style={{ width: "100%", height: "80%" }} contentFit="contain" /> : null}
-        <Pressable onPress={onClose} style={s.viewerClose} hitSlop={10} accessibilityLabel="Close"><Icon name="x" size={20} color="#fff" /></Pressable>
+        <Pressable onPress={onClose} style={s.viewerClose} hitSlop={10} accessibilityLabel={tr("Close")}><Icon name="x" size={20} color="#fff" /></Pressable>
       </View>
     </Modal>
   );
@@ -403,7 +404,7 @@ export function MediaGallery({ items, index, onClose }: { items: MediaItem[] | n
             <Text style={{ color: "#fff", fontWeight: "700", backgroundColor: "#0008", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 99, overflow: "hidden" }}>{cur + 1} / {items.length}</Text>
           </View>
         ) : null}
-        <Pressable onPress={onClose} style={s.viewerClose} hitSlop={10} accessibilityLabel="Close"><Icon name="x" size={20} color="#fff" /></Pressable>
+        <Pressable onPress={onClose} style={s.viewerClose} hitSlop={10} accessibilityLabel={tr("Close")}><Icon name="x" size={20} color="#fff" /></Pressable>
       </View>
     </Modal>
   );

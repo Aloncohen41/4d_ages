@@ -12,6 +12,7 @@ import { isConfigured, signOut, useSession } from "../src/lib/supabase";
 import { Btn } from "../src/components/ui";
 import { AddChildSheet } from "../src/components/Screen";
 
+import { tr } from "../src/lib/i18n";
 /**
  * After signing in, with no child yet: add your little one, or join the book your partner already started. Both only exist here, behind
  * sign-in, so every child belongs to a known account from the start (and is saved to it).
@@ -29,8 +30,8 @@ export default function Welcome() {
       <StatusBar style={t.dark ? "light" : "dark"} />
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Image source={WORDMARKS.pink} accessibilityLabel={APP_NAME} style={{ width: 280, maxWidth: "100%", aspectRatio: WORDMARK_ASPECT }} contentFit="contain" />
-        <Text style={[TYPE.headlineSmall, { color: t.ink, textAlign: "center", marginTop: 16 }]}>Welcome</Text>
-        <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center", marginTop: 6 }]}>Start a book for your little one, or join the one your partner started.</Text>
+        <Text style={[TYPE.headlineSmall, { color: t.ink, textAlign: "center", marginTop: 16 }]}>{tr("Welcome")}</Text>
+        <Text style={[TYPE.bodyLarge, { color: t.ink2, textAlign: "center", marginTop: 6 }]}>{tr("Start a book for your little one, or join the one your partner started.")}</Text>
         {sync.busy ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 18 }}>
             <ActivityIndicator color={t.accent} />
@@ -39,11 +40,11 @@ export default function Welcome() {
         ) : null}
       </View>
       <View style={{ gap: 10 }}>
-        <Btn label="Add your little one" onPress={() => setAdding(true)} />
-        <Btn label="Join a partner's baby book" kind="soft" onPress={() => setShareOpen(true)} />
+        <Btn label={tr("Add your little one")} onPress={() => setAdding(true)} />
+        <Btn label={tr("Join a partner's baby book")} kind="soft" onPress={() => setShareOpen(true)} />
         {isConfigured && session ? (
           <Pressable onPress={() => signOut()} hitSlop={8} style={{ alignSelf: "center", marginTop: 8 }}>
-            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Signed in as {session.user.email}. <Text style={{ textDecorationLine: "underline" }}>Sign out</Text></Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Signed in as")} {session.user.email}. <Text style={{ textDecorationLine: "underline" }}>{tr("Sign out")}</Text></Text>
           </Pressable>
         ) : null}
       </View>

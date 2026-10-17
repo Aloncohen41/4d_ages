@@ -6,6 +6,7 @@ import { attachAndRestore, isApplying, openInvite, syncAll } from "../lib/sync";
 import { friendlyShareError } from "../lib/shareFlow";
 import { useRealtime } from "../lib/realtime";
 
+import { tr } from "../lib/i18n";
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
@@ -25,10 +26,10 @@ async function joinPending() {
   try {
     const r = await openInvite(code);
     toast(r.outcome === "already"
-      ? { title: `You already have ${r.name}'s book`, body: "It's here on your phone, so there was nothing to add. The invite is left for whoever it was meant for.", tone: "info" }
-      : { title: `${r.name}'s book is here`, body: "Everything in it is on its way. From now on, what either of you adds shows up on both phones." });
+      ? { title: tr("You already have {0}'s book", [r.name]), body: tr("It's here on your phone, so there was nothing to add. The invite is left for whoever it was meant for."), tone: "info" }
+      : { title: tr("{0}'s book is here", [r.name]), body: tr("Everything in it is on its way. From now on, what either of you adds shows up on both phones.") });
   } catch (e) {
-    toast({ title: "Couldn't add the book", body: friendlyShareError(e), tone: "error" });
+    toast({ title: tr("Couldn't add the book"), body: friendlyShareError(e), tone: "error" });
   }
 }
 
@@ -46,7 +47,7 @@ export function SyncManager() {
   useEffect(() => {
     if (!notice) return;
     useStore.getState().setSync({ notice: undefined });
-    useStore.getState().showToast({ title: "A book was taken off this phone", body: notice, tone: "info" });
+    useStore.getState().showToast({ title: tr("A book was taken off this phone"), body: notice, tone: "info" });
   }, [notice]);
 
   // a link opened while already signed in

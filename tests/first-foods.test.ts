@@ -2,6 +2,7 @@
  * First foods: the NHS-based list with the UK's 14 allergens, three tries to "done", reactions, what to try next, the allergen nudges,
  * the doctor's summary, and the tries kept in the account (parents and editors only).
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ALLERGENS, FOODS, allergenNotes, allergenProgress, foodProgress, suggestions } from "../src/lib/foods";
@@ -10,7 +11,7 @@ import { buildSample } from "../src/lib/sample";
 import type { Child, FoodTry } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 ok("the UK's 14 allergens, each with at least one food", ALLERGENS.length === 14 && ALLERGENS.every((a) => FOODS.some((f) => f.allergen === a.id)));
 ok("about a hundred foods across the groups, each id once", FOODS.length >= 90 && new Set(FOODS.map((f) => f.id)).size === FOODS.length && ["veg", "fruit", "grains", "protein", "dairy"].every((g) => FOODS.some((f) => f.group === g)));

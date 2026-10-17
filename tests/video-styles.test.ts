@@ -14,7 +14,8 @@ const { suggestEvents, eventSlides, filterByWho, storyWords, spanLabel, cardMs }
 const { VIDEO_TEMPLATES, MUSIC, musicFor } = require("../src/lib/videoStyles");
 const { slideshowPayload } = require("../src/lib/videoExport");
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(path.join(__dirname, "..", f), "utf8");
+const { untr } = require("./untr"); // the code as written in English
+const read = (f: string) => untr(readFileSync(path.join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 
 let n = 0;
 const photo = (date: string, extra: any = {}) => ({ id: `m${++n}`, childId: "c", type: "photo", description: "", date, media: [{ id: "x", kind: "photo", uri: `file:///p${n}.jpg` }], tagIds: [], createdAt: 1, emoji: "📷", palette: "peach", source: "x", ...extra });

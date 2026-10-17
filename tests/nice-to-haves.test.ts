@@ -2,6 +2,7 @@
  * Part B of the October 2026 feedback ("nice to haves", NTH-01 … NTH-09), and the finishing touches to FAM-06 (drag to reorder). The logic is
  * tested directly; screens and the database are read as source, so their wiring is pinned down even though they can't be run here.
  */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CLASSICS, TEETH, datedItems, filledCount, listItems, classicById, ClassicEntry } from "../src/lib/classics";
@@ -16,7 +17,7 @@ import { Child, Memory, MILESTONE_DEFS, Tag } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 
 const child: Child = { id: "c", name: "Maya", birth: "2024-01-10", theme: "pink", emoji: "🌸" };
 let n = 0;

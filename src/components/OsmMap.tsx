@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { WebFrame as WebView } from "./WebFrame";
 import { useTheme } from "../lib/useTheme";
 
+import { tr } from "../lib/i18n";
 export interface MapPin { id: string; lat: number; lon: number; label: string }
 
 /*
@@ -41,7 +42,7 @@ export function OsmMap({ pins, onPick, start, height = 260 }: { pins: MapPin[]; 
   return (
     <View style={{ height, borderRadius: 18, overflow: "hidden", borderWidth: 1, borderColor: t.line }}>
       <WebView
-        accessibilityLabel="Map"
+        accessibilityLabel={tr("Map")}
         originWhitelist={["*"]}
         source={{ html, baseUrl: "https://4dages.local/" }}
         onMessage={(e) => { try { latest.current?.(JSON.parse(e.nativeEvent.data)); } catch { /* not ours */ } }}

@@ -7,6 +7,7 @@ import { MILESTONE_DEFS, MediaItem, Memory } from "../lib/types";
 import { ageShort, formatDate } from "../lib/date";
 import { MediaGallery, PhotoView, Sheet } from "./ui";
 
+import { tr } from "../lib/i18n";
 export type CollectionKind = "photos" | "milestones" | "stories";
 
 /** The three lists behind the profile boxes: all photos (no stories), milestones by name, and stories only. */
@@ -48,7 +49,7 @@ export function CollectionSheet({ kind, onClose }: { kind: CollectionKind | null
 
   return (
     <Sheet visible onClose={onClose} title={title}>
-      <Text style={{ color: t.ink3, fontWeight: "700", marginBottom: 12 }}>{count} {kind === "photos" ? (count === 1 ? "photo or video" : "photos & videos") : kind === "milestones" ? (count === 1 ? "milestone" : "milestones") : (count === 1 ? "story" : "stories")}</Text>
+      <Text style={{ color: t.ink3, fontWeight: "700", marginBottom: 12 }}>{count} {kind === "photos" ? (count === 1 ? tr("photo or video") : tr("photos & videos")) : kind === "milestones" ? (count === 1 ? "milestone" : "milestones") : (count === 1 ? "story" : "stories")}</Text>
 
       {kind === "photos" ? (
         tiles.length ? (
@@ -64,7 +65,7 @@ export function CollectionSheet({ kind, onClose }: { kind: CollectionKind | null
             ))}
           </View>
         ) : (
-          <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No photos yet. Use the + button to add some.</Text>
+          <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No photos yet. Use the + button to add some.")}</Text>
         )
       ) : null}
 
@@ -80,7 +81,7 @@ export function CollectionSheet({ kind, onClose }: { kind: CollectionKind | null
                 <Text style={{ color: t.ink4, fontSize: 18 }}>›</Text>
               </Pressable>
             ))
-          : <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No milestones logged yet. Open the Milestones tab to start.</Text>
+          : <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No milestones logged yet. Open the Milestones tab to start.")}</Text>
         : null}
 
       {kind === "stories"
@@ -98,7 +99,7 @@ export function CollectionSheet({ kind, onClose }: { kind: CollectionKind | null
                 </Pressable>
               );
             })
-          : <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No stories yet. Tap + and choose Story.</Text>
+          : <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No stories yet. Tap + and choose Story.")}</Text>
         : null}
 
       <MediaGallery items={gallery?.items ?? null} index={gallery?.index ?? 0} onClose={() => setGallery(null)} />

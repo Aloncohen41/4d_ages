@@ -10,6 +10,7 @@ import { TYPE } from "../theme";
 import { Btn, Sheet } from "./ui";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /** "1:05" from seconds. */
 export const clock = (secs: number) => {
   const s = Math.max(0, Math.round(secs || 0));
@@ -33,16 +34,16 @@ export function VoicePlayer({ item, onRemove }: { item: MediaItem; onRemove?: ()
   const progress = status.duration ? Math.min(1, status.currentTime / status.duration) : 0;
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: t.bg2, borderRadius: 99, paddingVertical: 6, paddingLeft: 6, paddingRight: 14, marginTop: 8 }}>
-      <Pressable onPress={toggle} disabled={!ready} accessibilityRole="button" accessibilityLabel={status.playing ? "Pause the voice note" : "Play the voice note"}
+      <Pressable onPress={toggle} disabled={!ready} accessibilityRole="button" accessibilityLabel={status.playing ? tr("Pause the voice note") : tr("Play the voice note")}
         style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.accent, alignItems: "center", justifyContent: "center", opacity: ready ? 1 : 0.4 }}>
         <Icon name={status.playing ? "pause" : "play"} size={18} color={t.onAccent} />
       </Pressable>
       <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: t.line, overflow: "hidden" }}>
         <View style={{ width: `${progress * 100}%`, height: 4, backgroundColor: t.accent }} />
       </View>
-      <Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{ready ? clock(status.playing || status.currentTime ? status.currentTime : status.duration) : "Downloading…"}</Text>
+      <Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{ready ? clock(status.playing || status.currentTime ? status.currentTime : status.duration) : tr("Downloading…")}</Text>
       {onRemove ? (
-        <Pressable onPress={onRemove} accessibilityLabel="Remove the voice note" hitSlop={8}><Icon name="x" size={18} color={t.ink3} /></Pressable>
+        <Pressable onPress={onRemove} accessibilityLabel={tr("Remove the voice note")} hitSlop={8}><Icon name="x" size={18} color={t.ink3} /></Pressable>
       ) : null}
     </View>
   );
@@ -65,7 +66,7 @@ export function VoiceRecorderSheet({ onDone, onClose }: { onDone: (item: MediaIt
   const start = async () => {
     setErr("");
     const perm = await requestRecordingPermissionsAsync();
-    if (!perm.granted) return setErr("Allow the microphone for this app to record (in the phone's Settings, Apps, 4D Ages, Permissions).");
+    if (!perm.granted) return setErr(tr("Allow the microphone for this app to record (in the phone's Settings, Apps, 4D Ages, Permissions)."));
     if (recorded) { deleteFile(recorded); setRecorded(null); }
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     await recorder.prepareToRecordAsync();
@@ -90,22 +91,22 @@ export function VoiceRecorderSheet({ onDone, onClose }: { onDone: (item: MediaIt
   };
 
   return (
-    <Sheet visible onClose={onClose} title="Voice note">
+    <Sheet visible onClose={onClose} title={tr("Voice note")}>
       <View style={{ alignItems: "center", paddingVertical: 16 }}>
         <Text style={{ color: t.ink, fontSize: 40, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{clock((state.durationMillis ?? 0) / 1000)}</Text>
-        <Pressable onPress={state.isRecording ? stop : start} accessibilityRole="button" accessibilityLabel={state.isRecording ? "Stop recording" : "Start recording"}
+        <Pressable onPress={state.isRecording ? stop : start} accessibilityRole="button" accessibilityLabel={state.isRecording ? tr("Stop recording") : tr("Start recording")}
           style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: state.isRecording ? t.danger : t.accent, alignItems: "center", justifyContent: "center", marginTop: 14 }}>
           <Icon name={state.isRecording ? "stop" : "mic"} size={38} color="#fff" />
         </Pressable>
-        <Text style={[TYPE.bodyMedium, { color: t.ink2, marginTop: 10 }]}>{state.isRecording ? "Recording… tap to stop" : recorded ? "Listen back, then use it or record again" : "Tap to record"}</Text>
+        <Text style={[TYPE.bodyMedium, { color: t.ink2, marginTop: 10 }]}>{state.isRecording ? tr("Recording… tap to stop") : recorded ? tr("Listen back, then use it or record again") : tr("Tap to record")}</Text>
       </View>
       {recorded && !state.isRecording ? (
         <>
           <VoicePlayer item={{ id: "preview", uri: recorded, kind: "audio" }} />
-          <Btn label="Use this recording" icon="check" onPress={() => use(recorded)} style={{ marginTop: 14 }} />
+          <Btn label={tr("Use this recording")} icon="check" onPress={() => use(recorded)} style={{ marginTop: 14 }} />
         </>
       ) : null}
-      <Btn label="Choose an audio file" icon="download" kind="line" onPress={pickFile} disabled={state.isRecording} style={{ marginTop: 12 }} />
+      <Btn label={tr("Choose an audio file")} icon="download" kind="line" onPress={pickFile} disabled={state.isRecording} style={{ marginTop: 12 }} />
       {err ? <Text style={{ color: t.danger, fontWeight: "700", marginTop: 10 }}>{err}</Text> : null}
     </Sheet>
   );

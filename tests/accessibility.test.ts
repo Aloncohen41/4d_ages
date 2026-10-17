@@ -2,12 +2,13 @@
  * Accessibility (WCAG 2.2 AA), on the website and in the app: the states screen readers hear, names for every control, pop-up and frame,
  * headings, a main region, page titles, the keyboard, focus, motion, and zoom. (The website was also checked screen by screen with axe.)
  */
+import { untr } from "./untr";
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
 const root = join(__dirname, "..");
-const read = (f: string) => readFileSync(join(root, f), "utf8");
+const read = (f: string) => untr(readFileSync(join(root, f), "utf8")); // the code as written in English (see untr.ts)
 const walk = (d: string): string[] => readdirSync(join(root, d)).flatMap((f) => (statSync(join(root, d, f)).isDirectory() ? walk(`${d}/${f}`) : [`${d}/${f}`]));
 const tsx = [...walk("app"), ...walk("src")].filter((f) => f.endsWith(".tsx"));
 const all = tsx.map((f) => [f, read(f)] as const);

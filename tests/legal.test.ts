@@ -3,12 +3,13 @@
  * (and consenting to keeping health information) before using an account; reaching them from the sign-in page and Settings; and the
  * rights the policy promises (download a copy, delete) really being there.
  */
+import { untr } from "./untr";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { LEGAL_VERSION, agreementNow, agreementOf, needsAgreement } from "../src/lib/consent";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 const text = (f: string) => read(f).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 const privacy = text("public/privacy/index.html");

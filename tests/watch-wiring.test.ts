@@ -1,8 +1,9 @@
 /* "Watch them grow": age-based videos, calendar years kept, the newest section first; and the slider builder. (Reads the screens' source.) */
+import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
-const read = (f: string) => readFileSync(join(__dirname, "..", f), "utf8");
+const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8")); // the code as written in English (see untr.ts)
 const watch = read("src/components/WatchView.tsx"), custom = read("src/components/CustomReelSheet.tsx"), reels = read("src/lib/reels.ts");
 
 ok("the monthly summaries are gone", !/Monthly summaries/.test(watch) && !/months\.map|buildReels\(/.test(watch) && !/kind: "month"/.test(reels));

@@ -6,6 +6,7 @@ import { journeySlides } from "../lib/journey";
 import { TYPE } from "../theme";
 import { Icon } from "./Icon";
 
+import { tr } from "../lib/i18n";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const WORLD = require("../../assets/world-map.png");
 const ASPECT = 1600 / 631;
@@ -58,10 +59,10 @@ export function JourneyMap({ places, width }: { places: Place[]; width: number }
           <Text style={[TYPE.titleSmall, { color: t.ink }]}>{slide.names}</Text>
           <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{slide.count}</Text>
         </View>
-        <Pressable onPress={() => setRun((x) => x + 1)} accessibilityRole="button" accessibilityLabel="Play the journey again" hitSlop={8}
+        <Pressable onPress={() => setRun((x) => x + 1)} accessibilityRole="button" accessibilityLabel={tr("Play the journey again")} hitSlop={8}
           style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Icon name="play" size={16} color={t.accentDeep} />
-          <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Play again</Text>
+          <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Play again")}</Text>
         </Pressable>
       </View>
     </View>

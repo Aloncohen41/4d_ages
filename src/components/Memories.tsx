@@ -15,6 +15,7 @@ import { GrowPlayer } from "./Grow";
 import { slidesOf } from "../lib/slides";
 import { TYPE } from "../theme";
 
+import { tr } from "../lib/i18n";
 /** Top of the timeline: birthday banner, "On this day", and a way into the yearly recap. */
 export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" }) {
   const t = useTheme();
@@ -50,20 +51,20 @@ export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" })
     <View style={{ marginBottom: 14 }}>
       {banner && part !== "rest" ? (
         <Pressable onPress={() => setRecapYear(banner.turning)} style={{ backgroundColor: t.accentSoft, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: t.accent, marginBottom: 12 }}>
-          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12 }}>Year in review is ready</Text>
+          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12 }}>{tr("Year in review is ready")}</Text>
           <Text style={[TYPE.titleLarge, { color: t.ink, marginTop: 2 }]}>{bannerText}</Text>
-          <Text style={{ color: t.ink2, marginTop: 4, fontSize: 13 }}>See the highlights of {child.name}'s year {banner.turning} — tap to play or export it.</Text>
+          <Text style={{ color: t.ink2, marginTop: 4, fontSize: 13 }}>{tr("See the highlights of {0}'s year {1} — tap to play or export it.", [child.name, banner.turning])}</Text>
         </Pressable>
       ) : null}
 
       {flashbacks.length && part !== "banner" ? (
         <View style={{ backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 14, marginBottom: 12 }}>
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>On this day</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>{tr("On this day")}</Text>
           <HScroll contentContainerStyle={{ gap: 10, paddingTop: 10 }}>
             {flashbacks.map(({ memory, yearsAgo }) => (
               <View key={memory.id} style={{ width: 130 }}>
                 <PhotoView fit="contain" photo={memory} style={{ width: 130, height: 100, borderRadius: 12, overflow: "hidden" }} emojiSize={36} />
-                <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11, marginTop: 5 }}>{yearsAgo} year{yearsAgo === 1 ? "" : "s"} ago · {ageShort(child.birth, memory.date).replace(" old", "")}</Text>
+                <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 11, marginTop: 5 }}>{tr("{0} year{1} ago · {2}", [yearsAgo, yearsAgo === 1 ? "" : "s", ageShort(child.birth, memory.date).replace(" old", "")])}</Text>
                 <Text style={{ color: t.ink3, fontSize: 11 }} numberOfLines={2}>{blurb(memory)}</Text>
               </View>
             ))}
@@ -73,7 +74,7 @@ export function Memories({ part = "all" }: { part?: "banner" | "rest" | "all" })
 
       {hasPhotos && !banner && part !== "banner" ? (
         <Pressable onPress={() => setRecapYear(currentYear(child.birth, today))}>
-          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 13, textDecorationLine: "underline" }}>See {child.name}'s year in review</Text>
+          <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 13, textDecorationLine: "underline" }}>{tr("See {0}'s year in review", [child.name])}</Text>
         </Pressable>
       ) : null}
 
@@ -116,26 +117,26 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
     try {
       const done = await exportBook({
         child, defs, memories: recap.highlights, relatives, tags: tagList, style, size,
-        title: `${child.name}'s Year ${year}`, subtitle: `${formatDate(recap.win.start)} – ${formatDate(recap.win.end)}`, intro: false,
+        title: tr("{0}'s Year {1}", [child.name, year]), subtitle: `${formatDate(recap.win.start)} – ${formatDate(recap.win.end)}`, intro: false,
       }, to);
-      if (done === "saved") setMsg("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder).");
+      if (done === "saved") setMsg(tr("Saved. You'll find the PDF where you chose (Downloads, Drive or a folder)."));
     } catch {
-      setMsg("Couldn't build the PDF. Try again.");
+      setMsg(tr("Couldn't build the PDF. Try again."));
     } finally {
       setBusy(null);
     }
   };
 
   return (
-    <Sheet visible onClose={onClose} title={`${child.name}'s year ${year} in review`}>
+    <Sheet visible onClose={onClose} title={tr("{0}'s year {1} in review", [child.name, year])}>
       <HScroll contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
         {Array.from({ length: maxYear }, (_, i) => i + 1).map((y) => (
           <Pressable key={y} onPress={() => { setYear(y); setPlaying(false); }} style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12, backgroundColor: y === year ? t.chipOn : t.card, borderWidth: 1, borderColor: y === year ? t.chipOn : t.line }}>
-            <Text style={{ color: y === year ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>Year {y}</Text>
+            <Text style={{ color: y === year ? t.onChipOn : t.ink2, fontWeight: "700", fontSize: 12 }}>{tr("Year {0}", [y])}</Text>
           </Pressable>
         ))}
       </HScroll>
-      <Text style={{ color: t.ink3, fontSize: 12 }}>{formatDate(recap.win.start)} – {formatDate(recap.win.end)}{inProgress ? " · so far" : ""}</Text>
+      <Text style={{ color: t.ink3, fontSize: 12 }}>{formatDate(recap.win.start)} – {formatDate(recap.win.end)}{inProgress ? tr(" · so far") : ""}</Text>
 
       <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
         {[[String(recap.photoCount), "photos"], [String(recap.milestones.length + recap.firsts.length), "firsts"], [grew !== null ? `+${formatHeight(grew, unit)}` : "—", "grew"]].map(([v, l]) => (
@@ -147,11 +148,11 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
       </View>
 
       {recap.highlights.length === 0 ? (
-        <Text style={{ color: t.ink3, textAlign: "center", marginTop: 24 }}>No photos from this year yet — add some on the timeline and come back.</Text>
+        <Text style={{ color: t.ink3, textAlign: "center", marginTop: 24 }}>{tr("No photos from this year yet — add some on the timeline and come back.")}</Text>
       ) : (
         <>
-          <Btn label={playing ? "Hide player" : "Play the year"} icon={playing ? undefined : "play"} onPress={() => setPlaying((p) => !p)} style={{ marginTop: 16 }} />
-          {playing ? <View style={{ marginTop: 14 }}><GrowPlayer slides={slidesOf(recap.highlights)} child={child} title={`${child.name}'s year ${year}`} fileLabel={`Year ${year}`} /></View> : null}
+          <Btn label={playing ? tr("Hide player") : tr("Play the year")} icon={playing ? undefined : "play"} onPress={() => setPlaying((p) => !p)} style={{ marginTop: 16 }} />
+          {playing ? <View style={{ marginTop: 14 }}><GrowPlayer slides={slidesOf(recap.highlights)} child={child} title={tr("{0}'s year {1}", [child.name, year])} fileLabel={`Year ${year}`} /></View> : null}
 
           {recap.milestones.length || recap.firsts.length ? (
             <View style={{ marginTop: 18 }}>
@@ -167,17 +168,17 @@ function RecapSheet({ initialYear, onClose }: { initialYear: number; onClose: ()
             </View>
           ) : null}
 
-          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15, marginTop: 18, marginBottom: 8 }}>Highlights</Text>
+          <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15, marginTop: 18, marginBottom: 8 }}>{tr("Highlights")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {recap.highlights.map((p) => (
               <PhotoView key={p.id} photo={p} style={{ width: "31.5%", aspectRatio: 1, borderRadius: 10, overflow: "hidden" }} emojiSize={26} />
             ))}
           </View>
 
-          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 20, marginBottom: 6 }}>PDF style</Text>
+          <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginTop: 20, marginBottom: 6 }}>{tr("PDF style")}</Text>
           <Seg options={BOOK_STYLES.map((s) => ({ id: s.id, label: s.label }))} value={style} onChange={setStyle} />
-          <Btn icon={busy ? undefined : "download"} label={busy === "save" ? "Saving your PDF…" : "Save this year as PDF"} onPress={() => doExport("save")} disabled={!!busy} style={{ marginTop: 14 }} />
-          <Btn icon={busy ? undefined : "share"} kind="line" label={busy === "share" ? "Building your PDF…" : "Share this year as PDF"} onPress={() => doExport("share")} disabled={!!busy} style={{ marginTop: 8 }} />
+          <Btn icon={busy ? undefined : "download"} label={busy === "save" ? tr("Saving your PDF…") : tr("Save this year as PDF")} onPress={() => doExport("save")} disabled={!!busy} style={{ marginTop: 14 }} />
+          <Btn icon={busy ? undefined : "share"} kind="line" label={busy === "share" ? tr("Building your PDF…") : tr("Share this year as PDF")} onPress={() => doExport("share")} disabled={!!busy} style={{ marginTop: 8 }} />
           {msg ? <Text style={{ color: t.accentDeep, fontWeight: "700", textAlign: "center", marginTop: 8 }}>{msg}</Text> : null}
         </>
       )}

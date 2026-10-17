@@ -8,6 +8,7 @@ import { TYPE } from "../theme";
 import { Btn, Sheet } from "./ui";
 import { Icon, IconName } from "./Icon";
 
+import { tr } from "../lib/i18n";
 /** What each theme looks like, in two little pictures. */
 export const THEME_ICONS: Record<BookStyle, [IconName, IconName]> = {
   classic: ["t-moon", "t-balloon"], nature: ["t-leaf", "t-flower"], playful: ["t-kite", "t-teddy"], modern: ["t-font", "t-font"],
@@ -37,7 +38,7 @@ export function ThemeCards({ value, onChange, pet = false }: { value: BookStyle;
               {id !== "modern" ? <Icon name={b} size={22} color={look.sub} /> : null}
             </View>
             <View style={{ padding: 10, backgroundColor: t.card }}>
-              <Text style={[TYPE.titleSmall, { color: t.ink }]}>{s.label}{KIDS_THEMES.includes(id) ? "  ·  new" : ""}</Text>
+              <Text style={[TYPE.titleSmall, { color: t.ink }]}>{s.label}{KIDS_THEMES.includes(id) ? tr("  ·  new") : ""}</Text>
               <Text style={[TYPE.bodySmall, { color: t.ink3 }]} numberOfLines={2}>{s.desc}</Text>
             </View>
           </Pressable>
@@ -63,7 +64,7 @@ export function ColourChoice({ value, onChange }: { value: BookColour; onChange:
                 </View>
               ) : <View style={{ flex: 1, borderRadius: 20, backgroundColor: c.swatch }} />}
             </View>
-            <Text style={[TYPE.labelSmall, { color: on ? t.ink : t.ink3, marginTop: 4 }]} numberOfLines={1}>{c.id === "age" ? "Theme's own" : c.label}</Text>
+            <Text style={[TYPE.labelSmall, { color: on ? t.ink : t.ink3, marginTop: 4 }]} numberOfLines={1}>{c.id === "age" ? tr("Theme's own") : c.label}</Text>
           </Pressable>
         );
       })}
@@ -81,18 +82,18 @@ export function BookExportSheet({ themeLabel, size, pages, onExport, busy, progr
 }) {
   const t = useTheme();
   return (
-    <Sheet visible onClose={busy ? () => undefined : onClose} title="Export the book">
+    <Sheet visible onClose={busy ? () => undefined : onClose} title={tr("Export the book")}>
       <Text style={[TYPE.bodyMedium, { color: t.ink3, textAlign: "center" }]}>{themeLabel} · {size.label} · {pages} pages</Text>
       {onWeb ? (
         <>
           {/* the website: the browser's print window, where "Save as PDF" saves the book */}
-          <Btn label={busy ? "Opening the print window…" : "Save as PDF"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
-          <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 8 }]}>In the print window, choose Save as PDF as the printer. The pages are already the right size.</Text>
+          <Btn label={busy ? tr("Opening the print window…") : tr("Save as PDF")} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
+          <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 8 }]}>{tr("In the print window, choose Save as PDF as the printer. The pages are already the right size.")}</Text>
         </>
       ) : (
         <>
-          <Btn label={busy === "save" ? "Saving your PDF…" : "Save PDF (phone or Drive)"} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
-          <Btn label={busy === "share" ? "Building your PDF…" : "Share PDF (WhatsApp, email…)"} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
+          <Btn label={busy === "save" ? tr("Saving your PDF…") : tr("Save PDF (phone or Drive)")} icon="download" onPress={() => onExport("save")} disabled={!!busy} style={{ marginTop: 10 }} />
+          <Btn label={busy === "share" ? tr("Building your PDF…") : tr("Share PDF (WhatsApp, email…)")} icon="share" kind="line" onPress={() => onExport("share")} disabled={!!busy} style={{ marginTop: 10 }} />
         </>
       )}
       {busy ? (
