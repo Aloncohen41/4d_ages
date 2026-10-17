@@ -60,6 +60,13 @@ async function download(path: string, name: string): Promise<string> {
   return saveFromUrl(data.signedUrl, name, extOf(path));
 }
 
+/** A short-lived link to a file kept in the account (an hour), for reading it straight from there. */
+export async function mediaLink(path: string): Promise<string> {
+  const { data, error } = await client().storage.from(BUCKET).createSignedUrl(path, 3600);
+  if (error || !data) throw new Error(error?.message || "Couldn't get a download link");
+  return data.signedUrl;
+}
+
 const progress = (text?: string) => useStore.getState().setSync({ progress: text });
 
 function check(...results: { error: { message: string } | null }[]) {

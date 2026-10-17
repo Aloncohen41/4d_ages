@@ -10,6 +10,7 @@ import { buildBookHtml, printSizes } from "./bookHtml";
 import { HeightUnit, WeightUnit } from "./growth";
 import type { ClassicEntry } from "./classics";
 import { onWeb } from "./onWeb";
+import { mediaLink } from "./sync";
 
 export { BOOK_SIZES, BOOK_STYLES } from "./bookPages";
 export { memoryHeading } from "./bookHtml";
@@ -126,9 +127,13 @@ export async function exportBook(i: BookInput, to: BookDestination = "share", on
 async function printOnWeb(i: BookInput, onProgress?: (text: string) => void): Promise<"saved"> {
   const size = sizeById(i.size);
   const plan = planBook(i.child, i.memories, size, { family: i.family, intro: i.intro, classics: i.classics, siblings: i.siblings, places: i.places, mapUri: i.mapUri, memorial: i.memorial, together: i.together });
+  // Every picture is read here, by the page itself, and handed to the print window ready to draw: the website keeps its pictures in the
+  // browser's own storage, which the print window couldn't always read, so the book printed with empty frames. A picture that isn't in
+  // this browser yet (added on the phone, not downloaded here) is read straight from the account instead.
+  const pictures = await webPictures(i, [...printSizes(plan, size).keys()], onProgress);
   onProgress?.("Opening the print window…");
-  const title = bookFileName(i).replace(/.pdf$/, "");
-  const html = buildBookHtml({ ...i, plan, size, image: (u) => u || null, mode: "print" }).replace("<head>", `<head><title>${title.replace(/</g, "")}</title>`);
+  const title = bookFileName(i).replace(/\.pdf$/, "");
+  const html = buildBookHtml({ ...i, plan, size, image: (u) => (u ? (pictures.get(u) ?? null) : null), mode: "print" }).replace("<head>", `<head><title>${title.replace(/</g, "")}</title>`);
   const frame = document.createElement("iframe");
   Object.assign(frame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
   document.body.appendChild(frame);
@@ -143,6 +148,33 @@ async function printOnWeb(i: BookInput, onProgress?: (text: string) => void): Pr
   frame.contentWindow!.focus();
   frame.contentWindow!.print();
   document.title = before;
-  setTimeout(() => frame.remove(), 60_000);
+  setTimeout(() => { frame.remove(); pictures.forEach((u) => { if (u?.startsWith("blob:")) URL.revokeObjectURL(u); }); }, 60_000);
   return "saved";
+}
+
+/** The book's pictures, each as an address the print window can always draw (a picture held in the page), or null if it can't be read. */
+async function webPictures(i: BookInput, wanted: string[], onProgress?: (text: string) => void): Promise<Map<string, string | null>> {
+  const inAccount = new Map<string, string>(); // a picture's address here → where it's kept in the account
+  for (const m of i.memories) for (const x of m.media) if (x.path && x.uri) inAccount.set(x.uri, x.path);
+  for (const e of i.classics ?? []) for (const list of Object.values(e.photos)) for (const x of list) if (x.path && x.uri) inAccount.set(x.uri, x.path);
+  const read = async (url: string): Promise<Blob | null> => {
+    try {
+      const r = await fetch(url);
+      // (an address the website doesn't have comes back as the website's own page, not a picture)
+      return r.ok && !/text\/html/.test(r.headers.get("content-type") || "") ? await r.blob() : null;
+    } catch {
+      return null;
+    }
+  };
+  const out = new Map<string, string | null>();
+  let n = 0;
+  for (const u of wanted) {
+    onProgress?.(`Preparing pictures: ${++n} of ${wanted.length}`);
+    if (u.startsWith("data:")) { out.set(u, u); continue; }
+    let blob = await read(u);
+    const path = inAccount.get(u);
+    if (!blob && path) blob = await mediaLink(path).then(read).catch(() => null);
+    out.set(u, blob ? URL.createObjectURL(blob) : null);
+  }
+  return out;
 }

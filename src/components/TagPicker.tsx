@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { uid, useActiveChild, useStore } from "../lib/store";
 import { familyOf } from "../lib/family";
+import { peopleOrder } from "../lib/kinship";
 import { useTheme } from "../lib/useTheme";
 import { TAG_CATEGORIES, displayName, implicitPlace, indexTags, personTag, relationLabel, tagStats, tagsFromText, uniqueIds } from "../lib/tags";
 import { Tag, TagCategory } from "../lib/types";
@@ -17,7 +18,7 @@ export function TagPicker({ value, onChange, location }: { value: string[]; onCh
   const t = useTheme();
   const relatives = useStore((s) => s.relatives);
   const active = useActiveChild();
-  const family = useMemo(() => (active ? familyOf(relatives, active.id) : relatives), [relatives, active]); // the people in THIS child's family
+  const family = useMemo(() => peopleOrder(active ? familyOf(relatives, active.id) : relatives), [relatives, active]); // the people in THIS child's family: parents first, then A to Z
   const memories = useStore((s) => s.memories);
   const list = useStore((s) => s.tags);
   const upsertTags = useStore((s) => s.upsertTags);

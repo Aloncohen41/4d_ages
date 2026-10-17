@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { Asset } from "expo-asset";
+import { onWeb } from "../lib/onWeb";
 import { useTheme } from "../lib/useTheme";
 import { TYPE } from "../theme";
 import { MUSIC, MusicId, VIDEO_TEMPLATES, VideoTemplate, musicModule } from "../lib/videoStyles";
@@ -10,7 +12,25 @@ import { Icon } from "./Icon";
 import { Input, Label, Seg } from "./ui";
 
 /** A few seconds of a track, to hear it before choosing it. */
-function Listen({ id, onEnd }: { id: Exclude<MusicId, "none">; onEnd: () => void }) {
+function Listen(props: { id: Exclude<MusicId, "none">; onEnd: () => void }) {
+  return onWeb ? <ListenWeb {...props} /> : <ListenPhone {...props} />;
+}
+
+/** The website: the browser's own audio (a hidden video player stayed silent in the browser). */
+function ListenWeb({ id, onEnd }: { id: Exclude<MusicId, "none">; onEnd: () => void }) {
+  const done = React.useRef(onEnd);
+  done.current = onEnd;
+  React.useEffect(() => {
+    const audio = new Audio(Asset.fromModule(musicModule(id)).uri);
+    audio.play().catch(() => done.current());
+    audio.onended = () => done.current();
+    const stop = setTimeout(() => { audio.pause(); done.current(); }, 15_000);
+    return () => { clearTimeout(stop); audio.pause(); };
+  }, [id]);
+  return null;
+}
+
+function ListenPhone({ id, onEnd }: { id: Exclude<MusicId, "none">; onEnd: () => void }) {
   const player = useVideoPlayer(musicModule(id), (p) => {
     p.loop = false;
     p.play();

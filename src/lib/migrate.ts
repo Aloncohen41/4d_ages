@@ -243,6 +243,12 @@ export function migrateRelativesV6<S extends Loose>(s: S): S {
   return { ...s, relatives };
 }
 
+/* ---------------- v7 ---------------- */
+/** Light is everyone's look unless they chose dark: "same as the phone" was only ever the default, never a choice, so it becomes light. */
+export function migrateAppearanceV7<S extends Loose>(s: S): S {
+  return s.appearance === "system" ? { ...s, appearance: "light" } : s;
+}
+
 export function migrateStored<S extends Loose>(persisted: S, fromVersion: number): S {
   let s: Loose = persisted;
   if (fromVersion < 2) s = migrateLegacyFirsts(s);
@@ -250,5 +256,6 @@ export function migrateStored<S extends Loose>(persisted: S, fromVersion: number
   if (fromVersion < 4) s = migrateTagsV4(s);
   if (fromVersion < 5) s = migrateMemoriesV5(s);
   if (fromVersion < 6) s = migrateRelativesV6(s);
+  if (fromVersion < 7) s = migrateAppearanceV7(s);
   return s as S;
 }

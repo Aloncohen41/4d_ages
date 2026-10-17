@@ -16,7 +16,11 @@ export function openDatePicker(opts: Opts) {
   if (!time && opts.minimumDate) input.min = ymd(opts.minimumDate);
   if (!time && opts.maximumDate) input.max = ymd(opts.maximumDate);
   Object.assign(input.style, { position: "fixed", left: "50%", top: "40%", opacity: "0", width: "1px", height: "1px", pointerEvents: "none" });
-  document.body.appendChild(input);
+  // inside the open pop-up, if there is one: a pop-up keeps the keyboard's focus inside itself, so a field outside it lost focus at once
+  // and the calendar closed as soon as it opened
+  const dialogs = document.querySelectorAll('[aria-modal="true"]');
+  const host = (document.activeElement?.closest('[aria-modal="true"]') as HTMLElement | null) ?? (dialogs[dialogs.length - 1] as HTMLElement | undefined) ?? document.body;
+  host.appendChild(input);
   let done = false;
   const finish = (set: boolean) => {
     if (done) return;

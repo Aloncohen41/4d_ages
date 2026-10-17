@@ -187,7 +187,7 @@ const activeViewOnly = (s: Pick<State, "kids" | "activeId">) => isViewOnly(s, s.
 /** Delete a memory's files from the phone. */
 const deleteMedia = (m: Memory) => filesOf(m.media).forEach(deleteFile);
 
-export const STORE_VERSION = 6;
+export const STORE_VERSION = 7;
 // Not brand, and never to be renamed: this key is where every existing phone keeps its memories (and where the pre-migration backups are made).
 const STORE_KEY = "4d-ages-v1";
 
@@ -213,7 +213,7 @@ export const useStore = create<State>()(
       heightUnit: "cm",
       weightUnit: "kg",
       growthChart: "who",
-      appearance: "system",
+      appearance: "light", // light for everyone unless they choose dark (or "same as phone") in Settings
       appLock: false,
       tags: [],
       milestoneAnswers: {},

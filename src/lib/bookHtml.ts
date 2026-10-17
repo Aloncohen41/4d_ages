@@ -41,8 +41,11 @@ export interface BookHtmlInput {
   /** pager: the page to open on. overview: which pages to show, and how wide (in screen pixels) each is drawn. */
   start?: number;
   overview?: { index: number; width: number }[];
-  /** pager: the page in front, with a little of the pages before and after it showing at the sides (the Customize view) */
-  peek?: boolean;
+  /**
+   * pager: the page in front, with a little of the pages before and after it showing at the sides (the Customize view). A number is how much
+   * of the width the page in front takes (0.78 when just true): on a computer it's less, so more of the pages either side shows.
+   */
+  peek?: boolean | number;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -805,10 +808,10 @@ html,body{background:transparent;overflow-x:hidden}
 .pager{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100vh;scrollbar-width:none}
 .pager::-webkit-scrollbar{display:none}
 .pager .slot{flex:0 0 100vw;height:100vh;scroll-snap-align:center;display:flex;align-items:center;justify-content:center}
-.pager.peek{padding-left:11vw;box-sizing:border-box}
-.pager.peek .slot{flex:0 0 78vw;transition:transform .25s,opacity .25s}
+.pager.peek{padding-left:var(--side);box-sizing:border-box}
+.pager.peek .slot{flex:0 0 var(--front);transition:transform .25s,opacity .25s}
 .pager.peek .slot:not(.on){transform:scale(.9);opacity:.55}
-.pager.peek::after{content:"";flex:0 0 11vw}
+.pager.peek::after{content:"";flex:0 0 var(--side)}
 .overview{display:flex;flex-wrap:wrap;justify-content:space-between;row-gap:10px}
 .overview .slot{display:flex;flex-direction:column;align-items:center;cursor:pointer}
 .overview .lead{flex:0 0 100%;padding:4px 0 6px}
@@ -819,10 +822,11 @@ html,body{background:transparent;overflow-x:hidden}
     return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="overview">${slots.join("")}</div>
 <script>function tap(i){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({open:i}))}</script></body></html>`;
   }
-  return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="pager${i.peek ? " peek" : ""}" id="pager">${pagesHtml.map((h) => `<div class="slot">${sheet(h, 1)}</div>`).join("")}</div>
+  const front = typeof i.peek === "number" ? i.peek : i.peek ? 0.78 : 1;
+  return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="pager${i.peek ? " peek" : ""}" id="pager" style="--front:${front * 100}vw;--side:${((1 - front) / 2) * 100}vw">${pagesHtml.map((h) => `<div class="slot">${sheet(h, 1)}</div>`).join("")}</div>
 <script>
 (function(){
-  var pager=document.getElementById('pager'),frames=document.querySelectorAll('.frame'),slots=document.querySelectorAll('.slot'),last=-1,SW=${i.peek ? 0.78 : 1};
+  var pager=document.getElementById('pager'),frames=document.querySelectorAll('.frame'),slots=document.querySelectorAll('.slot'),last=-1,SW=${front};
   function step(){return window.innerWidth*SW;}
   function fit(){var z=Math.min((step()-24)/${pageW.toFixed(2)},(window.innerHeight-24)/${pageH.toFixed(2)});
     for(var k=0;k<frames.length;k++){frames[k].style.width=(${pageW.toFixed(2)}*z)+'px';frames[k].style.height=(${pageH.toFixed(2)}*z)+'px';frames[k].firstChild.style.transform='scale('+z+')';}}

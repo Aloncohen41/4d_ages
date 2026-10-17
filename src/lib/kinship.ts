@@ -104,6 +104,15 @@ export function parentsOf<T extends Person>(family: T[]): T[] {
   return family.filter((r) => kinOf(r) === "parent").slice(0, 2);
 }
 
+/**
+ * The order people are offered in (tagging a post): the parents first, mum before dad, then everyone else A to Z by the name they're shown with.
+ */
+export function peopleOrder<T extends Person & { name: string; nickname?: string }>(family: T[]): T[] {
+  const rank = (r: T) => (kinOf(r) === "parent" ? (parentRole(r.relation) === "father" ? 1 : 0) : 2);
+  const shown = (r: T) => (r.nickname || r.name).toLocaleLowerCase();
+  return [...family].sort((a, b) => rank(a) - rank(b) || shown(a).localeCompare(shown(b)));
+}
+
 /** Which side someone is on: 0 (the first parent's), 1 (the second's), or null (both, neither, or not said). */
 export function sideIndex(r: Person, family: Person[]): 0 | 1 | null {
   if (!kinInfo(kinOf(r)).sided) return null;

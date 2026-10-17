@@ -209,7 +209,7 @@ export async function reauthenticate(password?: string): Promise<void> {
 
 export async function signOut(): Promise<void> {
   if (googleReady) await googleSignOut(); // so the next Google sign-in asks which account
-  await supabase?.auth.signOut();
+  await supabase?.auth.signOut({ scope: "local" }); // only this phone or browser: being signed in on the website and the phone at once is fine
 }
 
 /** Keeps the agreement to the terms, the privacy policy and keeping health information with the account (see consent.ts). */

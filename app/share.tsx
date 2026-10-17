@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, Share, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, Share, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Page } from "../src/components/Page";
 import { Btn, Input, MemberAvatar } from "../src/components/ui";
 import { Icon, IconName } from "../src/components/Icon";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
-import { useActiveChild, useStore } from "../src/lib/store";
+import { uid, useActiveChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { isConfigured, keyIsSecret, useSession } from "../src/lib/supabase";
 import {
@@ -253,8 +253,7 @@ function PeoplePicker({ child, value, onChange, single }: { child: Child; value:
   if (!family.length) {
     return (
       <View style={{ padding: 14, borderRadius: 14, backgroundColor: t.bg2 }}>
-        <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>No one is in {child.name}'s family list yet. Add them in Family (menu, Family), then tag them on posts: family members see the posts they're tagged in.</Text>
-        <Btn label="Open Family" kind="line" onPress={() => router.push("/family")} style={{ marginTop: 10 }} />
+        <Text style={[TYPE.bodyMedium, { color: t.ink2 }]}>No one is in {child.name}'s family list yet. Add them here: family members see the posts they're tagged in.</Text>
       </View>
     );
   }
@@ -317,6 +316,7 @@ function InviteSteps({ child, kind, onCreated, onCancel }: { child: Child; kind:
           <Text style={[TYPE.titleMedium, { color: t.ink }]}>Who are you inviting?</Text>
           <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 8 }]}>Choose them from {child.name}'s family (optional), then whose posts they'll see.</Text>
           <PeoplePicker child={child} value={who} single onChange={(ids) => { setWho(ids); if (ids[0] && !people.includes(ids[0])) setPeople([...people, ids[0]]); }} />
+          <AddFamilyMember child={child} onAdded={(id) => { setWho([id]); if (!people.includes(id)) setPeople([...people, id]); }} />
           <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 18 }]}>They'll see the posts with</Text>
           <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 8 }]}>Tick everyone whose posts they may see. Example: Grandma sees the posts with Grandma and Grandpa.</Text>
           <PeoplePicker child={child} value={people} onChange={setPeople} />
@@ -368,6 +368,9 @@ function SendInvite({ child, invite, onDone }: { child: Child; invite: PendingIn
     try { await Linking.openURL(url); } catch { fallback(); }
   };
   const others = () => Share.share({ message }).catch(() => undefined);
+  // the website: no WhatsApp (a browser can't open it), and other apps only where the browser can share
+  const web = Platform.OS === "web";
+  const canShare = !web || (typeof navigator !== "undefined" && typeof navigator.share === "function");
   return (
     <View>
       <View style={{ alignItems: "center", backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 18 }}>
@@ -377,9 +380,9 @@ function SendInvite({ child, invite, onDone }: { child: Child; invite: PendingIn
         <Text selectable style={{ color: t.ink, fontSize: 34, fontWeight: "700", letterSpacing: 5, marginTop: 10 }}>{invite.code}</Text>
         <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Works once, until {formatDate(invite.expires.slice(0, 10))}</Text>
       </View>
-      <Btn label="Send on WhatsApp" icon="message-circle" onPress={() => open(`whatsapp://send?text=${encodeURIComponent(message)}`, () => { setNote("WhatsApp isn't on this phone, so here are the other apps."); others(); })} style={{ marginTop: 16 }} />
-      <Btn label="Send by email" icon="mail" kind="line" onPress={() => open(`mailto:${encodeURIComponent(invite.email ?? "")}?subject=${encodeURIComponent(`${child.name}'s baby book`)}&body=${encodeURIComponent(message)}`, others)} style={{ marginTop: 10 }} />
-      <Btn label="Other apps" icon="share" kind="line" onPress={others} style={{ marginTop: 10 }} />
+      {web ? null : <Btn label="Send on WhatsApp" icon="message-circle" onPress={() => open(`whatsapp://send?text=${encodeURIComponent(message)}`, () => { setNote("WhatsApp isn't on this phone, so here are the other apps."); others(); })} style={{ marginTop: 16 }} />}
+      <Btn label="Send by email" icon="mail" kind={web ? "solid" : "line"} onPress={() => open(`mailto:${encodeURIComponent(invite.email ?? "")}?subject=${encodeURIComponent(`${child.name}'s baby book`)}&body=${encodeURIComponent(message)}`, others)} style={{ marginTop: web ? 16 : 10 }} />
+      {canShare ? <Btn label="Other apps" icon="share" kind="line" onPress={others} style={{ marginTop: 10 }} /> : null}
       <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
         <Btn label="Copy link" icon="copy" kind="soft" onPress={() => { Clipboard.setStringAsync(link); setNote("Link copied."); }} style={{ flex: 1 }} />
         <Btn label="Copy code" icon="copy" kind="soft" onPress={() => { Clipboard.setStringAsync(invite.code); setNote("Code copied."); }} style={{ flex: 1 }} />
@@ -459,6 +462,34 @@ function JoinCard({ expanded }: { expanded?: boolean }) {
           <Btn label={busy ? "Joining…" : "Join"} onPress={join} disabled={busy || clean.length !== 8} style={{ marginTop: 12 }} />
         </>
       ) : null}
+    </View>
+  );
+}
+
+/** Adding someone to the family from the invite, for inviting a relative who isn't in the family list yet. */
+function AddFamilyMember({ child, onAdded }: { child: Child; onAdded: (id: string) => void }) {
+  const t = useTheme();
+  const addRelative = useStore((s) => s.addRelative);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [relation, setRelation] = useState("");
+  const add = () => {
+    if (!name.trim() || !relation.trim()) return;
+    const id = uid("rel");
+    addRelative({ id, name: name.trim(), relation: relation.trim(), childIds: [child.id] });
+    onAdded(id);
+    setName(""); setRelation(""); setOpen(false);
+  };
+  if (!open) return <Btn label="Add a family member" icon="user-plus" kind="line" onPress={() => setOpen(true)} style={{ marginTop: 10 }} />;
+  return (
+    <View style={{ marginTop: 10, backgroundColor: t.bg2, borderRadius: 14, padding: 12, gap: 8 }}>
+      <Text style={[TYPE.titleSmall, { color: t.ink }]}>Add to {child.name}'s family</Text>
+      <Input value={name} onChangeText={setName} placeholder="Their name" maxLength={40} returnKeyType="next" />
+      <Input value={relation} onChangeText={setRelation} placeholder="Relationship. Example: Grandma" maxLength={30} returnKeyType="done" onSubmitEditing={add} />
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Btn label="Cancel" kind="soft" onPress={() => setOpen(false)} style={{ flex: 1 }} />
+        <Btn label="Add" onPress={add} disabled={!name.trim() || !relation.trim()} style={{ flex: 1 }} />
+      </View>
     </View>
   );
 }

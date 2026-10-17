@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
-import { WebFrame as WebView, WebFrameMessage as WebViewMessageEvent } from "./WebFrame";
+import { WebFrame as WebView, WebFrameHandle, WebFrameMessage as WebViewMessageEvent } from "./WebFrame";
+import { useWide } from "../lib/useWide";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BOOK_STYLES, BookColour, BookPlan, BookSize, BookStyle, STYLE_LOOK } from "../lib/bookPages";
 import { buildBookHtml } from "../lib/bookHtml";
@@ -10,7 +11,7 @@ import { TYPE } from "../theme";
 import { Icon } from "./Icon";
 import { BookViewInput } from "./BookPreview";
 import { BookExportSheet, ColourChoice, THEME_ICONS, themeOrder } from "./BookExportSheet";
-import { Seg, dialogName } from "./ui";
+import { Btn, Seg, dialogName } from "./ui";
 
 const fileAccess = {
   originWhitelist: ["*"] as string[],
@@ -25,7 +26,9 @@ const fromPhone = (uri: string) => uri || null;
 /**
  * Customize the book, like choosing a filter: the book's pages in front of you (a little of the page before and after showing at the sides,
  * swipe between them), and the themes along the bottom: slide them left and right, the one in the middle is the book's theme and the pages
- * change to it. The colour is one tab over. Once it looks right, the share button at the top right exports it.
+ * change to it. The colour is one tab over. Once it looks right, the download button at the top right exports it.
+ * On a computer: the pages large, with the pages before and after showing either side (arrows and the arrow keys turn them), and the
+ * themes and colours in a panel beside them.
  */
 export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, onExport, busy, progress, message }: {
   input: BookViewInput & { plan: BookPlan; size: BookSize; style: BookStyle; colour?: BookColour };
@@ -47,11 +50,26 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const page = useRef(0);
+  const wide = useWide();
+  const frame = useRef<WebFrameHandle>(null);
+  const turn = (to: number) => frame.current?.injectJavaScript(`go(${Math.max(0, Math.min(pages - 1, to))})`);
+  // the arrow keys turn the pages on a computer
+  useEffect(() => {
+    if (!wide || typeof document === "undefined") return;
+    const key = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.("input,textarea,[role=radiogroup]")) return;
+      if (e.key === "ArrowRight") turn(page.current + 1);
+      if (e.key === "ArrowLeft") turn(page.current - 1);
+    };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wide, pages]);
 
   // the pages, drawn in the theme chosen; a new theme opens on the page you were looking at
   const html = useMemo(
-    () => buildBookHtml({ ...input, image: fromPhone, mode: "pager", peek: true, start: page.current }),
-    [input],
+    () => buildBookHtml({ ...input, image: fromPhone, mode: "pager", peek: wide ? 0.5 : true, start: page.current }),
+    [input, wide],
   );
   useEffect(() => setLoading(true), [html]);
   const onMessage = (e: WebViewMessageEvent) => {
@@ -79,6 +97,72 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
     if (order[i] !== input.style) onStyle(order[i]);
   };
   const shown = BOOK_STYLES.find((s) => s.id === order[centred]) ?? BOOK_STYLES[0];
+  const exportSheet = exporting ? (
+    <BookExportSheet themeLabel={BOOK_STYLES.find((s) => s.id === input.style)?.label ?? ""} size={input.size} pages={pages} onExport={onExport} busy={busy} progress={progress} message={message} onClose={() => setExporting(false)} />
+  ) : null;
+
+  if (wide) {
+    const arrow = (dir: -1 | 1) => {
+      const off = dir < 0 ? index <= 0 : index >= pages - 1;
+      return (
+        <Pressable onPress={() => turn(index + dir)} disabled={off} accessibilityRole="button" accessibilityLabel={dir < 0 ? "Previous page" : "Next page"}
+          style={{ position: "absolute", top: "50%", [dir < 0 ? "left" : "right"]: 16, marginTop: -26, width: 52, height: 52, borderRadius: 26, backgroundColor: t.surfaceHigh, alignItems: "center", justifyContent: "center", opacity: off ? 0.35 : 1, boxShadow: "0 4px 16px rgba(0,0,0,.18)" } as object}>
+          <Icon name={dir < 0 ? "chevron-left" : "chevron-right"} size={28} color={t.ink} />
+        </Pressable>
+      );
+    };
+    return (
+      <Modal visible animationType="fade" onRequestClose={onClose} {...dialogName("Customize the book")}>
+        <View style={{ flex: 1, flexDirection: "row", backgroundColor: t.bg3 }}>
+          <View style={{ flex: 1 }}>
+            <WebView ref={frame as never} accessibilityLabel="The book's pages" {...fileAccess} source={{ html, baseUrl: "file:///" }} onMessage={onMessage} onLoadEnd={() => setLoading(false)} style={{ backgroundColor: "transparent" }} containerStyle={{ backgroundColor: "transparent" }} />
+            {loading ? <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={t.accent} /></View> : null}
+            {arrow(-1)}
+            {arrow(1)}
+          </View>
+          <View style={{ width: 380, backgroundColor: t.bg, borderLeftWidth: 1, borderLeftColor: t.line }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text role="heading" aria-level={1} style={[TYPE.headlineSmall, { color: t.ink }]}>Customize</Text>
+                <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Page {index + 1} of {pages} · the arrow keys turn the pages</Text>
+              </View>
+              <Pressable onPress={onClose} accessibilityLabel="Close" accessibilityRole="button" style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: t.bg2 }}><Icon name="x" size={22} color={t.ink2} /></Pressable>
+            </View>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+              <Seg options={[{ id: "theme" as const, label: "Theme" }, { id: "colour" as const, label: "Colour" }]} value={part} onChange={setPart} />
+              {part === "theme" ? (
+                <>
+                  <View accessibilityRole="radiogroup" accessibilityLabel="Theme" style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 16 }}>
+                    {order.map((id) => {
+                      const look = STYLE_LOOK[id];
+                      const [a, b] = THEME_ICONS[id];
+                      const on = id === input.style;
+                      return (
+                        <Pressable key={id} onPress={() => onStyle(id)} accessibilityRole="radio" aria-checked={on} accessibilityLabel={BOOK_STYLES.find((s) => s.id === id)?.label} style={{ width: 104, alignItems: "center" }}>
+                          <View style={{ width: 96, height: 120, borderRadius: 12, backgroundColor: look.paper, borderWidth: on ? 3 : 1, borderColor: on ? t.accent : t.line, alignItems: "center", justifyContent: "center", gap: 6 }}>
+                            <Icon name={a} size={26} color={look.accent} />
+                            {id !== "modern" ? <Icon name={b} size={18} color={look.sub} /> : <View style={{ width: 22, height: 3, borderRadius: 2, backgroundColor: look.sub }} />}
+                          </View>
+                          <Text style={[TYPE.labelSmall, { color: on ? t.ink : t.ink3, marginTop: 6, fontWeight: on ? "700" : "500" }]} numberOfLines={1}>{BOOK_STYLES.find((s) => s.id === id)?.label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 12 }]}>{(BOOK_STYLES.find((s) => s.id === input.style) ?? BOOK_STYLES[0]).desc}</Text>
+                </>
+              ) : (
+                <View style={{ marginTop: 16 }}><ColourChoice value={input.colour ?? "age"} onChange={onColour} /></View>
+              )}
+            </ScrollView>
+            <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: t.line }}>
+              <Btn label="Download the book" icon="download" onPress={() => setExporting(true)} />
+            </View>
+          </View>
+        </View>
+        {exportSheet}
+      </Modal>
+    );
+  }
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent {...dialogName("Customize the book")}>
@@ -91,7 +175,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
           </View>
           <Pressable onPress={() => setExporting(true)} accessibilityRole="button" accessibilityLabel="Export the book" hitSlop={6}
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" }}>
-            <Icon name="share" size={22} color={t.onAccent} />
+            <Icon name="download" size={22} color={t.onAccent} />
           </Pressable>
         </View>
 
@@ -152,9 +236,7 @@ export function BookCustomizer({ input, pages, pet, onStyle, onColour, onClose, 
           </ScrollView>
         )}
       </View>
-      {exporting ? (
-        <BookExportSheet themeLabel={BOOK_STYLES.find((s) => s.id === input.style)?.label ?? ""} size={input.size} pages={pages} onExport={onExport} busy={busy} progress={progress} message={message} onClose={() => setExporting(false)} />
-      ) : null}
+      {exportSheet}
     </Modal>
   );
 }

@@ -29,80 +29,133 @@ import { AddChildSheet } from "./Screen";
 /** How wide the website's content gets, in the middle of the window. */
 export const SITE_MAX = 1200;
 
-const KID_LINKS = [["/", "Home"], ["/milestones", "Milestones"], ["/growth", "Growth"], ["/book", "Book"], ["/family", "Family"]] as const;
-const PET_LINKS = [["/", "Home"], ["/growth", "Health"], ["/milestones", "Stories"], ["/book", "Book"], ["/family", "Family"]] as const;
+const KID_LINKS = [["/", "Home"], ["/milestones", "Milestones"], ["/growth", "Growth"], ["/book", "Book"]] as const;
+const PET_LINKS = [["/", "Home"], ["/growth", "Health"], ["/milestones", "Stories"], ["/book", "Book"]] as const;
 
 type Hover = PressableStateCallbackType & { hovered?: boolean };
 /** A Pressable's style with the mouse over it (the website's library reports `hovered`). */
 const hover = (base: StyleProp<ViewStyle>, over: ViewStyle) => (s: PressableStateCallbackType) => [base, (s as Hover).hovered || s.pressed ? over : null];
 
-type MenuName = "profile" | "add" | "account";
 
 export function SiteHeader() {
   const t = useTheme();
   const path = usePathname();
   const active = useActiveChild();
   const pet = isPet(active);
-  const [open, setOpen] = useState<MenuName | null>(null);
-  const toggle = (m: MenuName) => setOpen((o) => (o === m ? null : m));
+  const session = useSession();
+  const preview = useStore((s) => s.preview);
+  const clearSample = useStore((s) => s.clearSample);
+  const [adding, setAdding] = useState(false);
 
   // Escape closes an open menu, as on any website
   useEffect(() => {
-    if (!open || typeof document === "undefined") return;
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(null); };
+    if (!adding || typeof document === "undefined") return;
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setAdding(false); };
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);
-  }, [open]);
+  }, [adding]);
 
-  const links = pet ? PET_LINKS : KID_LINKS;
   const here = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const out = async () => {
+    await syncAll().catch(() => undefined); // anything not yet in the account goes there first
+    await signOut();
+  };
+  const link = (href: string, label: string, icon?: IconName) => {
+    const on = here(href);
+    return (
+      <Pressable key={href} onPress={() => goTo(href)} accessibilityRole="link" aria-current={on ? "page" : undefined} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 20 }, { backgroundColor: withAlpha(t.ink, 0.06) })}>
+        {icon ? <Icon name={icon} size={18} color={on ? t.ink : t.ink2} /> : null}
+        <Text style={[TYPE.labelLarge, { fontSize: 15, color: on ? t.ink : t.ink2, fontWeight: on ? "700" : "500" }]}>{label}</Text>
+        <View style={{ position: "absolute", left: 12, right: 12, bottom: 4, height: 3, borderRadius: 2, backgroundColor: on ? t.accent : "transparent" }} />
+      </Pressable>
+    );
+  };
+  const quiet = hover({ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 20 }, { backgroundColor: withAlpha(t.ink, 0.06) });
 
   return (
     <View style={{ zIndex: 20, backgroundColor: t.bg, borderBottomWidth: 1, borderBottomColor: t.line }}>
-      {open ? <Pressable onPress={() => setOpen(null)} focusable={false} aria-hidden style={{ position: "fixed" as "absolute", top: 0, left: 0, right: 0, bottom: 0 }} /> : null}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 24, width: "100%", maxWidth: SITE_MAX, alignSelf: "center", paddingHorizontal: 32, height: 72 }}>
-        <Pressable onPress={() => router.navigate("/")} accessibilityRole="link">
-          <Image source={WORDMARKS[t.key]} accessibilityLabel={`${APP_NAME}, home`} style={{ height: 40, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
+      {adding ? <Pressable onPress={() => setAdding(false)} focusable={false} aria-hidden style={{ position: "fixed" as "absolute", top: 0, left: 0, right: 0, bottom: 0 }} /> : null}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 16, width: "100%", maxWidth: SITE_MAX, alignSelf: "center", paddingHorizontal: 32, height: 72 }}>
+        <Pressable onPress={() => goTo("/")} accessibilityRole="link">
+          {/* the website always shows the original logo (a child's colours recolour it in the app) */}
+          <Image source={WORDMARKS.pink} accessibilityLabel={`${APP_NAME}, home`} style={{ height: 44, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
         </Pressable>
-
-        <View role="navigation" aria-label="Pages" style={{ flexDirection: "row", gap: 4, flex: 1 }}>
-          {links.map(([href, label]) => {
-            const on = here(href);
-            return (
-              <Pressable key={href} onPress={() => router.navigate(href)} accessibilityRole="link" aria-current={on ? "page" : undefined} style={hover({ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20 }, { backgroundColor: withAlpha(t.ink, 0.06) })}>
-                <Text style={[TYPE.labelLarge, { fontSize: 15, color: on ? t.ink : t.ink2, fontWeight: on ? "700" : "500" }]}>{label}</Text>
-                <View style={{ position: "absolute", left: 14, right: 14, bottom: 4, height: 3, borderRadius: 2, backgroundColor: on ? t.accent : "transparent" }} />
-              </Pressable>
-            );
-          })}
+        <View role="navigation" aria-label="Pages" style={{ flexDirection: "row", alignItems: "center", gap: 2, flex: 1 }}>
+          {(pet ? PET_LINKS : KID_LINKS).map(([href, label]) => link(href, label))}
+          <View style={{ flex: 1 }} />
+          {/* the pages that are in the phone's menu, in the same order */}
+          {link("/family", "Family", "family")}
+          {link("/classics", "Classics", "classics")}
+          {pet ? null : link("/health", "Health", "health")}
+          {link("/settings", "Settings", "settings")}
         </View>
-
-        {active && active.role !== "viewer" ? (
-          <View>
-            <Pressable onPress={() => toggle("add")} accessibilityRole="button" aria-haspopup="menu" aria-expanded={open === "add"} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 42, paddingHorizontal: 18, borderRadius: 21, backgroundColor: t.accent }, { opacity: 0.9 })}>
-              <Icon name="plus" size={20} color={t.onAccent} />
-              <Text style={[TYPE.labelLarge, { color: t.onAccent, fontSize: 15 }]}>Add</Text>
-            </Pressable>
-            {open === "add" ? <AddMenu pet={pet} onClose={() => setOpen(null)} /> : null}
-          </View>
+        {preview ? (
+          <Pressable onPress={clearSample} accessibilityRole="button" style={quiet}>
+            <Icon name="logout" size={18} color={t.ink2} /><Text style={[TYPE.labelLarge, { fontSize: 15, color: t.ink2 }]}>Leave the sample</Text>
+          </Pressable>
+        ) : session ? (
+          <Pressable onPress={out} accessibilityRole="button" style={quiet}>
+            <Icon name="logout" size={18} color={t.ink2} /><Text style={[TYPE.labelLarge, { fontSize: 15, color: t.ink2 }]}>Sign out</Text>
+          </Pressable>
         ) : null}
+      </View>
 
-        <View>
-          <Pressable onPress={() => toggle("profile")} accessibilityRole="button" accessibilityLabel={active ? `Profile: ${active.name}. Change profile` : "Choose a profile"} aria-haspopup="menu" aria-expanded={open === "profile"} style={hover({ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 10, height: 44, borderRadius: 22, borderWidth: 1, borderColor: t.outline }, { backgroundColor: withAlpha(t.ink, 0.05) })}>
-            {active ? <Avatar child={active} size={34} /> : null}
-            <Text style={[TYPE.labelLarge, { color: t.ink, maxWidth: 140 }]} numberOfLines={1}>{active?.name ?? "Profiles"}</Text>
-            <Icon name="chevron-down" size={18} color={t.ink2} />
-          </Pressable>
-          {open === "profile" ? <ProfileMenu onClose={() => setOpen(null)} /> : null}
-        </View>
-
-        <View>
-          <Pressable onPress={() => toggle("account")} accessibilityRole="button" accessibilityLabel="Account and more" aria-haspopup="menu" aria-expanded={open === "account"} style={hover({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }, { backgroundColor: withAlpha(t.ink, 0.06) })}>
-            <Icon name="menu" size={24} color={t.ink2} />
-          </Pressable>
-          {open === "account" ? <AccountMenu onClose={() => setOpen(null)} /> : null}
+      {/* every profile side by side, as on the phone, with adding on the right */}
+      <View style={{ backgroundColor: t.bg2 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16, width: "100%", maxWidth: SITE_MAX, alignSelf: "center", paddingHorizontal: 32, paddingVertical: 10 }}>
+          <Profiles />
+          {active && active.role !== "viewer" ? (
+            <View>
+              <Pressable onPress={() => setAdding((v) => !v)} accessibilityRole="button" aria-haspopup="menu" aria-expanded={adding} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: t.accent }, { opacity: 0.9 })}>
+                <Icon name="plus" size={20} color={t.onAccent} />
+                <Text style={[TYPE.labelLarge, { color: t.onAccent, fontSize: 15 }]}>Add</Text>
+              </Pressable>
+              {adding ? <AddMenu pet={pet} onClose={() => setAdding(false)} /> : null}
+            </View>
+          ) : null}
         </View>
       </View>
+    </View>
+  );
+}
+
+/**
+ * Going to a page from the header. The tab pages live together in one pager that remembers which of them was showing, so going to one
+ * of them from another page first returns to that pager, then picks the page asked for (never the one that happened to be open before).
+ */
+function goTo(href: string) {
+  const tab = href === "/" || /^\/(milestones|growth|book)$/.test(href);
+  if (tab && router.canDismiss()) router.dismissAll();
+  router.navigate(href as never);
+}
+
+/** The profiles, side by side: each with its picture, name and age; the chosen one filled in. */
+function Profiles() {
+  const t = useTheme();
+  const kids = useStore((s) => s.kids);
+  const setActive = useStore((s) => s.setActive);
+  const active = useActiveChild();
+  const [adding, setAdding] = useState(false);
+  return (
+    <View role="group" aria-label="Profiles" style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      {kids.map((k) => {
+        const on = k.id === active?.id;
+        const a = smartAge(k.birth);
+        return (
+          <Pressable key={k.id} onPress={() => setActive(k.id)} accessibilityRole="button" aria-pressed={on} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], on ? {} : { backgroundColor: withAlpha(t.ink, 0.05) })}>
+            <Avatar child={k} size={34} />
+            <View>
+              <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]} numberOfLines={1}>{k.name}</Text>
+              <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
+            </View>
+          </Pressable>
+        );
+      })}
+      <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1.5, borderStyle: "dashed", borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
+        <Icon name="plus" size={18} color={t.accentDeep} />
+        <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>Add a profile</Text>
+      </Pressable>
+      <AddChildSheet visible={adding} onClose={() => setAdding(false)} />
     </View>
   );
 }
@@ -153,54 +206,6 @@ function AddMenu({ pet, onClose }: { pet: boolean; onClose: () => void }) {
         <VoiceRecorderSheet onClose={() => { setRecording(false); onClose(); }} onDone={(item) => { setRecording(false); onClose(); setTimeout(() => setEntrySheet({ kind: "story", title: "Voice note", media: [item] }), 250); }} />
       ) : null}
     </>
-  );
-}
-
-function ProfileMenu({ onClose }: { onClose: () => void }) {
-  const t = useTheme();
-  const kids = useStore((s) => s.kids);
-  const setActive = useStore((s) => s.setActive);
-  const active = useActiveChild();
-  const [adding, setAdding] = useState(false);
-  return (
-    <>
-      <Dropdown label="Profiles" width={280}>
-        {kids.map((k) => {
-          const a = smartAge(k.birth);
-          return (
-            <Item key={k.id} label={k.name} sub={k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`} onPress={() => { setActive(k.id); onClose(); }}>
-              <Avatar child={k} size={32} />
-              {k.id === active?.id ? <View style={{ position: "absolute", right: 16 }}><Icon name="check" size={18} color={t.accent} /></View> : null}
-            </Item>
-          );
-        })}
-        {kids.length ? <Divider /> : null}
-        <Item icon="plus" label="Add a profile" onPress={() => setAdding(true)} />
-      </Dropdown>
-      <AddChildSheet visible={adding} onClose={() => { setAdding(false); onClose(); }} />
-    </>
-  );
-}
-
-function AccountMenu({ onClose }: { onClose: () => void }) {
-  const session = useSession();
-  const preview = useStore((s) => s.preview);
-  const clearSample = useStore((s) => s.clearSample);
-  const go = (p: "/classics" | "/health" | "/settings" | "/access") => { onClose(); router.navigate(p); };
-  const out = async () => {
-    onClose();
-    await syncAll().catch(() => undefined); // anything not yet in the account goes there first
-    await signOut();
-  };
-  return (
-    <Dropdown label="Account and more">
-      <Item icon="classics" label="Classics" onPress={() => go("/classics")} />
-      <Item icon="health" label="Health" onPress={() => go("/health")} />
-      <Item icon="settings" label="Settings" onPress={() => go("/settings")} />
-      {session || preview ? <Divider /> : null}
-      {preview ? <Item icon="logout" label="Leave the sample family" onPress={() => { onClose(); clearSample(); }} /> : null}
-      {session && !preview ? <Item icon="logout" label="Sign out" onPress={out} /> : null}
-    </Dropdown>
   );
 }
 

@@ -62,9 +62,9 @@ ok("voice recordings don't go to the book: a recording alone is left out, and a 
 ok("four kids' themes, each with its page background (and a frame on three)", KIDS_THEMES.join() === "stars,blossom,explorer,rainbow" && KIDS_THEMES.every((id) => !!THEME_BACKGROUND[id]?.pattern) && KIDS_THEMES.filter((id) => !!THEME_BACKGROUND[id]?.frame).length === 3);
 const bl = buildBookHtml({ child, plan: filled, defs: [], style: "blossom", size: sizeById("square-20"), image: (u) => u });
 ok("the background is printed on every page, with the frame, and pages keep their own colour under it", /\.page\{background-image:url\("data:image\/svg\+xml/.test(bl) && /\.page:before\{content:""/.test(bl) && !/class="page cover" style="background:/.test(bl));
-ok("the theme is chosen in Customize (the pages in front, the themes sliding along the bottom), and the book is exported from its share button",
-  /<BookCustomizer input=\{input\}/.test(read("app/(tabs)/book.tsx")) && !/ThemeCards/.test(read("app/(tabs)/book.tsx")) && /mode: "pager", peek: true/.test(read("src/components/BookCustomizer.tsx")) && /snapToInterval=\{ITEM\}/.test(read("src/components/BookCustomizer.tsx"))
-  && /accessibilityLabel="Export the book"[\s\S]{0,250}<Icon name="share"/.test(read("src/components/BookCustomizer.tsx")) && /<BookExportSheet themeLabel=/.test(read("src/components/BookCustomizer.tsx")) && /title="Export the book"/.test(read("src/components/BookExportSheet.tsx")));
+ok("the theme is chosen in Customize (the pages in front, the themes sliding along the bottom), and the book is exported from its download button",
+  /<BookCustomizer input=\{input\}/.test(read("app/(tabs)/book.tsx")) && !/ThemeCards/.test(read("app/(tabs)/book.tsx")) && /mode: "pager", peek: wide \? 0\.5 : true/.test(read("src/components/BookCustomizer.tsx")) && /snapToInterval=\{ITEM\}/.test(read("src/components/BookCustomizer.tsx"))
+  && /accessibilityLabel="Export the book"[\s\S]{0,250}<Icon name="download"/.test(read("src/components/BookCustomizer.tsx")) && /<BookExportSheet themeLabel=/.test(read("src/components/BookCustomizer.tsx")) && /title="Export the book"/.test(read("src/components/BookExportSheet.tsx")));
 
 /* ---------------- who can see a child, by email */
 const schema = read("supabase/schema.sql"), access = read("app/share.tsx");

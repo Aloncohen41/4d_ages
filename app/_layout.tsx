@@ -18,6 +18,7 @@ import { DriveAutoBackup } from "../src/components/DriveAutoBackup";
 import { Toast } from "../src/components/Toast";
 import { Confetti } from "../src/components/Confetti";
 import { WebToast } from "../src/components/WebToast";
+import { WebAlert } from "../src/components/WebAlert";
 import { AppColumn } from "../src/components/AppColumn";
 import { AgreementGate } from "../src/components/AgreementGate";
 import { BirthdayConfetti } from "../src/components/BirthdayConfetti";
@@ -200,6 +201,7 @@ export default function RootLayout() {
       <Toast />
       <Confetti />
       <WebToast />
+      <WebAlert />
       {signedIn && hasKids ? <BirthdayConfetti /> : null}
     </SafeAreaProvider>
   );

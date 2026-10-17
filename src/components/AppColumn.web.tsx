@@ -27,6 +27,8 @@ export function AppColumn({ children }: { children: React.ReactNode }) {
     const name = TITLES.find(([re]) => re.test(path))?.[1];
     document.title = name ? `${name} · ${APP_NAME}` : APP_NAME;
   }, [path]);
+  // the page's own light or dark, for the keyboard focus outline's colour (see public/index.html)
+  useEffect(() => { document.documentElement.dataset.theme = t.dark ? "dark" : "light"; }, [t.dark]);
   // the few screens with no header of their own (a welcome, joining a book, signing in) stay a centred block on a computer
   const full = width >= WIDE && !/^\/(welcome|join|auth-callback)/.test(path);
   const wide = width < WIDE && width > COLUMN + 40; // the phone-sized column, set off from the page around it
