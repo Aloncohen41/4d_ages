@@ -166,6 +166,7 @@ export default function RootLayout() {
         <Stack.Protected guard={signedIn && hasKids}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="family" />
+          <Stack.Screen name="tree" />
           <Stack.Screen name="person/[id]" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="classics" />

@@ -1,5 +1,5 @@
 import { Child, Memory, MilestoneDef, Relative, Tag, isPet } from "./types";
-import { treeLayout } from "./kinship";
+import { isCouple, treeLayout } from "./kinship";
 import { onMap, placesByYear, placesSummary } from "./places";
 import { petAge } from "./pets";
 import { indexTags, initialsOf, labelOfTag, displayName, relationLine } from "./tags";
@@ -384,16 +384,16 @@ export function buildBookHtml(i: BookHtmlInput): string {
             const out: string[] = [];
             for (let k = 0; k < list.length; k++) {
               const a = list[k], b = list[k + 1];
-              if (b && (a.partnerId === b.id || b.partnerId === a.id)) { out.push(`<div class="pair">${face(a)}<i class="bond">♥</i>${face(b)}</div>`); k++; }
+              if (b && isCouple(a, b, p.people)) { out.push(`<div class="pair">${face(a)}<i class="bond">♥</i>${face(b)}</div>`); k++; }
               else out.push(face(a));
             }
             return out;
           };
           const count = (row: { left: Relative[]; mid: Relative[]; right: Relative[] }) => row.left.length + row.mid.length + row.right.length;
           const rowsUsed = [L.great, L.grand, L.parent].filter((r) => count(r)).length + 1;
-          const widest = Math.max(...[L.great, L.grand, L.parent, L.same].flatMap((r) => [r.left.length, r.right.length]));
+          const widest = Math.max(...[L.great, L.grand, L.parent, { ...L.same, right: [...L.same.right, ...L.pets] }].flatMap((r) => [r.left.length, r.right.length]));
           // smaller faces when a side is crowded or the tree is tall (great-grandparents too): it always fits on its page
-          const many = rowsUsed >= 4 || widest >= 3 || Math.max(count(L.great), count(L.grand), count(L.parent), count(L.same) + 1) > 5;
+          const many = rowsUsed >= 4 || widest >= 3 || Math.max(count(L.great), count(L.grand), count(L.parent), count(L.same) + L.pets.length + 1) > 5;
           const tight = rowsUsed >= 4 && widest >= 3;
           // a row: the first parent's side on the left, anyone not on a side in the middle, the second parent's on the right
           const row = (r: { left: Relative[]; mid: Relative[]; right: Relative[] }, cls: string, centre: string[] = []) => {
@@ -402,7 +402,9 @@ export function buildBookHtml(i: BookHtmlInput): string {
             const side = (nodes: string[], at: string) => (nodes.length ? `<div class="nodes ${at}${nodes.length > 1 ? " linked" : ""}">${nodes.join("")}</div>` : `<div class="nodes ${at} empty"></div>`);
             return `<div class="gen ${cls}${many ? " many" : ""}${tight ? " tight" : ""}">${L.sides ? `${side(group(r.left), "left")}${mid.length ? side(mid, "mid") : ""}${side(group(r.right), "right")}` : side([...group(r.left), ...mid, ...group(r.right)], "all")}</div>`;
           };
-          const parts = [row(L.great, "great"), row(L.grand, "grand"), row(L.parent, "parent"), row(L.same, "same", [face(me, true)])].filter(Boolean);
+          // the pets at the far end of the child's row (the right-hand side), never in among the children
+          const sameRow = L.pets.length ? { ...L.same, right: [...L.same.right, ...L.pets] } : L.same;
+          const parts = [row(L.great, "great"), row(L.grand, "grand"), row(L.parent, "parent"), row(sameRow, "same", [face(me, true)])].filter(Boolean);
           const sideLabels = L.sides ? `<div class="side-labels" style="color:${ink(p)}"><span>${esc(L.sides[0])}</span><span>${esc(L.sides[1])}</span></div>` : "";
           const rows = { other: L.other };
           return `<section class="page family tree-page tree-${style}${rowsUsed >= 4 ? " tall" : ""}">

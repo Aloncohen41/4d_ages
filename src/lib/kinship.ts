@@ -153,18 +153,45 @@ export interface TreeLayout<T> {
   grand: { left: T[]; mid: T[]; right: T[] };
   parent: { left: T[]; mid: T[]; right: T[] };
   same: { left: T[]; mid: T[]; right: T[] };
+  /** the pets: at the far end of the child's own row, never in among the children */
+  pets: T[];
   other: T[];
   /** what to call each side ("Dana's side"), when the tree has two */
   sides: [string, string] | null;
 }
 
+/** Marks someone as with no partner in the tree (a couple separated by hand), so they're never paired up again as taken for granted. */
+export const APART = "none";
+
+const PAIRED_ROWS: Kin[] = ["parent", "grandparent", "great-grandparent"];
+
+/**
+ * Whether two people are a couple in the tree: when it's been said (one names the other as their partner), or taken for granted when
+ * neither has said otherwise: the two parents, two grandparents on the same side, two great-grandparents of the same grandparent.
+ * Separating them (a long press on the link between them) marks both APART, so it's never assumed again.
+ */
+export function isCouple(a: Person, b: Person, family: Person[]): boolean {
+  if (a.id === b.id) return false;
+  if (a.partnerId === b.id || b.partnerId === a.id) return true;
+  if (a.partnerId || b.partnerId) return false; // either is with someone else, or apart
+  const k = kinOf(a);
+  if (k !== kinOf(b) || !PAIRED_ROWS.includes(k)) return false;
+  if (k === "parent") return parentsOf(family).filter((p) => p.id === a.id || p.id === b.id).length === 2;
+  const sa = sideIndex(a, family), sb = sideIndex(b, family);
+  if (sa == null || sa !== sb) return false;
+  if (k === "great-grandparent" && (a.through || b.through) && a.through !== b.through) return false;
+  // only a pair: a third grandparent on the same side isn't anyone's partner by default
+  const same = family.filter((x) => !x.partnerId && kinOf(x) === k && sideIndex(x, family) === sa && (k !== "great-grandparent" || x.through === a.through));
+  return same.length === 2;
+}
+
 /** Couples next to each other (in the order the first of them comes), everyone else as they are. */
-export function pairUp<T extends Person>(list: T[]): T[] {
+export function pairUp<T extends Person>(list: T[], family: Person[] = list): T[] {
   const out: T[] = [];
   for (const p of list) {
     if (out.includes(p)) continue;
     out.push(p);
-    const partner = list.find((x) => x !== p && !out.includes(x) && (x.id === p.partnerId || x.partnerId === p.id));
+    const partner = list.find((x) => x !== p && !out.includes(x) && isCouple(p, x, family));
     if (partner) out.push(partner);
   }
   return out;
@@ -177,12 +204,13 @@ export function pairUp<T extends Person>(list: T[]): T[] {
  */
 export function treeLayout<T extends Person & { name: string; nickname?: string }>(family: T[]): TreeLayout<T> {
   const empty = () => ({ left: [] as T[], mid: [] as T[], right: [] as T[] });
-  const out: TreeLayout<T> = { great: empty(), grand: empty(), parent: empty(), same: empty(), other: [], sides: null };
+  const out: TreeLayout<T> = { great: empty(), grand: empty(), parent: empty(), same: empty(), pets: [], other: [], sides: null };
   const parents = parentsOf(family);
   for (const r of family) {
     const row = kinInfo(kinOf(r)).row;
     if (row === "other") { out.other.push(r); continue; }
     const k = kinOf(r);
+    if (k === "pet") { out.pets.push(r); continue; }
     if (k === "parent") {
       (parents.indexOf(r) === 1 ? out.parent.right : parents.indexOf(r) === 0 ? out.parent.left : out.parent.mid).push(r);
       continue;
@@ -193,17 +221,17 @@ export function treeLayout<T extends Person & { name: string; nickname?: string 
   // nearest the middle: the parents (and step-parents) at the inner edge of their side
   const inner = (list: T[], atEnd: boolean) => {
     const ps = list.filter((r) => kinOf(r) === "parent" || kinOf(r) === "step-parent");
-    const rest = pairUp(list.filter((r) => !ps.includes(r)));
-    return atEnd ? [...rest, ...pairUp(ps)] : [...pairUp(ps), ...rest];
+    const rest = pairUp(list.filter((r) => !ps.includes(r)), family);
+    return atEnd ? [...rest, ...pairUp(ps, family)] : [...pairUp(ps, family), ...rest];
   };
   out.parent.left = inner(out.parent.left, true);
   out.parent.right = inner(out.parent.right, false);
   for (const row of ["great", "grand", "same"] as const) {
-    out[row].left = pairUp(out[row].left);
-    out[row].mid = pairUp(out[row].mid);
-    out[row].right = pairUp(out[row].right);
+    out[row].left = pairUp(out[row].left, family);
+    out[row].mid = pairUp(out[row].mid, family);
+    out[row].right = pairUp(out[row].right, family);
   }
-  out.parent.mid = pairUp(out.parent.mid);
+  out.parent.mid = pairUp(out.parent.mid, family);
   const anySided = (["great", "grand", "parent", "same"] as const).some((row) => out[row].left.length || out[row].right.length);
   if (anySided && parents.length) {
     const names = sideChoices(family).map((c) => c.label);
@@ -221,4 +249,101 @@ export function sideLabel<T extends Person & { name: string; nickname?: string }
   const parents = parentsOf(family);
   if (parents.length === 2) return labels[s]?.label ?? "";
   return (s === 0 ? "Mum's side" : "Dad's side");
+}
+
+/* ---------------- building the tree by hand ---------------- */
+
+/** How someone is joined to the person they were dropped next to: "Ruth is Dana's mother or father / partner / brother or sister / son or daughter". */
+export type Link = "parent" | "partner" | "sibling" | "child";
+export const LINK_WORDS: Record<Link, string> = { parent: "Mother or father", partner: "Partner", sibling: "Brother or sister", child: "Son or daughter" };
+
+/** The child the tree is about, as a target to drop someone next to. */
+export const ME = "me";
+
+type Patch = { id: string; patch: Partial<Pick<Relative, "kin" | "side" | "partnerId" | "through">> };
+
+/** What a person becomes, joined to someone in a given way: their place relative to the child. */
+const LINKS: Partial<Record<Kin | typeof ME, Partial<Record<Link, Kin>>>> = {
+  me: { parent: "parent", sibling: "sibling" },
+  parent: { parent: "grandparent", partner: "parent", sibling: "aunt-uncle", child: "sibling" },
+  "step-parent": { parent: "step-grandparent", partner: "parent", sibling: "aunt-uncle", child: "half-sibling" },
+  grandparent: { parent: "great-grandparent", partner: "grandparent", sibling: "great-aunt-uncle", child: "aunt-uncle" },
+  "step-grandparent": { partner: "grandparent", child: "aunt-uncle" },
+  "great-grandparent": { partner: "great-grandparent", child: "grandparent" },
+  "aunt-uncle": { parent: "grandparent", partner: "aunt-uncle", sibling: "aunt-uncle", child: "cousin" },
+  "great-aunt-uncle": { parent: "great-grandparent", partner: "great-aunt-uncle", sibling: "great-aunt-uncle" },
+  cousin: { parent: "aunt-uncle", sibling: "cousin" },
+  sibling: { parent: "parent", sibling: "sibling" },
+  "half-sibling": { sibling: "half-sibling" },
+  "step-sibling": { sibling: "step-sibling" },
+};
+
+/** The ways someone can be joined to this person (some are too far from the child for the tree: a cousin's partner, a sibling's child). */
+export function linkChoices(target: Person | typeof ME, family: Person[]): Link[] {
+  if (target === ME) return parentsOf(family).length >= 2 ? ["sibling"] : ["parent", "sibling"];
+  const k = kinOf(target);
+  const known = LINKS[k];
+  if (known) return (Object.keys(LINK_WORDS) as Link[]).filter((l) => known[l]);
+  return k === "pet" ? [] : ["partner"]; // a godparent, a friend: only their partner
+}
+
+/** The side value for side 0 or 1 (a parent's own id, or "mother" / "father"). */
+function sideValue(i: 0 | 1 | null, family: Person[]): string | undefined {
+  if (i == null) return undefined;
+  return sideChoices(family as (Person & { name: string })[])[i]?.id;
+}
+
+/**
+ * Joins someone to the person they were dropped next to: who they become to the child, their side, who they're with. Returns every change
+ * to make (a partner on both people; an old partner let go). Nothing when the way isn't one the tree can show.
+ */
+export function connect(who: Person, target: Person | typeof ME, link: Link, family: Person[]): Patch[] {
+  const tk = target === ME ? ME : kinOf(target);
+  let kin = LINKS[tk]?.[link] ?? (link === "partner" && target !== ME ? kinOf(target) : undefined);
+  if (!kin || kinOf(who) === "pet") return [];
+  const others = family.filter((x) => x.id !== who.id);
+  // a parent's partner is a parent when there's room (two at most), otherwise a step-parent
+  if (kin === "parent" && target !== ME && link === "partner" && parentsOf(others).length >= 2) kin = "step-parent";
+  if (kin === "parent" && link !== "partner" && parentsOf(others).length >= 2) return [];
+  const sided = kinInfo(kin).sided;
+  const tSide = target === ME ? undefined : kinOf(target) === "parent" ? sideValue(parentsOf(others).indexOf(target) as 0 | 1, others) : target.side ?? sideValue(sideIndex(target, others), others);
+  const patch: Patch["patch"] = { kin, side: sided ? tSide : undefined, through: undefined };
+  if (kin === "cousin" && link === "child" && target !== ME) patch.through = target.id;
+  if (kin === "great-grandparent" && target !== ME) patch.through = link === "parent" ? target.id : target.through;
+  if (kin === "cousin" && link === "sibling" && target !== ME) patch.through = target.through;
+  const out: Patch[] = [];
+  // a partner on both sides; anyone they were with before is let go
+  const old = who.partnerId && who.partnerId !== APART ? family.find((x) => x.id === who.partnerId) : undefined;
+  if (link === "partner" && target !== ME) {
+    patch.partnerId = target.id;
+    const theirs = target.partnerId && target.partnerId !== APART ? family.find((x) => x.id === target.partnerId) : undefined;
+    if (theirs && theirs.id !== who.id) out.push({ id: theirs.id, patch: { partnerId: undefined } });
+    out.push({ id: target.id, patch: { partnerId: who.id } });
+    if (old && old.id !== target.id) out.push({ id: old.id, patch: { partnerId: undefined } });
+  } else if (old && kinInfo(kinOf(old)).row !== kinInfo(kin).row) {
+    // moved to another generation: no longer beside their partner
+    patch.partnerId = undefined;
+    out.push({ id: old.id, patch: { partnerId: undefined } });
+  }
+  out.unshift({ id: who.id, patch });
+  return out;
+}
+
+/** Separating a couple: neither is paired with anyone by default any more. */
+export function separate(a: Person, b: Person): Patch[] {
+  return [{ id: a.id, patch: { partnerId: APART } }, { id: b.id, patch: { partnerId: APART } }];
+}
+
+/** The place someone takes when dropped on an empty part of a row (a generation, on one side or in the middle). */
+export function placeInRow(who: Person, row: Exclude<Row, "other">, side: 0 | 1 | null, family: Person[]): Patch[] {
+  if (kinOf(who) === "pet") return [];
+  const others = family.filter((x) => x.id !== who.id);
+  const kin: Kin = row === "great" ? "great-grandparent" : row === "grand" ? "grandparent"
+    : row === "parent" ? (side == null && parentsOf(others).length < 2 ? "parent" : "aunt-uncle")
+    : side == null ? "sibling" : "cousin";
+  const patch: Patch["patch"] = { kin, side: kinInfo(kin).sided ? sideValue(side, others) : undefined, through: undefined };
+  const out: Patch[] = [{ id: who.id, patch }];
+  const old = who.partnerId && who.partnerId !== APART ? family.find((x) => x.id === who.partnerId) : undefined;
+  if (old && kinInfo(kinOf(old)).row !== row) { patch.partnerId = undefined; out.push({ id: old.id, patch: { partnerId: undefined } }); }
+  return out;
 }

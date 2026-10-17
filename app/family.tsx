@@ -6,6 +6,7 @@ import { Btn, Input, MemberAvatar } from "../src/components/ui";
 import { Icon } from "../src/components/Icon";
 import { FamilyImportSheet } from "../src/components/FamilyImportSheet";
 import { MemberSheet } from "../src/components/MemberSheet";
+import { Wiggle } from "../src/components/Wiggle";
 import { dropIndex, familyOf, importSources, moveInOrder, moveTo, orderedFamily, searchFamily } from "../src/lib/family";
 import { useShownChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
@@ -127,6 +128,17 @@ export default function FamilyPage() {
         <Btn label="Add a pet" icon="paw" kind="soft" onPress={() => setSheet({ pet: true })} style={{ flex: 1 }} />
       </View>
 
+      {family.length ? (
+        <Pressable onPress={() => router.push("/tree")} accessibilityRole="link" style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline }}>
+          <Icon name="tree" size={20} color={t.ink2} />
+          <View style={{ flex: 1 }}>
+            <Text style={[TYPE.labelLarge, { color: t.ink }]}>Family tree</Text>
+            <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Drag people into place and connect them</Text>
+          </View>
+          <Icon name="chevron-right" size={20} color={t.ink3} />
+        </Pressable>
+      ) : null}
+
       {sources.length ? (
         <Pressable onPress={() => setImporting(true)} accessibilityLabel={`Import family from ${importFrom}`} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline }}>
           <Icon name="download" size={20} color={t.ink2} />
@@ -144,6 +156,7 @@ export default function FamilyPage() {
         <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>No one matches “{query.trim()}”.</Text>
       ) : (
         <View style={{ marginTop: 16, gap: 8 }}>
+          {!editing && family.length > 1 ? <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>Press and hold someone to move or remove people.</Text> : null}
           {shown.map((r) => {
             const on = r.id === selected;
             const i = family.findIndex((x) => x.id === r.id);
@@ -158,8 +171,12 @@ export default function FamilyPage() {
                 style={{ zIndex: held ? 2 : 0, transform: held ? [{ translateY: drag.dy }] : undefined, elevation: held ? 6 : 0 }}>
               {lineAbove ? <View style={{ height: 3, borderRadius: 2, backgroundColor: t.accent, marginBottom: 4 }} /> : null}
               {/* selection is an outline: the row's colours (and so its contrast) never change */}
+              <Wiggle on={editing && !held} seed={i}>
               <Pressable
                 onPress={() => (editing ? setSheet({ memberId: r.id }) : open(r.id))}
+                // a long press, as with apps on a phone: everyone starts to wiggle, ready to be removed or moved
+                onLongPress={() => { if (!editing) setEditing(true); }}
+                delayLongPress={350}
                 accessibilityRole="button"
                 aria-pressed={on}
                 android_ripple={{ color: withAlpha(t.ink, 0.08) }}
@@ -193,17 +210,24 @@ export default function FamilyPage() {
                         <Pressable onPress={() => move(r.id, 1)} disabled={i === family.length - 1} accessibilityLabel={`Move ${displayName(r)} down`} hitSlop={4} style={{ padding: 6, opacity: i === family.length - 1 ? 0.3 : 1 }}><Icon name="arrow-down" size={20} color={t.ink2} /></Pressable>
                       </>
                     ) : null}
-                    <Pressable onPress={() => remove(r.id)} accessibilityLabel={`Remove ${displayName(r)}`} hitSlop={4} style={{ padding: 6 }}><Icon name="trash-2" size={20} color={t.danger} /></Pressable>
                   </View>
                 ) : (
                   <Icon name="chevron-right" size={20} color={t.ink3} />
                 )}
               </Pressable>
+              {/* the remove badge in the corner, like an app's on the home screen */}
+              {editing ? (
+                <Pressable onPress={() => remove(r.id)} accessibilityRole="button" accessibilityLabel={`Remove ${displayName(r)}`} hitSlop={8}
+                  style={{ position: "absolute", top: -6, left: -6, width: 26, height: 26, borderRadius: 13, backgroundColor: t.danger, borderWidth: 2, borderColor: t.bg, alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="minus" size={14} color="#fff" />
+                </Pressable>
+              ) : null}
+              </Wiggle>
               {lineBelow ? <View style={{ height: 3, borderRadius: 2, backgroundColor: t.accent, marginTop: 4 }} /> : null}
               </View>
             );
           })}
-          {editing ? <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 4 }]}>Drag a handle (or use the arrows) to change the order. Tap someone to edit them.</Text> : null}
+          {editing ? <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 4 }]}>Drag a handle (or use the arrows) to change the order, tap someone to edit them, or the red badge to remove them. Done when you're finished.</Text> : null}
         </View>
       )}
 
