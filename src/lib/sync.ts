@@ -8,6 +8,7 @@ import { deleteFile } from "./media";
 import { Child, MediaItem } from "./types";
 import { classicToRow, foodTryToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeFoodTries, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow, petColumns, petFromRow } from "./syncMerge";
 import { classicMedia } from "./classics";
+import { smallerVideo } from "./videoExport";
 import { loadReactions } from "./reactions";
 
 const BUCKET = "media";
@@ -43,9 +44,24 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : typeof e === "obje
 const MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", gif: "image/gif", mp4: "video/mp4", mov: "video/quicktime", "3gp": "video/3gpp", webm: "video/webm", m4a: "audio/mp4", aac: "audio/aac", mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", opus: "audio/ogg", amr: "audio/amr" };
 const extOf = (uri: string) => (uri.split("?")[0].split(".").pop() || "bin").toLowerCase().slice(0, 5);
 
-/** Upload a local file; returns its cloud path, or null if it's missing / too big. */
+/**
+ * Upload a local file; returns its cloud path, or null if it's missing or too big. A video too big for the account is first copied
+ * smaller (720p, see VideoShrinker) and the copy uploaded, so it still reaches the other parent and the website; the original on the
+ * phone stays full size.
+ */
 async function upload(childId: string, key: string, uri: string): Promise<string | null> {
-  if (!fileExists(uri) || fileSize(uri) > MAX_UPLOAD_BYTES) return null;
+  if (!fileExists(uri)) return null;
+  if (fileSize(uri) > MAX_UPLOAD_BYTES) {
+    if (!/^(mp4|mov|3gp|webm|mkv|m4v)$/.test(extOf(uri))) return null;
+    progress("Making a big video smaller to upload…");
+    const small = await smallerVideo(uri);
+    if (!small) return null;
+    try {
+      return fileExists(small) && fileSize(small) <= MAX_UPLOAD_BYTES ? await upload(childId, key, small) : null;
+    } finally {
+      deleteFile(small);
+    }
+  }
   const ext = extOf(uri);
   const path = `${childId}/${key}.${ext}`;
   const bytes = await fileBytes(uri);

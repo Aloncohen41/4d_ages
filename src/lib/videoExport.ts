@@ -28,6 +28,7 @@ interface NativeVideo {
   videoDuration(uri: string): Promise<number>;
   cancel(): void;
   saveToGallery(path: string, name: string): Promise<string>;
+  shrinkVideo?(uri: string): Promise<string>;
   addListener(event: "onProgress", cb: (e: { progress: number }) => void): { remove: () => void };
 }
 
@@ -41,6 +42,20 @@ function native(): NativeVideo | null {
     }
   }
   return cached ?? null;
+}
+
+/**
+ * A smaller copy of a video (720p at most) for uploading, when it's too big for the account; the original stays as it is. Null where it
+ * can't be made (the website, or an app built before this was added).
+ */
+export async function smallerVideo(uri: string): Promise<string | null> {
+  const n = onWeb ? null : native();
+  if (!n?.shrinkVideo) return null;
+  try {
+    return await n.shrinkVideo(uri);
+  } catch {
+    return null;
+  }
 }
 
 export const isVideoExportAvailable = () => (onWeb ? webVideoSupported() : native() !== null);

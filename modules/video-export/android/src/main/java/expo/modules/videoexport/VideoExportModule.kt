@@ -108,6 +108,14 @@ class VideoExportModule : Module() {
       }
     }
 
+    // A smaller copy of a video for uploading (720p at most), in the app's cache; the original is left as it is. See VideoShrinker.
+    AsyncFunction("shrinkVideo") { uri: String, promise: Promise ->
+      val out = File(ctx.cacheDir, "upload-${System.currentTimeMillis()}.mp4")
+      VideoShrinker(ctx).shrink(uri, out) { path, error ->
+        if (path != null) promise.resolve(path) else promise.reject("ERR_SHRINK", error?.message ?: "Couldn't make a smaller copy", error)
+      }
+    }
+
     // Copies the finished video into Movies/4D Ages (Android 10+, no permission needed).
     AsyncFunction("saveToGallery") { path: String, name: String ->
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
