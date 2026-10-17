@@ -3,6 +3,7 @@ import { addMonths, daysBetween } from "./date";
 import { monthsOld } from "./growth";
 import { withAlpha } from "./m3";
 
+import { tr, wordList } from "./i18n";
 /*
  * How milestones are matched, asked about and understood. Everything here is meant to be encouraging:
  * nothing is counted against a maximum, and "not yet" is never treated as a failure.
@@ -25,11 +26,11 @@ export interface AreaMeta {
  * Each pair is a very light tint and a slightly deeper (still soft) accent of one hue; text and icons on them use the area's dark ink.
  */
 export const AREA_META: Record<Area, AreaMeta> = {
-  "Social & Emotional": { label: "Social & Emotional", phrase: "social and emotional skills", emoji: "💗", icon: "heart", color: "#F2BC9C", soft: "#FDEEE5", ink: "#6E3517" },
-  Language: { label: "Language", phrase: "language", emoji: "💬", icon: "message-circle", color: "#A9C9E9", soft: "#E8F1FA", ink: "#1D4870" },
-  Cognitive: { label: "Cognitive", phrase: "thinking and problem-solving", emoji: "🧩", icon: "zap", color: "#AFD6B3", soft: "#E8F4E9", ink: "#285530" },
-  Movement: { label: "Movement", phrase: "movement", emoji: "🏃", icon: "activity", color: "#EDD083", soft: "#FCF4DA", ink: "#5E470C" },
-  Other: { label: "Your own", phrase: "their own milestones", emoji: "⭐", icon: "star", color: "#C9BCE2", soft: "#F1ECF7", ink: "#463868" },
+  "Social & Emotional": { get label() { return tr("Social & Emotional"); }, get phrase() { return tr("social and emotional skills"); }, emoji: "💗", icon: "heart", color: "#F2BC9C", soft: "#FDEEE5", ink: "#6E3517" },
+  Language: { get label() { return tr("Language"); }, get phrase() { return tr("language"); }, emoji: "💬", icon: "message-circle", color: "#A9C9E9", soft: "#E8F1FA", ink: "#1D4870" },
+  Cognitive: { get label() { return tr("Cognitive"); }, get phrase() { return tr("thinking and problem-solving"); }, emoji: "🧩", icon: "zap", color: "#AFD6B3", soft: "#E8F4E9", ink: "#285530" },
+  Movement: { get label() { return tr("Movement"); }, get phrase() { return tr("movement"); }, emoji: "🏃", icon: "activity", color: "#EDD083", soft: "#FCF4DA", ink: "#5E470C" },
+  Other: { get label() { return tr("Your own"); }, get phrase() { return tr("their own milestones"); }, emoji: "⭐", icon: "star", color: "#C9BCE2", soft: "#F1ECF7", ink: "#463868" },
 };
 
 /** An area's soft ground: its pastel in the light theme, its own colour at 24% in the dark one (a pastel there would glare and hide the text). */
@@ -161,14 +162,14 @@ export function analyze(defs: MilestoneDef[], logged: Record<string, Memory>, no
 }
 
 /** How a count is worded. One is "a first", never a bare "1" — small numbers are celebrated, not announced. */
-export const reachedText = (n: number) => (n === 1 ? "A first one reached 🎉" : `${n} milestones reached`);
+export const reachedText = (n: number) => (n === 1 ? tr("A first one reached 🎉") : `${n} milestones reached`);
 
 /** The headline on the Milestones tab. A small total is a lovely start, not a score to be compared with anything. */
 export function celebration(n: number, name: string): { title: string; sub: string } {
-  if (n <= 0) return { title: `Tick off what ${name} can do`, sub: "Each tick is a little celebration." };
-  if (n === 1) return { title: "A first milestone reached! 🎉", sub: "What a lovely start." };
-  if (n < 5) return { title: `${n} milestones reached`, sub: "A lovely start — every one is worth celebrating." };
-  return { title: `${n} milestones reached`, sub: "Every one is worth celebrating." };
+  if (n <= 0) return { title: `Tick off what ${name} can do`, sub: tr("Each tick is a little celebration.") };
+  if (n === 1) return { get title() { return tr("A first milestone reached! 🎉"); }, sub: tr("What a lovely start.") };
+  if (n < 5) return { title: `${n} milestones reached`, sub: tr("A lovely start — every one is worth celebrating.") };
+  return { title: `${n} milestones reached`, sub: tr("Every one is worth celebrating.") };
 }
 
 export function highlightText(name: string, r: AreaReport): string {
@@ -188,34 +189,34 @@ export const ACTIVITIES: Record<Core, string[][]> = {
   "Social & Emotional": [
     ["Hold them close and make eye contact while you talk or sing — they're learning your face.", "Smile and wait: when they smile back, smile even bigger. It's their first conversation.", "Soothe with a calm voice, gentle rocking and skin-to-skin; being comforted builds trust."],
     ["Play peekaboo with a cloth — it teaches that you always come back.", "Answer warmly when they reach for you; it builds a secure attachment.", "Sit face to face and copy their sounds and expressions back to them."],
-    ["Introduce new people slowly while they sit on your lap — a familiar base helps them warm up.", "Name feelings out loud: “You look surprised!” “That was a big giggle.”", "Wave hello and goodbye together whenever someone arrives or leaves."],
-    ["Offer two small choices (the red cup or the blue one) so they can practise independence.", "When big feelings come, stay close, name the feeling, and cuddle once it passes.", "Play side by side with another child and narrate: “You're both building!”"],
-    ["Invite them to help: putting socks in the basket or wiping the table counts as teamwork.", "Read a story about feelings and ask “How do you think they feel?”", "Play pretend with a doll or teddy and let them comfort it."],
-    ["Practise taking turns: roll a ball back and forth saying “my turn, your turn.”", "Notice kindness out loud: “You gave your friend a hug — that made them smile.”", "Try a calm-down routine together — three slow “smell the flower” breaths."],
+    wordList(["Introduce new people slowly while they sit on your lap — a familiar base helps them warm up.", "Name feelings out loud: “You look surprised!” “That was a big giggle.”", "Wave hello and goodbye together whenever someone arrives or leaves."]),
+    wordList(["Offer two small choices (the red cup or the blue one) so they can practise independence.", "When big feelings come, stay close, name the feeling, and cuddle once it passes.", "Play side by side with another child and narrate: “You're both building!”"]),
+    wordList(["Invite them to help: putting socks in the basket or wiping the table counts as teamwork.", "Read a story about feelings and ask “How do you think they feel?”", "Play pretend with a doll or teddy and let them comfort it."]),
+    wordList(["Practise taking turns: roll a ball back and forth saying “my turn, your turn.”", "Notice kindness out loud: “You gave your friend a hug — that made them smile.”", "Try a calm-down routine together — three slow “smell the flower” breaths."]),
   ],
   Language: [
     ["Talk through what you're doing — nappy changes, baths, walks — even if they only coo back.", "Pause after you speak and wait for a coo or gurgle, then answer it like a conversation.", "Sing the same songs every day; repetition is how they learn sounds."],
-    ["Copy their babbles (“ba-ba”) and add a word: “Ba-ba… ball!”", "Name things as you point: “That's a spoon. Spoon!”", "Read short board books with big pictures and let them pat the pages."],
-    ["Point and name: ask “Where's the dog?” and cheer when they look or point.", "Give one-step directions with a gesture: “Give me the ball.”", "Narrate the day in short, simple sentences and leave pauses for their words."],
-    ["Add to what they say: if they say “milk”, answer “Yes, more milk please!”", "Sing action songs (like Wheels on the Bus) and let them fill in the last word.", "Offer simple choices — “banana or apple?” — and wait for a word, a point or a gesture."],
-    ["Look at picture books together and ask “What's that?” and “What's happening?”", "Model short phrases: “Big truck.” “Daddy go work.”", "Play “where's your nose?” games to build the words they understand."],
-    ["Chat at mealtimes: ask about their day and give them time to answer.", "Retell a favourite story together and let them say what happens next.", "Try rhymes and word games, and stretch their sentences: “The dog is… big? brown?”"],
+    wordList(["Copy their babbles (“ba-ba”) and add a word: “Ba-ba… ball!”", "Name things as you point: “That's a spoon. Spoon!”", "Read short board books with big pictures and let them pat the pages."]),
+    wordList(["Point and name: ask “Where's the dog?” and cheer when they look or point.", "Give one-step directions with a gesture: “Give me the ball.”", "Narrate the day in short, simple sentences and leave pauses for their words."]),
+    wordList(["Add to what they say: if they say “milk”, answer “Yes, more milk please!”", "Sing action songs (like Wheels on the Bus) and let them fill in the last word.", "Offer simple choices — “banana or apple?” — and wait for a word, a point or a gesture."]),
+    wordList(["Look at picture books together and ask “What's that?” and “What's happening?”", "Model short phrases: “Big truck.” “Daddy go work.”", "Play “where's your nose?” games to build the words they understand."]),
+    wordList(["Chat at mealtimes: ask about their day and give them time to answer.", "Retell a favourite story together and let them say what happens next.", "Try rhymes and word games, and stretch their sentences: “The dog is… big? brown?”"]),
   ],
   Cognitive: [
-    ["Slowly move a bright toy from side to side and let their eyes follow it.", "Show high-contrast pictures and your face up close — they love faces.", "Place a baby-safe mirror or soft toys within sight during tummy time."],
-    ["Hide a toy under a cloth and cheer when they find it.", "Offer safe objects with different textures to touch, shake and bang.", "Play in-and-out games: drop toys in a basket and take them out together."],
-    ["Try stacking cups or simple cause-and-effect toys (press a button, something pops).", "Let them explore safely — different sounds, textures and lids to open and close.", "Offer two favourite toys and notice which one they choose."],
-    ["Try simple pretend play: “feed” a teddy or talk on a toy phone — copy them, then add a step.", "Look in a mirror together and name their face and body parts.", "Let them copy your everyday actions: stirring, sweeping, clapping."],
-    ["Try chunky puzzles with two to four pieces and cheer each fit.", "Set up a pretend kitchen, shop or doctor's corner with everyday props.", "Hide a toy somewhere new and play “where did it go?”"],
-    ["Sort by colour or shape: red blocks here, blue there — or sort the laundry together.", "Play a memory game: hide three toys, take one away and ask “what's missing?”", "Offer short puzzles and building challenges, and let them figure it out first."],
+    wordList(["Slowly move a bright toy from side to side and let their eyes follow it.", "Show high-contrast pictures and your face up close — they love faces.", "Place a baby-safe mirror or soft toys within sight during tummy time."]),
+    wordList(["Hide a toy under a cloth and cheer when they find it.", "Offer safe objects with different textures to touch, shake and bang.", "Play in-and-out games: drop toys in a basket and take them out together."]),
+    wordList(["Try stacking cups or simple cause-and-effect toys (press a button, something pops).", "Let them explore safely — different sounds, textures and lids to open and close.", "Offer two favourite toys and notice which one they choose."]),
+    wordList(["Try simple pretend play: “feed” a teddy or talk on a toy phone — copy them, then add a step.", "Look in a mirror together and name their face and body parts.", "Let them copy your everyday actions: stirring, sweeping, clapping."]),
+    wordList(["Try chunky puzzles with two to four pieces and cheer each fit.", "Set up a pretend kitchen, shop or doctor's corner with everyday props.", "Hide a toy somewhere new and play “where did it go?”"]),
+    wordList(["Sort by colour or shape: red blocks here, blue there — or sort the laundry together.", "Play a memory game: hide three toys, take one away and ask “what's missing?”", "Offer short puzzles and building challenges, and let them figure it out first."]),
   ],
   Movement: [
-    ["A few short, supervised bouts of tummy time each day, with a toy just out of reach.", "Lay a rattle or soft toy within reach so they can swipe and grasp it.", "Gently bring their hands together in the middle and let them grab your finger."],
-    ["Place favourite toys just beyond reach on the floor to encourage rolling and crawling.", "Practise supported sitting with cushions around, and add toys at the sides to reach for.", "Offer small, safe finger foods to practise picking up with finger and thumb."],
-    ["Let them cruise along a sturdy sofa, then hold both hands and take steps together.", "A push-along toy (with you close by) helps steady first walking.", "Offer a spoon and soft finger foods and let them try feeding themselves — mess is learning."],
+    wordList(["A few short, supervised bouts of tummy time each day, with a toy just out of reach.", "Lay a rattle or soft toy within reach so they can swipe and grasp it.", "Gently bring their hands together in the middle and let them grab your finger."]),
+    wordList(["Place favourite toys just beyond reach on the floor to encourage rolling and crawling.", "Practise supported sitting with cushions around, and add toys at the sides to reach for.", "Offer small, safe finger foods to practise picking up with finger and thumb."]),
+    wordList(["Let them cruise along a sturdy sofa, then hold both hands and take steps together.", "A push-along toy (with you close by) helps steady first walking.", "Offer a spoon and soft finger foods and let them try feeding themselves — mess is learning."]),
     ["Play kick and roll with a soft ball; show them how to throw underhand.", "Give chunky crayons and big paper for first scribbles.", "Practise stairs with you holding on, and run safely on soft grass."],
-    ["Make a safe obstacle path with cushions to climb over and a tunnel to crawl through.", "Practise jumping from a low step with your hands to help, and dance to music.", "Offer a child-size spoon and fork at meals, and thick crayons for drawing."],
-    ["Practise two-foot jumps: “jump like a frog!” over a rolled-up towel.", "Build towers with blocks, boxes or stacking cups, then knock them down together.", "Let them turn knobs and twist lids on safe containers, and play with playdough."],
+    wordList(["Make a safe obstacle path with cushions to climb over and a tunnel to crawl through.", "Practise jumping from a low step with your hands to help, and dance to music.", "Offer a child-size spoon and fork at meals, and thick crayons for drawing."]),
+    wordList(["Practise two-foot jumps: “jump like a frog!” over a rolled-up towel.", "Build towers with blocks, boxes or stacking cups, then knock them down together.", "Let them turn knobs and twist lids on safe containers, and play with playdough."]),
   ],
 };
 
@@ -227,8 +228,8 @@ export function activitiesFor(area: Area, band: number): string[] {
 export const reinforceBand = (r: AreaReport, months: number) => Math.min(bandIndex(months), ...r.notYet.map(bandOfDef).filter((b) => b >= 0));
 
 export const STATUS_COPY: Record<Status, { title: string; sub: string }> = {
-  outstanding: { title: "Outstanding", sub: "Doing wonderfully — ahead of the usual timing" },
-  ontrack: { title: "On track", sub: "They're right where they should be" },
-  reinforce: { title: "Reinforce", sub: "A little extra practice could be fun" },
-  unanswered: { title: "To explore", sub: "Tick a few milestones and we'll tell you more" },
+  outstanding: { get title() { return tr("Outstanding"); }, get sub() { return tr("Doing wonderfully — ahead of the usual timing"); } },
+  ontrack: { get title() { return tr("On track"); }, get sub() { return tr("They're right where they should be"); } },
+  reinforce: { get title() { return tr("Reinforce"); }, get sub() { return tr("A little extra practice could be fun"); } },
+  unanswered: { get title() { return tr("To explore"); }, get sub() { return tr("Tick a few milestones and we'll tell you more"); } },
 };

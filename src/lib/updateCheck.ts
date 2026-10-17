@@ -1,5 +1,6 @@
 import { APP_VERSION, LATEST_RELEASE_API } from "../brand";
 
+import { tr } from "./i18n";
 /*
  * "A new version is available": on opening, the app asks GitHub for the latest release and, if it is newer than this one, offers the APK.
  * The comparison and the choice of file are pure, for tests; the check itself never throws (no connection just means no prompt).
@@ -37,7 +38,7 @@ export function shouldOffer(release: Release | null, current: string, later: { v
 /** The latest published release, or null when it can't be reached. */
 export async function latestRelease(): Promise<Release | null> {
   try {
-    const res = await fetch(LATEST_RELEASE_API, { headers: { Accept: "application/vnd.github+json" } });
+    const res = await fetch(LATEST_RELEASE_API, { headers: { Accept: tr("application/vnd.github+json") } });
     if (!res.ok) return null;
     return releaseOf((await res.json()) as GitHubRelease);
   } catch {

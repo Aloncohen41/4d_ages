@@ -7,6 +7,7 @@ import { BACKUP_FILE, BACKUP_ZIP, LEGACY_FOLDER, buildBackup, prepareRestore, un
 import { googleReady } from "./supabase";
 import { syncAll } from "./sync";
 
+import { tr } from "./i18n";
 /*
  * Backing up to Google Drive, and restoring from it. The backup is one file, "4D Ages backup.zip", in the parent's own Drive, replaced each
  * time: the books, compressed. Photos and videos aren't copied into Drive (they're kept in the account already, see backupData.ts). The app
@@ -24,7 +25,7 @@ export const driveAvailable = () => googleReady;
 
 /** A Drive access token (see driveAuth.ts; the website has its own). */
 async function token(interactive: boolean): Promise<{ accessToken: string; email: string } | null> {
-  if (!googleReady) throw new Error("Google sign-in isn't set up in this build, so Drive backup isn't available.");
+  if (!googleReady) throw new Error(tr("Google sign-in isn't set up in this build, so Drive backup isn't available."));
   return driveToken(interactive);
 }
 
@@ -65,7 +66,7 @@ export function backupNow(interactive: boolean, onProgress?: (text: string) => v
     try {
       const auth = await token(interactive);
       if (!auth) return; // the parent closed the account picker
-      onProgress?.("Saving your books…");
+      onProgress?.(tr("Saving your books…"));
       const backup = buildBackup(useStore.getState() as unknown as Record<string, unknown>, `${APP_NAME} ${APP_VERSION}`, STORE_VERSION, Date.now());
       const existing = await findZip(auth.accessToken);
       const id = existing?.id ?? (await api<{ id: string }>(auth.accessToken, "/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: BACKUP_ZIP, mimeType: "application/zip" }) })).id;
@@ -114,10 +115,10 @@ export async function findBackup(): Promise<{ savedAt: number; app: string; kids
  */
 export async function restoreFromDrive(onProgress?: (text: string) => void): Promise<number> {
   const auth = await token(true);
-  if (!auth) throw new Error("Restoring was cancelled.");
-  onProgress?.("Downloading your backup…");
+  if (!auth) throw new Error(tr("Restoring was cancelled."));
+  onProgress?.(tr("Downloading your backup…"));
   const backup = await readBackup(auth.accessToken);
-  if (!backup) throw new Error("There's no 4D Ages backup in this Google account's Drive yet.");
+  if (!backup) throw new Error(tr("There's no 4D Ages backup in this Google account's Drive yet."));
   const data = backup.storeVersion < STORE_VERSION ? (migrateStored(backup.data as never, backup.storeVersion) as Record<string, unknown>) : backup.data;
   const restored = prepareRestore(data);
   useStore.setState({ ...(restored as object), preview: false });

@@ -2,6 +2,7 @@ import { addDays, ageBetween, daysBetween } from "./date";
 import { AgeSpan, ageSpan } from "./ageSpan";
 import { ageWindows } from "./reels";
 
+import { tr } from "./i18n";
 /*
  * Choosing a stretch of a child's life with two sliders. A slider position is a DAY NUMBER since birth (0 = the day they were born,
  * `total` = today), so dragging shows a date and the child's age at that moment.
@@ -34,12 +35,12 @@ export interface RangePreset { id: string; label: string; from: number; to: numb
 /** One-tap starting points: the last 30 days, all time, and each age step the child has reached (0–6 months, 1–2 years…). */
 export function presetRanges(birth: string, today: string): RangePreset[] {
   const total = totalDays(birth, today);
-  const out: RangePreset[] = [{ id: "recent", label: "Last 30 days", from: Math.max(0, total - 30), to: total }];
+  const out: RangePreset[] = [{ id: "recent", get label() { return tr("Last 30 days"); }, from: Math.max(0, total - 30), to: total }];
   for (const w of ageWindows(birth, today)) {
     const from = dayIndex(birth, w.from, total), to = dayIndex(birth, w.to, total);
     if (to > from) out.push({ id: w.id, label: ageSpan(w.startM, w.endM).display, from, to });
   }
-  out.push({ id: "all", label: "All time", from: 0, to: total });
+  out.push({ id: "all", get label() { return tr("All time"); }, from: 0, to: total });
   return out;
 }
 

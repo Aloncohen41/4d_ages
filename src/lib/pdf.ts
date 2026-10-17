@@ -12,6 +12,7 @@ import type { ClassicEntry } from "./classics";
 import { onWeb } from "./onWeb";
 import { mediaLink } from "./sync";
 
+import { tr } from "./i18n";
 export { BOOK_SIZES, BOOK_STYLES } from "./bookPages";
 export { memoryHeading } from "./bookHtml";
 export type { BookStyle, BookSizeId as BookSize } from "./bookPages";
@@ -59,7 +60,7 @@ async function printBook(i: BookInput, onProgress?: (text: string) => void): Pro
     onProgress?.(`Preparing pictures: ${++done} of ${sizes.size}`);
     loaded.set(u, await shrunkBase64(u, px, PRINT_QUALITY).catch(() => null));
   }
-  onProgress?.("Making the PDF…");
+  onProgress?.(tr("Making the PDF…"));
   let html: string | null = buildBookHtml({ ...i, plan, size, image: (u) => loaded.get(u) ?? null, mode: "print" });
   loaded.clear();
   const M = bookMetrics(size);
@@ -131,7 +132,7 @@ async function printOnWeb(i: BookInput, onProgress?: (text: string) => void): Pr
   // browser's own storage, which the print window couldn't always read, so the book printed with empty frames. A picture that isn't in
   // this browser yet (added on the phone, not downloaded here) is read straight from the account instead.
   const pictures = await webPictures(i, [...printSizes(plan, size).keys()], onProgress);
-  onProgress?.("Opening the print window…");
+  onProgress?.(tr("Opening the print window…"));
   const title = bookFileName(i).replace(/\.pdf$/, "");
   const html = buildBookHtml({ ...i, plan, size, image: (u) => (u ? (pictures.get(u) ?? null) : null), mode: "print" }).replace("<head>", `<head><title>${title.replace(/</g, "")}</title>`);
   const frame = document.createElement("iframe");

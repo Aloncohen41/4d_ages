@@ -5,37 +5,38 @@
  */
 import type { FoodTry } from "./types";
 
+import { tr, withWords } from "./i18n";
 /** The UK's 14 major allergens (the ones food labels must show). */
 export type AllergenId =
   | "milk" | "egg" | "gluten" | "peanut" | "tree-nuts" | "sesame" | "soya" | "fish" | "crustaceans" | "molluscs"
   | "celery" | "mustard" | "lupin" | "sulphites";
 
 export const ALLERGENS: { id: AllergenId; name: string; emoji: string }[] = [
-  { id: "milk", name: "Cows' milk", emoji: "🥛" },
-  { id: "egg", name: "Egg", emoji: "🥚" },
-  { id: "gluten", name: "Gluten (wheat, barley, rye, oats)", emoji: "🌾" },
-  { id: "peanut", name: "Peanut", emoji: "🥜" },
-  { id: "tree-nuts", name: "Tree nuts", emoji: "🌰" },
-  { id: "sesame", name: "Sesame", emoji: "🫘" },
-  { id: "soya", name: "Soya", emoji: "🫛" },
-  { id: "fish", name: "Fish", emoji: "🐟" },
-  { id: "crustaceans", name: "Shellfish (prawns, crab)", emoji: "🦐" },
-  { id: "molluscs", name: "Molluscs (mussels, squid)", emoji: "🦪" },
-  { id: "celery", name: "Celery", emoji: "🥬" },
-  { id: "mustard", name: "Mustard", emoji: "🟡" },
-  { id: "lupin", name: "Lupin", emoji: "🌼" },
-  { id: "sulphites", name: "Sulphites (dried fruit)", emoji: "🍇" },
+  { id: "milk", get name() { return tr("Cows' milk"); }, emoji: "🥛" },
+  { id: "egg", get name() { return tr("Egg"); }, emoji: "🥚" },
+  { id: "gluten", get name() { return tr("Gluten (wheat, barley, rye, oats)"); }, emoji: "🌾" },
+  { id: "peanut", get name() { return tr("Peanut"); }, emoji: "🥜" },
+  { id: "tree-nuts", get name() { return tr("Tree nuts"); }, emoji: "🌰" },
+  { id: "sesame", get name() { return tr("Sesame"); }, emoji: "🫘" },
+  { id: "soya", get name() { return tr("Soya"); }, emoji: "🫛" },
+  { id: "fish", get name() { return tr("Fish"); }, emoji: "🐟" },
+  { id: "crustaceans", get name() { return tr("Shellfish (prawns, crab)"); }, emoji: "🦐" },
+  { id: "molluscs", get name() { return tr("Molluscs (mussels, squid)"); }, emoji: "🦪" },
+  { id: "celery", get name() { return tr("Celery"); }, emoji: "🥬" },
+  { id: "mustard", get name() { return tr("Mustard"); }, emoji: "🟡" },
+  { id: "lupin", get name() { return tr("Lupin"); }, emoji: "🌼" },
+  { id: "sulphites", get name() { return tr("Sulphites (dried fruit)"); }, emoji: "🍇" },
 ];
 
 export type FoodGroup = "allergens" | "veg" | "fruit" | "grains" | "protein" | "dairy" | "extras";
 export const FOOD_GROUPS: { id: FoodGroup; label: string }[] = [
-  { id: "allergens", label: "Allergens" },
-  { id: "veg", label: "Vegetables" },
-  { id: "fruit", label: "Fruit" },
-  { id: "grains", label: "Grains" },
-  { id: "protein", label: "Protein" },
-  { id: "dairy", label: "Dairy" },
-  { id: "extras", label: "Herbs and more" },
+  { id: "allergens", get label() { return tr("Allergens"); } },
+  { id: "veg", get label() { return tr("Vegetables"); } },
+  { id: "fruit", get label() { return tr("Fruit"); } },
+  { id: "grains", get label() { return tr("Grains"); } },
+  { id: "protein", get label() { return tr("Protein"); } },
+  { id: "dairy", get label() { return tr("Dairy"); } },
+  { id: "extras", get label() { return tr("Herbs and more"); } },
 ];
 
 export interface Food {
@@ -51,7 +52,7 @@ export interface Food {
   from?: number;
 }
 
-const f = (id: string, name: string, emoji: string, group: Food["group"], prep?: string, allergen?: AllergenId, from?: number): Food => ({ id, name, emoji, group, ...(prep ? { prep } : {}), ...(allergen ? { allergen } : {}), ...(from ? { from } : {}) });
+const f = (id: string, name: string, emoji: string, group: Food["group"], prep?: string, allergen?: AllergenId, from?: number): Food => withWords<Food>({ id, name, emoji, group, ...(prep ? { prep } : {}), ...(allergen ? { allergen } : {}), ...(from ? { from } : {}) }, ["name", "prep"]);
 
 export const FOODS: Food[] = [
   // vegetables: the NHS suggests starting with vegetables, including bitter ones

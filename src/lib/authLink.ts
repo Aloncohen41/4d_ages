@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /*
  * The verification email's button opens  fourdages://auth-callback…  with the sign-in in the link. Supabase sends either a one-time
  * `code` (in the query) or the tokens themselves (in the #fragment), or an error. Pure parsing, so it can be tested without a phone.
@@ -31,6 +32,6 @@ export function parseAuthCallback(url: string | null | undefined): AuthCallback 
     ...(params.get("code") ? { code: params.get("code") } : {}),
     ...(params.get("access_token") ? { accessToken: params.get("access_token") } : {}),
     ...(params.get("refresh_token") ? { refreshToken: params.get("refresh_token") } : {}),
-    ...(error ? { error: /expired|invalid/i.test(error) ? "This link has expired or was already used. Sign in, or send a new verification email." : error } : {}),
+    ...(error ? { error: /expired|invalid/i.test(error) ? tr("This link has expired or was already used. Sign in, or send a new verification email.") : error } : {}),
   };
 }

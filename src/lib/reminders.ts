@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /*
  * A pet's health reminders: a vaccine on the date the vet gave, flea and worm treatment every month, the yearly check-up… Each can be a
  * notification from the app, an event in the phone's calendar, or both. Kept as JSON in the pet's Reminders page (REMINDERS_ID), so the other
@@ -19,20 +20,20 @@ export interface HealthReminder {
 }
 
 export const REPEATS: { id: Repeat; label: string; months: number }[] = [
-  { id: "once", label: "Once", months: 0 },
-  { id: "monthly", label: "Every month", months: 1 },
-  { id: "quarterly", label: "Every 3 months", months: 3 },
-  { id: "yearly", label: "Every year", months: 12 },
+  { id: "once", get label() { return tr("Once"); }, months: 0 },
+  { id: "monthly", get label() { return tr("Every month"); }, months: 1 },
+  { id: "quarterly", get label() { return tr("Every 3 months"); }, months: 3 },
+  { id: "yearly", get label() { return tr("Every year"); }, months: 12 },
 ];
 
 /** Ideas to start from. */
 export const REMINDER_IDEAS: { title: string; kind: string; repeat: Repeat }[] = [
-  { title: "Vaccination booster", kind: "vaccination", repeat: "yearly" },
-  { title: "Flea treatment", kind: "parasite", repeat: "monthly" },
-  { title: "Worming", kind: "parasite", repeat: "quarterly" },
-  { title: "Yearly check-up", kind: "vet", repeat: "yearly" },
-  { title: "Groomer", kind: "grooming", repeat: "once" },
-  { title: "Farrier", kind: "grooming", repeat: "once" },
+  { get title() { return tr("Vaccination booster"); }, kind: "vaccination", repeat: "yearly" },
+  { get title() { return tr("Flea treatment"); }, kind: "parasite", repeat: "monthly" },
+  { get title() { return tr("Worming"); }, kind: "parasite", repeat: "quarterly" },
+  { get title() { return tr("Yearly check-up"); }, kind: "vet", repeat: "yearly" },
+  { get title() { return tr("Groomer"); }, kind: "grooming", repeat: "once" },
+  { get title() { return tr("Farrier"); }, kind: "grooming", repeat: "once" },
 ];
 
 export function readReminders(values?: Record<string, string>): HealthReminder[] {

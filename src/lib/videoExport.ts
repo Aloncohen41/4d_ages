@@ -12,6 +12,7 @@ import { onWeb } from "./onWeb";
 import { cancelWebVideo, recordWebVideo, webVideoSupported } from "./webVideo";
 import { keepFile } from "./localFiles";
 
+import { tr } from "./i18n";
 /** The website records the video in the browser (see webVideo.ts) and keeps it like any other file. */
 async function onTheWeb(payload: Record<string, unknown>, onProgress: (p: number) => void): Promise<string> {
   const blob = await recordWebVideo(payload, onProgress);
@@ -157,7 +158,7 @@ export function slideshowPayload(child: Child, usable: Slide[], theme: Theme, op
     items: [
       ...sequence.map((e) => e.item),
       // the ending, when chosen for a pet: "In loving memory", with a rainbow and their words
-      ...(opts.memorial != null ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accent, age: "In loving memory", date: "", caption: opts.memorial || "Forever in our hearts" }] : []),
+      ...(opts.memorial != null ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accent, age: tr("In loving memory"), date: "", caption: opts.memorial || tr("Forever in our hearts") }] : []),
     ],
   };
 }
@@ -171,9 +172,9 @@ export async function createGrowVideo(
   onProgress: (p: number) => void
 ): Promise<string> {
   const mod = native();
-  if (!mod && !onWeb) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
+  if (!mod && !onWeb) throw new Error(tr("Video export needs the app to be rebuilt once (run: npm run android)."));
   const usable = slides.filter((s) => !!s.uri || !!s.clip);
-  if (!usable.length) throw new Error("There are no photos to put in a video yet.");
+  if (!usable.length) throw new Error(tr("There are no photos to put in a video yet."));
 
   const musicUri = opts.music ? (await musicFile(opts.music).catch(() => null)) ?? undefined : undefined; // no music rather than no video
   const payload = slideshowPayload(child, usable, theme, { ...opts, musicUri });
@@ -194,9 +195,9 @@ export async function createGrowVideo(
  */
 export async function createJourneyVideo(pet: Child, places: Place[], theme: Theme, format: VideoFormat, onProgress: (p: number) => void, memorial?: string): Promise<string> {
   const mod = native();
-  if (!mod && !onWeb) throw new Error("Video export needs the app to be rebuilt once (run: npm run android).");
+  if (!mod && !onWeb) throw new Error(tr("Video export needs the app to be rebuilt once (run: npm run android)."));
   const slides = journeySlides(places);
-  if (slides.length < 1) throw new Error("Add a place or two first.");
+  if (slides.length < 1) throw new Error(tr("Add a place or two first."));
   // loaded here, not at the top, so the rest of this file can be tested without the phone's libraries
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Asset } = require("expo-asset") as typeof import("expo-asset");
@@ -213,7 +214,7 @@ export async function createJourneyVideo(pet: Child, places: Place[], theme: The
     items: [
       ...slides.map((s) => ({ uri: mapUri, emoji: "🗺️", bg: "#ECF1F3", hill: theme.accent, age: s.year, date: s.count, caption: s.names, pins: s.pins })),
       // an "In loving memory" ending, when chosen
-      ...(memorial ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accentSoft, age: "In loving memory", date: "", caption: memorial }] : []),
+      ...(memorial ? [{ uri: null, emoji: "🌈", bg: theme.bg, hill: theme.accentSoft, age: tr("In loving memory"), date: "", caption: memorial }] : []),
     ],
   };
   if (onWeb || !mod) return onTheWeb(payload, onProgress);
@@ -234,7 +235,7 @@ export function cancelGrowVideo() {
 /** Saves the finished video to the phone's gallery under this file name (see fileNames.ts). */
 export async function saveVideoToGallery(uri: string, fileName: string): Promise<string> {
   const mod = native();
-  if (!mod) throw new Error("Video export isn't available yet.");
+  if (!mod) throw new Error(tr("Video export isn't available yet."));
   return mod.saveToGallery(uri, fileName);
 }
 

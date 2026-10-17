@@ -4,6 +4,7 @@
  */
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 
+import { tr } from "./i18n";
 export const googleMode: "token" | "redirect" = "token";
 
 export function configureGoogle(webClientId: string) {
@@ -16,12 +17,12 @@ export async function googleIdToken(): Promise<string | null> {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const res = await GoogleSignin.signIn();
     if (!isSuccessResponse(res)) return null;
-    if (!res.data.idToken) throw new Error("Google didn't send a sign-in token. Check the web client ID in .env.");
+    if (!res.data.idToken) throw new Error(tr("Google didn't send a sign-in token. Check the web client ID in .env."));
     return res.data.idToken;
   } catch (e) {
     if (isErrorWithCode(e)) {
       if (e.code === statusCodes.IN_PROGRESS) return null;
-      if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) throw new Error("Google Play services is missing or out of date on this phone.");
+      if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) throw new Error(tr("Google Play services is missing or out of date on this phone."));
     }
     throw e;
   }

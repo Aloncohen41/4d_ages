@@ -9,6 +9,7 @@ import { ordinal } from "./bookPages";
 import { Slide, slidesOf } from "./slides";
 import { evenly } from "./reels";
 
+import { tr, wordList } from "./i18n";
 export type EventKind = "birthday" | "trip" | "day" | "month";
 
 export interface VideoEvent {
@@ -28,7 +29,7 @@ export const TRIP_MIN = 12;
 export const BIRTHDAY_MIN = 4;
 export const MONTH_MIN = 10;
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const WEEKDAYS = wordList(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
 const SHORT = MONTH_NAMES.map((m) => m.slice(0, 3));
 const day = (iso: string) => new Date(`${iso}T12:00:00`);
 /** How many pictures (photos and videos) a memory holds. */

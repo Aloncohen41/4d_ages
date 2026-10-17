@@ -9,6 +9,7 @@ import { APP_NAME } from "../brand";
 import { RESTART_MANUAL_TITLE, RESTART_MESSAGE, RESTART_TITLE, isPickerRegistrationError, restartManualMessage } from "./pickerErrors";
 import { restartApp } from "./shareIntake";
 
+import { tr } from "./i18n";
 export interface Picked {
   uri: string; // permanent copy inside the app's own storage
   kind: MediaKind;
@@ -42,8 +43,8 @@ function offerRestart() {
   // loaded only now, so the data store (which imports this file) never needs the UI library just to start
   const { Alert } = require("react-native") as typeof import("react-native");
   Alert.alert(RESTART_TITLE, RESTART_MESSAGE, [
-    { text: "Not now", style: "cancel" },
-    { text: "Restart", onPress: () => { if (!restartApp()) Alert.alert(RESTART_MANUAL_TITLE, restartManualMessage(APP_NAME)); } },
+    { get text() { return tr("Not now"); }, style: "cancel" },
+    { get text() { return tr("Restart"); }, onPress: () => { if (!restartApp()) Alert.alert(RESTART_MANUAL_TITLE, restartManualMessage(APP_NAME)); } },
   ]);
 }
 
@@ -87,7 +88,7 @@ export async function pickMedia(opts: { videos: boolean; multiple: boolean }): P
 }
 
 /** Each picked photo or video becomes a memory of type "photo". */
-export function toMemories(child: Child, picked: Picked[], source = "Added"): Memory[] {
+export function toMemories(child: Child, picked: Picked[], source = tr("Added")): Memory[] {
   const palettes = ["peach", "sage", "butter", "rose", "sky", "lav"];
   const ts = Date.now();
   return picked.map((p, i) => ({
@@ -95,7 +96,7 @@ export function toMemories(child: Child, picked: Picked[], source = "Added"): Me
     childId: child.id,
     type: "photo" as const,
     date: p.date < child.birth ? child.birth : p.date,
-    description: p.kind === "video" ? "A little moment on video." : "A new memory.",
+    description: p.kind === "video" ? tr("A little moment on video.") : tr("A new memory."),
     media: toMediaItems([p]),
     tagIds: [],
     createdAt: ts,

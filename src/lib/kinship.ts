@@ -13,6 +13,7 @@
  */
 import type { Relative } from "./types";
 
+import { tr } from "./i18n";
 export type Kin =
   | "parent" | "step-parent" | "grandparent" | "step-grandparent" | "great-grandparent"
   | "aunt-uncle" | "great-aunt-uncle" | "cousin" | "sibling" | "half-sibling" | "step-sibling"
@@ -24,22 +25,22 @@ export type Row = "great" | "grand" | "parent" | "same" | "other";
 export interface KinInfo { id: Kin; label: string; row: Row; sided: boolean }
 
 export const KINS: KinInfo[] = [
-  { id: "parent", label: "Parent", row: "parent", sided: false },
-  { id: "grandparent", label: "Grandparent", row: "grand", sided: true },
-  { id: "great-grandparent", label: "Great-grandparent", row: "great", sided: true },
-  { id: "aunt-uncle", label: "Aunt or uncle", row: "parent", sided: true },
-  { id: "great-aunt-uncle", label: "Great-aunt or uncle", row: "grand", sided: true },
-  { id: "cousin", label: "Cousin", row: "same", sided: true },
-  { id: "sibling", label: "Brother or sister", row: "same", sided: false },
-  { id: "half-sibling", label: "Half-brother or sister", row: "same", sided: true },
-  { id: "step-sibling", label: "Stepbrother or sister", row: "same", sided: true },
-  { id: "step-parent", label: "Step-parent", row: "parent", sided: true },
-  { id: "step-grandparent", label: "Step-grandparent", row: "grand", sided: true },
-  { id: "godparent", label: "Godparent", row: "other", sided: false },
-  { id: "carer", label: "Nanny or carer", row: "other", sided: false },
-  { id: "friend", label: "Family friend", row: "other", sided: false },
-  { id: "pet", label: "Pet", row: "same", sided: false },
-  { id: "other", label: "Someone else", row: "other", sided: false },
+  { id: "parent", get label() { return tr("Parent"); }, row: "parent", sided: false },
+  { id: "grandparent", get label() { return tr("Grandparent"); }, row: "grand", sided: true },
+  { id: "great-grandparent", get label() { return tr("Great-grandparent"); }, row: "great", sided: true },
+  { id: "aunt-uncle", get label() { return tr("Aunt or uncle"); }, row: "parent", sided: true },
+  { id: "great-aunt-uncle", get label() { return tr("Great-aunt or uncle"); }, row: "grand", sided: true },
+  { id: "cousin", get label() { return tr("Cousin"); }, row: "same", sided: true },
+  { id: "sibling", get label() { return tr("Brother or sister"); }, row: "same", sided: false },
+  { id: "half-sibling", get label() { return tr("Half-brother or sister"); }, row: "same", sided: true },
+  { id: "step-sibling", get label() { return tr("Stepbrother or sister"); }, row: "same", sided: true },
+  { id: "step-parent", get label() { return tr("Step-parent"); }, row: "parent", sided: true },
+  { id: "step-grandparent", get label() { return tr("Step-grandparent"); }, row: "grand", sided: true },
+  { id: "godparent", get label() { return tr("Godparent"); }, row: "other", sided: false },
+  { id: "carer", get label() { return tr("Nanny or carer"); }, row: "other", sided: false },
+  { id: "friend", get label() { return tr("Family friend"); }, row: "other", sided: false },
+  { id: "pet", get label() { return tr("Pet"); }, row: "same", sided: false },
+  { id: "other", get label() { return tr("Someone else"); }, row: "other", sided: false },
 ];
 export const kinInfo = (k?: string) => KINS.find((x) => x.id === k) ?? KINS[KINS.length - 1];
 
@@ -142,8 +143,8 @@ export function sideChoices(family: (Person & { name: string; nickname?: string 
   if (parents.length === 2) return parents.map((p) => ({ id: p.id, label: `${p.nickname || p.name || p.relation}'s side` }));
   const out = parents.map((p) => ({ id: p.id, label: `${p.nickname || p.name || p.relation}'s side` }));
   const taken = new Set(parents.map((p) => parentRole(p.relation)));
-  if (!taken.has("mother")) out.push({ id: "mother", label: "Mum's side" });
-  if (!taken.has("father")) out.push({ id: "father", label: "Dad's side" });
+  if (!taken.has("mother")) out.push({ id: "mother", get label() { return tr("Mum's side"); } });
+  if (!taken.has("father")) out.push({ id: "father", get label() { return tr("Dad's side"); } });
   return out.slice(0, 2);
 }
 

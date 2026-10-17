@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Alert, BackHandler, Linking, Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
@@ -23,7 +23,7 @@ import { DriveBackupCard } from "../src/components/DriveBackupCard";
 import { Btn, Input, Label, Seg, Sheet } from "../src/components/ui";
 import { CHART_SOURCES } from "../src/lib/percentiles";
 
-import { tr } from "../src/lib/i18n";
+import { LANGS, LangChoice, lang, resolveLang, tr } from "../src/lib/i18n";
 /** The three tips that used to sit on the Add page, in order. */
 export const PHOTO_STEPS = [
   "In the picker, search a name — if you've named them in Google Photos, their photos come up together.",
@@ -76,6 +76,10 @@ export default function Settings() {
 
       <Section title={tr("Notifications")}>
         <RemindersCard />
+      </Section>
+
+      <Section title={tr("Language")}>
+        <LanguageChoice />
       </Section>
 
       <Section title={tr("Appearance")}>
@@ -200,6 +204,33 @@ function GrowthChartChoice() {
     <View>
       <Seg options={CHART_SOURCES.map((c) => ({ id: c.id, label: c.label }))} value={chart} onChange={setChart} />
       <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{tr("{0}. Percentiles are for information only: ask your health visitor or doctor about growth.", [CHART_SOURCES.find((c) => c.id === chart)?.desc])}</Text>
+    </View>
+  );
+}
+
+/**
+ * The language: the phone's (when there's a translation for it), English or Hebrew. Hebrew turns the layout right to left, which the phone
+ * only does when the app starts: the website reloads at once, and the app offers to close so it can be opened again.
+ */
+function LanguageChoice() {
+  const t = useTheme();
+  const language = useStore((s) => s.language);
+  const setLanguage = useStore((s) => s.setLanguage);
+  const change = (v: LangChoice) => {
+    setLanguage(v);
+    const next = resolveLang(v);
+    if (next === lang()) return;
+    if (onWeb) { setTimeout(() => window.location.reload(), 200); return; }
+    const name = LANGS.find((x) => x.id === next)?.name ?? "";
+    Alert.alert(name, next === "he" ? "סגרו ופתחו מחדש את 4D Ages כדי לראות אותה בעברית." : "Close and open 4D Ages again to see it in English.", [
+      { text: next === "he" ? "אחר כך" : "Later", style: "cancel" },
+      { text: next === "he" ? "סגירה עכשיו" : "Close now", onPress: () => BackHandler.exitApp() },
+    ]);
+  };
+  return (
+    <View>
+      <Seg options={[{ id: "system" as const, label: onWeb ? tr("Same as browser") : tr("Same as phone") }, ...LANGS.map((l) => ({ id: l.id, label: l.name }))]} value={language} onChange={change} />
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{language === "system" ? tr("4D Ages uses your {0}'s language when it's one of these, and English otherwise.", [onWeb ? tr("browser") : tr("phone")]) : tr("Always in this language.")}</Text>
     </View>
   );
 }

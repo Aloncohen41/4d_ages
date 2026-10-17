@@ -7,6 +7,7 @@ import { supabase } from "./supabase";
  */
 
 import { Reaction, groupReactions } from "./reactionMath";
+import { tr } from "./i18n";
 export type { Reaction } from "./reactionMath";
 export { groupReactions, reactionCounts } from "./reactionMath";
 
@@ -16,7 +17,7 @@ interface ReactionState {
 export const useReactions = create<ReactionState>(() => ({ byMemory: {} }));
 
 interface Row { memory_id: string; user_id: string; author: string | null; heart: boolean | null; comment: string | null; updated_at: string }
-const fromRow = (r: Row): Reaction => ({ memoryId: r.memory_id, userId: r.user_id, author: r.author || "Family", heart: !!r.heart, comment: r.comment ?? "", at: r.updated_at });
+const fromRow = (r: Row): Reaction => ({ memoryId: r.memory_id, userId: r.user_id, author: r.author || tr("Family"), heart: !!r.heart, comment: r.comment ?? "", at: r.updated_at });
 
 /** Fetch every reaction on a child's posts (the ones this account can see). A database without reactions yet simply has none. */
 export async function loadReactions(childId: string): Promise<void> {
@@ -36,16 +37,16 @@ const childOf = new Map<string, string>();
 
 /** Leave (or change) your heart and comment on a post. Both empty takes your reaction away. */
 export async function react(childId: string, memoryId: string, author: string, heart: boolean, comment: string): Promise<void> {
-  if (!supabase) throw new Error("Sign-in isn't set up in this build.");
+  if (!supabase) throw new Error(tr("Sign-in isn't set up in this build."));
   const { data } = await supabase.auth.getSession();
   const userId = data.session?.user.id;
-  if (!userId) throw new Error("Please sign in first.");
+  if (!userId) throw new Error(tr("Please sign in first."));
   const text = comment.trim().slice(0, 500);
   if (!heart && !text) {
     const { error } = await supabase.from("reactions").delete().eq("memory_id", memoryId).eq("user_id", userId);
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase.from("reactions").upsert({ child_id: childId, memory_id: memoryId, user_id: userId, author: author.trim() || "Family", heart, comment: text }, { onConflict: "memory_id,user_id" });
+    const { error } = await supabase.from("reactions").upsert({ child_id: childId, memory_id: memoryId, user_id: userId, author: author.trim() || tr("Family"), heart, comment: text }, { onConflict: tr("memory_id,user_id") });
     if (error) throw new Error(error.message);
   }
   await loadReactions(childId);

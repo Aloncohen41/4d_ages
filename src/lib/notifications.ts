@@ -9,6 +9,7 @@ import { planBumpPhotoNotifications } from "./pregnancy";
 import { planGotchaNotifications, planHealthReminders } from "./petPlan";
 import { HealthReminder } from "./reminders";
 
+import { tr } from "./i18n";
 export /** The app's brand colour on notifications (the tint behind the small icon, the LED), kept in step with the theme. */
 const BRAND = THEMES.pink.accent;
 const CHANNEL = "birthdays";
@@ -22,7 +23,7 @@ export function configureNotifications() {
 async function ensureChannel() {
   if (Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync(CHANNEL, {
-    name: "Birthdays & memories",
+    get name() { return tr("Birthdays & memories"); },
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: BRAND,
@@ -69,7 +70,7 @@ export async function scheduleNotifications(kids: { id: string; name: string; bi
 /** A notification in 5 seconds, so you can see that reminders work on this phone. */
 export async function sendTestNotification(name: string, kind: "birthday" | "cheer" | "ask" = "birthday") {
   await ensureChannel();
-  const sample = kind === "birthday" ? { title: `🎈 ${name} turns 3 in 3 days`, body: "This is how your birthday reminders will look. Tap to open the app." } : sampleMilestoneNotification(name, kind);
+  const sample = kind === "birthday" ? { title: `🎈 ${name} turns 3 in 3 days`, get body() { return tr("This is how your birthday reminders will look. Tap to open the app."); } } : sampleMilestoneNotification(name, kind);
   await Notifications.scheduleNotificationAsync({
     content: { title: sample.title, body: sample.body, data: { kind: "test" }, color: BRAND },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, channelId: CHANNEL },

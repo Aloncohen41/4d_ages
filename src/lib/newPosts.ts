@@ -1,6 +1,7 @@
 import { Child, MediaKind, Memory } from "./types";
 import { addMonths } from "./date";
 
+import { tr } from "./i18n";
 export type PostShape = "one" | "separate";
 
 export interface NewPostFile {
@@ -38,7 +39,7 @@ export function buildNewPosts(i: {
     tagIds: [],
     emoji: i.as?.emoji ?? (files.every((f) => f.kind === "video") ? "🎬" : "📷"),
     palette: PALETTES[k % PALETTES.length],
-    source: i.as?.source ?? "Added",
+    source: i.as?.source ?? tr("Added"),
     ...(i.as ? { title: i.as.title(onOrAfterBirth(date)) } : {}),
     createdAt: now,
     updatedAt: now,

@@ -1,6 +1,7 @@
 import { GrowthRef, HeightEntry } from "./types";
 import { daysBetween } from "./date";
 
+import { tr } from "./i18n";
 /*
  * APPROXIMATE reference values based on the WHO Child Growth Standards (length/height-for-age, 0–5 years).
  * Rows are [age in months, median cm, approx. standard deviation cm]. They are rounded and simplified for a
@@ -52,16 +53,16 @@ export interface DoorRef {
 }
 /** Everyday things at their real height, spread over the whole frame. Approximate. */
 export const DOOR_REFS: DoorRef[] = [
-  { cm: 18, name: "Baby bottle", icon: "ref-bottle" },
-  { cm: 30, name: "School ruler", icon: "ref-ruler" },
-  { cm: 46, name: "Chair seat", icon: "ref-chair" },
-  { cm: 60, name: "Labrador", icon: "ref-dog" },
-  { cm: 75, name: "Table", icon: "ref-table" },
-  { cm: 91, name: "Kitchen counter", icon: "ref-counter" },
-  { cm: 104, name: "Door handle", icon: "ref-door" },
-  { cm: 138, name: "A ten-year-old", icon: "ref-kid" },
-  { cm: 170, name: "An adult", icon: "ref-adult" },
-  { cm: 185, name: "Fridge", icon: "ref-fridge" },
+  { cm: 18, get name() { return tr("Baby bottle"); }, icon: "ref-bottle" },
+  { cm: 30, get name() { return tr("School ruler"); }, icon: "ref-ruler" },
+  { cm: 46, get name() { return tr("Chair seat"); }, icon: "ref-chair" },
+  { cm: 60, get name() { return tr("Labrador"); }, icon: "ref-dog" },
+  { cm: 75, get name() { return tr("Table"); }, icon: "ref-table" },
+  { cm: 91, get name() { return tr("Kitchen counter"); }, icon: "ref-counter" },
+  { cm: 104, get name() { return tr("Door handle"); }, icon: "ref-door" },
+  { cm: 138, get name() { return tr("A ten-year-old"); }, icon: "ref-kid" },
+  { cm: 170, get name() { return tr("An adult"); }, icon: "ref-adult" },
+  { cm: 185, get name() { return tr("Fridge"); }, icon: "ref-fridge" },
 ];
 
 export function rangeStatus(ref: GrowthRef | undefined, months: number, cm: number): "below" | "within" | "above" | null {
@@ -150,13 +151,13 @@ export const FUN_REFS: FunRef[] = [
 
 /** Small things to stack or line up: "as tall as 104 pencils". Each with its height, or its length end to end. */
 export const STACK_REFS: { cm: number; one: string; many: string; emoji: string; how: "stacked" | "end to end" }[] = [
-  { cm: 1.2, one: "pancake", many: "pancakes", emoji: "🥞", how: "stacked" },
-  { cm: 5.4, one: "rubber duck", many: "rubber ducks", emoji: "🦆", how: "stacked" },
-  { cm: 9.5, one: "cupcake", many: "cupcakes", emoji: "🧁", how: "stacked" },
-  { cm: 19, one: "pencil", many: "pencils", emoji: "✏️", how: "end to end" },
-  { cm: 20, one: "banana", many: "bananas", emoji: "🍌", how: "end to end" },
-  { cm: 15, one: "hot dog", many: "hot dogs", emoji: "🌭", how: "end to end" },
-  { cm: 6.7, one: "tennis ball", many: "tennis balls", emoji: "🎾", how: "stacked" },
+  { cm: 1.2, get one() { return tr("pancake"); }, get many() { return tr("pancakes"); }, emoji: "🥞", how: "stacked" },
+  { cm: 5.4, get one() { return tr("rubber duck"); }, get many() { return tr("rubber ducks"); }, emoji: "🦆", how: "stacked" },
+  { cm: 9.5, get one() { return tr("cupcake"); }, get many() { return tr("cupcakes"); }, emoji: "🧁", how: "stacked" },
+  { cm: 19, get one() { return tr("pencil"); }, get many() { return tr("pencils"); }, emoji: "✏️", how: "end to end" },
+  { cm: 20, get one() { return tr("banana"); }, get many() { return tr("bananas"); }, emoji: "🍌", how: "end to end" },
+  { cm: 15, get one() { return tr("hot dog"); }, get many() { return tr("hot dogs"); }, emoji: "🌭", how: "end to end" },
+  { cm: 6.7, get one() { return tr("tennis ball"); }, get many() { return tr("tennis balls"); }, emoji: "🎾", how: "stacked" },
 ];
 
 /** "As tall as 104 pencils, end to end": one of the small things, turned with `turn` (for "More"). */
@@ -237,7 +238,7 @@ export function funComparisons(cm: number, count = 3, offset = 0): Comparison[] 
   for (let i = 0; i < n; i++) {
     const ref = all[(offset * n + i) % all.length];
     const diff = cm - ref.cm;
-    out.push({ ref, diff, phrase: diff <= 3 ? "About as tall as" : "Taller than" });
+    out.push({ ref, diff, phrase: diff <= 3 ? tr("About as tall as") : tr("Taller than") });
   }
   return out;
 }

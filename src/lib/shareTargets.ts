@@ -4,6 +4,7 @@
  */
 import { Child, EntryKind, SharedItem, isPet } from "./types";
 
+import { tr } from "./i18n";
 export type ShareKind = "post" | "bump" | "ultrasound" | "voice" | "story" | "first" | "last" | "milestone" | "measure" | "health";
 
 export interface ShareOption {
@@ -30,29 +31,29 @@ export function shareOptions(child: Child, items: Pick<SharedItem, "kind">[]): S
   const out: ShareOption[] = [];
   const pet = isPet(child);
   // a recording is a voice note: a story with the sound (and the pictures with it)
-  if (audio) out.push({ id: "voice", label: "Voice note", desc: pictures ? "The recording, with the pictures" : "A recording to keep, with a few words if you like", emoji: "🎙️", entry: "story" });
-  if (pictures && !audio) out.push({ id: "post", label: pictures > 1 ? "Just the photos" : "Just the photo", desc: "A post (or a post each), with a few words if you like", emoji: "📷" });
+  if (audio) out.push({ id: "voice", get label() { return tr("Voice note"); }, desc: pictures ? tr("The recording, with the pictures") : tr("A recording to keep, with a few words if you like"), emoji: "🎙️", entry: "story" });
+  if (pictures && !audio) out.push({ id: "post", label: pictures > 1 ? tr("Just the photos") : tr("Just the photo"), get desc() { return tr("A post (or a post each), with a few words if you like"); }, emoji: "📷" });
   if (child.expecting) {
     if (pictures && !audio) {
-      out.push({ id: "bump", label: "Bump photo", desc: "For the bump, week by week (and its video)", emoji: "🤰" });
-      out.push({ id: "ultrasound", label: "Ultrasound picture", desc: "Kept with the scans, by week", emoji: "🩻" });
+      out.push({ id: "bump", get label() { return tr("Bump photo"); }, get desc() { return tr("For the bump, week by week (and its video)"); }, emoji: "🤰" });
+      out.push({ id: "ultrasound", get label() { return tr("Ultrasound picture"); }, get desc() { return tr("Kept with the scans, by week"); }, emoji: "🩻" });
     }
-    out.push({ id: "milestone", label: "Pregnancy milestone", desc: "The first kick, the gender reveal…", emoji: "⭐", entry: "milestone" });
-    out.push({ id: "story", label: "Story", desc: "Something to remember, in your words", emoji: "📝", entry: "story" });
+    out.push({ id: "milestone", get label() { return tr("Pregnancy milestone"); }, get desc() { return tr("The first kick, the gender reveal…"); }, emoji: "⭐", entry: "milestone" });
+    out.push({ id: "story", get label() { return tr("Story"); }, get desc() { return tr("Something to remember, in your words"); }, emoji: "📝", entry: "story" });
     return out;
   }
-  out.push({ id: "story", label: "Story", desc: "Something that happened, in your words", emoji: "📝", entry: "story" });
+  out.push({ id: "story", get label() { return tr("Story"); }, get desc() { return tr("Something that happened, in your words"); }, emoji: "📝", entry: "story" });
   if (pet) {
-    out.push({ id: "first", label: "Trick or first", desc: "A new trick, or a first time", emoji: "🎓", entry: "first" });
-    out.push({ id: "health", label: "Health", desc: "A vet visit, a vaccination, a treatment", emoji: "🩺", entry: "health" });
-    if (!audio) out.push({ id: "measure", label: "Weight", desc: "On the scales, with a photo", emoji: "⚖️", entry: "measure" });
+    out.push({ id: "first", get label() { return tr("Trick or first"); }, get desc() { return tr("A new trick, or a first time"); }, emoji: "🎓", entry: "first" });
+    out.push({ id: "health", get label() { return tr("Health"); }, get desc() { return tr("A vet visit, a vaccination, a treatment"); }, emoji: "🩺", entry: "health" });
+    if (!audio) out.push({ id: "measure", get label() { return tr("Weight"); }, get desc() { return tr("On the scales, with a photo"); }, emoji: "⚖️", entry: "measure" });
     return out;
   }
-  out.push({ id: "first", label: "First", desc: "The first time they…", emoji: "✨", entry: "first" });
-  out.push({ id: "last", label: "Last", desc: "The last time they…", emoji: "🌙", entry: "last" });
-  out.push({ id: "milestone", label: "Milestone", desc: "Walking, talking, a first tooth…", emoji: "⭐", entry: "milestone" });
-  if (!audio) out.push({ id: "measure", label: "Growth", desc: "Height and weight, with a photo", emoji: "📏", entry: "measure" });
-  out.push({ id: "health", label: "Health", desc: "A check-up, a vaccination, being poorly", emoji: "🩺", entry: "health" });
+  out.push({ id: "first", get label() { return tr("First"); }, get desc() { return tr("The first time they…"); }, emoji: "✨", entry: "first" });
+  out.push({ id: "last", get label() { return tr("Last"); }, get desc() { return tr("The last time they…"); }, emoji: "🌙", entry: "last" });
+  out.push({ id: "milestone", get label() { return tr("Milestone"); }, get desc() { return tr("Walking, talking, a first tooth…"); }, emoji: "⭐", entry: "milestone" });
+  if (!audio) out.push({ id: "measure", get label() { return tr("Growth"); }, get desc() { return tr("Height and weight, with a photo"); }, emoji: "📏", entry: "measure" });
+  out.push({ id: "health", get label() { return tr("Health"); }, get desc() { return tr("A check-up, a vaccination, being poorly"); }, emoji: "🩺", entry: "health" });
   return out;
 }
 

@@ -1,4 +1,5 @@
 import { PREGNANCY_MILESTONES } from "./pregnancy";
+import { withWords } from "./i18n";
 /** One central list of tags. Memories carry tag ids; the name, category and (for people) the family member live here. */
 export type TagCategory = "person" | "event" | "place" | "other";
 export interface Tag {
@@ -173,7 +174,7 @@ export const CATEGORY_EMOJI: Record<string, string> = {
 /** The chart's age bands, in months. */
 export const BANDS: [number, number][] = [[0, 6], [6, 12], [12, 18], [18, 24], [24, 30], [30, 36]];
 
-const m = (id: string, label: string, emoji: string, category: string, lo: number, hi: number, hint: string): MilestoneDef => ({ id, label, emoji, hint, category, months: [lo, hi] });
+const m = (id: string, label: string, emoji: string, category: string, lo: number, hi: number, hint: string): MilestoneDef => withWords({ id, label, emoji, hint, category, months: [lo, hi] as [number, number] }, ["label", "hint"]);
 
 /** The earlier catalogue. Kept so milestones you already logged keep their names; only logged ones are shown. */
 export const LEGACY_MILESTONE_DEFS: MilestoneDef[] = [
@@ -227,9 +228,9 @@ export const LEGACY_MILESTONE_DEFS: MilestoneDef[] = [
   m("brushes-teeth", "Brushes their own teeth", "🪥", "Feeding & self-care", 30, 42, "With a little help."),
 ];
 
-const c = (id: string, label: string, emoji: string, area: Area, band: number, hint: string, aliases: string[] = []): MilestoneDef => ({
+const c = (id: string, label: string, emoji: string, area: Area, band: number, hint: string, aliases: string[] = []): MilestoneDef => withWords<MilestoneDef>({
   id, label, emoji, hint, category: area, months: BANDS[band], ...(aliases.length ? { aliases } : {}),
-});
+}, ["label", "hint"]);
 
 /**
  * The milestone catalogue, taken from ZERO TO THREE's "Developmental Milestones by Age" (birth to 36 months):

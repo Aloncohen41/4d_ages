@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /*
  * Pets: the kinds of pet, their breeds, their age in their own years (or their stage of life), their tricks and firsts, and how they're named
  * in the family. Pure, for tests.
@@ -17,19 +18,19 @@ export type PetOrigin = "breeder" | "shelter" | "friend" | "found" | "shop" | "o
 export interface SpeciesInfo { id: Species; label: string; emoji: string; noun: string; breeds: string[] }
 
 export const SPECIES: SpeciesInfo[] = [
-  { id: "dog", label: "Dog", emoji: "🐶", noun: "dog", breeds: ["Mixed breed", "Labrador Retriever", "Golden Retriever", "German Shepherd", "French Bulldog", "Bulldog", "Poodle", "Beagle", "Dachshund", "Cocker Spaniel", "Border Collie", "Cavapoo", "Cockapoo", "Shih Tzu", "Chihuahua", "Jack Russell", "Pomeranian", "Husky", "Staffordshire Bull Terrier", "Boxer", "Yorkshire Terrier", "Maltese", "Pug", "Canaan Dog"] },
-  { id: "cat", label: "Cat", emoji: "🐱", noun: "cat", breeds: ["Mixed breed", "Domestic shorthair", "Domestic longhair", "British Shorthair", "Maine Coon", "Ragdoll", "Siamese", "Persian", "Bengal", "Sphynx", "Scottish Fold", "Norwegian Forest Cat", "Russian Blue"] },
-  { id: "rabbit", label: "Rabbit", emoji: "🐰", noun: "rabbit", breeds: ["Mixed breed", "Netherland Dwarf", "Holland Lop", "Mini Lop", "Lionhead", "Mini Rex", "Dutch", "Flemish Giant", "English Lop", "Angora", "Rex", "French Lop"] },
-  { id: "bird", label: "Bird", emoji: "🦜", noun: "bird", breeds: ["Budgie", "Cockatiel", "Lovebird", "African Grey", "Amazon parrot", "Macaw", "Cockatoo", "Conure", "Parrotlet", "Canary", "Finch"] },
-  { id: "hamster", label: "Hamster", emoji: "🐹", noun: "hamster", breeds: ["Syrian", "Roborovski", "Campbell's dwarf", "Winter white", "Chinese"] },
-  { id: "snake", label: "Snake", emoji: "🐍", noun: "snake", breeds: ["Corn snake", "Ball python", "King snake", "Milk snake", "Boa", "Hognose"] },
-  { id: "horse", label: "Horse", emoji: "🐴", noun: "horse", breeds: ["Pony", "Arabian", "Thoroughbred", "Quarter Horse", "Warmblood", "Cob", "Shetland", "Welsh", "Appaloosa", "Friesian", "Andalusian"] },
+  { id: "dog", get label() { return tr("Dog"); }, emoji: "🐶", noun: "dog", get breeds() { return ["Mixed breed", "Labrador Retriever", "Golden Retriever", "German Shepherd", "French Bulldog", "Bulldog", "Poodle", "Beagle", "Dachshund", "Cocker Spaniel", "Border Collie", "Cavapoo", "Cockapoo", "Shih Tzu", "Chihuahua", "Jack Russell", "Pomeranian", "Husky", "Staffordshire Bull Terrier", "Boxer", "Yorkshire Terrier", "Maltese", "Pug", "Canaan Dog"].map((w) => tr(w)); } },
+  { id: "cat", get label() { return tr("Cat"); }, emoji: "🐱", noun: "cat", get breeds() { return ["Mixed breed", "Domestic shorthair", "Domestic longhair", "British Shorthair", "Maine Coon", "Ragdoll", "Siamese", "Persian", "Bengal", "Sphynx", "Scottish Fold", "Norwegian Forest Cat", "Russian Blue"].map((w) => tr(w)); } },
+  { id: "rabbit", get label() { return tr("Rabbit"); }, emoji: "🐰", noun: "rabbit", get breeds() { return ["Mixed breed", "Netherland Dwarf", "Holland Lop", "Mini Lop", "Lionhead", "Mini Rex", "Dutch", "Flemish Giant", "English Lop", "Angora", "Rex", "French Lop"].map((w) => tr(w)); } },
+  { id: "bird", get label() { return tr("Bird"); }, emoji: "🦜", noun: "bird", get breeds() { return ["Budgie", "Cockatiel", "Lovebird", "African Grey", "Amazon parrot", "Macaw", "Cockatoo", "Conure", "Parrotlet", "Canary", "Finch"].map((w) => tr(w)); } },
+  { id: "hamster", get label() { return tr("Hamster"); }, emoji: "🐹", noun: "hamster", get breeds() { return ["Syrian", "Roborovski", "Campbell's dwarf", "Winter white", "Chinese"].map((w) => tr(w)); } },
+  { id: "snake", get label() { return tr("Snake"); }, emoji: "🐍", noun: "snake", get breeds() { return ["Corn snake", "Ball python", "King snake", "Milk snake", "Boa", "Hognose"].map((w) => tr(w)); } },
+  { id: "horse", get label() { return tr("Horse"); }, emoji: "🐴", noun: "horse", get breeds() { return ["Pony", "Arabian", "Thoroughbred", "Quarter Horse", "Warmblood", "Cob", "Shetland", "Welsh", "Appaloosa", "Friesian", "Andalusian"].map((w) => tr(w)); } },
 ];
 export const speciesInfo = (s?: string): SpeciesInfo => SPECIES.find((x) => x.id === s) ?? SPECIES[0];
 
 export const ORIGINS: { id: PetOrigin; label: string }[] = [
-  { id: "breeder", label: "A breeder" }, { id: "shelter", label: "A shelter or rescue" }, { id: "friend", label: "Family or friends" },
-  { id: "found", label: "We found them" }, { id: "shop", label: "A pet shop" }, { id: "other", label: "Somewhere else" },
+  { id: "breeder", get label() { return tr("A breeder"); } }, { id: "shelter", get label() { return tr("A shelter or rescue"); } }, { id: "friend", get label() { return tr("Family or friends"); } },
+  { id: "found", get label() { return tr("We found them"); } }, { id: "shop", get label() { return tr("A pet shop"); } }, { id: "other", get label() { return tr("Somewhere else"); } },
 ];
 
 /** Whole years and months between two dates. */
@@ -89,35 +90,35 @@ export const petRelation = (species?: string) => `Our ${speciesInfo(species).nou
 
 /** Tricks to tick off, by kind of pet. */
 export const TRICK_IDEAS: Record<Species, string[]> = {
-  dog: ["Sit", "Paw", "Lie down", "Come", "Stay", "Roll over", "High five", "Spin", "Toilet trained", "Walks on a lead", "Crate trained", "Fetch"],
-  cat: ["Comes when called", "Uses the cat flap", "High five", "Sits on command", "Uses the scratching post", "Walks on a harness", "Fetch"],
-  rabbit: ["Litter trained", "Comes when called", "Binky (the happy jump)", "Stands up on command", "Jumps through a hoop", "Spins", "Eats from the hand"],
-  bird: ["Steps up", "Says their name", "Whistles a tune", "Waves", "Comes to the hand", "Turns around", "Says hello"],
-  hamster: ["Comes to the hand", "Uses the wheel", "Eats from the hand", "Climbs onto the hand"],
-  snake: ["Handled calmly", "First feed with us", "Comes out to explore"],
-  horse: ["First ride", "Walk, trot and canter", "Loads into the trailer", "First jump", "Lifts their feet", "Ground tied"],
+  get dog() { return ["Sit", "Paw", "Lie down", "Come", "Stay", "Roll over", "High five", "Spin", "Toilet trained", "Walks on a lead", "Crate trained", "Fetch"].map((w) => tr(w)); },
+  get cat() { return ["Comes when called", "Uses the cat flap", "High five", "Sits on command", "Uses the scratching post", "Walks on a harness", "Fetch"].map((w) => tr(w)); },
+  get rabbit() { return ["Litter trained", "Comes when called", "Binky (the happy jump)", "Stands up on command", "Jumps through a hoop", "Spins", "Eats from the hand"].map((w) => tr(w)); },
+  get bird() { return ["Steps up", "Says their name", "Whistles a tune", "Waves", "Comes to the hand", "Turns around", "Says hello"].map((w) => tr(w)); },
+  get hamster() { return ["Comes to the hand", "Uses the wheel", "Eats from the hand", "Climbs onto the hand"].map((w) => tr(w)); },
+  get snake() { return ["Handled calmly", "First feed with us", "Comes out to explore"].map((w) => tr(w)); },
+  get horse() { return ["First ride", "Walk, trot and canter", "Loads into the trailer", "First jump", "Lifts their feet", "Ground tied"].map((w) => tr(w)); },
 };
 
 /** Firsts worth keeping, by kind of pet. */
 export const PET_FIRST_IDEAS: Record<Species, string[]> = {
-  dog: ["First walk", "First night home", "First bath", "First vet visit", "First time at the beach", "First snow", "First haircut", "First holiday", "First birthday party"],
-  cat: ["First night home", "First vet visit", "First time outside", "First bird spotted", "First cuddle on the sofa", "First birthday"],
-  rabbit: ["First night home", "First binky", "First time in the garden", "First vet visit", "First carrot", "First friend"],
-  bird: ["First word", "First flight in the house", "First bath", "First vet visit", "First new toy"],
-  hamster: ["First night home", "First run on the wheel", "First time in the ball", "First vet visit"],
-  snake: ["First shed with us", "First feed", "First vet visit", "First time handled"],
-  horse: ["First ride", "First show", "First rosette", "First hack out", "First time at the beach", "First vet visit"],
+  get dog() { return ["First walk", "First night home", "First bath", "First vet visit", "First time at the beach", "First snow", "First haircut", "First holiday", "First birthday party"].map((w) => tr(w)); },
+  get cat() { return ["First night home", "First vet visit", "First time outside", "First bird spotted", "First cuddle on the sofa", "First birthday"].map((w) => tr(w)); },
+  get rabbit() { return ["First night home", "First binky", "First time in the garden", "First vet visit", "First carrot", "First friend"].map((w) => tr(w)); },
+  get bird() { return ["First word", "First flight in the house", "First bath", "First vet visit", "First new toy"].map((w) => tr(w)); },
+  get hamster() { return ["First night home", "First run on the wheel", "First time in the ball", "First vet visit"].map((w) => tr(w)); },
+  get snake() { return ["First shed with us", "First feed", "First vet visit", "First time handled"].map((w) => tr(w)); },
+  get horse() { return ["First ride", "First show", "First rosette", "First hack out", "First time at the beach", "First vet visit"].map((w) => tr(w)); },
 };
 
 /** Health entries for a pet (on the Health tab, instead of development). */
 export const PET_HEALTH_KINDS = [
-  { id: "vet", label: "Vet visit", emoji: "🩺" },
-  { id: "vaccination", label: "Vaccination", emoji: "💉" },
-  { id: "parasite", label: "Flea and worm", emoji: "🐛" },
-  { id: "medicine", label: "Medicine", emoji: "💊" },
-  { id: "operation", label: "Operation", emoji: "🏥" },
-  { id: "grooming", label: "Groomer or farrier", emoji: "✂️" },
-  { id: "other", label: "Other", emoji: "📝" },
+  { id: "vet", get label() { return tr("Vet visit"); }, emoji: "🩺" },
+  { id: "vaccination", get label() { return tr("Vaccination"); }, emoji: "💉" },
+  { id: "parasite", get label() { return tr("Flea and worm"); }, emoji: "🐛" },
+  { id: "medicine", get label() { return tr("Medicine"); }, emoji: "💊" },
+  { id: "operation", get label() { return tr("Operation"); }, emoji: "🏥" },
+  { id: "grooming", get label() { return tr("Groomer or farrier"); }, emoji: "✂️" },
+  { id: "other", get label() { return tr("Other"); }, emoji: "📝" },
 ] as const;
 
 /** The pet-only notice under health notes. */

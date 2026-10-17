@@ -3,6 +3,7 @@ import { memoryForDef } from "./development";
 import { milestonesLogged } from "./selectors";
 import { uid, useStore } from "./store";
 
+import { tr } from "./i18n";
 export interface MilestoneInput {
   childId: string;
   defId?: string; // an existing milestone being logged or edited
@@ -26,7 +27,7 @@ export function logMilestone(i: MilestoneInput): string | null {
   const name = i.title.trim();
   let def = i.defId ? defs.find((d) => d.id === i.defId) : undefined;
   if (!def) {
-    if (!name) return "Give the milestone a name, or pick one from the list.";
+    if (!name) return tr("Give the milestone a name, or pick one from the list.");
     def = defs.find((d) => d.label.toLowerCase() === name.toLowerCase());
     if (def && logged(def)) return `“${def.label}” is already logged — open it from the Milestones tab to edit it.`;
   }

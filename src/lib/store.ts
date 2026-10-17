@@ -13,6 +13,7 @@ import type { GrowthChartSource } from "./percentiles";
 import { ClassicEntry, classicMedia } from "./classics";
 import { MemoryInput, buildMemory, milestoneMemoryId } from "./entries";
 import { migrateStored } from "./migrate";
+import type { LangChoice } from "./i18n";
 import { backupIfOlder } from "./backup";
 import { buildSample } from "./sample";
 import { deleteFile } from "./media";
@@ -64,6 +65,7 @@ export interface State {
   weightUnit: WeightUnit;
   growthChart: GrowthChartSource; // which charts the percentiles come from: WHO (default) or CDC (US)
   appearance: Appearance; // light or dark: the same as the phone (default), or always one of them
+  language: LangChoice; // the app's language: the phone's (default, when there's a translation), or chosen (see i18n.ts)
   appLock: boolean; // ask for the fingerprint, face or phone PIN to open the app
   tags: Tag[]; // the central tag list
   milestoneAnswers: Record<string, Record<string, string>>; // child → milestone → the day the parent said "not yet"
@@ -140,6 +142,7 @@ export interface State {
   setWeightUnit: (u: WeightUnit) => void;
   setGrowthChart: (c: GrowthChartSource) => void;
   setAppearance: (a: Appearance) => void;
+  setLanguage: (l: LangChoice) => void;
   setAppLock: (on: boolean) => void;
   setGrowSpeed: (v: number) => void;
   setNotif: (patch: Partial<NotifPrefs>) => void;
@@ -220,6 +223,7 @@ export const useStore = create<State>()(
       weightUnit: "kg",
       growthChart: "who",
       appearance: "light", // light for everyone unless they choose dark (or "same as phone") in Settings
+      language: "system",
       appLock: false,
       tags: [],
       milestoneAnswers: {},
@@ -246,6 +250,7 @@ export const useStore = create<State>()(
       setWeightUnit: (weightUnit) => set({ weightUnit }),
       setGrowthChart: (growthChart) => set({ growthChart }),
       setAppearance: (appearance) => set({ appearance }),
+      setLanguage: (language) => set({ language }),
       setAppLock: (appLock) => set({ appLock }),
       setEntrySheet: (entrySheet) => set((s) => (entrySheet && activeViewOnly(s) ? {} : { entrySheet })),
       setTagSheet: (tagSheet) => set({ tagSheet }),
@@ -526,6 +531,7 @@ export const useStore = create<State>()(
         weightUnit: s.weightUnit,
         growthChart: s.growthChart,
         appearance: s.appearance,
+        language: s.language,
         appLock: s.appLock,
         tags: s.tags,
         milestoneAnswers: s.milestoneAnswers,

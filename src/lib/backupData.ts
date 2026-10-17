@@ -1,6 +1,7 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { ACCOUNT_FIELDS } from "./accounts";
 
+import { tr } from "./i18n";
 /*
  * What a Google Drive backup holds, and how it is put back. Pure, for tests: driveBackup.ts does the uploading and downloading.
  *
@@ -26,7 +27,7 @@ export function unzipBackup(bytes: Uint8Array): BackupFile {
   try {
     const files = unzipSync(bytes);
     const inside = files[BACKUP_FILE];
-    if (!inside) throw new Error("no data");
+    if (!inside) throw new Error(tr("no data"));
     text = strFromU8(inside);
   } catch {
     text = strFromU8(bytes); // not a zip: the data file itself
@@ -75,10 +76,10 @@ export function parseBackup(text: string): BackupFile {
   try {
     b = JSON.parse(text) as BackupFile;
   } catch {
-    throw new Error("The backup file couldn't be read.");
+    throw new Error(tr("The backup file couldn't be read."));
   }
-  if (!b || typeof b !== "object" || !b.data || !Array.isArray((b.data as { kids?: unknown }).kids)) throw new Error("That isn't a 4D Ages backup.");
-  if (b.format > BACKUP_FORMAT) throw new Error("This backup was made by a newer version of 4D Ages. Update the app, then restore it.");
+  if (!b || typeof b !== "object" || !b.data || !Array.isArray((b.data as { kids?: unknown }).kids)) throw new Error(tr("That isn't a 4D Ages backup."));
+  if (b.format > BACKUP_FORMAT) throw new Error(tr("This backup was made by a newer version of 4D Ages. Update the app, then restore it."));
   return b;
 }
 

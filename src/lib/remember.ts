@@ -2,6 +2,7 @@ import { Child, Memory, NotifPrefs } from "./types";
 import { addMonthsClamped, daysBetween, parseISO } from "./date";
 import { ClassicEntry } from "./classics";
 
+import { tr } from "./i18n";
 /*
  * Looking back and keeping up: "On this day" (what happened on today's date in earlier years) and the monthly photo (in the first year, a
  * reminder on each month's birthday to take the photo for the Monthly photos page in Classics). Pure, so they can be tested.
@@ -62,8 +63,8 @@ export function planMonthlyPhotoNotifications(kids: Pick<Child, "id" | "name" | 
       if (d <= now) continue;
       out.push({
         date: d,
-        title: `Time for ${k.name}'s ${month === 12 ? "first birthday" : `${month}-month`} photo`,
-        body: "Take this month's photo for the Monthly photos page in Classics. The same spot each month makes a lovely grid.",
+        title: `Time for ${k.name}'s ${month === 12 ? tr("first birthday") : `${month}-month`} photo`,
+        get body() { return tr("Take this month's photo for the Monthly photos page in Classics. The same spot each month makes a lovely grid."); },
         data: { kind: "monthly-photo", childId: k.id, month },
       });
     }

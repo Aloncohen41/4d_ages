@@ -1,5 +1,6 @@
 import type { MilestoneDef } from "./types";
 
+import { tr, withWords, wordList } from "./i18n";
 /**
  * The last day a pregnancy note can have: today while expecting; for a child already born (telling the pregnancy afterwards, "looking back"),
  * the day before the birth. Their birth date stands in for the due date, so weeks are counted back from it.
@@ -37,43 +38,43 @@ export interface WeekSize {
 }
 
 export const FRUIT_WEEKS: WeekSize[] = [
-  { week: 4, fruit: "a poppy seed", pic: "poppy-seed", emoji: "🌱", cm: 0.1 },
-  { week: 5, fruit: "a sesame seed", pic: "sesame-seed", emoji: "🌱", cm: 0.2 },
-  { week: 6, fruit: "a lentil", pic: "lentil", emoji: "🫘", cm: 0.6 },
-  { week: 7, fruit: "a blueberry", pic: "blueberry", emoji: "🫐", cm: 1.3 },
-  { week: 8, fruit: "a raspberry", pic: "raspberry", emoji: "🍇", cm: 1.6, g: 1 },
-  { week: 9, fruit: "a cherry", pic: "cherry", emoji: "🍒", cm: 2.3, g: 2 },
-  { week: 10, fruit: "a strawberry", pic: "strawberry", emoji: "🍓", cm: 3.1, g: 4 },
-  { week: 11, fruit: "a fig", pic: "fig", emoji: "🟣", cm: 4.1, g: 7 },
-  { week: 12, fruit: "a lime", pic: "lime", emoji: "🍋‍🟩", cm: 5.4, g: 14 },
-  { week: 13, fruit: "a lemon", pic: "lemon", emoji: "🍋", cm: 7.4, g: 23 },
-  { week: 14, fruit: "a peach", pic: "peach", emoji: "🍑", cm: 8.7, g: 43 },
-  { week: 15, fruit: "an apple", pic: "apple", emoji: "🍎", cm: 10.1, g: 70 },
-  { week: 16, fruit: "an avocado", pic: "avocado", emoji: "🥑", cm: 11.6, g: 100 },
-  { week: 17, fruit: "a pear", pic: "pear", emoji: "🍐", cm: 13, g: 140 },
-  { week: 18, fruit: "a sweet pepper", pic: "sweet-pepper", emoji: "🫑", cm: 14.2, g: 190 },
-  { week: 19, fruit: "a mango", pic: "mango", emoji: "🥭", cm: 15.3, g: 240 },
-  { week: 20, fruit: "a banana", pic: "banana", emoji: "🍌", cm: 25.6, g: 300 },
-  { week: 21, fruit: "a carrot", pic: "carrot", emoji: "🥕", cm: 26.7, g: 360 },
-  { week: 22, fruit: "a papaya", pic: "papaya", emoji: "🥭", cm: 27.8, g: 430 },
-  { week: 23, fruit: "a grapefruit", pic: "grapefruit", emoji: "🍊", cm: 28.9, g: 500 },
-  { week: 24, fruit: "a corn cob", pic: "corn", emoji: "🌽", cm: 30, g: 600 },
-  { week: 25, fruit: "a cauliflower", pic: "cauliflower", emoji: "🥦", cm: 34.6, g: 660 },
-  { week: 26, fruit: "a curly lettuce", pic: "lettuce", emoji: "🥬", cm: 35.6, g: 760 },
-  { week: 27, fruit: "a cabbage", pic: "cabbage", emoji: "🥬", cm: 36.6, g: 875 },
-  { week: 28, fruit: "an aubergine", pic: "aubergine", emoji: "🍆", cm: 37.6, g: 1000 },
-  { week: 29, fruit: "a butternut squash", pic: "butternut-squash", emoji: "🎃", cm: 38.6, g: 1150 },
-  { week: 30, fruit: "a cucumber", pic: "cucumber", emoji: "🥒", cm: 39.9, g: 1300 },
-  { week: 31, fruit: "a coconut", pic: "coconut", emoji: "🥥", cm: 41.1, g: 1500 },
-  { week: 32, fruit: "an acorn squash", pic: "squash", emoji: "🎃", cm: 42.4, g: 1700 },
-  { week: 33, fruit: "a pineapple", pic: "pineapple", emoji: "🍍", cm: 43.7, g: 1900 },
-  { week: 34, fruit: "a cantaloupe melon", pic: "cantaloupe", emoji: "🍈", cm: 45, g: 2100 },
-  { week: 35, fruit: "a honeydew melon", pic: "honeydew", emoji: "🍈", cm: 46.2, g: 2400 },
-  { week: 36, fruit: "a romaine lettuce", pic: "romaine", emoji: "🥬", cm: 47.4, g: 2600 },
-  { week: 37, fruit: "a bunch of chard", pic: "chard", emoji: "🥬", cm: 48.6, g: 2900 },
-  { week: 38, fruit: "a leek", pic: "leek", emoji: "🥬", cm: 49.8, g: 3100 },
-  { week: 39, fruit: "a small watermelon", pic: "watermelon", emoji: "🍉", cm: 50.7, g: 3300 },
-  { week: 40, fruit: "a small pumpkin", pic: "pumpkin", emoji: "🎃", cm: 51.2, g: 3500 },
+  { week: 4, get fruit() { return tr("a poppy seed"); }, pic: "poppy-seed", emoji: "🌱", cm: 0.1 },
+  { week: 5, get fruit() { return tr("a sesame seed"); }, pic: "sesame-seed", emoji: "🌱", cm: 0.2 },
+  { week: 6, get fruit() { return tr("a lentil"); }, pic: "lentil", emoji: "🫘", cm: 0.6 },
+  { week: 7, get fruit() { return tr("a blueberry"); }, pic: "blueberry", emoji: "🫐", cm: 1.3 },
+  { week: 8, get fruit() { return tr("a raspberry"); }, pic: "raspberry", emoji: "🍇", cm: 1.6, g: 1 },
+  { week: 9, get fruit() { return tr("a cherry"); }, pic: "cherry", emoji: "🍒", cm: 2.3, g: 2 },
+  { week: 10, get fruit() { return tr("a strawberry"); }, pic: "strawberry", emoji: "🍓", cm: 3.1, g: 4 },
+  { week: 11, get fruit() { return tr("a fig"); }, pic: "fig", emoji: "🟣", cm: 4.1, g: 7 },
+  { week: 12, get fruit() { return tr("a lime"); }, pic: "lime", emoji: "🍋‍🟩", cm: 5.4, g: 14 },
+  { week: 13, get fruit() { return tr("a lemon"); }, pic: "lemon", emoji: "🍋", cm: 7.4, g: 23 },
+  { week: 14, get fruit() { return tr("a peach"); }, pic: "peach", emoji: "🍑", cm: 8.7, g: 43 },
+  { week: 15, get fruit() { return tr("an apple"); }, pic: "apple", emoji: "🍎", cm: 10.1, g: 70 },
+  { week: 16, get fruit() { return tr("an avocado"); }, pic: "avocado", emoji: "🥑", cm: 11.6, g: 100 },
+  { week: 17, get fruit() { return tr("a pear"); }, pic: "pear", emoji: "🍐", cm: 13, g: 140 },
+  { week: 18, get fruit() { return tr("a sweet pepper"); }, pic: "sweet-pepper", emoji: "🫑", cm: 14.2, g: 190 },
+  { week: 19, get fruit() { return tr("a mango"); }, pic: "mango", emoji: "🥭", cm: 15.3, g: 240 },
+  { week: 20, get fruit() { return tr("a banana"); }, pic: "banana", emoji: "🍌", cm: 25.6, g: 300 },
+  { week: 21, get fruit() { return tr("a carrot"); }, pic: "carrot", emoji: "🥕", cm: 26.7, g: 360 },
+  { week: 22, get fruit() { return tr("a papaya"); }, pic: "papaya", emoji: "🥭", cm: 27.8, g: 430 },
+  { week: 23, get fruit() { return tr("a grapefruit"); }, pic: "grapefruit", emoji: "🍊", cm: 28.9, g: 500 },
+  { week: 24, get fruit() { return tr("a corn cob"); }, pic: "corn", emoji: "🌽", cm: 30, g: 600 },
+  { week: 25, get fruit() { return tr("a cauliflower"); }, pic: "cauliflower", emoji: "🥦", cm: 34.6, g: 660 },
+  { week: 26, get fruit() { return tr("a curly lettuce"); }, pic: "lettuce", emoji: "🥬", cm: 35.6, g: 760 },
+  { week: 27, get fruit() { return tr("a cabbage"); }, pic: "cabbage", emoji: "🥬", cm: 36.6, g: 875 },
+  { week: 28, get fruit() { return tr("an aubergine"); }, pic: "aubergine", emoji: "🍆", cm: 37.6, g: 1000 },
+  { week: 29, get fruit() { return tr("a butternut squash"); }, pic: "butternut-squash", emoji: "🎃", cm: 38.6, g: 1150 },
+  { week: 30, get fruit() { return tr("a cucumber"); }, pic: "cucumber", emoji: "🥒", cm: 39.9, g: 1300 },
+  { week: 31, get fruit() { return tr("a coconut"); }, pic: "coconut", emoji: "🥥", cm: 41.1, g: 1500 },
+  { week: 32, get fruit() { return tr("an acorn squash"); }, pic: "squash", emoji: "🎃", cm: 42.4, g: 1700 },
+  { week: 33, get fruit() { return tr("a pineapple"); }, pic: "pineapple", emoji: "🍍", cm: 43.7, g: 1900 },
+  { week: 34, get fruit() { return tr("a cantaloupe melon"); }, pic: "cantaloupe", emoji: "🍈", cm: 45, g: 2100 },
+  { week: 35, get fruit() { return tr("a honeydew melon"); }, pic: "honeydew", emoji: "🍈", cm: 46.2, g: 2400 },
+  { week: 36, get fruit() { return tr("a romaine lettuce"); }, pic: "romaine", emoji: "🥬", cm: 47.4, g: 2600 },
+  { week: 37, get fruit() { return tr("a bunch of chard"); }, pic: "chard", emoji: "🥬", cm: 48.6, g: 2900 },
+  { week: 38, get fruit() { return tr("a leek"); }, pic: "leek", emoji: "🥬", cm: 49.8, g: 3100 },
+  { week: 39, get fruit() { return tr("a small watermelon"); }, pic: "watermelon", emoji: "🍉", cm: 50.7, g: 3300 },
+  { week: 40, get fruit() { return tr("a small pumpkin"); }, pic: "pumpkin", emoji: "🎃", cm: 51.2, g: 3500 },
 ];
 
 /** This week's size (weeks before 4 count as week 4, after 40 as week 40). */
@@ -90,7 +91,7 @@ export function weekOn(due: string, date: string): number {
   return Math.max(1, Math.min(42, 40 - Math.ceil(daysToGo / 7)));
 }
 
-const p = (id: string, label: string, emoji: string, week: number, hint: string): MilestoneDef => ({ id: `preg-${id}`, label, emoji, hint, category: "Pregnancy", months: undefined, aliases: undefined, ...({ week } as object) });
+const p = (id: string, label: string, emoji: string, week: number, hint: string): MilestoneDef => withWords<MilestoneDef>({ id: `preg-${id}`, label, emoji, hint, category: "Pregnancy", months: undefined, aliases: undefined, ...({ week } as object) }, ["label", "hint"]);
 
 /** The gender reveal: the day you found out, and whether it's a girl or a boy (it sets the child's gender). The id is kept from before. */
 export const GENDER_REVEAL_ID = "preg-boy-or-girl";
@@ -133,7 +134,7 @@ export const fruitName = (fruit: string) => fruit.replace(/^(a|an) /, "");
  */
 export function weekLabel(due: string, date: string): string {
   const days = Math.round((new Date(due + "T00:00:00").getTime() - new Date(date + "T00:00:00").getTime()) / 86400000);
-  if (days > 42 * 7) return "Before birth";
+  if (days > 42 * 7) return tr("Before birth");
   const week = weekOn(due, date);
   return week < 4 ? `Week ${week}` : `Week ${week} (${fruitName(sizeForWeek(week).fruit)})`;
 }
@@ -143,14 +144,14 @@ export function weekLabel(due: string, date: string): string {
  * growing. The photos are kept as posts with this source (and "Bump, week 21" as the title).
  */
 export const BUMP_SOURCE = "Bump";
-export const BUMP_TIPS = [
+export const BUMP_TIPS = wordList([
   "The same spot each week, in front of a plain wall or door.",
   "Stand side-on, in the same pose (a hand under the bump works well).",
   "Keep the phone at the same height and distance: a strip of tape on the floor for your feet helps, and so does a shelf or tripod.",
   "The same light: the same time of day, by the same window.",
   "A fitted top, the same one each week if you can.",
   "Portrait, with the whole bump and a little space around it.",
-];
+]);
 
 export interface PlannedBumpReminder { date: Date; title: string; body: string; data: { kind: "bump-photo"; childId: string; week: number } }
 

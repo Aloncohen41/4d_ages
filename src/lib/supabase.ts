@@ -10,6 +10,7 @@ import { parseAuthCallback } from "./authLink";
 import { usePasswordReset } from "./authLinkState";
 import { agreementNow } from "./consent";
 
+import { tr } from "./i18n";
 /** True if the key in the app is a SECRET key. It must never be inside an app (it bypasses every privacy rule), so sign-in refuses to start with it. */
 export const keyIsSecret = classifyKey(SUPABASE_ANON_KEY) === "secret";
 export const isConfigured = SUPABASE_URL.startsWith("https://") && SUPABASE_ANON_KEY.length > 20 && !keyIsSecret;
@@ -52,7 +53,7 @@ export const providerOf = (session: Session | null): "google" | "email" =>
   session?.user.app_metadata?.provider === "google" || (session?.user.identities ?? []).some((i) => i.provider === "google") ? "google" : "email";
 
 const need = () => {
-  if (!supabase) throw new Error("Sign-in isn't set up in this build. See SHARING.md.");
+  if (!supabase) throw new Error(tr("Sign-in isn't set up in this build. See SHARING.md."));
   return supabase;
 };
 
@@ -60,10 +61,10 @@ const need = () => {
 
 /** Supabase's own wording for the usual mistakes, said plainly. */
 function friendly(message: string): string {
-  if (/invalid login credentials/i.test(message)) return "That email and password don't match. Check them, or create an account.";
-  if (/email not confirmed/i.test(message)) return "Your email isn't verified yet. Tap the button in the email we sent you, or send it again below.";
-  if (/user already registered/i.test(message)) return "There's already an account with this email. Sign in instead.";
-  if (/password should be at least/i.test(message)) return "Choose a password of at least 6 characters.";
+  if (/invalid login credentials/i.test(message)) return tr("That email and password don't match. Check them, or create an account.");
+  if (/email not confirmed/i.test(message)) return tr("Your email isn't verified yet. Tap the button in the email we sent you, or send it again below.");
+  if (/user already registered/i.test(message)) return tr("There's already an account with this email. Sign in instead.");
+  if (/password should be at least/i.test(message)) return tr("Choose a password of at least 6 characters.");
   return message;
 }
 
@@ -81,7 +82,7 @@ export async function signUp(email: string, password: string): Promise<"verify" 
   const { data, error } = await need().auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: AUTH_REDIRECT, data: { legal: agreementNow() } } });
   if (error) throw new Error(friendly(error.message));
   // an existing, verified address comes back with no identities (Supabase hides whether it exists): treat it as "sign in instead"
-  if (data.user && !data.session && (data.user.identities ?? []).length === 0) throw new Error(friendly("User already registered"));
+  if (data.user && !data.session && (data.user.identities ?? []).length === 0) throw new Error(friendly(tr("User already registered")));
   return data.session ? "signed-in" : "verify";
 }
 
@@ -118,7 +119,7 @@ if (googleReady) configureGoogle(GOOGLE_WEB_CLIENT_ID);
 
 /** The ID token for the Google account the parent picks, or null if they closed the picker. */
 async function googleIdToken(): Promise<string | null> {
-  if (!googleReady) throw new Error("Google sign-in isn't set up in this build.");
+  if (!googleReady) throw new Error(tr("Google sign-in isn't set up in this build."));
   return pickGoogleAccount();
 }
 
@@ -146,7 +147,7 @@ export async function signInWithGoogle(): Promise<boolean> {
 /** "Forgot password?": sends an email whose button opens the app, signed in, to choose a new password. */
 export async function sendPasswordReset(email: string): Promise<void> {
   const clean = email.trim();
-  if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("Enter the email you signed up with.");
+  if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error(tr("Enter the email you signed up with."));
   usePasswordReset.setState({ resetAskedAt: Date.now() });
   const { error } = await need().auth.resetPasswordForEmail(clean, { redirectTo: AUTH_REDIRECT });
   if (error) throw new Error(friendly(error.message));
@@ -154,17 +155,17 @@ export async function sendPasswordReset(email: string): Promise<void> {
 
 /** Sets a new password for the signed-in account (after a reset link, or with the current password checked first). */
 export async function setNewPassword(password: string, current?: string): Promise<void> {
-  if (password.length < 6) throw new Error("Choose a password of at least 6 characters.");
+  if (password.length < 6) throw new Error(tr("Choose a password of at least 6 characters."));
   if (current !== undefined) await reauthenticate(current);
   const { error } = await need().auth.updateUser({ password });
-  if (error) throw new Error(/different from the old/i.test(error.message) ? "Choose a password that's different from the one you have." : friendly(error.message));
+  if (error) throw new Error(/different from the old/i.test(error.message) ? tr("Choose a password that's different from the one you have.") : friendly(error.message));
   usePasswordReset.setState({ needed: false, resetAskedAt: 0 });
 }
 
 /** Changes the account's email. Supabase sends a confirmation to the new address (and the old one); it changes once confirmed. */
 export async function changeEmail(email: string): Promise<void> {
   const clean = email.trim();
-  if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("Enter a valid email address.");
+  if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error(tr("Enter a valid email address."));
   const { error } = await need().auth.updateUser({ email: clean }, { emailRedirectTo: AUTH_REDIRECT });
   if (error) throw new Error(friendly(error.message));
 }
@@ -186,25 +187,25 @@ export async function reauthenticate(password?: string): Promise<void> {
   const sb = need();
   const { data } = await sb.auth.getSession();
   const session = data.session;
-  if (!session) throw new Error("Please sign in again first.");
+  if (!session) throw new Error(tr("Please sign in again first."));
   if (providerOf(session) === "google") {
     if (googleMode === "redirect") {
       // the website can't ask Google again without leaving the page: a sign-in in the last ten minutes counts instead
       const last = Date.parse(session.user.last_sign_in_at ?? "");
-      if (!(Date.now() - last < 10 * 60_000)) throw new Error("To make sure it's you, sign out, sign in with Google again, and then do this within ten minutes.");
+      if (!(Date.now() - last < 10 * 60_000)) throw new Error(tr("To make sure it's you, sign out, sign in with Google again, and then do this within ten minutes."));
       return;
     }
     if (googleReady) await googleSignOut(); // so Google asks which account, instead of answering silently
     const token = await googleIdToken();
-    if (!token) throw new Error("Choose your Google account to confirm it's you.");
+    if (!token) throw new Error(tr("Choose your Google account to confirm it's you."));
     const { data: again, error } = await sb.auth.signInWithIdToken({ provider: "google", token });
     if (error) throw new Error(friendly(error.message));
-    if (again.user?.id !== session.user.id) throw new Error("That's a different Google account. Choose the one you signed in with.");
+    if (again.user?.id !== session.user.id) throw new Error(tr("That's a different Google account. Choose the one you signed in with."));
     return;
   }
-  if (!password) throw new Error("Enter your password.");
+  if (!password) throw new Error(tr("Enter your password."));
   const { error } = await sb.auth.signInWithPassword({ email: session.user.email ?? "", password });
-  if (error) throw new Error(/invalid login credentials/i.test(error.message) ? "That password isn't right." : friendly(error.message));
+  if (error) throw new Error(/invalid login credentials/i.test(error.message) ? tr("That password isn't right.") : friendly(error.message));
 }
 
 export async function signOut(): Promise<void> {

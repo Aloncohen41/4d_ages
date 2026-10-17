@@ -10,6 +10,7 @@ import { APP_NAME } from "../brand";
 import { CLASSICS, ClassicEntry, TEETH, datedItems, listItems } from "./classics";
 import { AgeBand, BookColour, bookName, BookPage, BookPlan, BookSize, BookStyle, STYLE_LOOK, bookMetrics, ordinal, picturesOf, styleById, yearTitle } from "./bookPages";
 
+import { tr } from "./i18n";
 /*
  * The book's pages as one HTML document. The PDF is printed from it, and the preview on the phone shows the very same document in a web view,
  * so every page looks the same in both. Pure (no phone APIs): the caller says where each picture comes from.
@@ -219,10 +220,10 @@ function mouthSvg(through: Set<string>, c: string): string {
 }
 
 const KIND_BADGE: Partial<Record<Memory["type"], { label: string; icon: string }>> = {
-  first: { label: "First", icon: "star" },
-  milestone: { label: "Milestone", icon: "star" },
-  last: { label: "Last", icon: "heart" },
-  story: { label: "Story", icon: "quote" },
+  first: { get label() { return tr("First"); }, icon: "star" },
+  milestone: { get label() { return tr("Milestone"); }, icon: "star" },
+  last: { get label() { return tr("Last"); }, icon: "heart" },
+  story: { get label() { return tr("Story"); }, icon: "quote" },
 };
 
 export function buildBookHtml(i: BookHtmlInput): string {

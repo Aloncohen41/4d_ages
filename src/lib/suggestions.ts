@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /** Quick ideas for the "First" and "Last" entry types. */
 export interface Idea {
   title: string;
@@ -5,33 +6,33 @@ export interface Idea {
 }
 
 export const FIRST_IDEAS: Idea[] = [
-  { title: "First smile", emoji: "😊" },
-  { title: "First laugh", emoji: "😄" },
-  { title: "First word", emoji: "🗣️" },
-  { title: "First steps", emoji: "👣" },
-  { title: "First tooth", emoji: "🦷" },
-  { title: "First solid food", emoji: "🥑" },
-  { title: "First bath", emoji: "🛁" },
-  { title: "First haircut", emoji: "✂️" },
-  { title: "First swim", emoji: "🏊" },
-  { title: "First flight", emoji: "✈️" },
-  { title: "First day at nursery", emoji: "🏫" },
-  { title: "First holiday", emoji: "🏖️" },
-  { title: "First snow", emoji: "❄️" },
-  { title: "First birthday", emoji: "🎂" },
+  { get title() { return tr("First smile"); }, emoji: "😊" },
+  { get title() { return tr("First laugh"); }, emoji: "😄" },
+  { get title() { return tr("First word"); }, emoji: "🗣️" },
+  { get title() { return tr("First steps"); }, emoji: "👣" },
+  { get title() { return tr("First tooth"); }, emoji: "🦷" },
+  { get title() { return tr("First solid food"); }, emoji: "🥑" },
+  { get title() { return tr("First bath"); }, emoji: "🛁" },
+  { get title() { return tr("First haircut"); }, emoji: "✂️" },
+  { get title() { return tr("First swim"); }, emoji: "🏊" },
+  { get title() { return tr("First flight"); }, emoji: "✈️" },
+  { get title() { return tr("First day at nursery"); }, emoji: "🏫" },
+  { get title() { return tr("First holiday"); }, emoji: "🏖️" },
+  { get title() { return tr("First snow"); }, emoji: "❄️" },
+  { get title() { return tr("First birthday"); }, emoji: "🎂" },
 ];
 
 export const LAST_IDEAS: Idea[] = [
-  { title: "Last bottle", emoji: "🍼" },
-  { title: "Last diaper", emoji: "🧷" },
-  { title: "Last time sleeping in the cot", emoji: "🛏️" },
-  { title: "Last day at nursery", emoji: "🏫" },
-  { title: "Last time using a dummy", emoji: "🧸" },
-  { title: "Last breastfeed", emoji: "🤱" },
-  { title: "Last baby bath", emoji: "🛁" },
-  { title: "Last night waking for a feed", emoji: "🌙" },
-  { title: "Last time in the stroller", emoji: "🚼" },
-  { title: "Last time being carried to bed", emoji: "💤" },
+  { get title() { return tr("Last bottle"); }, emoji: "🍼" },
+  { get title() { return tr("Last diaper"); }, emoji: "🧷" },
+  { get title() { return tr("Last time sleeping in the cot"); }, emoji: "🛏️" },
+  { get title() { return tr("Last day at nursery"); }, emoji: "🏫" },
+  { get title() { return tr("Last time using a dummy"); }, emoji: "🧸" },
+  { get title() { return tr("Last breastfeed"); }, emoji: "🤱" },
+  { get title() { return tr("Last baby bath"); }, emoji: "🛁" },
+  { get title() { return tr("Last night waking for a feed"); }, emoji: "🌙" },
+  { get title() { return tr("Last time in the stroller"); }, emoji: "🚼" },
+  { get title() { return tr("Last time being carried to bed"); }, emoji: "💤" },
 ];
 
 /** Ideas the child hasn't used yet (compared by title, ignoring case). */

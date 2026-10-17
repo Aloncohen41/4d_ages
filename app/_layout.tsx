@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { readReminders } from "../src/lib/reminders";
 import { REMINDERS_ID } from "../src/lib/classics";
-import { Appearance, Platform } from "react-native";
+import { Appearance, Platform, I18nManager } from "react-native";
 import { Stack, router } from "expo-router";
 import * as Linking from "expo-linking";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -19,6 +19,7 @@ import { Toast } from "../src/components/Toast";
 import { Confetti } from "../src/components/Confetti";
 import { WebToast } from "../src/components/WebToast";
 import { WebAlert } from "../src/components/WebAlert";
+import { LANGS, Lang, resolveLang, setLang } from "../src/lib/i18n";
 import { CookieBanner } from "../src/components/CookieBanner";
 import { AppColumn } from "../src/components/AppColumn";
 import { AgreementGate } from "../src/components/AgreementGate";
@@ -58,10 +59,30 @@ function useAuthLinks() {
   }, []);
 }
 
+/** The language, and its direction: right to left for Hebrew (the website at once; the phone from the next start, see Settings). */
+function applyLanguage(l: Lang) {
+  setLang(l);
+  const rtl = LANGS.find((x) => x.id === l)?.rtl ?? false;
+  if (Platform.OS === "web") {
+    document.documentElement.dir = rtl ? "rtl" : "ltr";
+    document.documentElement.lang = l;
+  } else {
+    I18nManager.allowRTL(rtl);
+    I18nManager.forceRTL(rtl);
+  }
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ ...ICON_FONT, Fraunces_600SemiBold_Italic });
   const hydrated = useStore((s) => s.hydrated);
   const appearance = useStore((s) => s.appearance);
+  // the language: set once the saved choice is known, before anything with words is drawn (changing it starts the app afresh)
+  const language = useStore((s) => s.language);
+  const langSet = useRef(false);
+  if (hydrated && !langSet.current) {
+    langSet.current = true;
+    applyLanguage(resolveLang(language));
+  }
   // the phone's own parts (date and time pickers, the status bar) follow the choice in Settings too
   useEffect(() => {
     if (Platform.OS !== "web") Appearance.setColorScheme(appearance === "system" ? "unspecified" : appearance); // a browser follows the page's own colours

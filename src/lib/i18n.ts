@@ -66,3 +66,24 @@ export function localized<T extends object>(items: T[], fields: (keyof T)[]): T[
     return out;
   });
 }
+
+/** One item of a built-in list, with these text fields read in the current language whenever they're read (see localized()). */
+export function withWords<T extends object>(item: T, fields: (keyof T)[]): T {
+  return localized([item], fields)[0];
+}
+
+/**
+ * A fixed list of words (the weekdays, the ways a baby can be born…) read in the current language: reading an item, or mapping, joining
+ * or slicing the list, gives the translated words.
+ */
+export function wordList(english: string[]): string[] {
+  return new Proxy(english, {
+    get(target, prop, receiver) {
+      if (typeof prop === "string" && /^\d+$/.test(prop)) {
+        const w = target[Number(prop)];
+        return typeof w === "string" ? tr(w) : w;
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}

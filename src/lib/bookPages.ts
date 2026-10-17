@@ -5,6 +5,7 @@ import { ageBetween, daysBetween, parseISO } from "./date";
 import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, PET_HOME_ID, classicMedia, classicsFor, isFilled } from "./classics";
 import type { Place } from "./places";
 
+import { tr } from "./i18n";
 /*
  * The keepsake book, page by page. One plan drives both the preview on the phone and the exported PDF (both are drawn from the same HTML, see
  * bookHtml.ts), so what you see — the pages, their order, the pictures, the page count — is what you get. Pure, so it can be tested without a phone.
@@ -28,11 +29,11 @@ export interface BookSize {
 
 /** Standard photo-book sizes. The PDF page is exactly this size (to the nearest PDF point, 0.35 mm). */
 export const BOOK_SIZES: BookSize[] = [
-  { id: "square-15", label: "Small square — 15 × 15 cm (6 × 6 in)", wCm: 15, hCm: 15, notesPerPage: 2 },
-  { id: "square-20", label: "Square — 20 × 20 cm (8 × 8 in)", wCm: 20, hCm: 20, notesPerPage: 3 },
-  { id: "square-30", label: "Large square — 30 × 30 cm (12 × 12 in)", wCm: 30, hCm: 30, notesPerPage: 4 },
-  { id: "a4-portrait", label: "A4 portrait — 21 × 29.7 cm (8.3 × 11.7 in)", wCm: 21, hCm: 29.7, notesPerPage: 4 },
-  { id: "a4-landscape", label: "A4 landscape — 29.7 × 21 cm (11.7 × 8.3 in)", wCm: 29.7, hCm: 21, notesPerPage: 3 },
+  { id: "square-15", get label() { return tr("Small square — 15 × 15 cm (6 × 6 in)"); }, wCm: 15, hCm: 15, notesPerPage: 2 },
+  { id: "square-20", get label() { return tr("Square — 20 × 20 cm (8 × 8 in)"); }, wCm: 20, hCm: 20, notesPerPage: 3 },
+  { id: "square-30", get label() { return tr("Large square — 30 × 30 cm (12 × 12 in)"); }, wCm: 30, hCm: 30, notesPerPage: 4 },
+  { id: "a4-portrait", get label() { return tr("A4 portrait — 21 × 29.7 cm (8.3 × 11.7 in)"); }, wCm: 21, hCm: 29.7, notesPerPage: 4 },
+  { id: "a4-landscape", get label() { return tr("A4 landscape — 29.7 × 21 cm (11.7 × 8.3 in)"); }, wCm: 29.7, hCm: 21, notesPerPage: 3 },
 ];
 export const DEFAULT_BOOK_SIZE: BookSizeId = "square-20";
 export const sizeById = (id: string): BookSize => BOOK_SIZES.find((s) => s.id === id) ?? BOOK_SIZES[1];
@@ -83,22 +84,22 @@ export function storyPages(parts: { label: string; text: string }[], size: BookS
 
 /** The book's name: "Maya's Days" until they turn two, then "Maya's Years". */
 export function bookName(child: Pick<Child, "name" | "birth" | "expecting">, on: string): string {
-  return `${child.name}'s ${!child.expecting && ageBetween(child.birth, on).years >= 2 ? "Years" : "Days"}`;
+  return `${child.name}'s ${!child.expecting && ageBetween(child.birth, on).years >= 2 ? tr("Years") : tr("Days")}`;
 }
 
 export const BOOK_STYLES: { id: BookStyle; label: string; desc: string }[] = [
-  { id: "classic", label: "Classic", desc: "Cream pages, serif titles, a moon, clouds, sun and balloons as they grow" },
-  { id: "nature", label: "Nature", desc: "Soft natural paper with leaves, flowers, trees and hills" },
-  { id: "playful", label: "Playful", desc: "Child's games: a rattle, ball, blocks, kite and paper boat, rounded photos" },
-  { id: "modern", label: "Modern", desc: "Plain white, clean type, no drawings" },
-  { id: "stars", label: "Little Stars", desc: "Stars and moons on a pale night sky, for dreamers" },
-  { id: "blossom", label: "Blossom", desc: "Little flowers on blush pink, a dotted frame on every page" },
-  { id: "explorer", label: "Little Explorer", desc: "Clouds and paper planes on soft blue, a trail around every page" },
-  { id: "rainbow", label: "Rainbow Play", desc: "Colourful confetti and rainbows on cream, for any little one" },
-  { id: "paws", label: "Paw Prints", desc: "Paws, bones and balls on warm cream" },
-  { id: "feathers", label: "Feathers & Sky", desc: "Soft feathers and clouds on pale blue" },
-  { id: "stable", label: "Hay & Horseshoes", desc: "Horseshoes and rosettes on a meadow green" },
-  { id: "leafscale", label: "Leaf & Scale", desc: "Leaves and sunshine on soft jungle green" },
+  { id: "classic", get label() { return tr("Classic"); }, get desc() { return tr("Cream pages, serif titles, a moon, clouds, sun and balloons as they grow"); } },
+  { id: "nature", get label() { return tr("Nature"); }, get desc() { return tr("Soft natural paper with leaves, flowers, trees and hills"); } },
+  { id: "playful", get label() { return tr("Playful"); }, get desc() { return tr("Child's games: a rattle, ball, blocks, kite and paper boat, rounded photos"); } },
+  { id: "modern", get label() { return tr("Modern"); }, get desc() { return tr("Plain white, clean type, no drawings"); } },
+  { id: "stars", get label() { return tr("Little Stars"); }, get desc() { return tr("Stars and moons on a pale night sky, for dreamers"); } },
+  { id: "blossom", get label() { return tr("Blossom"); }, get desc() { return tr("Little flowers on blush pink, a dotted frame on every page"); } },
+  { id: "explorer", get label() { return tr("Little Explorer"); }, get desc() { return tr("Clouds and paper planes on soft blue, a trail around every page"); } },
+  { id: "rainbow", get label() { return tr("Rainbow Play"); }, get desc() { return tr("Colourful confetti and rainbows on cream, for any little one"); } },
+  { id: "paws", get label() { return tr("Paw Prints"); }, get desc() { return tr("Paws, bones and balls on warm cream"); } },
+  { id: "feathers", get label() { return tr("Feathers & Sky"); }, get desc() { return tr("Soft feathers and clouds on pale blue"); } },
+  { id: "stable", get label() { return tr("Hay & Horseshoes"); }, get desc() { return tr("Horseshoes and rosettes on a meadow green"); } },
+  { id: "leafscale", get label() { return tr("Leaf & Scale"); }, get desc() { return tr("Leaves and sunshine on soft jungle green"); } },
 ];
 /** A pet's book themes (a pet's book shows only these; a child's never does). */
 export const PET_THEMES: BookStyle[] = ["paws", "feathers", "stable", "leafscale"];
@@ -130,12 +131,12 @@ export const STYLE_LOOK: Record<BookStyle, { paper: string; ink: string; accent:
 /** The book's colour: one that changes with their age (newborn blush, then sky, sunshine, sage and lavender), or one colour all through. */
 export type BookColour = "age" | "blush" | "sky" | "sunshine" | "sage" | "lavender";
 export const BOOK_COLOURS: { id: BookColour; label: string; swatch: string }[] = [
-  { id: "age", label: "By age", swatch: "linear" },
-  { id: "blush", label: "Blush", swatch: "#e9a99a" },
-  { id: "sky", label: "Sky", swatch: "#8db4cf" },
-  { id: "sunshine", label: "Sunshine", swatch: "#e2bd5f" },
-  { id: "sage", label: "Sage", swatch: "#9cbc84" },
-  { id: "lavender", label: "Lavender", swatch: "#b3a2d8" },
+  { id: "age", get label() { return tr("By age"); }, swatch: "linear" },
+  { id: "blush", get label() { return tr("Blush"); }, swatch: "#e9a99a" },
+  { id: "sky", get label() { return tr("Sky"); }, swatch: "#8db4cf" },
+  { id: "sunshine", get label() { return tr("Sunshine"); }, swatch: "#e2bd5f" },
+  { id: "sage", get label() { return tr("Sage"); }, swatch: "#9cbc84" },
+  { id: "lavender", get label() { return tr("Lavender"); }, swatch: "#b3a2d8" },
 ];
 export const colourById = (id?: string): BookColour => (BOOK_COLOURS.some((c) => c.id === id) ? (id as BookColour) : "age");
 
@@ -190,7 +191,7 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 /** The chapter a date falls in: monthly in the first year, every 3 months up to 3, then yearly. */
 /** The pregnancy: everything before the birth (scans, bump photos). */
-export const BEFORE_BIRTH: Chapter = { key: "pre", label: "Before you were born", band: "newborn", year: -1 };
+export const BEFORE_BIRTH: Chapter = { key: "pre", get label() { return tr("Before you were born"); }, band: "newborn", year: -1 };
 
 /** For a book of several children (their ages differ), chapters are calendar years, each with its own colours. */
 export function calendarChapter(date: string): Chapter {
@@ -211,12 +212,12 @@ export function chapterOf(birth: string, date: string, coarse = false): Chapter 
   if (coarse && months < 36) {
     if (months < 12) {
       const q = Math.floor(months / 3) * 3;
-      return { key: `cq${q}`, label: q === 0 ? "The first 3 months" : `${q} to ${q + 3} months`, band: q < 3 ? "newborn" : q < 6 ? "early" : "late", year: 0 };
+      return { key: `cq${q}`, label: q === 0 ? tr("The first 3 months") : `${q} to ${q + 3} months`, band: q < 3 ? "newborn" : q < 6 ? "early" : "late", year: 0 };
     }
     const h = Math.floor(months / 6) * 6, y = Math.floor(h / 12), m = h % 12;
     return { key: `ch${h}`, label: m ? `${plural(y, "year")}, ${plural(m, "month")}` : plural(y, "year"), band: months < 24 ? "toddler" : "kid", year: y };
   }
-  if (a.totalDays <= 28 || months < 1) return { key: "m0", label: "Newborn", band: "newborn", year: 0 };
+  if (a.totalDays <= 28 || months < 1) return { key: "m0", get label() { return tr("Newborn"); }, band: "newborn", year: 0 };
   if (months < 12) return { key: `m${months}`, label: plural(months, "month"), band: months < 6 ? "early" : "late", year: 0 };
   if (months < 36) {
     const q = Math.floor(months / 3) * 3, y = Math.floor(q / 12), m = q % 12;
@@ -229,7 +230,7 @@ const ORDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "seven
 /** A pet's chapters: a year at a time from the day they came home ("Your first year with us"), and what came before. */
 export function petChapter(pet: { birth: string; gotchaDay?: string }, date: string): Chapter {
   const home = pet.gotchaDay ?? pet.birth;
-  if (date < home) return { key: "pre-home", label: "Before you came home", band: "newborn", year: -1 };
+  if (date < home) return { key: "pre-home", get label() { return tr("Before you came home"); }, band: "newborn", year: -1 };
   const y = ageBetween(home, date).years;
   const bands: AgeBand[] = ["newborn", "early", "late", "toddler", "kid"];
   return { key: `home-${y}`, label: y < ORDINALS.length ? `Your ${ORDINALS[y]} year with us` : `Year ${y + 1} with us`, band: bands[y % bands.length], year: y };

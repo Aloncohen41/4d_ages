@@ -1,14 +1,15 @@
 import { MediaItem, Memory, MemoryType } from "./types";
 import { uniqueIds } from "./tags";
 
+import { tr } from "./i18n";
 export const TYPE_META: Record<MemoryType, { label: string; emoji: string; palette: string; source: string }> = {
-  photo: { label: "Photo", emoji: "📷", palette: "peach", source: "Added" },
-  story: { label: "Story", emoji: "📖", palette: "sky", source: "Story" },
-  milestone: { label: "Milestone", emoji: "⭐", palette: "butter", source: "Milestone" },
-  measure: { label: "Measurement", emoji: "📏", palette: "sage", source: "Measurement" },
-  first: { label: "First", emoji: "🥇", palette: "peach", source: "First" },
-  last: { label: "Last", emoji: "🏁", palette: "lav", source: "Last" },
-  health: { label: "Health", emoji: "🩺", palette: "sky", source: "Health" },
+  photo: { get label() { return tr("Photo"); }, emoji: "📷", palette: "peach", get source() { return tr("Added"); } },
+  story: { get label() { return tr("Story"); }, emoji: "📖", palette: "sky", get source() { return tr("Story"); } },
+  milestone: { get label() { return tr("Milestone"); }, emoji: "⭐", palette: "butter", get source() { return tr("Milestone"); } },
+  measure: { get label() { return tr("Measurement"); }, emoji: "📏", palette: "sage", get source() { return tr("Measurement"); } },
+  first: { get label() { return tr("First"); }, emoji: "🥇", palette: "peach", get source() { return tr("First"); } },
+  last: { get label() { return tr("Last"); }, emoji: "🏁", palette: "lav", get source() { return tr("Last"); } },
+  health: { get label() { return tr("Health"); }, emoji: "🩺", palette: "sky", get source() { return tr("Health"); } },
 };
 /** Older name for the same table, kept so existing imports keep working. */
 export const KIND_META = TYPE_META;

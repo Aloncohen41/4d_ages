@@ -11,6 +11,7 @@ import { classicMedia } from "./classics";
 import { smallerVideo } from "./videoExport";
 import { loadReactions } from "./reactions";
 
+import { tr } from "./i18n";
 const BUCKET = "media";
 const MAX_UPLOAD_BYTES = 45 * 1024 * 1024; // Supabase's default per-file limit is 50 MB
 
@@ -29,13 +30,13 @@ function apply(fn: (s: State) => Partial<State>) {
 }
 
 function client() {
-  if (!supabase) throw new Error("Sharing isn't set up yet — see SHARING.md.");
+  if (!supabase) throw new Error(tr("Sharing isn't set up yet — see SHARING.md."));
   return supabase;
 }
 
 async function me() {
   const { data } = await client().auth.getSession();
-  if (!data.session) throw new Error("Please sign in first.");
+  if (!data.session) throw new Error(tr("Please sign in first."));
   return data.session.user;
 }
 
@@ -53,7 +54,7 @@ async function upload(childId: string, key: string, uri: string): Promise<string
   if (!fileExists(uri)) return null;
   if (fileSize(uri) > MAX_UPLOAD_BYTES) {
     if (!/^(mp4|mov|3gp|webm|mkv|m4v)$/.test(extOf(uri))) return null;
-    progress("Making a big video smaller to upload…");
+    progress(tr("Making a big video smaller to upload…"));
     const small = await smallerVideo(uri);
     if (!small) return null;
     try {
@@ -72,14 +73,14 @@ async function upload(childId: string, key: string, uri: string): Promise<string
 
 async function download(path: string, name: string): Promise<string> {
   const { data, error } = await client().storage.from(BUCKET).createSignedUrl(path, 3600);
-  if (error || !data) throw new Error(error?.message || "Couldn't get a download link");
+  if (error || !data) throw new Error(error?.message || tr("Couldn't get a download link"));
   return saveFromUrl(data.signedUrl, name, extOf(path));
 }
 
 /** A short-lived link to a file kept in the account (an hour), for reading it straight from there. */
 export async function mediaLink(path: string): Promise<string> {
   const { data, error } = await client().storage.from(BUCKET).createSignedUrl(path, 3600);
-  if (error || !data) throw new Error(error?.message || "Couldn't get a download link");
+  if (error || !data) throw new Error(error?.message || tr("Couldn't get a download link"));
   return data.signedUrl;
 }
 
@@ -96,11 +97,11 @@ export const isSampleChild = (id: string) => id === "maya" || id === "leo";
 
 /** Put a child in the cloud and make this phone its first member. */
 export async function shareChild(childId: string): Promise<void> {
-  if (isSampleChild(childId)) throw new Error("The sample family can't be shared. Add your own child to share their book.");
+  if (isSampleChild(childId)) throw new Error(tr("The sample family can't be shared. Add your own child to share their book."));
   const sb = client();
   const user = await me();
   const child = useStore.getState().kids.find((k) => k.id === childId);
-  if (!child) throw new Error("Child not found");
+  if (!child) throw new Error(tr("Child not found"));
 
   const ts = child.updatedAt ?? Date.now();
   const { error: e1 } = await sb.from("children").upsert({
@@ -109,7 +110,7 @@ export async function shareChild(childId: string): Promise<void> {
   });
   if (e1) throw new Error(e1.message);
   // already a member (a first try that stopped half way, or sharing again): nothing to change
-  const { error: e2 } = await sb.from("child_members").upsert({ child_id: child.id, user_id: user.id, role: "owner", email: user.email ?? null }, { onConflict: "child_id,user_id", ignoreDuplicates: true });
+  const { error: e2 } = await sb.from("child_members").upsert({ child_id: child.id, user_id: user.id, role: "owner", email: user.email ?? null }, { onConflict: tr("child_id,user_id"), ignoreDuplicates: true });
   if (e2) throw new Error(e2.message);
 
   apply((s) => ({ kids: s.kids.map((k) => (k.id === childId ? { ...k, shared: true, updatedAt: ts, syncedTs: ts } : k)) }));
@@ -213,7 +214,7 @@ export async function listBlocked(childId: string): Promise<{ email: string; at:
 
 /** Block an email from a child's book (even before they've joined), or let them in again. */
 export async function blockEmail(childId: string, email: string): Promise<void> {
-  if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error("Enter an email address.");
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) throw new Error(tr("Enter an email address."));
   const { error } = await client().rpc("block_email", { p_child: childId, p_email: email.trim() });
   if (error) throw new Error(error.message);
 }
@@ -269,7 +270,7 @@ export async function cancelInvite(code: string): Promise<void> {
 /** Make sure a child is in the cloud and this account is a member (a first try that stopped half way is finished here). */
 export async function ensureShared(childId: string): Promise<void> {
   const child = useStore.getState().kids.find((k) => k.id === childId);
-  if (!child) throw new Error("This child isn't on this phone any more.");
+  if (!child) throw new Error(tr("This child isn't on this phone any more."));
   const list = await listMembers(childId).catch(() => [] as Member[]);
   if (!child.shared || !list.some((m) => m.me)) await shareChild(childId);
 }
@@ -309,7 +310,7 @@ export async function syncChild(childId: string): Promise<void> {
   const cursor = st.syncMeta[childId]?.cursor;
 
   /* 1 ── PULL: what changed in the cloud since last time */
-  progress("Checking for new memories…");
+  progress(tr("Checking for new memories…"));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const since = (q: any) => (cursor ? q.gte("updated_at", cursor) : q);
   const access = await myAccess(childId);
@@ -332,7 +333,7 @@ export async function syncChild(childId: string): Promise<void> {
   check(cRes, mRes, dRes, rRes, noClassics ? { error: null } : kRes);
   if (!cRes.data) {
     // removed from the book on the other phone (or the book was deleted): it leaves this phone too
-    const name = useStore.getState().kids.find((k) => k.id === childId)?.name ?? "This child";
+    const name = useStore.getState().kids.find((k) => k.id === childId)?.name ?? tr("This child");
     useStore.getState().forgetChild(childId);
     useStore.getState().setSync({ notice: `${name}'s book isn't shared with you any more, so it was taken off this phone.` });
     return;
@@ -421,7 +422,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   const defs = (s.customDefs[childId] || []).filter(isDirty);
   if (defs.length) {
     const rows = defs.map((d) => ({ child_id: childId, id: d.id, label: d.label, emoji: d.emoji, hint: d.hint, category: d.category ?? null, client_ts: d.updatedAt ?? Date.now(), deleted: false }));
-    const { error } = await sb.from("custom_defs").upsert(rows, { onConflict: "child_id,id" });
+    const { error } = await sb.from("custom_defs").upsert(rows, { onConflict: tr("child_id,id") });
     if (error) throw new Error(error.message);
     apply((st) => ({ customDefs: { ...st.customDefs, [childId]: (st.customDefs[childId] || []).map((d) => { const r = rows.find((x) => x.id === d.id); return r ? { ...d, updatedAt: r.client_ts, syncedTs: r.client_ts } : d; }) } }));
   }
@@ -433,7 +434,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   if (rels.length) {
     const { error } = await sb.from("relatives").upsert(
       rels.map((r) => ({ child_id: childId, id: r.id, name: r.name, relation: relationLabel(r), custom_label: null, nickname: r.nickname ?? null, description: r.description ?? null, child_ref: r.childRef ?? null, ...kinColumns(r), client_ts: r.updatedAt ?? 0, deleted: false })),
-      { onConflict: "child_id,id" }
+      { onConflict: tr("child_id,id") }
     );
     if (error) throw new Error(error.message);
   }
@@ -447,14 +448,14 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
       for (const x of list) {
         let path = x.path;
         if (!path && x.uri) {
-          progress("Uploading pictures…");
+          progress(tr("Uploading pictures…"));
           path = (await upload(childId, `classic-${e.id}-${x.id}`, x.uri)) ?? undefined;
         }
         photos[field].push({ ...x, path });
       }
     }
     const ts = e.updatedAt ?? Date.now();
-    const { error } = await sb.from("classics").upsert(classicToRow({ ...e, photos }, ts), { onConflict: "child_id,id" });
+    const { error } = await sb.from("classics").upsert(classicToRow({ ...e, photos }, ts), { onConflict: tr("child_id,id") });
     if (error) throw new Error(error.message);
     apply((st) => ({
       classics: st.classics.map((c) => (c.childId === childId && c.id === e.id && (c.updatedAt ?? 0) === ts
@@ -468,7 +469,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   const foods = foodsReady ? s.foodTries.filter((x) => x.childId === childId && isDirty(x)) : [];
   if (foods.length) {
     const rows = foods.map((x) => foodTryToRow(x, x.updatedAt ?? Date.now()));
-    const { error } = await sb.from("food_tries").upsert(rows, { onConflict: "child_id,id" });
+    const { error } = await sb.from("food_tries").upsert(rows, { onConflict: tr("child_id,id") });
     if (error) throw new Error(error.message);
     apply((st) => ({ foodTries: st.foodTries.map((x) => { const r = rows.find((y) => y.id === x.id && y.child_id === x.childId); return r && (x.updatedAt ?? 0) === r.client_ts ? { ...x, syncedTs: r.client_ts } : x; }) }));
   }
@@ -592,7 +593,7 @@ async function leaveFamilies(childId: string) {
   if (families.length) {
     await client().from("relatives").upsert(
       families.map((fam) => ({ child_id: fam, id: me.id, name: me.name, relation: me.relation, custom_label: null, nickname: null, description: null, child_ref: childId, client_ts: ts, deleted: true })),
-      { onConflict: "child_id,id" },
+      { onConflict: tr("child_id,id") },
     );
   }
   st.removeRelative(me.id);
@@ -633,7 +634,7 @@ export async function deleteChild(childId: string): Promise<DeleteOutcome> {
     }
     if (plan.outcome === "deleted") await leaveFamilies(childId);
     const { data, error } = await client().rpc("delete_child", { p_child: childId });
-    if (error) throw new Error(/function .*delete_child/i.test(error.message) ? "The database needs the latest setup (npm run db:setup) before a profile can be deleted." : error.message);
+    if (error) throw new Error(/function .*delete_child/i.test(error.message) ? tr("The database needs the latest setup (npm run db:setup) before a profile can be deleted.") : error.message);
     useStore.getState().forgetChild(childId);
     return (data as DeleteOutcome) ?? plan.outcome;
   }
@@ -661,7 +662,7 @@ export async function deleteAccountData(): Promise<void> {
     }
   }
   const { error: e4 } = await sb.rpc("delete_my_account");
-  if (e4) throw new Error(/function .*delete_my_account/i.test(e4.message) ? "The database needs the latest setup (npm run db:setup) before accounts can be deleted." : e4.message);
+  if (e4) throw new Error(/function .*delete_my_account/i.test(e4.message) ? tr("The database needs the latest setup (npm run db:setup) before accounts can be deleted.") : e4.message);
 }
 
 /* ---------- running it ---------- */

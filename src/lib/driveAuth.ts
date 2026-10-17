@@ -6,11 +6,12 @@ import { GoogleSignin, isSuccessResponse } from "@react-native-google-signin/goo
 import * as LegacyFS from "expo-file-system/legacy";
 import { File, Paths } from "expo-file-system";
 
+import { tr } from "./i18n";
 export const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
 export class NeedsGoogle extends Error {
   constructor() {
-    super("Connect Google Drive again: tap Back up now.");
+    super(tr("Connect Google Drive again: tap Back up now."));
   }
 }
 

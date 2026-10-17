@@ -3,6 +3,7 @@ import { Slide, slidesOf } from "./slides";
 import { addMonthsClamped } from "./date";
 import { ageSpan } from "./ageSpan";
 
+import { tr } from "./i18n";
 /**
  * An automatic summary video.
  *  - "age":  a stretch of the CHILD's life — since birth to 1 month, 3 months, 6 months and 1 year, then each year of age (1–2 years, 2–3 years…)
@@ -122,7 +123,7 @@ export function buildBumpReel(memories: Memory[], child: ChildInfo, bumpSource: 
   const slides = slidesOf(memories.filter((m) => m.childId === child.id && m.source === bumpSource)).filter((s) => s.uri);
   if (slides.length < 2) return null;
   return {
-    id: "bump", kind: "bump", label: "The bump", title: `Waiting for ${child.name}`, subtitle: "the bump, week by week", fileLabel: "The bump",
+    id: "bump", kind: "bump", get label() { return tr("The bump"); }, title: `Waiting for ${child.name}`, get subtitle() { return tr("the bump, week by week"); }, fileLabel: tr("The bump"),
     from: slides[0].date, to: slides[slides.length - 1].date, inProgress: false, slides, cover: slides[slides.length - 1], newest: slides[slides.length - 1].date,
   };
 }

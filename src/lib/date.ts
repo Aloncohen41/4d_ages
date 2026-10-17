@@ -1,6 +1,8 @@
 import { weekLabel } from "./pregnancy";
+import { lang } from "./i18n";
 
 const pad = (n: number) => String(n).padStart(2, "0");
+const HE_MONTHS = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -55,12 +57,35 @@ export function ageBetween(birth: string, date: string): Age {
   return { years, months, days, totalDays: daysBetween(birth, date) };
 }
 
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const plural = (n: number, w: string) => (lang() === "he" ? hePlural(n, w) : `${n} ${w}${n === 1 ? "" : "s"}`);
+
+/**
+ * Hebrew counts, as they're said: one, two (a word of its own: שנתיים, חודשיים, שבועיים, יומיים) and then the plural. Ages in Hebrew are
+ * said for a boy or a girl ("בן שנתיים", "בת שנתיים"), so they're written as the length of time alone, which suits both.
+ */
+const HE_UNITS: Record<string, [string, string, string]> = {
+  day: ["יום אחד", "יומיים", "ימים"],
+  week: ["שבוע אחד", "שבועיים", "שבועות"],
+  month: ["חודש אחד", "חודשיים", "חודשים"],
+  year: ["שנה אחת", "שנתיים", "שנים"],
+};
+function hePlural(n: number, w: string): string {
+  const u = HE_UNITS[w];
+  if (!u) return `${n} ${w}`;
+  return n === 1 ? u[0] : n === 2 ? u[1] : `${n} ${u[2]}`;
+}
 
 /** Short label for a photo: "3 weeks old", "7 months old", "2y 1m old"; before the birth, the pregnancy week and size: "Week 20 (banana)" */
 export function ageShort(birth: string, date: string): string {
   const a = ageBetween(birth, date);
   if (a.totalDays < 0) return weekLabel(birth, date);
+  if (lang() === "he") {
+    if (a.totalDays === 0) return "יום הלידה";
+    if (a.totalDays < 14) return plural(a.totalDays, "day");
+    if (a.totalDays < 56) return plural(Math.floor(a.totalDays / 7), "week");
+    if (a.years < 1) return plural(a.months, "month");
+    return a.months ? `${a.years} ש׳ ${a.months} ח׳` : plural(a.years, "year");
+  }
   if (a.totalDays === 0) return "birth day";
   if (a.totalDays < 14) return `${plural(a.totalDays, "day")} old`;
   if (a.totalDays < 56) return `${plural(Math.floor(a.totalDays / 7), "week")} old`;
@@ -70,20 +95,22 @@ export function ageShort(birth: string, date: string): string {
 
 export function ageLong(birth: string, date: string): string {
   const a = ageBetween(birth, date);
-  if (a.totalDays < 0) return "not born yet";
+  if (a.totalDays < 0) return lang() === "he" ? "לפני הלידה" : "not born yet";
   const parts: string[] = [];
   if (a.years) parts.push(plural(a.years, "year"));
   if (a.months) parts.push(plural(a.months, "month"));
   if (a.days || !parts.length) parts.push(plural(a.days, "day"));
+  if (lang() === "he") return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} ו${parts[parts.length - 1]}` : parts[0];
   return parts.join(", ");
 }
 
 /** Days until the first birthday, then decimal years */
 export function smartAge(birth: string, on: string = todayISO()): { value: string; unit: string } {
   const a = ageBetween(birth, on);
-  if (a.totalDays < 0) return { value: "0", unit: "days old" };
-  if (a.years < 1) return { value: String(a.totalDays), unit: a.totalDays === 1 ? "day old" : "days old" };
-  return { value: (a.totalDays / 365.25).toFixed(1), unit: "years old" };
+  const he = lang() === "he";
+  if (a.totalDays < 0) return { value: "0", unit: he ? "ימים" : "days old" };
+  if (a.years < 1) return { value: String(a.totalDays), unit: he ? (a.totalDays === 1 ? "יום" : "ימים") : a.totalDays === 1 ? "day old" : "days old" };
+  return { value: (a.totalDays / 365.25).toFixed(1), unit: he ? "שנים" : "years old" };
 }
 
 export function ageTotals(birth: string, on: string = todayISO()) {
@@ -100,9 +127,10 @@ export function ageTotals(birth: string, on: string = todayISO()) {
 export function ageBucket(birth: string, date: string): string {
   const a = ageBetween(birth, date);
   if (a.totalDays < 0) return weekLabel(birth, date);
-  if (a.totalDays <= 28) return "Newborn";
+  if (a.totalDays <= 28) return lang() === "he" ? "החודש הראשון" : "Newborn";
   const totalMonths = a.years * 12 + a.months;
   if (totalMonths < 12) return plural(totalMonths, "month");
+  if (lang() === "he") return a.months ? `${plural(a.years, "year")} ו${plural(a.months, "month")}` : plural(a.years, "year");
   return a.months ? `${plural(a.years, "year")}, ${a.months} mo` : plural(a.years, "year");
 }
 
@@ -112,6 +140,7 @@ export const formatSpan = (date: string, endDate?: string) => (endDate && endDat
 /** "5 March 2025": the day first, as in Europe (never the US "March 5, 2025"). */
 export function formatDate(s: string): string {
   const d = parseISO(s);
+  if (lang() === "he") return `${d.getDate()} ב${HE_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 

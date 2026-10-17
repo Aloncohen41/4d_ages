@@ -1,15 +1,16 @@
 import { Relative, Tag, TagCategory } from "./types";
 
+import { tr } from "./i18n";
 /**
  * Tags are stored once, centrally: { id, name, category, relatedFamilyMemberId? }.
  * Memories (photos, stories, milestones, firsts, lasts, measurements, …) only hold the tag ids, so a tag can be
  * renamed in one place, a person tag always points at its family member, and searching by a tag is a simple id lookup.
  */
 export const TAG_CATEGORIES: { id: TagCategory; label: string; short: string; emoji: string }[] = [
-  { id: "person", label: "Person / Family", short: "People", emoji: "👪" },
-  { id: "event", label: "Event", short: "Events", emoji: "🎉" },
-  { id: "place", label: "Location", short: "Places", emoji: "📍" },
-  { id: "other", label: "Custom / Other", short: "Other", emoji: "🏷️" },
+  { id: "person", get label() { return tr("Person / Family"); }, get short() { return tr("People"); }, emoji: "👪" },
+  { id: "event", get label() { return tr("Event"); }, get short() { return tr("Events"); }, emoji: "🎉" },
+  { id: "place", get label() { return tr("Location"); }, get short() { return tr("Places"); }, emoji: "📍" },
+  { id: "other", get label() { return tr("Custom / Other"); }, get short() { return tr("Other"); }, emoji: "🏷️" },
 ];
 export const CATEGORY_ICON: Record<TagCategory, string> = { person: "👪", event: "🎉", place: "📍", other: "🏷️" };
 const MAX_LEN = 40;
@@ -38,7 +39,7 @@ export function makeTag(category: TagCategory, name: string, memberId?: string):
 export const personTag = (r: Relative): Tag => makeTag("person", personLabel(r), r.id);
 
 /** The relationship in the family's own words ("Mummy", "Stepmum"). Data from before free-text relationships may still carry its old wording. */
-export const relationLabel = (r: Pick<Relative, "relation" | "customLabel">) => r.customLabel?.trim() || (r.relation === "Other" ? "Family" : r.relation?.trim() || "Family");
+export const relationLabel = (r: Pick<Relative, "relation" | "customLabel">) => r.customLabel?.trim() || (r.relation === "Other" ? tr("Family") : r.relation?.trim() || tr("Family"));
 /** How a person is titled: their nickname if they have one, else their name (else, for someone with neither, the relationship). */
 export const displayName = (r: Pick<Relative, "name" | "nickname" | "relation" | "customLabel">) => r.nickname?.trim() || r.name.trim() || relationLabel(r);
 /** The line under their name: the relationship, plus their name when the title is a nickname ("Grandma · Rosa"). */

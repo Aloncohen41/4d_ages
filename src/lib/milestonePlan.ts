@@ -2,6 +2,7 @@ import { addMonths, parseISO } from "./date";
 import { AREAS, BANDS, MILESTONE_CATALOG, NotifPrefs } from "./types";
 import { areaOf, ageLabel, askStartMonths } from "./development";
 
+import { tr, wordList } from "./i18n";
 export interface PlannedMilestone {
   date: Date;
   title: string;
@@ -9,12 +10,12 @@ export interface PlannedMilestone {
   data: { kind: "milestone-age" | "milestone-ask"; childId: string; months: number };
 }
 
-const CHEERS = [
+const CHEERS = wordList([
   "Take a peek at the milestones coming up — and tick off anything new!",
   "Another month of wonderful growing. See what they might be up to next.",
   "Every month is worth celebrating. Open Milestones for fresh ideas.",
   "Look how far they've come! Come and see what's next.",
-];
+]);
 const NEW_STAGE = "A new set of milestones just opened up — come and see what's next.";
 
 const at = (birth: string, months: number, hour: number) => {

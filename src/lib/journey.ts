@@ -1,5 +1,6 @@
 import { Place, onMap, placesByYear } from "./places";
 
+import { tr } from "./i18n";
 /*
  * The journey video: one slide a year on the world map, the places from earlier years already pinned and that year's popping in, with the
  * year and its places written along the bottom. Pure, for tests: videoExport.ts hands it to the video maker.
@@ -19,7 +20,7 @@ export function journeySlides(places: Place[]): JourneySlide[] {
     out.push({
       year,
       pins,
-      count: `${list.length} ${list.length === 1 ? "new place" : "new places"} · ${seen.length + list.length} in all`,
+      count: `${list.length} ${list.length === 1 ? tr("new place") : tr("new places")} · ${seen.length + list.length} in all`,
       names: names.length > 4 ? `${names.slice(0, 4).join(", ")} and ${names.length - 4} more` : names.join(", "),
     });
     seen.push(...list);

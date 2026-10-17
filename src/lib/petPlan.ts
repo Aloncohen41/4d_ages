@@ -1,6 +1,7 @@
 import { NotifPrefs } from "./types";
 import { HealthReminder, nextDates } from "./reminders";
 
+import { tr } from "./i18n";
 /*
  * A pet's notifications: their gotcha day every year ("2 years since Rex came home!"), and their health reminders (a vaccine booster, flea
  * treatment…) at the time chosen. Their birthday is planned with the children's (birthdayPlan.ts). Pure, for tests.
@@ -40,7 +41,7 @@ export function planHealthReminders(pets: { id: string; name: string; reminders:
     const [h, m] = r.time.split(":").map(Number);
     for (const d of nextDates(r, today, 3)) {
       const when = atHour(d, h || 9, m || 0);
-      if (when > now) out.push({ date: when, title: `🩺 ${p.name}: ${r.title}`, body: "Today. Tap to see their health page.", data: { kind: "health-reminder", childId: p.id } });
+      if (when > now) out.push({ date: when, title: `🩺 ${p.name}: ${r.title}`, get body() { return tr("Today. Tap to see their health page."); }, data: { kind: "health-reminder", childId: p.id } });
     }
   }
   return out;

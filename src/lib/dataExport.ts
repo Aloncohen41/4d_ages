@@ -10,6 +10,7 @@ import { baseName, buildBackup, filesIn } from "./backupData";
 import { fileBytes, fileExists, writeFile } from "./localFiles";
 import { todayISO } from "./date";
 
+import { tr } from "./i18n";
 const README = (date: string) => `${APP_NAME}: a copy of your data, made on ${date}.
 
 - "${APP_NAME} data.json" holds everything in your books: your children, pregnancies and pets, their posts, milestones, growth, health
@@ -38,7 +39,7 @@ export async function exportMyData(onProgress?: (text: string) => void): Promise
       /* a file that can't be read is left out */
     }
   }
-  onProgress?.("Making the file…");
+  onProgress?.(tr("Making the file…"));
   const fileName = `${APP_NAME} data ${date}.zip`;
   const uri = await writeFile(zipSync(files), fileName);
   return { uri, fileName };

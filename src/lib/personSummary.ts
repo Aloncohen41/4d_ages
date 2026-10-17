@@ -1,5 +1,6 @@
 import { Memory, MemoryType } from "./types";
 
+import { tr, wordList } from "./i18n";
 export interface SummaryItem {
   key: string;
   label: string; // "7 photos"

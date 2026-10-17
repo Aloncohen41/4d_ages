@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /*
  * The website's app lock: the device's own check that it's you (Windows Hello, Touch ID or Face ID, Android's fingerprint or screen lock),
  * through the browser's passkey support (WebAuthn). The first time, the device makes a key for 4D Ages on this browser; after that, unlocking
@@ -25,7 +26,7 @@ export async function unlock(_reason: string): Promise<boolean> {
         publicKey: {
           challenge: random(32),
           rp: { name: "4D Ages", id: location.hostname },
-          user: { id: random(16), name: "4D Ages", displayName: "4D Ages lock" },
+          user: { id: random(16), name: "4D Ages", displayName: tr("4D Ages lock") },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
           authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
           timeout: 60000,

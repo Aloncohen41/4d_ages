@@ -1,6 +1,7 @@
 import { SharedItem } from "./types";
 import { dateFromFileName, exifToISO, toHHMM, toISO, todayISO } from "./date";
 
+import { tr } from "./i18n";
 /** What the Android side hands over for each shared file. */
 export interface RawShared {
   uri: string;
@@ -42,7 +43,7 @@ export function splitShared(raw: RawShared[]): { items: SharedItem[]; skipped: s
 export function skippedMessage(skipped: string[]): string {
   if (!skipped.length) return "";
   const named = skipped.filter((s) => s !== "a file");
-  const what = named.length ? named.slice(0, 3).join(", ") + (skipped.length > 3 ? ` and ${skipped.length - 3} more` : "") : skipped.length === 1 ? "One file" : `${skipped.length} files`;
+  const what = named.length ? named.slice(0, 3).join(", ") + (skipped.length > 3 ? ` and ${skipped.length - 3} more` : "") : skipped.length === 1 ? tr("One file") : `${skipped.length} files`;
   return `${named.length ? `Couldn't add ${what}` : `${what} couldn't be added`}. Only photos, videos and sound recordings can be added.`;
 }
 

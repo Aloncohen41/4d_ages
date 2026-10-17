@@ -13,13 +13,14 @@ import { planMonthlyPhotoNotifications } from "./remember";
 import { planBumpPhotoNotifications } from "./pregnancy";
 import { planGotchaNotifications, planHealthReminders } from "./petPlan";
 
+import { tr } from "./i18n";
 export const BRAND = THEMES.pink.accent;
 const SHOWN = "4d-reminders-shown";
 const timers: ReturnType<typeof setTimeout>[] = [];
 
 export function configureNotifications() {}
 
-const supported = () => typeof window !== "undefined" && "Notification" in window;
+const supported = () => typeof window !== "undefined" && tr("Notification") in window;
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!supported()) return false;
@@ -80,6 +81,6 @@ export async function scheduleNotifications(
 /** A notification in 5 seconds, so you can see that reminders work in this browser. */
 export async function sendTestNotification(name: string, kind: "birthday" | "cheer" | "ask" = "birthday") {
   if (!(await requestNotificationPermission())) return;
-  const sample = kind === "birthday" ? { title: `🎈 ${name} turns 3 in 3 days`, body: "This is how your birthday reminders will look." } : sampleMilestoneNotification(name, kind);
+  const sample = kind === "birthday" ? { title: `🎈 ${name} turns 3 in 3 days`, body: tr("This is how your birthday reminders will look.") } : sampleMilestoneNotification(name, kind);
   timers.push(setTimeout(() => show(sample.title, sample.body, `test-${Date.now()}`), 5000));
 }

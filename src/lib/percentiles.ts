@@ -2,6 +2,7 @@ import { GROWTH_REFS, LmsRow } from "./growthRefs";
 import { ageBetween, daysBetween } from "./date";
 import { GrowthRef } from "./types";
 
+import { tr } from "./i18n";
 /*
  * Growth percentiles: where a height, weight or head measurement sits among children of the same age and sex, worked out with the LMS method
  * the WHO and CDC charts are published in (z = ((x / M)^L − 1) / (L × S)). Pure, so it can be tested without a phone.
@@ -14,8 +15,8 @@ import { GrowthRef } from "./types";
 export type GrowthChartSource = "who" | "cdc";
 export type Measure = "height" | "weight" | "head";
 export const CHART_SOURCES: { id: GrowthChartSource; label: string; desc: string }[] = [
-  { id: "who", label: "WHO", desc: "World Health Organization charts (the same as UK-WHO from 2 weeks to 4 years)" },
-  { id: "cdc", label: "CDC (US)", desc: "US Centers for Disease Control charts" },
+  { id: "who", label: "WHO", get desc() { return tr("World Health Organization charts (the same as UK-WHO from 2 weeks to 4 years)"); } },
+  { id: "cdc", get label() { return tr("CDC (US)"); }, get desc() { return tr("US Centers for Disease Control charts"); } },
 ];
 
 /** Exact age in months (a month being 30.4375 days), as the charts use. */
@@ -63,8 +64,8 @@ export function percentileFor(source: GrowthChartSource, measure: Measure, sex: 
 
 /** "52nd percentile"; the far ends as "below the 1st" and "above the 99th". */
 export function percentileLabel(p: number): string {
-  if (p < 1) return "Below the 1st percentile";
-  if (p > 99) return "Above the 99th percentile";
+  if (p < 1) return tr("Below the 1st percentile");
+  if (p > 99) return tr("Above the 99th percentile");
   const n = Math.round(p);
   const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
   return `${n}${suffix} percentile`;
@@ -80,9 +81,9 @@ export function inStep(height: Percentile, weight: Percentile): InStep {
   return gap > 1.34 ? "heavier" : gap < -1.34 ? "lighter" : "in-step";
 }
 export const IN_STEP_TEXT: Record<InStep, string> = {
-  "in-step": "Height and weight are growing in step.",
-  heavier: "Weight is ahead of height for now. Worth mentioning at the next check-up.",
-  lighter: "Weight is behind height for now. Worth mentioning at the next check-up.",
+  get "in-step"() { return tr("Height and weight are growing in step."); },
+  get heavier() { return tr("Weight is ahead of height for now. Worth mentioning at the next check-up."); },
+  get lighter() { return tr("Weight is behind height for now. Worth mentioning at the next check-up."); },
 };
 
 /** The age a measurement was taken at, as the summary shows it: "at 6 months", "at 2 years, 3 months". */

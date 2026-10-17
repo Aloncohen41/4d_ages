@@ -6,11 +6,12 @@ import { cookiesAllow, openCookieSettings } from "./cookieConsent";
  */
 import { GOOGLE_WEB_CLIENT_ID } from "../config";
 
+import { tr } from "./i18n";
 export const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
 export class NeedsGoogle extends Error {
   constructor() {
-    super("Connect Google Drive again: tap Back up now.");
+    super(tr("Connect Google Drive again: tap Back up now."));
   }
 }
 
@@ -29,8 +30,8 @@ function loadGoogle(): Promise<GoogleOAuth> {
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client";
     s.async = true;
-    s.onload = () => (w.google ? resolve(w.google) : reject(new Error("Google's sign-in didn't load.")));
-    s.onerror = () => reject(new Error("Google's sign-in couldn't be reached. Check your connection."));
+    s.onload = () => (w.google ? resolve(w.google) : reject(new Error(tr("Google's sign-in didn't load."))));
+    s.onerror = () => reject(new Error(tr("Google's sign-in couldn't be reached. Check your connection.")));
     document.head.appendChild(s);
   });
 }
@@ -41,7 +42,7 @@ export async function driveToken(interactive: boolean): Promise<{ accessToken: s
   if (!cookiesAllow("google")) {
     // Google's code (and its cookies) only with permission: ask, and try again once it's allowed
     openCookieSettings();
-    throw new Error("Backing up to Google Drive uses Google's own cookies. Allow Google services in the cookie settings, then try again.");
+    throw new Error(tr("Backing up to Google Drive uses Google's own cookies. Allow Google services in the cookie settings, then try again."));
   }
   const google = await loadGoogle();
   const answer = await new Promise<TokenResponse | null>((resolve) => {
