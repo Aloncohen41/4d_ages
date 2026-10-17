@@ -18,6 +18,7 @@ import { pickMedia, toMemories } from "../lib/media";
 import { coverOf } from "../lib/display";
 import { Avatar, Btn, DateField, Input, Label, PhotoView, Seg, Sheet, ThemePicker, dialogName } from "./ui";
 import { EmojiPicker } from "./EmojiPicker";
+import { Wiggle } from "./Wiggle";
 import { AvatarCropper } from "./AvatarCropper";
 import { HScroll } from "./HScroll";
 import { APP_NAME, WORDMARK_ASPECT } from "../brand";
@@ -56,6 +57,8 @@ export function TopBar() {
   const active = useActiveChild();
   const [adding, setAdding] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [arranging, setArranging] = useState(false); // a long press on a profile: move them with the arrows
+  const moveKid = useStore((s) => s.moveKid);
   return (
     <View style={{ backgroundColor: t.bg, paddingTop: insets.top + 8, paddingBottom: 8 }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 6, gap: 2 }}>
@@ -75,27 +78,48 @@ export function TopBar() {
             </View>
           </Pressable>
         ) : null}
-        {kids.map((k) => {
+        {kids.map((k, i) => {
           const on = k.id === active?.id;
           const a = smartAge(k.birth);
           return (
-            // Material 3 filter chips: the selected child is a tonal container, the others are outlined
-            <Pressable key={k.id} onPress={() => setActive(k.id)} accessibilityRole="button" aria-pressed={on} android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }]}>
-              <Avatar child={k} size={32} />
-              <View>
-                <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}</Text>
-                <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
-              </View>
-            </Pressable>
+            // Material 3 filter chips: the selected child is a tonal container, the others are outlined. A long press arranges them.
+            <Wiggle key={k.id} on={arranging} seed={i} style={{ flexDirection: "row", alignItems: "center" }}>
+              {arranging ? <MoveButton dir={-1} name={k.name} disabled={i === 0} onPress={() => moveKid(k.id, -1)} /> : null}
+              <Pressable onPress={() => (arranging ? undefined : setActive(k.id))} onLongPress={() => setArranging(true)} delayLongPress={350} accessibilityRole="button" aria-pressed={on} accessibilityHint={tr("Press and hold to change the order")} android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }]}>
+                <Avatar child={k} size={32} />
+                <View>
+                  <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}</Text>
+                  <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
+                </View>
+              </Pressable>
+              {arranging ? <MoveButton dir={1} name={k.name} disabled={i === kids.length - 1} onPress={() => moveKid(k.id, 1)} /> : null}
+            </Wiggle>
           );
         })}
-        <Pressable onPress={() => setAdding(true)} accessibilityLabel={tr("Add a child")} android_ripple={{ color: withAlpha(t.onAccentSoft, 0.14) }} style={[st.plus, { backgroundColor: t.accentSoft }]}>
-          <Icon name="plus" size={22} color={t.onAccentSoft} />
-        </Pressable>
+        {arranging ? (
+          <Pressable onPress={() => setArranging(false)} accessibilityRole="button" style={[st.chip, { backgroundColor: t.accent, borderColor: t.accent, paddingLeft: 14 }]}>
+            <Text style={[TYPE.labelLarge, { color: t.onAccent }]}>{tr("Done")}</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => setAdding(true)} accessibilityLabel={tr("Add a child")} android_ripple={{ color: withAlpha(t.onAccentSoft, 0.14) }} style={[st.plus, { backgroundColor: t.accentSoft }]}>
+            <Icon name="plus" size={22} color={t.onAccentSoft} />
+          </Pressable>
+        )}
       </HScroll>
       <AddChildSheet visible={adding} onClose={() => setAdding(false)} />
       <AppMenu visible={menu} onClose={() => setMenu(false)} />
     </View>
+  );
+}
+
+/** Moving a profile one place earlier or later, while arranging them. */
+export function MoveButton({ dir, name, disabled, onPress }: { dir: -1 | 1; name: string; disabled: boolean; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={dir < 0 ? tr("Move {0} earlier", [name]) : tr("Move {0} later", [name])} hitSlop={6}
+      style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: t.bg2, opacity: disabled ? 0.3 : 1, marginHorizontal: 2 }}>
+      <Icon name={dir < 0 ? "chevron-left" : "chevron-right"} size={18} color={t.ink} />
+    </Pressable>
   );
 }
 

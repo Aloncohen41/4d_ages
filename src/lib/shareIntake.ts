@@ -45,12 +45,20 @@ export async function readInitialShare(): Promise<ShareResult> {
   return splitShared(raw || []);
 }
 
+/** Files dragged onto the website's page (see shareIntake.web.ts); the phone has no such thing. */
+export async function filesToItems(_files: unknown[]): Promise<ShareResult> {
+  return { items: [], skipped: [] };
+}
+
 /** Called while the app is open: first when copying starts (with the count), then with the finished files. */
 export function listenForShares(onStart: (count: number) => void, onItems: (result: ShareResult) => void): () => void {
   const mod = native();
   if (!mod) return () => undefined;
   const a = mod.addListener("onShareStart", (e) => onStart(e.count ?? 0));
   const b = mod.addListener("onShare", () => onItems(splitShared(mod.takePending())));
+  // anything that arrived before this was listening (a cold start from the share sheet) is picked up now
+  const waiting = mod.takePending();
+  if (waiting.length) onItems(splitShared(waiting));
   return () => {
     a.remove();
     b.remove();

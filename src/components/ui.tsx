@@ -283,7 +283,7 @@ export function PhotoView({ photo, style, emojiSize = 48, fit = "cover", minRati
         </View>
       );
     }
-    const img = <Image source={{ uri: cover.uri }} style={[badge ? { width: "100%", height: "100%" } : (style as object), fit === "contain" ? { backgroundColor: t.bg3 } : null]} contentFit={fit === "contain" ? "contain" : "cover"} transition={transition} />;
+    const img = <Image source={{ uri: cover.uri }} accessibilityLabel={tr("Photo")} style={[badge ? { width: "100%", height: "100%" } : (style as object), fit === "contain" ? { backgroundColor: t.bg3 } : null]} contentFit={fit === "contain" ? "contain" : "cover"} transition={transition} />;
     return badge ? <View style={[style, { overflow: "hidden" }]}>{img}{badge}</View> : img;
   }
   const [bg, hill] = PALETTES[photo.palette] || PALETTES.peach;

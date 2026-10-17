@@ -69,6 +69,25 @@ class ShareIntakeModule : Module() {
       }
     }
 
+    // A cold start from the share sheet: the screen may not exist yet when the app first asks for the files (so nothing came back and the
+    // share was lost). Once the screen is up, any share it was opened with and that hasn't been picked up is read and announced.
+    OnActivityEntersForeground {
+      val intent = appContext.currentActivity?.intent
+      if (isShare(intent)) {
+        Thread {
+          try {
+            val items = read(intent, true)
+            if (items.isNotEmpty()) {
+              synchronized(pending) { pending.addAll(items) }
+              sendEvent("onShare", Bundle())
+            }
+          } catch (e: Throwable) {
+            // the user can simply share again
+          }
+        }.start()
+      }
+    }
+
     OnNewIntent { intent ->
       if (isShare(intent)) {
         Thread {
@@ -108,8 +127,11 @@ class ShareIntakeModule : Module() {
   }
 
   private fun read(intent: Intent?, announce: Boolean): List<Map<String, Any?>> {
-    if (intent == null || !isShare(intent)) return emptyList()
-    intent.putExtra(HANDLED, true) // so coming back to the app doesn't import them a second time
+    if (intent == null) return emptyList()
+    synchronized(this) {
+      if (!isShare(intent)) return emptyList()
+      intent.putExtra(HANDLED, true) // so coming back to the app (or the other way in) doesn't import them a second time
+    }
     val uris = streams(intent)
     if (announce) {
       val b = Bundle()

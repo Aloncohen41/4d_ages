@@ -73,7 +73,7 @@ try {
   if (trial) await client.query("begin");
   await client.query(sql);
   say(trial ? "✓ It applies cleanly.\n" : "✓ Applied.\n");
-  const tables = ["children", "child_members", "invites", "memories", "custom_defs", "relatives", "classics", "reactions", "child_blocks"];
+  const tables = ["children", "child_members", "invites", "memories", "custom_defs", "relatives", "classics", "reactions", "child_blocks", "food_tries"];
   const t = await client.query("select table_name from information_schema.tables where table_schema='public' and table_name = any($1)", [tables]);
   const rls = await client.query("select relname from pg_class where relnamespace='public'::regnamespace and relrowsecurity and relname = any($1)", [tables]);
   const fns = await client.query("select proname from pg_proc where pronamespace='public'::regnamespace and proname in ('is_member','is_editor','can_see_memory','create_invite','join_child','delete_my_account','parent_count','remove_member','set_member_people','can_see_post','block_email','unblock_email','delete_child','check_invite','max_parents')");

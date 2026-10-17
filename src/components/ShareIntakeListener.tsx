@@ -24,13 +24,23 @@ export function ShareIntakeListener() {
       st().setIncoming(all.length ? { items: all, ...(text ? { text } : {}) } : null);
     };
 
-    if (hasInitialShare()) st().setIncoming({ items: st().incoming?.items ?? [], busy: 1 });
-    readInitialShare()
-      .then((r) => { if (alive) arrived(r); })
-      .catch(() => {
-        const cur = st().incoming;
-        if (cur && !cur.items.length) st().setIncoming(null);
-      });
+    // Opened from the share sheet: read the files. On a cold start the app's screen can still be getting ready, so an empty answer while a
+    // share is waiting is tried again for a few seconds (the native side also hands it over once the screen is up).
+    const opened = hasInitialShare();
+    if (opened) st().setIncoming({ items: st().incoming?.items ?? [], busy: 1 });
+    const tryRead = (left: number) =>
+      readInitialShare()
+        .then((r) => {
+          if (!alive) return;
+          if (!r.items.length && !r.skipped.length && left > 0 && hasInitialShare()) { setTimeout(() => tryRead(left - 1), 600); return; }
+          arrived(r);
+        })
+        .catch(() => {
+          if (left > 0 && alive) { setTimeout(() => tryRead(left - 1), 600); return; }
+          const cur = st().incoming;
+          if (cur && !cur.items.length) st().setIncoming(null);
+        });
+    tryRead(opened ? 6 : 0);
 
     const off = listenForShares((count) => st().setIncoming({ items: st().incoming?.items ?? [], busy: count || 1 }), arrived);
     return () => {

@@ -15,10 +15,12 @@ import { tr } from "../lib/i18n";
  * The one tag editor used everywhere (photos, stories, milestones, firsts, lasts, measurements, imports).
  * It edits a list of tag ids; the tags themselves live in the central list.
  */
-export function TagPicker({ value, onChange, location }: { value: string[]; onChange: (ids: string[]) => void; location?: string }) {
+export function TagPicker({ value, onChange, location, childId }: { value: string[]; onChange: (ids: string[]) => void; location?: string; childId?: string }) {
   const t = useTheme();
   const relatives = useStore((s) => s.relatives);
-  const active = useActiveChild();
+  const shown = useActiveChild();
+  const kids = useStore((s) => s.kids);
+  const active = (childId ? kids.find((k) => k.id === childId) : undefined) ?? shown;
   const family = useMemo(() => peopleOrder(active ? familyOf(relatives, active.id) : relatives), [relatives, active]); // the people in THIS child's family: parents first, then A to Z
   const memories = useStore((s) => s.memories);
   const list = useStore((s) => s.tags);

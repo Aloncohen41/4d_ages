@@ -49,7 +49,8 @@ export function untr(src: string): string {
     const vars = args[1] ? splitTop(args[1].replace(/^\[|\]$/g, "")) : [];
     // where the call sits: {tr(…)} as a child, ={tr(…)} as a prop, or anywhere else
     const before = s.slice(0, start), after = s.slice(end);
-    const asChild = /\{\s*$/.test(before) && /^\s*\}/.test(after) && !/=\s*\{\s*$/.test(before);
+    // (inside a template string, ${tr(…)} is a value, not words on screen)
+    const asChild = /(^|[^$])\{\s*$/.test(before) && /^\s*\}/.test(after) && !/=\s*\{\s*$/.test(before);
     const asProp = /=\{\s*$/.test(before) && /^\s*\}/.test(after);
     let by: string; let from = start, to = end;
     if (asChild) {

@@ -56,6 +56,33 @@ export async function readInitialShare(): Promise<ShareResult> {
   return out;
 }
 
+/**
+ * Files dragged onto the page (or chosen in the browser): kept with the website's other files and turned into what the "new post" screen
+ * takes, the same way as files shared in. Anything that isn't a photo, a video or a sound recording is left out, by name.
+ */
+export async function filesToItems(files: File[]): Promise<ShareResult> {
+  const out: ShareResult = { items: [], skipped: [] };
+  await localFilesReady;
+  for (const file of files) {
+    const mime = file.type || "";
+    const kind = kindOf(mime) ?? (/.(opus|ogg|m4a|mp3|wav|aac|amr)$/i.test(file.name) ? "audio" : null);
+    if (!kind) { out.skipped.push(file.name); continue; }
+    const url = URL.createObjectURL(file);
+    try {
+      const uri = await keepFile(url, extOf(file.name, mime));
+      const fromName = dateFromFileName(file.name);
+      const fromModified = file.lastModified ? new Date(file.lastModified).toISOString().slice(0, 10) : undefined;
+      const date = [fromName, fromModified].find((d) => d && d >= "1990-01-01" && d <= todayISO()) ?? undefined;
+      out.items.push({ uri, kind, mime, name: file.name, size: file.size, ...(date ? { date } : {}) });
+    } catch {
+      out.skipped.push(file.name);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+  return out;
+}
+
 /** The website is opened anew for each share (see above), so there's nothing to listen for while it's open. */
 export function listenForShares(_onStart: (count: number) => void, _onItems: (r: ShareResult) => void): () => void {
   return () => undefined;

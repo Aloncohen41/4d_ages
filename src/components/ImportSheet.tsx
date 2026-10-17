@@ -19,6 +19,7 @@ import { skippedMessage } from "../lib/sharedMedia";
 import { TYPE } from "../theme";
 import { Avatar, Btn, DateField, Input, Label, PhotoView, Sheet } from "./ui";
 import { ThumbPicker } from "./ThumbPicker";
+import { TagPicker } from "./TagPicker";
 import { Icon } from "./Icon";
 
 import { tr } from "../lib/i18n";
@@ -86,6 +87,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
   const [shape0, setShape] = useState<PostShape | null>(several ? null : "one"); // with several, the parent chooses
   const shape: PostShape | null = kindOf && several ? "separate" : shape0;
   const [note, setNote] = useState(caption ?? "");
+  const [tagIds, setTagIds] = useState<string[]>([]); // who's in it (and any event or place), on every post made here
   const [oneDate, setOneDate] = useState<string | null>(null); // null = from the files
   const [dates, setDates] = useState<Record<string, string>>({}); // a date changed by hand, per file
   const [err, setErr] = useState("");
@@ -151,10 +153,10 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
       ...(what.id === "bump" ? { as: { source: BUMP_SOURCE, emoji: "🤰", title: (d: string) => `Bump, week ${weekOn(child.birth, d)}` } } : {}),
       ...(what.id === "ultrasound" ? { as: { source: "Ultrasound", emoji: "🩻", title: (d: string) => `Ultrasound, week ${weekOn(child.birth, d)}` } } : {}),
     });
-    addMemories(posts);
+    addMemories(tagIds.length ? posts.map((p) => ({ ...p, tagIds: [...new Set([...p.tagIds, ...tagIds])] })) : posts);
     setActive(child.id);
     setIncoming(null);
-    toast(tr("Added {0} to {1}'s story. Tap the pencil on a post to tag people.", [posts.length === 1 ? "a post" : `${posts.length} posts`, child.name]), true);
+    toast(tr("Added {0} to {1}'s story.", [posts.length === 1 ? "a post" : `${posts.length} posts`, child.name]), true);
     router.navigate("/");
   };
 
@@ -206,7 +208,7 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
           <Label>{tr("Whose memories?")}</Label>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {kids.map((k) => (
-              <Pressable key={k.id} onPress={() => { setChildId(k.id); setErr(""); if (pick && !shareOptions(k, items).some((o) => o.id === pick)) setPick(null); }} accessibilityRole="radio" aria-checked={k.id === childId} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
+              <Pressable key={k.id} onPress={() => { setChildId(k.id); setTagIds([]); setErr(""); if (pick && !shareOptions(k, items).some((o) => o.id === pick)) setPick(null); }} accessibilityRole="radio" aria-checked={k.id === childId} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 12, backgroundColor: k.id === childId ? t.chipOn : t.card, borderWidth: 1, borderColor: k.id === childId ? t.chipOn : t.line }}>
                 <Avatar child={k} size={28} />
                 <Text style={{ color: k.id === childId ? t.onChipOn : t.ink2, fontWeight: "700" }}>{k.name}</Text>
               </Pressable>
@@ -267,6 +269,8 @@ function NewPostForm({ items, fromShare, caption, onDiscard }: { items: SharedIt
         <>
           <Label>{tr("Description (optional)")}</Label>
           <Input value={note} onChangeText={setNote} multiline placeholder={shape === "separate" ? tr("Added to each post") : tr("What happened?")} accessibilityLabel={tr("Description")} />
+          <Label>{tr("Who's in it?")}</Label>
+          <TagPicker key={child.id} childId={child.id} value={tagIds} onChange={setTagIds} />
         </>
       ) : null}
 

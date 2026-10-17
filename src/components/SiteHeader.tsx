@@ -19,7 +19,8 @@ import { Avatar } from "./ui";
 import { Icon, IconName } from "./Icon";
 import { Action, ICON, LABEL, actionsFor } from "./Fab";
 import { VoiceRecorderSheet } from "./Voice";
-import { AddChildSheet } from "./Screen";
+import { AddChildSheet, MoveButton } from "./Screen";
+import { Wiggle } from "./Wiggle";
 
 import { tr } from "../lib/i18n";
 /*
@@ -107,6 +108,13 @@ export function SiteHeader() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 16, width: "100%", maxWidth: SITE_MAX, alignSelf: "center", paddingHorizontal: 32, paddingVertical: 10 }}>
           <Profiles />
           {active && active.role !== "viewer" ? (
+            // choosing files from the computer (they can also be dragged onto the page: see DropZone)
+            <Pressable onPress={() => addPhotosFlow()} accessibilityRole="button" accessibilityHint={tr("Or drag photos and videos onto the page")} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 18, borderRadius: 22, borderWidth: 1, borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
+              <Icon name="upload" size={20} color={t.accentDeep} />
+              <Text style={[TYPE.labelLarge, { color: t.accentDeep, fontSize: 15 }]}>{tr("Upload")}</Text>
+            </Pressable>
+          ) : null}
+          {active && active.role !== "viewer" ? (
             <View>
               <Pressable onPress={() => setAdding((v) => !v)} accessibilityRole="button" aria-haspopup="menu" aria-expanded={adding} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: t.accent }, { opacity: 0.9 })}>
                 <Icon name="plus" size={20} color={t.onAccent} />
@@ -137,8 +145,10 @@ function Profiles() {
   const path = usePathname();
   const kids = useStore((s) => s.kids);
   const setActive = useStore((s) => s.setActive);
+  const moveKid = useStore((s) => s.moveKid);
   const active = useActiveChild();
   const [adding, setAdding] = useState(false);
+  const [arranging, setArranging] = useState(false); // a long press on a profile (or "Change the order"): move them with the arrows
   return (
     <View role="group" aria-label={tr("Profiles")} style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
       {kids.length > 1 ? (
@@ -148,19 +158,32 @@ function Profiles() {
           <Text style={[TYPE.labelLarge, { color: path === "/my-family" ? t.onChipOn : t.ink }]}>{tr("My family")}</Text>
         </Pressable>
       ) : null}
-      {kids.map((k) => {
+      {kids.map((k, i) => {
         const on = k.id === active?.id;
         const a = smartAge(k.birth);
         return (
-          <Pressable key={k.id} onPress={() => setActive(k.id)} accessibilityRole="button" aria-pressed={on} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], on ? {} : { backgroundColor: withAlpha(t.ink, 0.05) })}>
+          <Wiggle key={k.id} on={arranging} seed={i} style={{ flexDirection: "row", alignItems: "center" }}>
+          {arranging ? <MoveButton dir={-1} name={k.name} disabled={i === 0} onPress={() => moveKid(k.id, -1)} /> : null}
+          <Pressable onPress={() => (arranging ? undefined : setActive(k.id))} onLongPress={() => setArranging(true)} delayLongPress={350} accessibilityRole="button" aria-pressed={on} accessibilityHint={tr("Press and hold to change the order")} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], on ? {} : { backgroundColor: withAlpha(t.ink, 0.05) })}>
             <Avatar child={k} size={34} />
             <View>
               <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]} numberOfLines={1}>{k.name}</Text>
               <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
             </View>
           </Pressable>
+          {arranging ? <MoveButton dir={1} name={k.name} disabled={i === kids.length - 1} onPress={() => moveKid(k.id, 1)} /> : null}
+          </Wiggle>
         );
       })}
+      {arranging ? (
+        <Pressable onPress={() => setArranging(false)} accessibilityRole="button" style={hover({ height: 44, paddingHorizontal: 18, borderRadius: 22, justifyContent: "center", backgroundColor: t.accent }, { opacity: 0.9 })}>
+          <Text style={[TYPE.labelLarge, { color: t.onAccent }]}>{tr("Done")}</Text>
+        </Pressable>
+      ) : kids.length > 1 ? (
+        <Pressable onPress={() => setArranging(true)} accessibilityRole="button" style={hover({ height: 44, paddingHorizontal: 12, borderRadius: 22, justifyContent: "center" }, { backgroundColor: withAlpha(t.ink, 0.05) })}>
+          <Text style={[TYPE.labelLarge, { color: t.ink2 }]}>{tr("Change the order")}</Text>
+        </Pressable>
+      ) : null}
       <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1.5, borderStyle: "dashed", borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
         <Icon name="plus" size={18} color={t.accentDeep} />
         <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Add a profile")}</Text>
