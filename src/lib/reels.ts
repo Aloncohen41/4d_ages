@@ -93,7 +93,7 @@ export function buildAgeReels(memories: Memory[], child: ChildInfo, today: strin
     }
     const span = ageSpan(w.startM, w.endM);
     out.push({
-      id: w.id, kind: "age", label: span.display, title: `Here is ${child.name}`, subtitle: `at ${span.display} old`, fileLabel: span.file,
+      id: w.id, kind: "age", label: span.display, title: tr("Here is {0}", [child.name]), subtitle: tr("at {0} old", [span.display]), fileLabel: span.file,
       from: w.from, to: w.to, inProgress: w.to > today, slides: chosen, cover: chosen.find((s) => s.uri) ?? null, newest: chosen[chosen.length - 1].date,
     });
   }
@@ -123,7 +123,7 @@ export function buildBumpReel(memories: Memory[], child: ChildInfo, bumpSource: 
   const slides = slidesOf(memories.filter((m) => m.childId === child.id && m.source === bumpSource)).filter((s) => s.uri);
   if (slides.length < 2) return null;
   return {
-    id: "bump", kind: "bump", get label() { return tr("The bump"); }, title: `Waiting for ${child.name}`, get subtitle() { return tr("the bump, week by week"); }, fileLabel: tr("The bump"),
+    id: "bump", kind: "bump", get label() { return tr("The bump"); }, title: tr("Waiting for {0}", [child.name]), get subtitle() { return tr("the bump, week by week"); }, fileLabel: tr("The bump"),
     from: slides[0].date, to: slides[slides.length - 1].date, inProgress: false, slides, cover: slides[slides.length - 1], newest: slides[slides.length - 1].date,
   };
 }

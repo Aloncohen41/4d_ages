@@ -10,7 +10,7 @@ import { APP_NAME } from "../brand";
 import { CLASSICS, ClassicEntry, TEETH, datedItems, listItems } from "./classics";
 import { AgeBand, BookColour, bookName, BookPage, BookPlan, BookSize, BookStyle, STYLE_LOOK, bookMetrics, ordinal, picturesOf, styleById, yearTitle } from "./bookPages";
 
-import { tr } from "./i18n";
+import { isRTL, tr, wordList } from "./i18n";
 /*
  * The book's pages as one HTML document. The PDF is printed from it, and the preview on the phone shows the very same document in a web view,
  * so every page looks the same in both. Pure (no phone APIs): the caller says where each picture comes from.
@@ -50,11 +50,11 @@ export interface BookHtmlInput {
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const WEEKDAYS = wordList(["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
 
 /** The heading for a memory on its page: the milestone's name, the title, or what kind of memory it is. */
 export function memoryHeading(m: Memory, defs: MilestoneDef[]): string {
-  if (m.type === "milestone") return defs.find((d) => d.id === m.milestoneId)?.label ?? m.title ?? "Milestone";
+  if (m.type === "milestone") return defs.find((d) => d.id === m.milestoneId)?.label ?? m.title ?? tr("Milestone");
   return m.title?.trim() || (m.type === "photo" ? "" : TYPE_META[m.type].label);
 }
 
@@ -69,18 +69,18 @@ export const BAND_LOOK: Record<AgeBand, { wash: string; ink: string }> = {
 /** A single colour all through the book uses one of the age colours everywhere. */
 /** The family page's title, in the words of each theme. */
 export const FAMILY_TITLES: Record<BookStyle, string> = {
-  classic: "The people who love you most",
-  nature: "The roots that help you grow",
-  playful: "Your very best playmates",
-  modern: "Your people",
-  stars: "The stars in your sky",
-  blossom: "The birds that make you bloom",
-  explorer: "Your crew for every adventure",
-  rainbow: "All the colours of your rainbow",
-  paws: "The humans who love you",
-  feathers: "Your flock",
-  stable: "Your herd",
-  leafscale: "Your favourite humans",
+  get classic() { return tr("The people who love you most"); },
+  get nature() { return tr("The roots that help you grow"); },
+  get playful() { return tr("Your very best playmates"); },
+  get modern() { return tr("Your people"); },
+  get stars() { return tr("The stars in your sky"); },
+  get blossom() { return tr("The birds that make you bloom"); },
+  get explorer() { return tr("Your crew for every adventure"); },
+  get rainbow() { return tr("All the colours of your rainbow"); },
+  get paws() { return tr("The humans who love you"); },
+  get feathers() { return tr("Your flock"); },
+  get stable() { return tr("Your herd"); },
+  get leafscale() { return tr("Your favourite humans"); },
 };
 
 const COLOUR_BAND: Record<Exclude<BookColour, "age">, AgeBand> = { blush: "newborn", sky: "early", sunshine: "late", sage: "toddler", lavender: "kid" };
@@ -255,7 +255,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
   };
   const people = (ids?: string[]) => {
     const labels = (ids || []).map((x) => labelOfTag(tagIndex.get(x), rels)).filter(Boolean);
-    return labels.length ? `<p class="with">With ${labels.map(esc).join(", ")}</p>` : "";
+    return labels.length ? `<p class="with">${esc(tr("With {0}", [labels.join(", ")]))}</p>` : "";
   };
   // a sibling book says whose memory each one is; ages are always that child's own
   const kids = [child, ...(i.siblings ?? []).filter((k) => k.id !== child.id)].sort((a, b) => a.birth.localeCompare(b.birth));
@@ -265,7 +265,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
   const names = (list: Child[]) => (list.length <= 2 ? list.map((k) => k.name).join(" & ") : `${list.slice(0, -1).map((k) => k.name).join(", ")} & ${list[list.length - 1].name}`);
   const meta = (m: Memory) => [multi ? kidOf(m).name : "", formatSpan(m.date, m.endDate), m.time ? formatTime(m.time) : "", ageOf(m), m.location?.trim() ?? ""].filter(Boolean).map(esc).join(" · ");
   const badge = (m: Memory, color: string, birthday = 0) => {
-    if (birthday) return `<span class="badge" style="background:${color}">${motif("star", "#fff")}${ordinal(birthday)} birthday</span>`;
+    if (birthday) return `<span class="badge" style="background:${color}">${motif("star", "#fff")}${esc(tr("{0} birthday", [ordinal(birthday)]))}</span>`;
     const b = KIND_BADGE[m.type];
     return b ? `<span class="badge" style="background:${color}">${motif(b.icon, "#fff")}${b.label}</span>` : "";
   };
@@ -311,7 +311,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
       : photos(shownPics);
     return `<section class="page classic${shownPics.length ? " has-photo" : ""}">
       ${corner(p, drawings ? drawings.family : "")}
-      <p class="kicker" style="color:${ink(p)}">Keepsake</p>
+      <p class="kicker" style="color:${ink(p)}">${tr("Keepsake")}</p>
       <h2>${esc(tpl.title)}</h2>
       ${facts.length ? `<div class="facts">${facts.map(([k, v]) => `<div class="fact"><span class="k" style="color:${ink(p)}">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join("")}</div>` : ""}
       ${extra}
@@ -329,13 +329,13 @@ export function buildBookHtml(i: BookHtmlInput): string {
     const running = p.chapter ? folio(p.chapter.label) : numbered(n);
     switch (p.kind) {
       case "cover": {
-        const title = i.title || (multi ? `${names(kids)}: Our Story` : child.expecting ? `Waiting for ${child.name}` : bookName(child, todayISO()));
+        const title = i.title || (multi ? tr("{0}: Our Story", [names(kids)]) : child.expecting ? tr("Waiting for {0}", [child.name]) : bookName(child, todayISO()));
         const pic = p.photo ? i.image(p.photo) : null;
         return `<section class="page cover" style="background-color:${look.motifs ? fixed("newborn").wash : look.paper}">
           ${drawings ? `<div class="motif big tl">${motif(drawings.cover, fixed("newborn").ink)}</div><div class="motif tr">${motif(drawings.cover2, fixed("late").ink)}</div>` : ""}
           <div class="cover-frame">${pic ? `<img src="${esc(pic)}"/>` : `<div class="monogram">${esc(initialsOf(child.name))}</div>`}</div>
           <h1 style="color:${accent}">${esc(title)}</h1>
-          <p class="subtitle">${esc(i.subtitle || (multi ? kids.map((k) => `${k.name}, born ${formatDate(k.birth)}`).join(" · ") : child.expecting ? `Due ${formatDate(child.birth)}` : isPet(child) ? `Came home ${formatDate(child.gotchaDay ?? child.birth)}` : `Born ${formatDate(child.birth)}`))}</p>
+          <p class="subtitle">${esc(i.subtitle || (multi ? kids.map((k) => tr("{0}, born {1}", [k.name, formatDate(k.birth)])).join(" · ") : child.expecting ? tr("Due {0}", [formatDate(child.birth)]) : isPet(child) ? tr("Came home {0}", [formatDate(child.gotchaDay ?? child.birth)]) : tr("Born {0}", [formatDate(child.birth)])))}</p>
           <p class="brand">${esc(APP_NAME)}</p>
         </section>`;
       }
@@ -344,14 +344,14 @@ export function buildBookHtml(i: BookHtmlInput): string {
         const d = p.details;
         const day = parseISO(d.date);
         const rows: [string, string][] = [
-          ["Born", `${WEEKDAYS[day.getDay()]}, ${formatDate(d.date)}`],
-          ...(d.time ? [["Time", formatTime(d.time)] as [string, string]] : []),
-          ...(d.place ? [["Place", d.place] as [string, string]] : []),
-          ...(d.weightText ? [["Weight", d.weightText] as [string, string]] : d.weightKg ? [["Weight", formatWeight(d.weightKg, i.weightUnit ?? "kg")] as [string, string]] : []),
-          ...(d.lengthText ? [["Length", d.lengthText] as [string, string]] : d.heightCm ? [["Length", formatHeight(d.heightCm, i.heightUnit ?? "cm")] as [string, string]] : []),
-          ...(d.type ? [["Birth", d.type] as [string, string]] : []),
-          ...(d.labour ? [["Labour", d.labour] as [string, string]] : []),
-          ...(d.who ? [["Who was there", d.who] as [string, string]] : []),
+          [tr("Born"), `${WEEKDAYS[day.getDay()]}, ${formatDate(d.date)}`],
+          ...(d.time ? [[tr("Time"), formatTime(d.time)] as [string, string]] : []),
+          ...(d.place ? [[tr("Place"), d.place] as [string, string]] : []),
+          ...(d.weightText ? [[tr("Weight"), d.weightText] as [string, string]] : d.weightKg ? [[tr("Weight"), formatWeight(d.weightKg, i.weightUnit ?? "kg")] as [string, string]] : []),
+          ...(d.lengthText ? [[tr("Length"), d.lengthText] as [string, string]] : d.heightCm ? [[tr("Length"), formatHeight(d.heightCm, i.heightUnit ?? "cm")] as [string, string]] : []),
+          ...(d.type ? [[tr("Birth"), d.type] as [string, string]] : []),
+          ...(d.labour ? [[tr("Labour"), d.labour] as [string, string]] : []),
+          ...(d.who ? [[tr("Who was there"), d.who] as [string, string]] : []),
         ];
         const photoUri = p.photoUri;
         const story = p.storyText;
@@ -359,8 +359,8 @@ export function buildBookHtml(i: BookHtmlInput): string {
           ${corner(p, drawings ? drawings.newborn : "")}
           ${photoUri ? `<div class="photo single arch">${img(photoUri)}</div>` : ""}
           <div class="birth-text">
-            <p class="kicker" style="color:${ink(p)}">Hello, world</p>
-            <h2>The day ${esc(born.name)} was born</h2>
+            <p class="kicker" style="color:${ink(p)}">${tr("Hello, world")}</p>
+            <h2>${esc(tr("The day {0} was born", [born.name]))}</h2>
             <div class="facts">${rows.map(([k, v]) => `<div class="fact"><span class="k" style="color:${ink(p)}">${k}</span><span class="v">${esc(v)}</span></div>`).join("")}</div>
             ${p.story?.title?.trim() ? `<h3>${esc(p.story.title.trim())}</h3>` : ""}
             ${story ? `<p class="body" style="-webkit-line-clamp:${photoUri ? 3 : 10}">${esc(story)}</p>` : ""}
@@ -410,17 +410,17 @@ export function buildBookHtml(i: BookHtmlInput): string {
           const rows = { other: L.other };
           return `<section class="page family tree-page tree-${style}${rowsUsed >= 4 ? " tall" : ""}">
             ${corner(p, drawings ? drawings.family : "")}
-            <p class="kicker" style="color:${ink(p)}">Your family tree</p>
+            <p class="kicker" style="color:${ink(p)}">${tr("Your family tree")}</p>
             <h2>${esc(FAMILY_TITLES[style])}</h2>
             ${sideLabels}
             <div class="tree" style="--line:${ink(p)}">${parts.join('<div class="stem"></div>')}</div>
-            ${rows.other.length ? `<p class="others-label" style="color:${ink(p)}">And everyone else who loves you</p><div class="gen other"><div class="nodes">${rows.other.map((r) => face(r)).join("")}</div></div>` : ""}
+            ${rows.other.length ? `<p class="others-label" style="color:${ink(p)}">${tr("And everyone else who loves you")}</p><div class="gen other"><div class="nodes">${rows.other.map((r) => face(r)).join("")}</div></div>` : ""}
             ${numbered(n)}
           </section>`;
         }
         return `<section class="page family">
           ${corner(p, drawings ? drawings.family : "")}
-          <p class="kicker" style="color:${ink(p)}">Your family</p>
+          <p class="kicker" style="color:${ink(p)}">${tr("Your family")}</p>
           <h2>${esc(FAMILY_TITLES[style])}</h2>
           <div class="people">${p.people.map((r) => {
             const pic = r.photoUri ? i.image(r.photoUri) : null;
@@ -433,10 +433,10 @@ export function buildBookHtml(i: BookHtmlInput): string {
       case "year": {
         return `<section class="page year" style="background-color:${wash(p)}">
           ${drawings ? `<div class="motif big tr">${motif(drawings.year, ink(p))}</div><div class="motif confetti">${motif("confetti", ink(p))}</div>` : ""}
-          <p class="kicker" style="color:${ink(p)}">${p.year === 1 ? "Happy first birthday" : `Happy ${ordinal(p.year)} birthday`}</p>
+          <p class="kicker" style="color:${ink(p)}">${p.year === 1 ? tr("Happy first birthday") : tr("Happy {0} birthday", [ordinal(p.year)])}</p>
           <div class="numeral" style="color:${ink(p)}">${p.year}</div>
           <h2>${yearTitle(p.year)}</h2>
-          <p class="subtitle">From ${p.year} to ${p.year + 1} years old</p>
+          <p class="subtitle">${tr("From {0} to {1} years old", [p.year, p.year + 1])}</p>
           ${running}
         </section>`;
       }
@@ -464,8 +464,8 @@ export function buildBookHtml(i: BookHtmlInput): string {
         // the pictures with a brother, a sister or a pet, laid out like the shared-moment pages, under "With Rex"
         const n2 = p.items.length;
         return `<section class="page pictures together n${n2}${wide ? " wide" : ""}" style="color:${look.ink}">
-          <p class="kicker" style="color:${accent}">${p.part ? "More moments together" : "Together"}</p>
-          <h2>With ${esc(p.who.name)}</h2>
+          <p class="kicker" style="color:${accent}">${p.part ? "More moments together" : tr("Together")}</p>
+          <h2>${esc(tr("With {0}", [p.who.name]))}</h2>
           <div class="moments">${p.items.map((it) => `<div class="moment"><div class="photo single">${img(it.photo)}</div>${caption(it.memory, ink(p), 1)}</div>`).join("")}</div>
           ${numbered(n)}
         </section>`;
@@ -474,8 +474,8 @@ export function buildBookHtml(i: BookHtmlInput): string {
         const who = (kids.find((k) => k.id === p.childId) ?? child).name;
         return `<section class="page classic birth-story">
           ${corner(p, drawings ? drawings.newborn : "")}
-          <p class="kicker" style="color:${ink(p)}">The day ${esc(who)} was born</p>
-          <h2>${p.part ? "The story, continued" : "Our birth story"}</h2>
+          <p class="kicker" style="color:${ink(p)}">${esc(tr("The day {0} was born", [who]))}</p>
+          <h2>${p.part ? "The story, continued" : tr("Our birth story")}</h2>
           ${p.parts.map((x) => `<h3>${esc(x.label)}</h3><p class="body">${esc(x.text)}</p>`).join("")}
           ${numbered(n)}
         </section>`;
@@ -493,7 +493,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
         return `<section class="page notes n${p.memories.length}">
           ${p.opens ? "" : corner(p)}
           ${chapterHead(p)}
-          ${p.opens ? "" : `<p class="kicker" style="color:${ink(p)}">Little moments</p>`}
+          ${p.opens ? "" : `<p class="kicker" style="color:${ink(p)}">${tr("Little moments")}</p>`}
           <div class="cards">${p.memories.map((m) => `<div class="card" style="border-color:${m.type === "last" ? "#8b84a8" : ink(p)}">${caption(m, m.type === "last" ? "#8b84a8" : ink(p), 4, 0)}</div>`).join("")}</div>
           ${running}
         </section>`;
@@ -501,8 +501,8 @@ export function buildBookHtml(i: BookHtmlInput): string {
       case "firsts": {
         return `<section class="page firsts">
           ${corner(p, drawings ? "star" : "")}
-          <p class="kicker" style="color:${accent}">Looking back</p>
-          <h2>${p.part ? "Your firsts, continued" : "Your firsts"}</h2>
+          <p class="kicker" style="color:${accent}">${tr("Looking back")}</p>
+          <h2>${p.part ? "Your firsts, continued" : tr("Your firsts")}</h2>
           <div class="rows">${p.memories.map((m) => `<div class="row"><span class="what">${esc(memoryHeading(m, defs) || "A first")}</span><span class="dots"></span><span class="when">${esc(multi ? `${kidOf(m).name}, ${ageOf(m)}` : ageOf(m))}</span><span class="date">${esc(formatDate(m.date))}</span></div>`).join("")}</div>
           ${numbered(n)}
         </section>`;
@@ -511,13 +511,13 @@ export function buildBookHtml(i: BookHtmlInput): string {
         const v = p.entry?.values ?? {};
         const photos = (p.entry?.photos.photos ?? []).map((x) => x.uri).filter(Boolean).slice(0, 1);
         const pin = v.lat && v.lon ? onMap(Number(v.lat), Number(v.lon)) : null;
-        const facts: [string, string][] = [["The day", formatDate(v.date || child.gotchaDay || child.birth)], ...(v.from ? [["From", v.from] as [string, string]] : []), ...(v.place ? [["Where", v.place] as [string, string]] : []), ...(v.address && v.address !== v.place ? [["", v.address] as [string, string]] : [])];
+        const facts: [string, string][] = [[tr("The day"), formatDate(v.date || child.gotchaDay || child.birth)], ...(v.from ? [[tr("From"), v.from] as [string, string]] : []), ...(v.place ? [[tr("Where"), v.place] as [string, string]] : []), ...(v.address && v.address !== v.place ? [["", v.address] as [string, string]] : [])];
         return `<section class="page birth${photos.length ? " has-photo" : ""}" style="background-color:${wash(p)}">
           ${corner(p, drawings ? drawings.cover : "")}
           ${photos.length ? `<div class="photo single arch">${img(photos[0])}</div>` : ""}
           <div class="birth-text">
-            <p class="kicker" style="color:${ink(p)}">Welcome home</p>
-            <h2>The day ${esc(child.name)} came home</h2>
+            <p class="kicker" style="color:${ink(p)}">${tr("Welcome home")}</p>
+            <h2>${esc(tr("The day {0} came home", [child.name]))}</h2>
             <div class="facts">${facts.map(([k, val]) => `<div class="fact"><span class="k" style="color:${ink(p)}">${esc(k)}</span><span class="v">${esc(val)}</span></div>`).join("")}</div>
             ${v.story?.trim() ? `<p class="body" style="-webkit-line-clamp:${photos.length ? 3 : 8}">${esc(v.story.trim())}</p>` : ""}
             ${p.mapUri && pin && !photos.length ? `<div class="worldmap mini">${img(p.mapUri)}<span class="pin" style="left:${(pin.x * 100).toFixed(2)}%;top:${(pin.y * 100).toFixed(2)}%;background:${ink(p)}"></span></div>` : ""}
@@ -529,8 +529,8 @@ export function buildBookHtml(i: BookHtmlInput): string {
         const years = placesByYear(p.places);
         return `<section class="page places">
           ${corner(p, drawings ? drawings.cover2 : "")}
-          <p class="kicker" style="color:${ink(p)}">Adventures</p>
-          <h2>Everywhere ${esc(child.name)} has been</h2>
+          <p class="kicker" style="color:${ink(p)}">${tr("Adventures")}</p>
+          <h2>${esc(tr("Everywhere {0} has been", [child.name]))}</h2>
           ${p.mapUri ? `<div class="worldmap">${img(p.mapUri)}${p.places.map((pl) => { const q = onMap(pl.lat, pl.lon); return `<span class="pin" style="left:${(q.x * 100).toFixed(2)}%;top:${(q.y * 100).toFixed(2)}%;background:${accent}"></span>`; }).join("")}</div>` : ""}
           <p class="meta">${esc(placesSummary(p.places))}</p>
           <div class="years">${years.map((y) => `<div class="year-row"><b style="color:${ink(p)}">${esc(y.year)}</b><span>${esc(y.places.map((pl) => pl.name).join(" · "))}</span></div>`).join("")}</div>
@@ -540,7 +540,7 @@ export function buildBookHtml(i: BookHtmlInput): string {
       case "memorial": {
         return `<section class="page memorial" style="background-color:${look.motifs ? fixed("kid").wash : look.paper}">
           <div class="motif big">${motif("rainbow", accent)}</div>
-          <p class="kicker" style="color:${accent}">In loving memory</p>
+          <p class="kicker" style="color:${accent}">${tr("In loving memory")}</p>
           <h2>${esc(child.name)}</h2>
           <p class="subtitle">${esc(p.dates)}</p>
           ${p.words.trim() ? `<p class="body">${esc(p.words.trim())}</p>` : ""}
@@ -559,16 +559,16 @@ export function buildBookHtml(i: BookHtmlInput): string {
         ].filter(([v]) => (v as number) > 0);
         return `<section class="page end" style="background-color:${look.motifs ? fixed("kid").wash : look.paper}">
           ${drawings ? `<div class="motif tr">${motif("heart", fixed("newborn").ink)}</div>` : ""}
-          <p class="kicker" style="color:${accent}">And the story goes on</p>
+          <p class="kicker" style="color:${accent}">${tr("And the story goes on")}</p>
           ${multi
             ? `<h2>${esc(names(kids))} today</h2><div class="ages">${kids.map((k) => `<div><b>${esc(k.expecting ? "Due" : smartAge(k.birth, now).value)}</b><span>${esc(k.name)}, ${esc(k.expecting ? formatDate(k.birth) : smartAge(k.birth, now).unit)}</span></div>`).join("")}</div>`
             : child.expecting
-              ? `<h2>Not long now, ${esc(child.name)}</h2><div class="numeral" style="color:${accent}">${weeksToGo}</div><p class="subtitle">${weeksToGo === 1 ? "week" : "weeks"} to go · due ${esc(formatDate(child.birth))}</p>`
+              ? `<h2>${esc(tr("Not long now, {0}", [child.name]))}</h2><div class="numeral" style="color:${accent}">${weeksToGo}</div><p class="subtitle">${weeksToGo === 1 ? tr("week to go · due") : tr("weeks to go · due")} ${esc(formatDate(child.birth))}</p>`
               : isPet(child)
                 ? `<h2>${esc(child.name)} today</h2><p class="subtitle">${esc(petAge(child, now).human)} · ${esc(petAge(child, now).own ?? petAge(child, now).stage)}</p>`
                 : `<h2>${esc(child.name)} today</h2><div class="numeral" style="color:${accent}">${esc(sm.value)}</div><p class="subtitle">${esc(sm.unit)} · ${esc(ageLong(child.birth, now))}</p>`}
           ${stats.length ? `<div class="stats">${stats.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("")}</div>` : ""}
-          <p class="brand">Made with love on ${esc(formatDate(now))} · ${esc(APP_NAME)}</p>
+          <p class="brand">${esc(tr("Made with love on {0} · {1}", [formatDate(now), APP_NAME]))}</p>
         </section>`;
       }
     }
@@ -798,7 +798,7 @@ h3{font-size:${pt(M.label)};line-height:1.25;color:${look.ink};font-weight:700;m
 `;
 
   const pagesHtml = plan.pages.map((p, n) => page(p, n));
-  if (mode === "print") return `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>${pagesHtml.join("")}</body></html>`;
+  if (mode === "print") return `<html${isRTL() ? ' dir="rtl" lang="he"' : ""}><head><meta charset="utf-8"/><style>${css}</style></head><body>${pagesHtml.join("")}</body></html>`;
 
   // the preview: the same pages, scaled to the screen (1pt = 4/3 css px). Each page sits in a frame of its scaled size and is scaled with a
   // transform, which shrinks it exactly (a zoomed page would be laid out again at the new size, and lay out differently).
@@ -822,11 +822,11 @@ html,body{background:transparent;overflow-x:hidden}
 `;
   if (mode === "overview") {
     const slots = (i.overview ?? []).map(({ index, width }, k) => `<div class="slot${k === 0 ? " lead" : ""}" onclick="tap(${index})">${sheet(pagesHtml[index] ?? "", width / pageW)}${k === 0 ? "" : `<div class="num">Page ${index + 1}</div>`}</div>`);
-    return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="overview">${slots.join("")}</div>
+    return `<html${isRTL() ? ' dir="rtl" lang="he"' : ""}><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="overview">${slots.join("")}</div>
 <script>function tap(i){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({open:i}))}</script></body></html>`;
   }
   const front = typeof i.peek === "number" ? i.peek : i.peek ? 0.78 : 1;
-  return `<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="pager${i.peek ? " peek" : ""}" id="pager" style="--front:${front * 100}vw;--side:${((1 - front) / 2) * 100}vw">${pagesHtml.map((h) => `<div class="slot">${sheet(h, 1)}</div>`).join("")}</div>
+  return `<html${isRTL() ? ' dir="rtl" lang="he"' : ""}><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>${css}${screenCss}</style></head><body><div class="pager${i.peek ? " peek" : ""}" id="pager" style="--front:${front * 100}vw;--side:${((1 - front) / 2) * 100}vw">${pagesHtml.map((h) => `<div class="slot">${sheet(h, 1)}</div>`).join("")}</div>
 <script>
 (function(){
   var pager=document.getElementById('pager'),frames=document.querySelectorAll('.frame'),slots=document.querySelectorAll('.slot'),last=-1,SW=${front};

@@ -29,7 +29,7 @@ export function logMilestone(i: MilestoneInput): string | null {
   if (!def) {
     if (!name) return tr("Give the milestone a name, or pick one from the list.");
     def = defs.find((d) => d.label.toLowerCase() === name.toLowerCase());
-    if (def && logged(def)) return `“${def.label}” is already logged — open it from the Milestones tab to edit it.`;
+    if (def && logged(def)) return tr("“{0}” is already logged — open it from the Milestones tab to edit it.", [def.label]);
   }
   if (!def) {
     def = { id: uid("custom"), label: name, emoji: i.emoji, hint: "", custom: true, category: i.category };

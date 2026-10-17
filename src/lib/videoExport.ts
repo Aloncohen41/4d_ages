@@ -210,7 +210,7 @@ export async function createJourneyVideo(pet: Child, places: Place[], theme: The
   const payload = {
     width, height, fps: 30, perMs: per, fadeMs: 700, driftMs: per,
     introMs: INTRO_MS,
-    intro: { emoji: pet.emoji, title: `${pet.name}'s adventures`, subtitle: `${places.length} ${places.length === 1 ? "place" : "places"}, year by year`, bg: theme.bg, ink: theme.ink },
+    intro: { emoji: pet.emoji, title: `${pet.name}'s adventures`, subtitle: tr("{0} {1}, year by year", [places.length, places.length === 1 ? "place" : "places"]), bg: theme.bg, ink: theme.ink },
     items: [
       ...slides.map((s) => ({ uri: mapUri, emoji: "🗺️", bg: "#ECF1F3", hill: theme.accent, age: s.year, date: s.count, caption: s.names, pins: s.pins })),
       // an "In loving memory" ending, when chosen
@@ -240,4 +240,4 @@ export async function saveVideoToGallery(uri: string, fileName: string): Promise
 }
 
 export const defaultTitle = (child: Child) => `${child.name}'s story`;
-export const defaultSubtitle = (child: Child, count: number) => `from day one to ${ageLong(child.birth, todayISO())} · ${count} memories`;
+export const defaultSubtitle = (child: Child, count: number) => tr("from day one to {0} · {1} memories", [ageLong(child.birth, todayISO()), count]);

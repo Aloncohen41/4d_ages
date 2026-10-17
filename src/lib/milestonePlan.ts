@@ -44,7 +44,7 @@ export function planMilestoneNotifications(kids: { id: string; name: string; bir
         const newStage = BANDS.some(([lo]) => lo === m);
         out.push({
           date,
-          title: `🎉 Wow — ${k.name} is ${ageLabel(m)} old today!`,
+          title: tr("🎉 Wow — {0} is {1} old today!", [k.name, ageLabel(m)]),
           body: newStage ? NEW_STAGE : CHEERS[m % CHEERS.length],
           data: { kind: "milestone-age", childId: k.id, months: m },
         });
@@ -63,8 +63,8 @@ export function planMilestoneNotifications(kids: { id: string; name: string; bir
         const names = order.map((a) => open.find((d) => areaOf(d) === a)?.label).filter((x): x is string => !!x).slice(0, 3);
         out.push({
           date,
-          title: `👀 Is ${k.name} starting any of these?`,
-          body: `${names.join(" · ")} — tap to tick off what's happened.`,
+          title: tr("👀 Is {0} starting any of these?", [k.name]),
+          body: tr("{0} — tap to tick off what's happened.", [names.join(" · ")]),
           data: { kind: "milestone-ask", childId: k.id, months: askMonth },
         });
       }
@@ -75,8 +75,8 @@ export function planMilestoneNotifications(kids: { id: string; name: string; bir
 
 /** What the two milestone notifications look like (for the "send me a preview" buttons). */
 export function sampleMilestoneNotification(name: string, kind: "cheer" | "ask"): { title: string; body: string } {
-  if (kind === "cheer") return { title: `🎉 Wow — ${name} is 6 months old today!`, body: NEW_STAGE };
+  if (kind === "cheer") return { title: tr("🎉 Wow — {0} is 6 months old today!", [name]), body: NEW_STAGE };
   const open = MILESTONE_CATALOG.filter((d) => d.months?.[0] === 6);
   const names = AREAS.map((a) => open.find((d) => areaOf(d) === a)?.label).filter((x): x is string => !!x).slice(0, 3);
-  return { title: `👀 Is ${name} starting any of these?`, body: `${names.join(" · ")} — tap to tick off what's happened.` };
+  return { title: tr("👀 Is {0} starting any of these?", [name]), body: tr("{0} — tap to tick off what's happened.", [names.join(" · ")]) };
 }

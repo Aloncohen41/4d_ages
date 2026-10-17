@@ -165,7 +165,7 @@ export function heightInThings(cm: number, turn = 0): { count: number; ref: (typ
   if (cm < 20) return null;
   const ref = STACK_REFS[((turn % STACK_REFS.length) + STACK_REFS.length) % STACK_REFS.length];
   const count = Math.round(cm / ref.cm);
-  return { count, ref, text: `As tall as ${count} ${count === 1 ? ref.one : ref.many}, ${ref.how}` };
+  return { count, ref, text: tr("As tall as {0} {1}, {2}", [count, count === 1 ? ref.one : ref.many, ref.how]) };
 }
 
 export interface WeightRef { kg: number; emoji: string; name: string; many: string }
@@ -203,7 +203,7 @@ export function weightInThings(kg: number, turn = 0): { count: number; ref: Weig
   if (!fits.length) return [];
   const out = fits.map((ref) => {
     const count = Math.max(1, Math.round(kg / ref.kg));
-    return { count, ref, text: count === 1 ? `As heavy as ${ref.name}` : `As heavy as ${count} ${ref.many}` };
+    return { count, ref, text: count === 1 ? tr("As heavy as {0}", [ref.name]) : tr("As heavy as {0} {1}", [count, ref.many]) };
   });
   const start = ((turn * 3) % out.length + out.length) % out.length;
   return [...out.slice(start), ...out.slice(0, start)].slice(0, 3);

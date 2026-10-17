@@ -168,7 +168,7 @@ export function planBumpPhotoNotifications(kids: { id: string; name: string; bir
       if (d <= now) break;
       const week = 40 - back;
       if (week < 4) continue;
-      out.push({ date: d, title: `Week ${week}: time for the bump photo 📸`, body: `${k.name} is the size of ${sizeForWeek(week).fruit}. Same spot, same pose, same light, and after the birth the photos play as a video of the bump growing.`, data: { kind: "bump-photo", childId: k.id, week } });
+      out.push({ date: d, title: tr("Week {0}: time for the bump photo 📸", [week]), body: tr("{0} is the size of {1}. Same spot, same pose, same light, and after the birth the photos play as a video of the bump growing.", [k.name, sizeForWeek(week).fruit]), data: { kind: "bump-photo", childId: k.id, week } });
     }
   }
   return out;

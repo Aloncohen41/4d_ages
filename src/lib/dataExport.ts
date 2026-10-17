@@ -32,7 +32,7 @@ export async function exportMyData(onProgress?: (text: string) => void): Promise
   const media = [...filesIn(backup.data)].filter((u) => fileExists(u));
   let k = 0;
   for (const uri of media) {
-    onProgress?.(`Adding photos and videos: ${++k} of ${media.length}`);
+    onProgress?.(tr("Adding photos and videos: {0} of {1}", [++k, media.length]));
     try {
       files[`media/${baseName(uri)}`] = [await fileBytes(uri), { level: 0 }]; // pictures are already compressed
     } catch {

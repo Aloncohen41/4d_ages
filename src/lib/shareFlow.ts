@@ -36,14 +36,14 @@ export function friendlyShareError(e: unknown): string {
  */
 export function inviteMessage(kind: InviteKind, childName: string, code: string, link: string, appName: string, email?: string): string {
   const intro = kind === "parent"
-    ? `Join ${childName}'s baby book on ${appName}. You can view and add photos and memories.`
-    : `You're invited to ${childName}'s baby book on ${appName} (view only).`;
+    ? tr("Join {0}'s baby book on {1}. You can view and add photos and memories.", [childName, appName])
+    : tr("You're invited to {0}'s baby book on {1} (view only).", [childName, appName]);
   // the code is inside the link (and on the share screen, to type in by hand), so the message stays short
-  return [intro, link, email ? `Sign in with ${email} to open it.` : ""].filter(Boolean).join("\n");
+  return [intro, link, email ? tr("Sign in with {0} to open it.", [email]) : ""].filter(Boolean).join("\n");
 }
 
 /** What the person invited will see, in one line. */
 export const kindSummary = (kind: InviteKind, childName: string, people: string[]) =>
   kind === "parent"
-    ? `They'll see everything in ${childName}'s book and can add to it, like you.`
-    : `They'll see only the posts with ${people.length ? people.join(", ") : tr("the people you choose")}, and can leave a heart and a comment. They can't change anything.`;
+    ? tr("They'll see everything in {0}'s book and can add to it, like you.", [childName])
+    : tr("They'll see only the posts with {0}, and can leave a heart and a comment. They can't change anything.", [people.length ? people.join(", ") : tr("the people you choose")]);

@@ -335,7 +335,7 @@ export async function syncChild(childId: string): Promise<void> {
     // removed from the book on the other phone (or the book was deleted): it leaves this phone too
     const name = useStore.getState().kids.find((k) => k.id === childId)?.name ?? tr("This child");
     useStore.getState().forgetChild(childId);
-    useStore.getState().setSync({ notice: `${name}'s book isn't shared with you any more, so it was taken off this phone.` });
+    useStore.getState().setSync({ notice: tr("{0}'s book isn't shared with you any more, so it was taken off this phone.", [name]) });
     return;
   }
 
@@ -398,7 +398,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
       for (const x of m.media) {
         let path = x.path;
         if (!path && x.uri) {
-          progress(`Uploading ${++uploaded} of ${toUpload}…`);
+          progress(tr("Uploading {0} of {1}…", [++uploaded, toUpload]));
           path = (await upload(childId, `${m.id}-${x.id}`, x.uri)) ?? undefined;
         }
         media.push({ ...x, path });
@@ -513,7 +513,7 @@ async function downloadMissing(childId: string) {
   }
   let n = 0;
   for (const j of jobs) {
-    progress(`Downloading ${++n} of ${jobs.length}…`);
+    progress(tr("Downloading {0} of {1}…", [++n, jobs.length]));
     try {
       const uri = await download(j.path, `${j.memoryId}-${j.mediaId}`);
       apply((st) => ({ memories: st.memories.map((m) => (m.id === j.memoryId ? { ...m, media: m.media.map((x) => (x.id === j.mediaId ? { ...x, uri } : x)) } : m)) }));

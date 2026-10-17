@@ -90,10 +90,10 @@ export const IN_STEP_TEXT: Record<InStep, string> = {
 export function atAge(birth: string, date: string): string {
   const a = ageBetween(birth, date);
   const months = a.years * 12 + a.months;
-  if (a.totalDays < 14) return `at ${a.totalDays} day${a.totalDays === 1 ? "" : "s"}`;
-  if (months < 1) return `at ${Math.floor(a.totalDays / 7)} weeks`;
-  if (a.years < 2) return `at ${months} month${months === 1 ? "" : "s"}`;
-  return `at ${a.years} years${a.months ? `, ${a.months} month${a.months === 1 ? "" : "s"}` : ""}`;
+  if (a.totalDays < 14) return tr("at {0} day{1}", [a.totalDays, a.totalDays === 1 ? "" : "s"]);
+  if (months < 1) return tr("at {0} weeks", [Math.floor(a.totalDays / 7)]);
+  if (a.years < 2) return tr("at {0} month{1}", [months, months === 1 ? "" : "s"]);
+  return tr("at {0} years{1}", [a.years, a.months ? `, ${a.months} month${a.months === 1 ? "" : "s"}` : ""]);
 }
 
 /** The measurement at a z-score, from L, M and S (the inverse of zScore). */

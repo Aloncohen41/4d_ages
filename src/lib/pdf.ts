@@ -57,7 +57,7 @@ async function printBook(i: BookInput, onProgress?: (text: string) => void): Pro
   const loaded = new Map<string, string | null>();
   let done = 0;
   for (const [u, px] of sizes) {
-    onProgress?.(`Preparing pictures: ${++done} of ${sizes.size}`);
+    onProgress?.(tr("Preparing pictures: {0} of {1}", [++done, sizes.size]));
     loaded.set(u, await shrunkBase64(u, px, PRINT_QUALITY).catch(() => null));
   }
   onProgress?.(tr("Making the PDF…"));
@@ -69,7 +69,7 @@ async function printBook(i: BookInput, onProgress?: (text: string) => void): Pro
   try {
     uri = (await Print.printToFileAsync({ html, width: M.w, height: M.h })).uri;
   } catch (e) {
-    throw new Error(`The phone couldn't make the PDF (${e instanceof Error ? e.message : String(e)}). Try a smaller page size, or fewer posts (Choose posts).`);
+    throw new Error(tr("The phone couldn't make the PDF ({0}). Try a smaller page size, or fewer posts (Choose posts).", [e instanceof Error ? e.message : String(e)]));
   } finally {
     html = null;
   }
@@ -170,7 +170,7 @@ async function webPictures(i: BookInput, wanted: string[], onProgress?: (text: s
   const out = new Map<string, string | null>();
   let n = 0;
   for (const u of wanted) {
-    onProgress?.(`Preparing pictures: ${++n} of ${wanted.length}`);
+    onProgress?.(tr("Preparing pictures: {0} of {1}", [++n, wanted.length]));
     if (u.startsWith("data:")) { out.set(u, u); continue; }
     let blob = await read(u);
     const path = inAccount.get(u);

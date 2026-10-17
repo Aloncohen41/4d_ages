@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /*
  * Confetti that behaves like the real thing: paper pieces burst out of the middle of the screen in every direction, air slows them almost at
  * once, gravity takes over, and each piece flutters side to side and turns over as it falls (so it flashes thin, then wide). The flight is
@@ -109,10 +110,10 @@ export function celebrationsToday(kids: { id: string; name: string; birth: strin
     const years = Number(today.slice(0, 4)) - Number(k.birth.slice(0, 4));
     // a 29 February birthday is celebrated on the 28th in other years
     const bday = k.birth.slice(5) === "02-29" && !isLeap(Number(today.slice(0, 4))) ? "02-28" : k.birth.slice(5);
-    if (years >= 1 && bday === md) out.push({ id: `bday-${k.id}-${today.slice(0, 4)}`, childId: k.id, text: `Happy ${years}${suffix(years)} birthday, ${k.name}!` });
+    if (years >= 1 && bday === md) out.push({ id: `bday-${k.id}-${today.slice(0, 4)}`, childId: k.id, text: tr("Happy {0}{1} birthday, {2}!", [years, suffix(years), k.name]) });
     if (k.kind === "pet" && k.gotchaDay) {
       const g = Number(today.slice(0, 4)) - Number(k.gotchaDay.slice(0, 4));
-      if (g >= 1 && k.gotchaDay.slice(5) === md) out.push({ id: `gotcha-${k.id}-${today.slice(0, 4)}`, childId: k.id, text: `${g} ${g === 1 ? "year" : "years"} since ${k.name} came home!` });
+      if (g >= 1 && k.gotchaDay.slice(5) === md) out.push({ id: `gotcha-${k.id}-${today.slice(0, 4)}`, childId: k.id, text: tr("{0} {1} since {2} came home!", [g, g === 1 ? "year" : "years", k.name]) });
     }
   }
   return out;

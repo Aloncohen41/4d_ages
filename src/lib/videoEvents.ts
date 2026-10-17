@@ -94,7 +94,7 @@ export function suggestEvents(memories: Memory[], child: { id: string; name: str
       const list = mine.filter((m) => m.date >= run[0] && m.date <= run[run.length - 1]);
       const place = placeOf(list);
       const span = Math.round((day(run[run.length - 1]).getTime() - day(run[0]).getTime()) / 86_400_000) + 1;
-      make("trip", run[0], run[run.length - 1], place ? `${span} days in ${place}` : `${span} days to remember`);
+      make("trip", run[0], run[run.length - 1], place ? tr("{0} days in {1}", [span, place]) : tr("{0} days to remember", [span]));
       run.forEach((d) => used.add(d));
     }
     run = [];
@@ -109,7 +109,7 @@ export function suggestEvents(memories: Memory[], child: { id: string; name: str
   for (const [d, list] of byDay) {
     if (used.has(d) || count(d) < DAY_MIN) continue;
     const place = placeOf(list);
-    make("day", d, d, place ? `A day in ${place}` : `A ${WEEKDAYS[day(d).getDay()]} to remember`);
+    make("day", d, d, place ? tr("A day in {0}", [place]) : tr("A {0} to remember", [WEEKDAYS[day(d).getDay()]]));
   }
 
   // months in review: the last few months with plenty in them

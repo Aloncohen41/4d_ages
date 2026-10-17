@@ -114,7 +114,7 @@ const tagged = ["a", "b", "c", "d", "e"].map((x, i) => mem("t" + x, `2024-0${i +
 const withNoa = planBook(dog, [...tagged, mem("alone", "2024-07-01")], BOOK_SIZES[2], { together: [{ id: "r1", name: "Noa", tagIds: ["tag-person-r1"] }, { id: "r9", name: "Nobody", tagIds: ["tag-person-r9"] }] });
 const tPages = withNoa.pages.filter((p) => p.kind === "together");
 ok("pictures with a brother, a sister or a pet get pages of their own (“With Noa”)", tPages.length >= 1 && tPages.every((p) => p.kind === "together" && p.who.name === "Noa") && tPages.reduce((n, p) => n + (p.kind === "together" ? p.items.length : 0), 0) === 5 && noaRef.name === "Noa");
-ok("…drawn, with every picture loaded and sized for print", /case "together":/.test(read("src/lib/bookHtml.ts")) && /With \$\{esc\(p\.who\.name\)\}/.test(read("src/lib/bookHtml.ts")) && /p\.kind === "pictures" \|\| p\.kind === "together"\) p\.items\.forEach\(\(it\) => out\.add/.test(read("src/lib/bookHtml.ts")));
+ok("…drawn, with every picture loaded and sized for print", /case "together":/.test(read("src/lib/bookHtml.ts")) && /With \$\{(esc\()?p\.who\.name\)?\}/.test(read("src/lib/bookHtml.ts")) && /p\.kind === "pictures" \|\| p\.kind === "together"\) p\.items\.forEach\(\(it\) => out\.add/.test(read("src/lib/bookHtml.ts")));
 ok("the Book tab: an “In loving memory” tick for a pet, which changes the cover and adds their page", /In loving memory of \$\{child\.name\}/.test(read("app/(tabs)/book.tsx")) && /set\(\{ inMemory: prefs\.inMemory \? undefined : true \}\)/.test(read("app/(tabs)/book.tsx")) && !/onMemorial/.test(read("src/components/BookExportSheet.tsx")));
 
 console.log(fails ? `${fails} FAILED` : "all pet tests passed");

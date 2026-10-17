@@ -1,5 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 
+import { tr } from "./i18n";
 /** The folder picked last time, so the folder picker opens there next time. */
 let lastFolder: string | undefined;
 
@@ -22,7 +23,7 @@ export async function saveToFolder(mimeType: string): Promise<((uri: string, fil
       const out = folder.createFile(fileName, mimeType);
       out.write(new File(uri).bytesSync());
     } catch (e) {
-      throw new Error(`Couldn't save to that folder (${e instanceof Error ? e.message : String(e)}). Try Downloads, or use Share PDF.`);
+      throw new Error(tr("Couldn't save to that folder ({0}). Try Downloads, or use Share PDF.", [e instanceof Error ? e.message : String(e)]));
     }
   };
 }

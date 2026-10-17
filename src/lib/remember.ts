@@ -63,7 +63,7 @@ export function planMonthlyPhotoNotifications(kids: Pick<Child, "id" | "name" | 
       if (d <= now) continue;
       out.push({
         date: d,
-        title: `Time for ${k.name}'s ${month === 12 ? tr("first birthday") : `${month}-month`} photo`,
+        title: tr("Time for {0}'s {1} photo", [k.name, month === 12 ? tr("first birthday") : `${month}-month`]),
         get body() { return tr("Take this month's photo for the Monthly photos page in Classics. The same spot each month makes a lovely grid."); },
         data: { kind: "monthly-photo", childId: k.id, month },
       });

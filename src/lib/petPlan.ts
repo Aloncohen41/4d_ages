@@ -26,7 +26,7 @@ export function planGotchaNotifications(pets: { id: string; name: string; gotcha
       if (years < 1) continue;
       const day = new Date(y, gm - 1, gd, prefs.hour, 0, 0);
       if (day <= now) continue;
-      out.push({ date: day, title: `🏡 ${years} ${years === 1 ? "year" : "years"} since ${p.name} came home!`, body: `Happy gotcha day, ${p.name}. Tap to look back at the day they came home.`, data: { kind: "gotcha", childId: p.id } });
+      out.push({ date: day, title: tr("🏡 {0} {1} since {2} came home!", [years, years === 1 ? "year" : "years", p.name]), body: tr("Happy gotcha day, {0}. Tap to look back at the day they came home.", [p.name]), data: { kind: "gotcha", childId: p.id } });
     }
   }
   return out;

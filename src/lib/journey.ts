@@ -20,8 +20,8 @@ export function journeySlides(places: Place[]): JourneySlide[] {
     out.push({
       year,
       pins,
-      count: `${list.length} ${list.length === 1 ? tr("new place") : tr("new places")} · ${seen.length + list.length} in all`,
-      names: names.length > 4 ? `${names.slice(0, 4).join(", ")} and ${names.length - 4} more` : names.join(", "),
+      count: tr("{0} {1} · {2} in all", [list.length, list.length === 1 ? tr("new place") : tr("new places"), seen.length + list.length]),
+      names: names.length > 4 ? tr("{0} and {1} more", [names.slice(0, 4).join(", "), names.length - 4]) : names.join(", "),
     });
     seen.push(...list);
   }

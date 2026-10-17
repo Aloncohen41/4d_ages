@@ -43,7 +43,7 @@ const AREA_ALIASES: Record<string, Area> = {
   "Thinking & play": "Cognitive", Movement: "Movement", "Feeding & self-care": "Other", Other: "Other",
 };
 /** Which area a milestone belongs to (earlier versions used other names). */
-export const areaOf = (def: { category?: string }): Area => AREA_ALIASES[def.category ?? ""] ?? "Other";
+export const areaOf = (def: { category?: string }): Area => AREA_ALIASES[def.category ?? ""] ?? tr("Other");
 
 /* ---------- ages ---------- */
 export const ageMonths = (birth: string, today: string) => monthsOld(birth, today);
@@ -57,7 +57,7 @@ export function ageLabel(months: number): string {
   const m = Math.floor(months);
   if (m < 24) return `${m} month${m === 1 ? "" : "s"}`;
   const y = Math.floor(m / 12), r = m % 12;
-  return r === 0 ? `${y} years` : `${y} years ${r} month${r === 1 ? "" : "s"}`;
+  return r === 0 ? `${y} years` : tr("{0} years {1} month{2}", [y, r, r === 1 ? "" : "s"]);
 }
 
 /** A short age for tight spaces: "18 mo", "2y 6m". */
@@ -162,23 +162,23 @@ export function analyze(defs: MilestoneDef[], logged: Record<string, Memory>, no
 }
 
 /** How a count is worded. One is "a first", never a bare "1" — small numbers are celebrated, not announced. */
-export const reachedText = (n: number) => (n === 1 ? tr("A first one reached 🎉") : `${n} milestones reached`);
+export const reachedText = (n: number) => (n === 1 ? tr("A first one reached 🎉") : tr("{0} milestones reached", [n]));
 
 /** The headline on the Milestones tab. A small total is a lovely start, not a score to be compared with anything. */
 export function celebration(n: number, name: string): { title: string; sub: string } {
-  if (n <= 0) return { title: `Tick off what ${name} can do`, sub: tr("Each tick is a little celebration.") };
+  if (n <= 0) return { title: tr("Tick off what {0} can do", [name]), sub: tr("Each tick is a little celebration.") };
   if (n === 1) return { get title() { return tr("A first milestone reached! 🎉"); }, sub: tr("What a lovely start.") };
-  if (n < 5) return { title: `${n} milestones reached`, sub: tr("A lovely start — every one is worth celebrating.") };
-  return { title: `${n} milestones reached`, sub: tr("Every one is worth celebrating.") };
+  if (n < 5) return { title: tr("{0} milestones reached", [n]), sub: tr("A lovely start — every one is worth celebrating.") };
+  return { title: tr("{0} milestones reached", [n]), sub: tr("Every one is worth celebrating.") };
 }
 
 export function highlightText(name: string, r: AreaReport): string {
   const what = AREA_META[r.area].phrase;
   if (r.status === "outstanding" && r.ahead.length) {
-    const more = r.ahead.length > 1 ? ` and ${r.ahead.length - 1} more` : "";
-    return `Wow, ${name} is really good at ${what}! They've already reached “${r.ahead[0].label}”${more} — ahead of the usual timing.`;
+    const more = r.ahead.length > 1 ? tr(" and {0} more", [r.ahead.length - 1]) : "";
+    return tr("Wow, {0} is really good at {1}! They've already reached “{2}”{3} — ahead of the usual timing.", [name, what, r.ahead[0].label, more]);
   }
-  return `Wow, ${name} is doing great at ${what}!`;
+  return tr("Wow, {0} is doing great at {1}!", [name, what]);
 }
 
 /* ---------- things to try together ---------- */

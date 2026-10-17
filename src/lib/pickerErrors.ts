@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /*
  * Android sometimes rebuilds the app's main screen (a font-size, display-size or language change, or memory pressure). When it does,
  * Expo's photo picker is left "unregistered" and rejects every call until the whole app process restarts (expo issue #50386). It surfaces as:
@@ -22,4 +23,4 @@ export const RESTART_TITLE = "The photo picker needs a quick restart";
 export const RESTART_MESSAGE =
   "Android reset the app's photo picker after something changed on the phone (like the font or display size). Restarting fixes it, and you'll come straight back to where you were.";
 export const RESTART_MANUAL_TITLE = "Close and reopen the app";
-export const restartManualMessage = (appName: string) => `Swipe ${appName} away from your recent apps, then open it again — photos will work.`;
+export const restartManualMessage = (appName: string) => tr("Swipe {0} away from your recent apps, then open it again — photos will work.", [appName]);

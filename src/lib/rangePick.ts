@@ -46,5 +46,5 @@ export function presetRanges(birth: string, today: string): RangePreset[] {
 
 /** The title card of a made video: "Here is Maya" / "at 1–2 years old" (or the name you typed, over the same age line). */
 export function videoTitles(childName: string, span: AgeSpan, typed: string): { title: string; subtitle: string } {
-  return { title: typed.trim() || `Here is ${childName}`, subtitle: `at ${span.display} old` };
+  return { title: typed.trim() || tr("Here is {0}", [childName]), subtitle: tr("at {0} old", [span.display]) };
 }

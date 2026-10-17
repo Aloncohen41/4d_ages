@@ -5,7 +5,7 @@ import { ageBetween, daysBetween, parseISO } from "./date";
 import { BIRTH_STORY_PARTS, CLASSICS, ClassicEntry, PET_HOME_ID, classicMedia, classicsFor, isFilled } from "./classics";
 import type { Place } from "./places";
 
-import { tr } from "./i18n";
+import { lang, tr } from "./i18n";
 /*
  * The keepsake book, page by page. One plan drives both the preview on the phone and the exported PDF (both are drawn from the same HTML, see
  * bookHtml.ts), so what you see — the pages, their order, the pictures, the page count — is what you get. Pure, so it can be tested without a phone.
@@ -212,7 +212,7 @@ export function chapterOf(birth: string, date: string, coarse = false): Chapter 
   if (coarse && months < 36) {
     if (months < 12) {
       const q = Math.floor(months / 3) * 3;
-      return { key: `cq${q}`, label: q === 0 ? tr("The first 3 months") : `${q} to ${q + 3} months`, band: q < 3 ? "newborn" : q < 6 ? "early" : "late", year: 0 };
+      return { key: `cq${q}`, label: q === 0 ? tr("The first 3 months") : tr("{0} to {1} months", [q, q + 3]), band: q < 3 ? "newborn" : q < 6 ? "early" : "late", year: 0 };
     }
     const h = Math.floor(months / 6) * 6, y = Math.floor(h / 12), m = h % 12;
     return { key: `ch${h}`, label: m ? `${plural(y, "year")}, ${plural(m, "month")}` : plural(y, "year"), band: months < 24 ? "toddler" : "kid", year: y };
@@ -233,7 +233,7 @@ export function petChapter(pet: { birth: string; gotchaDay?: string }, date: str
   if (date < home) return { key: "pre-home", get label() { return tr("Before you came home"); }, band: "newborn", year: -1 };
   const y = ageBetween(home, date).years;
   const bands: AgeBand[] = ["newborn", "early", "late", "toddler", "kid"];
-  return { key: `home-${y}`, label: y < ORDINALS.length ? `Your ${ORDINALS[y]} year with us` : `Year ${y + 1} with us`, band: bands[y % bands.length], year: y };
+  return { key: `home-${y}`, label: y < ORDINALS.length ? tr("Your {0} year with us", [ORDINALS[y], y + 1]) : tr("Year {0} with us", [y + 1]), band: bands[y % bands.length], year: y };
 }
 
 /** The birthday a date is, if it is one: 1 for the first birthday, 2 for the second… 0 if it isn't a birthday. */
@@ -592,4 +592,4 @@ export function yearTitle(year: number): string {
   return `Year ${words[year] ?? year + 1}`;
 }
 /** 1 → "1st", 2 → "2nd", 11 → "11th", 23 → "23rd". */
-export const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+export const ordinal = (n: number) => (lang() === "he" ? String(n) : `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`);

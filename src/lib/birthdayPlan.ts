@@ -1,6 +1,7 @@
 import { parseISO } from "./date";
 import { NotifPrefs } from "./types";
 
+import { tr } from "./i18n";
 export interface Planned {
   date: Date;
   title: string;
@@ -24,11 +25,11 @@ export function planBirthdayNotifications(kids: { id: string; name: string; birt
         const before = new Date(day.getTime());
         before.setDate(before.getDate() - prefs.daysBefore);
         if (before > now) {
-          const when = prefs.daysBefore === 1 ? "tomorrow" : `in ${prefs.daysBefore} days`;
+          const when = prefs.daysBefore === 1 ? "tomorrow" : tr("in {0} days", [prefs.daysBefore]);
           out.push({
             date: before,
             title: `🎈 ${k.name} turns ${turning} ${when}`,
-            body: `${k.name}'s year in review is ready — tap to watch the highlights.`,
+            body: tr("{0}'s year in review is ready — tap to watch the highlights.", [k.name]),
             data: { kind: "birthday", childId: k.id, turning, phase: "before" },
           });
         }
@@ -36,8 +37,8 @@ export function planBirthdayNotifications(kids: { id: string; name: string; birt
       if (day > now) {
         out.push({
           date: day,
-          title: `🎂 Happy birthday, ${k.name}!`,
-          body: `${years(turning)} of memories. Tap to relive ${k.name}'s year.`,
+          title: tr("🎂 Happy birthday, {0}!", [k.name]),
+          body: tr("{0} of memories. Tap to relive {1}'s year.", [years(turning), k.name]),
           data: { kind: "birthday", childId: k.id, turning, phase: "day" },
         });
       }

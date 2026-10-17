@@ -32,7 +32,7 @@ async function token(interactive: boolean): Promise<{ accessToken: string; email
 async function api<T>(accessToken: string, path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(path.startsWith("http") ? path : `${API}${path}`, { ...init, headers: { Authorization: `Bearer ${accessToken}`, ...(init.headers ?? {}) } });
   if (res.status === 401) throw new NeedsGoogle();
-  if (!res.ok) throw new Error(`Google Drive said no (${res.status}). ${(await res.text().catch(() => "")).slice(0, 160)}`);
+  if (!res.ok) throw new Error(tr("Google Drive said no ({0}). {1}", [res.status, (await res.text().catch(() => "")).slice(0, 160)]));
   return (res.status === 204 ? null : await res.json()) as T;
 }
 
@@ -72,7 +72,7 @@ export function backupNow(interactive: boolean, onProgress?: (text: string) => v
       const id = existing?.id ?? (await api<{ id: string }>(auth.accessToken, "/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: BACKUP_ZIP, mimeType: "application/zip" }) })).id;
       const status = await uploadBytes(`${UPLOAD}/files/${id}?uploadType=media`, zipBackup(backup), auth.accessToken, BACKUP_ZIP);
       if (status === 401) throw new NeedsGoogle();
-      if (status >= 300) throw new Error(`Google Drive didn't take the backup (${status}).`);
+      if (status >= 300) throw new Error(tr("Google Drive didn't take the backup ({0}).", [status]));
       set({ lastAt: Date.now(), account: auth.email, error: undefined });
       await clearLegacy(auth.accessToken).catch(() => undefined); // tidying up never fails a backup
     } catch (e) {
@@ -96,7 +96,7 @@ async function readBackup(accessToken: string) {
   if (!id) return null;
   const got = await downloadBytes(`${API}/files/${id}?alt=media`, accessToken);
   if (got === 401) throw new NeedsGoogle();
-  if (typeof got === "number") throw new Error(`Couldn't download the backup (${got}).`);
+  if (typeof got === "number") throw new Error(tr("Couldn't download the backup ({0}).", [got]));
   return unzipBackup(got);
 }
 
