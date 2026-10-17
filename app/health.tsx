@@ -29,7 +29,7 @@ function FoodReactions({ childId }: { childId: string }) {
       </View>
       {list.slice(0, 5).map((x) => (
         <Text key={x.id} style={[TYPE.bodySmall, { color: t.ink2, marginTop: 6 }]}>
-          {formatDate(x.date)} · {foodById(x.food)?.name ?? x.food} · <Text style={{ color: t.danger, fontWeight: "700" }}>{x.reaction === "serious" ? "serious" : "mild"}</Text>{x.note ? ` · ${x.note}` : ""}
+          {formatDate(x.date)} · {foodById(x.food)?.name ?? x.food} · <Text style={{ color: t.danger, fontWeight: "700" }}>{x.reaction === "serious" ? tr("serious") : tr("mild")}</Text>{x.note ? ` · ${x.note}` : ""}
         </Text>
       ))}
     </Pressable>

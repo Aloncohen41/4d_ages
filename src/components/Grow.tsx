@@ -167,7 +167,7 @@ export function GrowPlayer({ slides, child, title, subtitle, fileLabel }: { slid
           ) : null}
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Text style={{ color: t.ink4, fontSize: 11, fontWeight: "700" }}>{formatDate(slides[0].date)}</Text>
-            <Text style={{ color: t.ink4, fontSize: 11, fontWeight: "700" }}>{idx + 1} of {slides.length}</Text>
+            <Text style={{ color: t.ink4, fontSize: 11, fontWeight: "700" }}>{tr("{0} of {1}", [idx + 1, slides.length])}</Text>
             <Text style={{ color: t.ink4, fontSize: 11, fontWeight: "700" }}>{formatDate(slides[slides.length - 1].date)}</Text>
           </View>
         </View>

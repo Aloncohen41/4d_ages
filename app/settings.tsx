@@ -23,13 +23,13 @@ import { DriveBackupCard } from "../src/components/DriveBackupCard";
 import { Btn, Input, Label, Seg, Sheet } from "../src/components/ui";
 import { CHART_SOURCES } from "../src/lib/percentiles";
 
-import { LANGS, LangChoice, lang, resolveLang, tr } from "../src/lib/i18n";
+import { LANGS, LangChoice, lang, resolveLang, tr, wordList } from "../src/lib/i18n";
 /** The three tips that used to sit on the Add page, in order. */
-export const PHOTO_STEPS = [
+export const PHOTO_STEPS = wordList([
   "In the picker, search a name — if you've named them in Google Photos, their photos come up together.",
   "Select many at once — press and hold.",
   "Only the photos you picked are added. Nothing is scanned.",
-];
+]);
 
 /** The word typed to confirm deleting the account. */
 export const DELETE_WORD = "DELETE";
@@ -221,6 +221,7 @@ function LanguageChoice() {
     const next = resolveLang(v);
     if (next === lang()) return;
     if (onWeb) { setTimeout(() => window.location.reload(), 200); return; }
+    // in the language being switched to, not the one it is now
     const name = LANGS.find((x) => x.id === next)?.name ?? "";
     Alert.alert(name, next === "he" ? "סגרו ופתחו מחדש את 4D Ages כדי לראות אותה בעברית." : "Close and open 4D Ages again to see it in English.", [
       { text: next === "he" ? "אחר כך" : "Later", style: "cancel" },

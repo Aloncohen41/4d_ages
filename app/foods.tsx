@@ -56,7 +56,7 @@ export default function FoodsPage() {
   const ring = (label: string, n: number, of: number) => (
     <View style={{ flex: 1, padding: 14, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }} accessible accessibilityLabel={tr("{0}: {1} of {2}", [label, n, of])}>
       <Text style={[TYPE.labelLarge, { color: t.ink2 }]}>{label}</Text>
-      <Text style={[TYPE.headlineSmall, { color: t.ink, marginTop: 2 }]}>{n}<Text style={[TYPE.bodyMedium, { color: t.ink3 }]}> of {of}</Text></Text>
+      <Text style={[TYPE.headlineSmall, { color: t.ink, marginTop: 2 }]}>{n}<Text style={[TYPE.bodyMedium, { color: t.ink3 }]}> {tr("of {0}", [of])}</Text></Text>
       <View style={{ height: 8, borderRadius: 4, backgroundColor: withAlpha(t.accent, 0.16), marginTop: 8, overflow: "hidden" }}>
         <View style={{ width: `${Math.round((n / Math.max(1, of)) * 100)}%`, height: 8, borderRadius: 4, backgroundColor: t.accent }} />
       </View>

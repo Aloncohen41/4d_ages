@@ -110,7 +110,7 @@ export async function shareChild(childId: string): Promise<void> {
   });
   if (e1) throw new Error(e1.message);
   // already a member (a first try that stopped half way, or sharing again): nothing to change
-  const { error: e2 } = await sb.from("child_members").upsert({ child_id: child.id, user_id: user.id, role: "owner", email: user.email ?? null }, { onConflict: tr("child_id,user_id"), ignoreDuplicates: true });
+  const { error: e2 } = await sb.from("child_members").upsert({ child_id: child.id, user_id: user.id, role: "owner", email: user.email ?? null }, { onConflict: "child_id,user_id", ignoreDuplicates: true });
   if (e2) throw new Error(e2.message);
 
   apply((s) => ({ kids: s.kids.map((k) => (k.id === childId ? { ...k, shared: true, updatedAt: ts, syncedTs: ts } : k)) }));
@@ -422,7 +422,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   const defs = (s.customDefs[childId] || []).filter(isDirty);
   if (defs.length) {
     const rows = defs.map((d) => ({ child_id: childId, id: d.id, label: d.label, emoji: d.emoji, hint: d.hint, category: d.category ?? null, client_ts: d.updatedAt ?? Date.now(), deleted: false }));
-    const { error } = await sb.from("custom_defs").upsert(rows, { onConflict: tr("child_id,id") });
+    const { error } = await sb.from("custom_defs").upsert(rows, { onConflict: "child_id,id" });
     if (error) throw new Error(error.message);
     apply((st) => ({ customDefs: { ...st.customDefs, [childId]: (st.customDefs[childId] || []).map((d) => { const r = rows.find((x) => x.id === d.id); return r ? { ...d, updatedAt: r.client_ts, syncedTs: r.client_ts } : d; }) } }));
   }
@@ -434,7 +434,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   if (rels.length) {
     const { error } = await sb.from("relatives").upsert(
       rels.map((r) => ({ child_id: childId, id: r.id, name: r.name, relation: relationLabel(r), custom_label: null, nickname: r.nickname ?? null, description: r.description ?? null, child_ref: r.childRef ?? null, ...kinColumns(r), client_ts: r.updatedAt ?? 0, deleted: false })),
-      { onConflict: tr("child_id,id") }
+      { onConflict: "child_id,id" }
     );
     if (error) throw new Error(error.message);
   }
@@ -455,7 +455,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
       }
     }
     const ts = e.updatedAt ?? Date.now();
-    const { error } = await sb.from("classics").upsert(classicToRow({ ...e, photos }, ts), { onConflict: tr("child_id,id") });
+    const { error } = await sb.from("classics").upsert(classicToRow({ ...e, photos }, ts), { onConflict: "child_id,id" });
     if (error) throw new Error(error.message);
     apply((st) => ({
       classics: st.classics.map((c) => (c.childId === childId && c.id === e.id && (c.updatedAt ?? 0) === ts
@@ -469,7 +469,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
   const foods = foodsReady ? s.foodTries.filter((x) => x.childId === childId && isDirty(x)) : [];
   if (foods.length) {
     const rows = foods.map((x) => foodTryToRow(x, x.updatedAt ?? Date.now()));
-    const { error } = await sb.from("food_tries").upsert(rows, { onConflict: tr("child_id,id") });
+    const { error } = await sb.from("food_tries").upsert(rows, { onConflict: "child_id,id" });
     if (error) throw new Error(error.message);
     apply((st) => ({ foodTries: st.foodTries.map((x) => { const r = rows.find((y) => y.id === x.id && y.child_id === x.childId); return r && (x.updatedAt ?? 0) === r.client_ts ? { ...x, syncedTs: r.client_ts } : x; }) }));
   }
@@ -593,7 +593,7 @@ async function leaveFamilies(childId: string) {
   if (families.length) {
     await client().from("relatives").upsert(
       families.map((fam) => ({ child_id: fam, id: me.id, name: me.name, relation: me.relation, custom_label: null, nickname: null, description: null, child_ref: childId, client_ts: ts, deleted: true })),
-      { onConflict: tr("child_id,id") },
+      { onConflict: "child_id,id" },
     );
   }
   st.removeRelative(me.id);

@@ -1,4 +1,6 @@
 import React from "react";
+import { isRTL } from "../lib/i18n";
+import { View } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { resolveGlyph } from "../lib/iconGlyph";
 
@@ -49,8 +51,12 @@ function glyphs(): unknown {
   return glyphList;
 }
 
+/** Icons that point along the line: mirrored when the page reads right to left (Hebrew), so "back" points right. */
+const DIRECTIONAL = new Set<string>(["chevron-left", "chevron-right", "arrow-left", "arrow-right", "logout"]);
+
 export function Icon({ name, size = 20, color = "#1d1b1e" }: { name: IconName; size?: number; color?: string }) {
-  return <MaterialCommunityIcons name={resolveGlyph(MAP[name], glyphs()) as never} size={size} color={color} />;
+  const icon = <MaterialCommunityIcons name={resolveGlyph(MAP[name], glyphs()) as never} size={size} color={color} />;
+  return isRTL() && DIRECTIONAL.has(name) ? <View style={{ transform: [{ scaleX: -1 }] }}>{icon}</View> : icon;
 }
 
 /** The icon font, loaded once at start so icons never flash empty. */

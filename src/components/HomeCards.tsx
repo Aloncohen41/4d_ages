@@ -51,7 +51,7 @@ export function HomeCards({ child, onView }: { child: Child; onView: (m: Memory)
         <View style={[card, { flexDirection: "row", alignItems: "center", gap: 12 }]}>
           <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name="images" size={22} color={t.onAccentSoft} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={[TYPE.titleSmall, { color: t.ink }]}>{child.name} is {due.month === 12 ? "one" : tr("{0} month{1} old", [due.month, due.month === 1 ? "" : "s"])}!</Text>
+            <Text style={[TYPE.titleSmall, { color: t.ink }]}>{tr("{0} is {1}!", [child.name, due.month === 12 ? "one" : tr("{0} month{1} old", [due.month, due.month === 1 ? "" : "s"])])}</Text>
             <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Add this month's photo to the Monthly photos page.")}</Text>
             <Btn label={tr("Add the {0}-month photo", [due.month])} icon="image" kind="soft" onPress={addMonthly} style={{ marginTop: 8, paddingVertical: 8 }} />
           </View>
@@ -82,7 +82,7 @@ export function HomeCards({ child, onView }: { child: Child; onView: (m: Memory)
             {past.slice(0, 10).map(({ memory: m, yearsAgo }) => (
               <Pressable key={m.id} onPress={() => onView(m)} accessibilityRole="button" accessibilityLabel={tr("{0} year{1} ago: {2}", [yearsAgo, yearsAgo === 1 ? "" : "s", blurb(m) || TYPE_META[m.type].label])} style={{ width: 128 }}>
                 <PhotoView photo={m} emojiSize={30} style={{ width: 128, height: 96, borderRadius: 12 }} />
-                <Text style={[TYPE.labelMedium, { color: t.accentDeep, marginTop: 4 }]}>{yearsAgo} year{yearsAgo === 1 ? "" : "s"} ago</Text>
+                <Text style={[TYPE.labelMedium, { color: t.accentDeep, marginTop: 4 }]}>{tr("{0} year{1} ago", [yearsAgo, yearsAgo === 1 ? "" : "s"])}</Text>
                 <Text style={[TYPE.bodySmall, { color: t.ink2 }]} numberOfLines={2}>{blurb(m) || TYPE_META[m.type].label}</Text>
               </Pressable>
             ))}

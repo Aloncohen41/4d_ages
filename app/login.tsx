@@ -137,7 +137,7 @@ export default function Login() {
               <>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <View style={{ flex: 1, height: 1, backgroundColor: t.line }} />
-                  <Text style={[TYPE.labelMedium, { color: t.ink3 }]}>or</Text>
+                  <Text style={[TYPE.labelMedium, { color: t.ink3 }]}>{tr("or")}</Text>
                   <View style={{ flex: 1, height: 1, backgroundColor: t.line }} />
                 </View>
                 <Btn label={tr("Sign in with Google")} kind="line" icon="google" disabled={busy} onPress={() => run(async () => { await signInWithGoogle(); })} />

@@ -373,7 +373,7 @@ function SendInvite({ child, invite, onDone }: { child: Child; invite: PendingIn
       <View style={{ alignItems: "center", backgroundColor: t.card, borderRadius: 20, borderWidth: 1, borderColor: t.line, padding: 18 }}>
         <Icon name="check" size={30} color={t.accent} />
         <Text style={[TYPE.titleMedium, { color: t.ink, marginTop: 4 }]}>{tr("The invite is ready")}</Text>
-        <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 2 }]}>{invite.email ? tr("For {0} · ", [invite.email]) : ""}{invite.kind === "parent" ? "parent" : tr("family, sees the posts with {0}", [names.join(", ") || "the people chosen"])}</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink3, textAlign: "center", marginTop: 2 }]}>{invite.email ? tr("For {0} · ", [invite.email]) : ""}{invite.kind === "parent" ? tr("parent") : tr("family, sees the posts with {0}", [names.join(", ") || "the people chosen"])}</Text>
         <Text selectable style={{ color: t.ink, fontSize: 34, fontWeight: "700", letterSpacing: 5, marginTop: 10 }}>{invite.code}</Text>
         <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("Works once, until {0}", [formatDate(invite.expires.slice(0, 10))])}</Text>
       </View>

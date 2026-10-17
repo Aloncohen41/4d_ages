@@ -19,6 +19,7 @@ import { TYPE } from "../../src/theme";
 import { withAlpha } from "../../src/lib/m3";
 import { useWide } from "../../src/lib/useWide";
 import { SiteHeader } from "../../src/components/SiteHeader";
+import { isRTL } from "../../src/lib/i18n";
 
 import { tr } from "../../src/lib/i18n";
 /*
@@ -129,12 +130,13 @@ export default function TabsLayout() {
       <Tabs
         key={isPet(active) ? "pet" : "kid"} // a pet and a child have different tabs: the pager is made afresh when switching between them
         tabBarPosition="bottom"
+        style={{ direction: "ltr" }} // the pager itself always slides left to right (see sceneStyle)
         tabBar={(props: MaterialTopTabBarProps) => <BottomBar {...props} hidden={wide} restoreTo={restoring ? saved : null} onRestored={() => setRestoring(false)} />}
         screenOptions={{
           swipeEnabled: !held && !wide, // off only while the player's slider is being dragged
           lazy: false, // every tab is mounted up front: neighbours are already there during the swipe
           animationEnabled: !restoring && !wide, // the jump to the saved tab is instant; normal swipes and taps animate as usual
-          sceneStyle: { backgroundColor: t.bg }, // never a white gap between pages
+          sceneStyle: { backgroundColor: t.bg, direction: isRTL() ? "rtl" : "ltr" }, // never a white gap between pages; each page in the language's direction
         }}
       >
         {(isPet(active) ? PET_TABS : KID_TABS).map((tab) => (

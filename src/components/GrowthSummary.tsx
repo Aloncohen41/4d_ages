@@ -65,7 +65,7 @@ export function GrowthSummary({ child, memories }: { child: Child; memories: Mem
       ) : null}
       <Pressable onPress={() => router.push("/settings")} accessibilityRole="button" hitSlop={6} style={{ marginTop: 10 }}>
         <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>
-          {CHART_SOURCES.find((c) => c.id === source)?.label} {tr("charts, compared with")} {sex === "girl" ? "girls" : sex === "boy" ? "boys" : tr("girls and boys")}. <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{tr("Change charts")}</Text>
+          {CHART_SOURCES.find((c) => c.id === source)?.label} {tr("charts, compared with")} {sex === "girl" ? tr("girls") : sex === "boy" ? tr("boys") : tr("girls and boys")}. <Text style={{ color: t.accentDeep, fontWeight: "700" }}>{tr("Change charts")}</Text>
         </Text>
       </Pressable>
     </View>

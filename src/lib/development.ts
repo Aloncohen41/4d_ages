@@ -3,7 +3,7 @@ import { addMonths, daysBetween } from "./date";
 import { monthsOld } from "./growth";
 import { withAlpha } from "./m3";
 
-import { tr, wordList } from "./i18n";
+import { lang, tr, wordList } from "./i18n";
 /*
  * How milestones are matched, asked about and understood. Everything here is meant to be encouraging:
  * nothing is counted against a maximum, and "not yet" is never treated as a failure.
@@ -57,14 +57,16 @@ export function ageLabel(months: number): string {
   const m = Math.floor(months);
   if (m < 24) return `${m} month${m === 1 ? "" : "s"}`;
   const y = Math.floor(m / 12), r = m % 12;
-  return r === 0 ? `${y} years` : tr("{0} years {1} month{2}", [y, r, r === 1 ? "" : "s"]);
+  return r === 0 ? tr("{0} years", [y]) : tr("{0} years {1} month{2}", [y, r, r === 1 ? "" : "s"]);
 }
 
 /** A short age for tight spaces: "18 mo", "2y 6m". */
 export function ageChip(months: number): string {
   const m = Math.floor(months);
-  if (m < 24) return `${m} mo`;
+  const he = lang() === "he";
+  if (m < 24) return he ? `${m} ח׳` : `${m} mo`;
   const y = Math.floor(m / 12), r = m % 12;
+  if (he) return r ? `${y} ש׳ ${r} ח׳` : `${y} ש׳`;
   return r ? `${y}y ${r}m` : `${y}y`;
 }
 

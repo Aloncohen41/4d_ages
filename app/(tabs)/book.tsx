@@ -145,8 +145,8 @@ function Book() {
       <BookOverview input={input} count={plan.pages.length} width={width - 32} onOpen={setPreviewAt} />
 
       <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", marginTop: 16 }}>
-        <Text style={[TYPE.titleMedium, { color: t.ink }]}>{plan.pages.length} pages</Text>
-        <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{plan.pictures} photo{plan.pictures === 1 ? "" : "s"}</Text>
+        <Text style={[TYPE.titleMedium, { color: t.ink }]}>{tr("{0} pages", [plan.pages.length])}</Text>
+        <Text style={[TYPE.bodyMedium, { color: t.ink3 }]}>{tr("{0} photo{1}", [plan.pictures, plan.pictures === 1 ? "" : "s"])}</Text>
       </View>
       {plan.available > plan.pictures ? (
         <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 2 }]}>{tr("Up to {0} photos fit in one book, chosen evenly across the years. The rest of those memories are in it as words.", [BOOK_PHOTO_LIMIT])}</Text>
@@ -227,7 +227,7 @@ function Book() {
 
       {/* the theme and colour are chosen in the Customize view, and the book is exported from there (its share button, top right) */}
       <Btn label={tr("Customize and export")} icon="pdf" onPress={() => { setMsg(""); setCustomizing(true); }} style={{ marginTop: 18 }} />
-      <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>{size.label} · {plan.pages.length} pages</Text>
+      <Text style={{ color: t.ink4, fontSize: 12, textAlign: "center", marginTop: 8 }}>{tr("{0} · {1} pages", [size.label, plan.pages.length])}</Text>
       {customizing ? (
         <BookCustomizer input={input} pages={plan.pages.length} pet={isPet(child)} onStyle={(v) => set({ style: v })} onColour={(c) => set({ colour: c })}
           onClose={() => setCustomizing(false)} onExport={doExport} busy={busy} progress={progress} message={msg} />

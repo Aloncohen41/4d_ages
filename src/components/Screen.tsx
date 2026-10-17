@@ -215,15 +215,15 @@ function Hero({ wide = false }: { wide?: boolean }) {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep, flexShrink: 1 }]}>{tr("{0} · {1} week{2} to go", [weekLabel(child.birth, todayISO()), pregnancy(child.birth).weeksToGo, pregnancy(child.birth).weeksToGo === 1 ? "" : "s"])}</Text></View>
           ) : (
             <Pressable onPress={() => setAgeOpen(true)} hitSlop={6}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{ageLong(child.birth, todayISO())} old</Text></View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}><Icon name="birthday" size={15} color={t.accentDeep} /><Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("{0} old", [ageLong(child.birth, todayISO())])}</Text></View>
             </Pressable>
           )}
         </View>
       </View>
       <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
-        <Pressable style={box} onPress={() => setCollection("photos")}><Text style={statNum(t.ink)}>{stats.ph}</Text><Text style={statLbl(t.ink3)}>photos</Text></Pressable>
-        <Pressable style={box} onPress={() => setCollection("milestones")}><Text style={statNum(t.ink)}>{stats.ms}</Text><Text style={statLbl(t.ink3)}>{isPet(child) ? tr("tricks & firsts") : "milestones"}</Text></Pressable>
-        <Pressable style={box} onPress={() => setCollection("stories")}><Text style={statNum(t.ink)}>{stats.st}</Text><Text style={statLbl(t.ink3)}>stories</Text></Pressable>
+        <Pressable style={box} onPress={() => setCollection("photos")}><Text style={statNum(t.ink)}>{stats.ph}</Text><Text style={statLbl(t.ink3)}>{tr("photos")}</Text></Pressable>
+        <Pressable style={box} onPress={() => setCollection("milestones")}><Text style={statNum(t.ink)}>{stats.ms}</Text><Text style={statLbl(t.ink3)}>{isPet(child) ? tr("tricks & firsts") : tr("milestones")}</Text></Pressable>
+        <Pressable style={box} onPress={() => setCollection("stories")}><Text style={statNum(t.ink)}>{stats.st}</Text><Text style={statLbl(t.ink3)}>{tr("stories")}</Text></Pressable>
       </View>
       <AgeSheet visible={ageOpen} onClose={() => setAgeOpen(false)} />
       <ProfileSheet visible={editOpen} onClose={() => setEditOpen(false)} onArrived={() => { setEditOpen(false); setTimeout(() => setArrival(true), 300); }} />

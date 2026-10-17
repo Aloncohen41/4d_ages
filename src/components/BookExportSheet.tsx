@@ -83,7 +83,7 @@ export function BookExportSheet({ themeLabel, size, pages, onExport, busy, progr
   const t = useTheme();
   return (
     <Sheet visible onClose={busy ? () => undefined : onClose} title={tr("Export the book")}>
-      <Text style={[TYPE.bodyMedium, { color: t.ink3, textAlign: "center" }]}>{themeLabel} · {size.label} · {pages} pages</Text>
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, textAlign: "center" }]}>{tr("{0} · {1} · {2} pages", [themeLabel, size.label, pages])}</Text>
       {onWeb ? (
         <>
           {/* the website: the browser's print window, where "Save as PDF" saves the book */}

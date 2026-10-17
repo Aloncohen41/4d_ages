@@ -34,7 +34,7 @@ export function PetWeight() {
       <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 12 }]}>{tr("{0}'s weight over time. Weigh them now and then, and add it here.", [child.name])}</Text>
       {!viewOnly ? <Btn label={tr("Add a weight")} icon="scale" onPress={() => setEntrySheet({ kind: "measure" })} /> : null}
       <View style={{ marginTop: 12, width: 160 }}>
-        <Seg options={[{ id: "kg" as WeightUnit, label: "kg" }, { id: "lb" as WeightUnit, label: "lb" }]} value={wUnit} onChange={setWeightUnit} />
+        <Seg options={[{ id: "kg" as WeightUnit, label: tr("kg") }, { id: "lb" as WeightUnit, label: tr("lb") }]} value={wUnit} onChange={setWeightUnit} />
       </View>
       {latest ? (
         <>

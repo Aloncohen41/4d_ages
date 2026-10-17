@@ -62,7 +62,7 @@ function PhotoForm({ photoId, onClose }: { photoId: string; onClose: () => void 
 
       <Label>{tr("Date taken")}</Label>
       <DateField value={date} onChange={setDate} min={earliestDate(child.birth)} />
-      <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{date < child.birth ? ageShort(child.birth, date) : tr("{0} was {1}", [child.name, ageShort(child.birth, date).replace(" old", "")])} on {formatDate(date)}</Text>
+      <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12, marginTop: 6 }}>{tr("{0} on {1}", [date < child.birth ? ageShort(child.birth, date) : tr("{0} was {1}", [child.name, ageShort(child.birth, date).replace(" old", "")]), formatDate(date)])}</Text>
       <TimeField value={time} onChange={setTime} />
       <Label>{tr("Caption")}</Label>
       <Input value={caption} onChangeText={setCaption} multiline accessibilityLabel={tr("Caption")} />

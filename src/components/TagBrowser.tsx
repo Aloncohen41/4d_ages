@@ -31,7 +31,7 @@ export function TagResults({ keys, childId }: { keys: string[]; childId: string 
   return (
     <View>
       <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12, marginBottom: 8 }}>
-        {found.length} {found.length === 1 ? "memory" : "memories"} · {[...counts.entries()].map(([k, n]) => `${n} ${k.replace(/^\S+\s/, "").toLowerCase()}${n === 1 ? "" : "s"}`).join(", ")}
+        {found.length} {found.length === 1 ? tr("memory") : tr("memories")} · {[...counts.entries()].map(([k, n]) => `${n} ${k.replace(/^\S+\s/, "").toLowerCase()}${n === 1 ? "" : "s"}`).join(", ")}
       </Text>
       {found.map((p) => {
         const cover = coverOf(p.media);
@@ -105,7 +105,7 @@ function Browser({ initial, forHome, childId, childName, onClose }: { initial: s
             {shown.map((s) => (
               <Pressable key={s.id} onPress={() => setSelected((c) => (forHome && c.length ? [...new Set([...c, s.id])] : [s.id]))} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: t.card, borderRadius: 14, borderWidth: 1, borderColor: t.line, padding: 10 }}>
                 <TagChip tag={s.tag} />
-                <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{s.count} {s.count === 1 ? "memory" : "memories"}  ›</Text>
+                <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{s.count} {s.count === 1 ? tr("memory") : tr("memories")}  ›</Text>
               </Pressable>
             ))}
           </View>

@@ -164,7 +164,7 @@ function Growth() {
           <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 18, marginTop: 16 }}>
             <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Latest height · {0}", [formatDate(latest.date)])}</Text>
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 34, marginTop: 2 }}>{formatHeight(latest.cm, unit)}</Text>
-            {prev ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{latest.cm >= prev.cm ? "+" : ""}{formatHeight(latest.cm - prev.cm, unit)} since {formatDate(prev.date)}</Text> : null}
+            {prev ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("{0}{1} since {2}", [latest.cm >= prev.cm ? "+" : "", formatHeight(latest.cm - prev.cm, unit), formatDate(prev.date)])}</Text> : null}
             <Comparisons cm={latest.cm} unit={unit} />
             {status ? <Text style={{ color: t.ink3, marginTop: 10, fontSize: 12.5 }}>{tr("Height is {0} for {1} this age. Every child grows in their own way.", [statusText[status], ref === "boy" ? "boys" : ref === "girl" ? "girls" : "children"])}</Text> : null}
           </View>
@@ -189,7 +189,7 @@ function Growth() {
           <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 18, marginTop: 16 }}>
             <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12 }}>{tr("Latest weight · {0}", [formatDate(latestW.date)])}</Text>
             <Text style={{ color: t.ink, fontWeight: "700", fontSize: 34, marginTop: 2 }}>{formatWeight(latestW.kg, wUnit)}</Text>
-            {prevW ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{latestW.kg >= prevW.kg ? "+" : ""}{formatWeight(latestW.kg - prevW.kg, wUnit)} since {formatDate(prevW.date)}</Text> : null}
+            {prevW ? <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("{0}{1} since {2}", [latestW.kg >= prevW.kg ? "+" : "", formatWeight(latestW.kg - prevW.kg, wUnit), formatDate(prevW.date)])}</Text> : null}
           </View>
           <Text style={{ color: t.ink, fontWeight: "700", fontSize: 17, marginTop: 20, marginBottom: 8 }}>{tr("Weight curve")}</Text>
           <LineChart child={child} entries={weights} unit={unit} mode="weight" weightUnit={wUnit} />

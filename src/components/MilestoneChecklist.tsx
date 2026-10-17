@@ -170,7 +170,7 @@ export function MilestoneChecklist() {
       </View>
       {selecting ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6, backgroundColor: t.surfaceHigh, borderRadius: 16, padding: 10 }}>
-          <Text style={[TYPE.labelLarge, { color: t.ink, flex: 1, paddingLeft: 6 }]}>{selected.length} selected</Text>
+          <Text style={[TYPE.labelLarge, { color: t.ink, flex: 1, paddingLeft: 6 }]}>{tr("{0} selected", [selected.length])}</Text>
           <Btn label={tr("Set date")} icon="calendar" onPress={dateSelected} disabled={!selected.length} />
         </View>
       ) : null}
@@ -204,7 +204,7 @@ export function MilestoneChecklist() {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: areaSoft(meta, t), paddingHorizontal: 14, paddingVertical: 12 }}>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: meta.color, alignItems: "center", justifyContent: "center" }}><Icon name={meta.icon as IconName} size={18} color={meta.ink} /></View>
               <Text style={{ flex: 1, color: t.ink, fontWeight: "700", fontSize: 16 }}>{meta.label}</Text>
-              {done >= 2 ? <Text style={{ color: areaInk(meta, t), fontWeight: "700", fontSize: 12.5 }}>{done} reached</Text> : done === 1 ? <Icon name="star" size={15} color={areaInk(meta, t)} /> : null}
+              {done >= 2 ? <Text style={{ color: areaInk(meta, t), fontWeight: "700", fontSize: 12.5 }}>{tr("{0} reached", [done])}</Text> : done === 1 ? <Icon name="star" size={15} color={areaInk(meta, t)} /> : null}
             </View>
             <View style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
               {list.map((d, i) => (

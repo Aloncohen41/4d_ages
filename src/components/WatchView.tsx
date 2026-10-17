@@ -47,7 +47,7 @@ export function WatchView({ child, memories }: { child: Child; memories: Memory[
       <View style={{ position: "absolute", right: 8, top: 8, backgroundColor: "#000a", borderRadius: 99, padding: 6 }}><Icon name="play" size={12} color="#fff" /></View>
       <View style={{ padding: 11 }}>
         <Text style={{ color: t.ink, fontWeight: "700", fontSize: 15 }}>{r.label}</Text>
-        <Text style={{ color: t.ink3, fontSize: 12 }}>{r.slides.length} moments{r.inProgress ? tr(" · so far") : ""}</Text>
+        <Text style={{ color: t.ink3, fontSize: 12 }}>{tr("{0} moments{1}", [r.slides.length, r.inProgress ? tr(" · so far") : ""])}</Text>
       </View>
     </Pressable>
   );

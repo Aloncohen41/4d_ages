@@ -194,7 +194,7 @@ export function PregnancyMilestones({ child }: { child: Child }) {
 
   return (
     <View>
-      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 4 }]}>{done} of {PREGNANCY_MILESTONES.length} · {past ? tr("tap one to tick it (it's dated to the week it usually happens; the calendar changes it)") : tr("tap one to tick it with today's date, tap again to change it")}.</Text>
+      <Text style={[TYPE.bodyMedium, { color: t.ink3, marginBottom: 4 }]}>{tr("{0} of {1} · {2}.", [done, PREGNANCY_MILESTONES.length, past ? tr("tap one to tick it (it's dated to the week it usually happens; the calendar changes it)") : tr("tap one to tick it with today's date, tap again to change it")])}</Text>
       {milestonesByTrimester().map((tri) => (
         <View key={tri.trimester}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16, marginBottom: 2 }}>

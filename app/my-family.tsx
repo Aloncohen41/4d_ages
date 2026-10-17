@@ -73,7 +73,7 @@ function Timeline({ kids }: { kids: Child[] }) {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <Avatar child={child} size={24} />
               <Text style={[TYPE.labelLarge, { color: t.ink2 }]}>{child.name}</Text>
-              <Text style={[TYPE.labelSmall, { color: t.ink3 }]}>· {child.expecting ? "expecting" : ageShort(child.birth, p.date)}</Text>
+              <Text style={[TYPE.labelSmall, { color: t.ink3 }]}>· {child.expecting ? tr("expecting") : ageShort(child.birth, p.date)}</Text>
             </View>
             <PostCard p={p} child={child} onView={() => setViewing(p)} onOpenMedia={(i) => { const items = visualMedia(p.media).filter((m) => m.uri); if (items.length) setGallery({ items, index: Math.min(i, items.length - 1) }); }} onEdit={() => { setActive(child.id); edit(p); }} />
           </View>

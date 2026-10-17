@@ -58,7 +58,7 @@ export function ReinforceSheet({ visible, onClose }: { visible: boolean; onClose
         {r.status === "outstanding" && r.ahead.length ? <Text style={{ color: t.ink2, fontSize: 13, lineHeight: 19, marginTop: 8 }}>{tr("Already reached {0}{1}, ahead of the usual timing.", [r.ahead.slice(0, 2).map((d) => `“${d.label}”`).join(" and "), r.ahead.length > 2 ? ` and ${r.ahead.length - 2} more` : ""])}</Text> : null}
         {r.status === "reinforce" ? (
           <View style={{ marginTop: 10, backgroundColor: t.bg2, borderRadius: 14, padding: 12 }}>
-            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>{tr("Try this together")} <Text style={{ color: t.ink3, fontWeight: "600" }}>· {bandLabel(band)} ideas</Text></Text>
+            <Text style={{ color: t.ink, fontWeight: "700", fontSize: 13 }}>{tr("Try this together")} <Text style={{ color: t.ink3, fontWeight: "600" }}>{tr("· {0} ideas", [bandLabel(band)])}</Text></Text>
             {activitiesFor(r.area, band).map((a) => (
               <View key={a} style={{ flexDirection: "row", gap: 8, marginTop: 7 }}>
                 <Text style={{ color: areaInk(meta, t), fontWeight: "700" }}>•</Text>

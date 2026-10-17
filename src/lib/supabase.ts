@@ -82,7 +82,7 @@ export async function signUp(email: string, password: string): Promise<"verify" 
   const { data, error } = await need().auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: AUTH_REDIRECT, data: { legal: agreementNow() } } });
   if (error) throw new Error(friendly(error.message));
   // an existing, verified address comes back with no identities (Supabase hides whether it exists): treat it as "sign in instead"
-  if (data.user && !data.session && (data.user.identities ?? []).length === 0) throw new Error(friendly(tr("User already registered")));
+  if (data.user && !data.session && (data.user.identities ?? []).length === 0) throw new Error(friendly("User already registered"));
   return data.session ? "signed-in" : "verify";
 }
 

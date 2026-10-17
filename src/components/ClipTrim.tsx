@@ -64,7 +64,7 @@ export function ClipTrim({ uri, lengthMs, startMs, onChange }: { uri: string; le
         <View style={{ position: "absolute", left: `${from}%`, width: `${span}%`, top: 0, bottom: 0, borderRadius: 99, backgroundColor: t.accent }} />
       </View>
       <Text style={{ color: t.ink2, fontSize: 12.5, fontWeight: "700", textAlign: "center", marginTop: 8 }}>
-        {mmss(pos)} – {mmss(Math.min(lengthMs, pos + CLIP_MAX_MS))} of {mmss(lengthMs)}
+        {tr("{0} – {1} of {2}", [mmss(pos), mmss(Math.min(lengthMs, pos + CLIP_MAX_MS)), mmss(lengthMs)])}
       </Text>
     </View>
   );

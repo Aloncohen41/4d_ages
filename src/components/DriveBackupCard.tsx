@@ -57,12 +57,12 @@ export function DriveBackupCard() {
   const status = busy
     ? busy
     : prefs.error === "needs-google"
-      ? "Google Drive needs connecting again. Tap Back up now."
+      ? tr("Google Drive needs connecting again. Tap Back up now.")
       : prefs.error
-        ? `The last backup didn't finish: ${prefs.error}`
+        ? tr("The last backup didn't finish: {0}", [prefs.error])
         : prefs.lastAt
-          ? `Last backup ${when(prefs.lastAt)}${prefs.account ? ` · ${prefs.account}` : ""}`
-          : "Not backed up yet.";
+          ? tr("Last backup {0}{1}", [when(prefs.lastAt), prefs.account ? ` · ${prefs.account}` : ""])
+          : tr("Not backed up yet.");
 
   return (
     <View style={{ backgroundColor: t.card, borderRadius: 22, borderWidth: 1, borderColor: t.line, padding: 16 }}>

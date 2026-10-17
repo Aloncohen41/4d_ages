@@ -61,6 +61,7 @@ export function untr(src: string): string {
     } else if (vars.length) {
       by = "`" + english.replace(/`/g, "\\`").replace(/\{(\d+)\}/g, (_x, k) => "${" + (vars[Number(k)] ?? "") + "}") + "`";
     } else by = JSON.stringify(english);
+    if (/\btr\(/.test(by)) by = untr(by); // a translation inside another one's values
     out += s.slice(i, from) + by;
     i = to;
     re.lastIndex = to;

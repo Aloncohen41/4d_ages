@@ -83,13 +83,13 @@ export function SiteHeader() {
           <Image source={WORDMARKS.pink} accessibilityLabel={tr("{0}, home", [APP_NAME])} style={{ height: 44, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
         </Pressable>
         <View role="navigation" aria-label={tr("Pages")} style={{ flexDirection: "row", alignItems: "center", gap: 2, flex: 1 }}>
-          {(pet ? PET_LINKS : KID_LINKS).map(([href, label]) => link(href, label))}
+          {(pet ? PET_LINKS : KID_LINKS).map(([href, label]) => link(href, tr(label)))}
           <View style={{ flex: 1 }} />
           {/* the pages that are in the phone's menu, in the same order */}
-          {link("/family", "Family", "family")}
-          {link("/classics", "Classics", "classics")}
-          {pet ? null : link("/health", "Health", "health")}
-          {link("/settings", "Settings", "settings")}
+          {link("/family", tr("Family"), "family")}
+          {link("/classics", tr("Classics"), "classics")}
+          {pet ? null : link("/health", tr("Health"), "health")}
+          {link("/settings", tr("Settings"), "settings")}
         </View>
         {preview ? (
           <Pressable onPress={clearSample} accessibilityRole="button" style={quiet}>

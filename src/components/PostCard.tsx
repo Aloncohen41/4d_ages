@@ -34,7 +34,7 @@ export function usePostBadge(child: Child) {
   return (p: Memory) => {
     const ms = p.milestoneId ? [...MILESTONE_DEFS, ...(defs[child.id] || [])].find((d) => d.id === p.milestoneId)?.label : null;
     if (ms) return `Milestone: ${ms}`;
-    return p.type === "photo" ? (p.media.some((m) => m.kind === "video") && !p.media.some((m) => m.kind === "photo") ? "Video" : "Photo") : TYPE_META[p.type].label;
+    return p.type === "photo" ? (p.media.some((m) => m.kind === "video") && !p.media.some((m) => m.kind === "photo") ? tr("Video") : tr("Photo")) : TYPE_META[p.type].label;
   };
 }
 

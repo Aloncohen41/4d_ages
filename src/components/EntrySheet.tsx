@@ -285,21 +285,21 @@ function EntryForm({ kind, editId, prefill, child, onClose }: { kind: EntryKind;
               <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>{tr("Height")}</Text>
               <Input value={heightText} onChangeText={setHeightText} keyboardType="decimal-pad" placeholder={heightUnit === "cm" ? tr("Example: 74.5") : tr("Example: 29.5")} />
             </View>
-            <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: "cm" }, { id: "in" as const, label: "in" }]} value={heightUnit} onChange={setHeightUnit} /></View>
+            <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: tr("cm") }, { id: "in" as const, label: tr("in") }]} value={heightUnit} onChange={setHeightUnit} /></View>
           </View> : null}
           <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: pet ? 0 : 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>{tr("Weight")}</Text>
               <Input value={weightText} onChangeText={setWeightText} keyboardType="decimal-pad" placeholder={weightUnit === "kg" ? tr("Example: 9.2") : tr("Example: 20.3")} />
             </View>
-            <View style={{ width: 92 }}><Seg options={[{ id: "kg" as const, label: "kg" }, { id: "lb" as const, label: "lb" }]} value={weightUnit} onChange={setWeightUnit} /></View>
+            <View style={{ width: 92 }}><Seg options={[{ id: "kg" as const, label: tr("kg") }, { id: "lb" as const, label: tr("lb") }]} value={weightUnit} onChange={setWeightUnit} /></View>
           </View>
           {!pet ? <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginTop: 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.ink2, fontWeight: "700", fontSize: 12, marginBottom: 6 }}>{tr("Head circumference")}</Text>
               <Input value={headText} onChangeText={setHeadText} keyboardType="decimal-pad" placeholder={heightUnit === "cm" ? tr("Example: 44") : tr("Example: 17.3")} />
             </View>
-            <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: "cm" }, { id: "in" as const, label: "in" }]} value={heightUnit} onChange={setHeightUnit} /></View>
+            <View style={{ width: 92 }}><Seg options={[{ id: "cm" as const, label: tr("cm") }, { id: "in" as const, label: tr("in") }]} value={heightUnit} onChange={setHeightUnit} /></View>
           </View> : null}
           <Text style={{ color: t.ink4, fontSize: 11.5, marginTop: 6 }}>{pet ? tr("It also appears in the Weight tab.") : tr("Fill in any of them. They also appear in the Growth tab.")}</Text>
         </View>

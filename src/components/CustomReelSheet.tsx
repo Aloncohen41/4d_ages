@@ -145,7 +145,7 @@ export function CustomReelSheet({ child, memories, initial, onClose }: { child: 
       <View style={{ backgroundColor: t.accentSoft, borderRadius: 18, padding: 14, marginTop: 14 }}>
         <Text style={{ color: t.ink3, fontWeight: "700", fontSize: 11.5, letterSpacing: 0.6 }}>{tr("YOUR VIDEO")}</Text>
         <Text style={{ color: t.ink, fontWeight: "700", fontSize: 19, marginTop: 3 }}>{tr("Here is {0}", [child.name])}</Text>
-        <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 15 }}>at {liveSpan.display} old</Text>
+        <Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 15 }}>{tr("at {0} old", [liveSpan.display])}</Text>
       </View>
 
       <End label={tr("From")} child={child} total={total} committed={range.from} shown={live.from ?? range.from} rev={rev} onLive={(v) => setLive((l) => ({ ...l, from: v }))} onCommit={(v) => commit("from", v)} />
@@ -156,7 +156,7 @@ export function CustomReelSheet({ child, memories, initial, onClose }: { child: 
       ) : (
         <>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18, marginBottom: 10 }}>
-            <Text style={{ color: t.ink, fontWeight: "700" }}>{chosen.length} of {candidates.length} chosen</Text>
+            <Text style={{ color: t.ink, fontWeight: "700" }}>{tr("{0} of {1} chosen", [chosen.length, candidates.length])}</Text>
             <View style={{ flexDirection: "row", gap: 16 }}>
               <Pressable onPress={() => setPicked(new Set(candidates.map((c) => c.id)))}><Text style={{ color: t.accentDeep, fontWeight: "700", fontSize: 12.5 }}>{tr("Select all")}</Text></Pressable>
               <Pressable onPress={() => setPicked(new Set())}><Text style={{ color: t.ink3, fontWeight: "700", fontSize: 12.5 }}>{tr("None")}</Text></Pressable>

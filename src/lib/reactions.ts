@@ -46,7 +46,7 @@ export async function react(childId: string, memoryId: string, author: string, h
     const { error } = await supabase.from("reactions").delete().eq("memory_id", memoryId).eq("user_id", userId);
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase.from("reactions").upsert({ child_id: childId, memory_id: memoryId, user_id: userId, author: author.trim() || tr("Family"), heart, comment: text }, { onConflict: tr("memory_id,user_id") });
+    const { error } = await supabase.from("reactions").upsert({ child_id: childId, memory_id: memoryId, user_id: userId, author: author.trim() || tr("Family"), heart, comment: text }, { onConflict: "memory_id,user_id" });
     if (error) throw new Error(error.message);
   }
   await loadReactions(childId);

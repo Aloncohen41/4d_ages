@@ -62,7 +62,7 @@ export function FamilyImportSheet({ visible, onClose, child }: { visible: boolea
           ) : null}
 
           <Text style={{ color: t.ink2, fontSize: 14, lineHeight: 20 }}>
-            {tr("Everyone from")} {src.child.name}{tr("'s family is marked.")} <Text style={{ fontWeight: "700" }}>{tr("Tap someone to leave them out")}</Text> of {child.name}{tr("'s family, then approve.")}
+            {tr("Everyone from {0}'s family is marked. Tap someone to leave them out of {1}'s family, then approve.", [src.child.name, child.name])}
           </Text>
 
           <View style={{ marginTop: 14 }}>{approveButton}</View>

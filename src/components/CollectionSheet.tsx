@@ -49,7 +49,7 @@ export function CollectionSheet({ kind, onClose }: { kind: CollectionKind | null
 
   return (
     <Sheet visible onClose={onClose} title={title}>
-      <Text style={{ color: t.ink3, fontWeight: "700", marginBottom: 12 }}>{count} {kind === "photos" ? (count === 1 ? tr("photo or video") : tr("photos & videos")) : kind === "milestones" ? (count === 1 ? "milestone" : "milestones") : (count === 1 ? "story" : "stories")}</Text>
+      <Text style={{ color: t.ink3, fontWeight: "700", marginBottom: 12 }}>{count} {kind === "photos" ? (count === 1 ? tr("photo or video") : tr("photos & videos")) : kind === "milestones" ? (count === 1 ? tr("milestone") : tr("milestones")) : (count === 1 ? tr("story") : tr("stories"))}</Text>
 
       {kind === "photos" ? (
         tiles.length ? (

@@ -21,7 +21,7 @@ export function ReactionSummary({ memoryId, onPress }: { memoryId: string; onPre
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={tr("{0} hearts, {1} comments", [hearts, comments])} style={{ flexDirection: "row", alignItems: "center", gap: 14, marginTop: 8 }}>
       {hearts ? <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="heart" size={15} color={t.accent} /><Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{hearts}</Text></View> : null}
-      {comments ? <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="message-circle" size={15} color={t.ink2} /><Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{comments} comment{comments === 1 ? "" : "s"}</Text></View> : null}
+      {comments ? <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="message-circle" size={15} color={t.ink2} /><Text style={[TYPE.labelMedium, { color: t.ink2 }]}>{tr("{0} comment{1}", [comments, comments === 1 ? "" : "s"])}</Text></View> : null}
     </Pressable>
   );
 }
