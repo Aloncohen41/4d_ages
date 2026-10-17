@@ -1,3 +1,4 @@
+import { cookiesAllow, openCookieSettings } from "./cookieConsent";
 /*
  * Google Drive access for the backup, on the website: Google's own sign-in for browsers (Google Identity Services) opens a small Google window
  * the first time, asking to allow Drive only for files 4D Ages makes. The permission lasts about an hour; the automatic backup uses it while it
@@ -37,6 +38,11 @@ function loadGoogle(): Promise<GoogleOAuth> {
 export async function driveToken(interactive: boolean): Promise<{ accessToken: string; email: string } | null> {
   if (held && Date.now() < held.until) return { accessToken: held.accessToken, email: held.email };
   if (!interactive) throw new NeedsGoogle(); // a browser can't ask Google in the background
+  if (!cookiesAllow("google")) {
+    // Google's code (and its cookies) only with permission: ask, and try again once it's allowed
+    openCookieSettings();
+    throw new Error("Backing up to Google Drive uses Google's own cookies. Allow Google services in the cookie settings, then try again.");
+  }
   const google = await loadGoogle();
   const answer = await new Promise<TokenResponse | null>((resolve) => {
     const client = google.accounts.oauth2.initTokenClient({

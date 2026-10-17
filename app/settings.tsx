@@ -7,7 +7,8 @@ import { TYPE } from "../src/theme";
 import { accountName, isConfigured, providerOf, reauthenticate, signOut, useSession } from "../src/lib/supabase";
 import { ChangeEmailSheet, ChangePasswordSheet, NameSheet } from "../src/components/AccountSheets";
 import { Icon, IconName } from "../src/components/Icon";
-import { ACCESSIBILITY_URL, CONTACT_EMAIL, LICENCES_URL, PRIVACY_URL, TERMS_URL } from "../src/brand";
+import { ACCESSIBILITY_URL, CONTACT_EMAIL, COOKIES_URL, LICENCES_URL, PRIVACY_URL, TERMS_URL } from "../src/brand";
+import { openCookieSettings } from "../src/lib/cookieConsent";
 import { exportMyData } from "../src/lib/dataExport";
 import { fileExport } from "../src/lib/fileExport";
 import { onWeb } from "../src/lib/onWeb";
@@ -99,6 +100,8 @@ export default function Settings() {
           <LinkRow icon="info" label="Terms of use" onPress={() => Linking.openURL(TERMS_URL)} />
           <LinkRow icon="smile" label="Accessibility" onPress={() => Linking.openURL(ACCESSIBILITY_URL)} />
           <LinkRow icon="info" label="Licences (open-source software, maps and music)" onPress={() => Linking.openURL(LICENCES_URL)} />
+          {onWeb ? <LinkRow icon="lock" label="Cookie policy" onPress={() => Linking.openURL(COOKIES_URL)} /> : null}
+          {onWeb ? <LinkRow icon="settings" label="Cookie settings" onPress={openCookieSettings} /> : null}
           <LinkRow icon="message-circle" label="Contact us (questions, feedback, privacy)" value={CONTACT_EMAIL} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)} />
         </View>
       </Section>

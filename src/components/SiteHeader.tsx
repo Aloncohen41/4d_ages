@@ -12,7 +12,8 @@ import { weekLabel } from "../lib/pregnancy";
 import { signOut, useSession } from "../lib/supabase";
 import { syncAll } from "../lib/sync";
 import { addPhotosFlow } from "../lib/addPhotos";
-import { ACCESSIBILITY_URL, APP_NAME, CONTACT_EMAIL, LICENCES_URL, PRIVACY_URL, TERMS_URL, WORDMARK_ASPECT } from "../brand";
+import { openCookieSettings } from "../lib/cookieConsent";
+import { ACCESSIBILITY_URL, APP_NAME, CONTACT_EMAIL, COOKIES_URL, LICENCES_URL, PRIVACY_URL, TERMS_URL, WORDMARK_ASPECT } from "../brand";
 import { TYPE } from "../theme";
 import { Avatar } from "./ui";
 import { Icon, IconName } from "./Icon";
@@ -223,6 +224,8 @@ export function SiteFooter() {
         {link("Terms", TERMS_URL)}
         {link("Accessibility", ACCESSIBILITY_URL)}
         {link("Licences", LICENCES_URL)}
+        {link("Cookie policy", COOKIES_URL)}
+        <Text accessibilityRole="button" onPress={openCookieSettings} style={[TYPE.bodyMedium, { color: t.ink2, textDecorationLine: "underline" }]}>Cookie settings</Text>
         {link("Contact", `mailto:${CONTACT_EMAIL}`)}
       </View>
     </View>

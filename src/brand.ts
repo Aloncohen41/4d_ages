@@ -18,6 +18,8 @@ export const TERMS_URL = `${SITE_URL}terms/`;
 export const DELETE_ACCOUNT_URL = `${SITE_URL}delete-account/`;
 export const ACCESSIBILITY_URL = `${SITE_URL}accessibility/`;
 export const LICENCES_URL = `${SITE_URL}licences/`;
+/** The cookie policy: what the website keeps in your browser, and the choices. */
+export const COOKIES_URL = `${SITE_URL}cookies/`;
 /** Where questions, feedback and privacy requests go (the legal pages say the same). */
 export const CONTACT_EMAIL = "contact@4dages.com";
 /** Where feedback and questions go. */
