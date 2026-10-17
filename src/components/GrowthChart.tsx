@@ -123,9 +123,11 @@ export function DoorFrame({ child, entries, unit }: { child: Child; entries: Hei
         <View style={{ position: "absolute", left: 0, top: PAD - 4, bottom: PAD, width: 6, borderRadius: 3, backgroundColor: t.outline, opacity: 0.55 }} />
         <View style={{ position: "absolute", right: 0, top: PAD - 4, bottom: PAD, width: 6, borderRadius: 3, backgroundColor: t.outline, opacity: 0.55 }} />
         {ticks.map((c) => (
-          <View key={c} style={{ position: "absolute", left: 6, width: c % 50 === 0 ? 16 : 8, top: Y(c) - 0.75, height: 1.5, backgroundColor: t.ink3, opacity: 0.55 }}>
-            {c % 50 === 0 ? <Text style={{ position: "absolute", left: 18, top: -7, width: 34, fontSize: 10, color: t.ink3, fontWeight: "700" }}>{Math.round(fromCm(c, unit))}</Text> : null}
-          </View>
+          <React.Fragment key={c}>
+            <View style={{ position: "absolute", left: 6, width: c % 50 === 0 ? 16 : 8, top: Y(c) - 0.75, height: 1.5, backgroundColor: t.ink3, opacity: 0.55 }} />
+            {/* the numbers at full strength (inside the faint tick they were too pale to read) */}
+            {c % 50 === 0 ? <Text style={{ position: "absolute", left: 24, top: Y(c) - 7.75, width: 34, fontSize: 10, color: t.ink2, fontWeight: "700" }}>{Math.round(fromCm(c, unit))}</Text> : null}
+          </React.Fragment>
         ))}
         {marks.map((e) => (
           <View key={e.id} style={{ position: "absolute", left: 0, right: 0, top: Y(e.cm) - 1.5, height: 3, borderRadius: 2, backgroundColor: e.id === newest?.id ? t.accentDeep : t.accent }} />
@@ -145,3 +147,51 @@ export function DoorFrame({ child, entries, unit }: { child: Child; entries: Hei
 }
 
 export const measurementLabel = (e: HeightEntry, unit: HeightUnit) => `${formatHeight(e.cm, unit)} · ${formatDate(e.date)}`;
+
+/** A colour for each child on the family door frame, told apart even when two share a theme. */
+export const FAMILY_COLOURS = ["#c9577f", "#2f78b7", "#3d8f4f", "#c47a12", "#7a55c4", "#b0473a"];
+
+/**
+ * The family door frame: one mark per child, each in their own colour with their name, at the height chosen by the slider (a date, or an
+ * age). No everyday objects beside it here, only the family. The frame is as tall as the tallest child needs, so small children aren't
+ * squashed at the bottom.
+ */
+export function FamilyDoorFrame({ marks, unit }: { marks: { id: string; name: string; colour: string; cm: number; note?: string }[]; unit: HeightUnit }) {
+  const t = useTheme();
+  const top = Math.min(DOOR_MAX_CM, Math.max(100, Math.ceil((Math.max(0, ...marks.map((m) => m.cm)) + 20) / 50) * 50));
+  const H = 420, PAD = 14;
+  const Y = (cm: number) => PAD + H - (Math.min(cm, top) / top) * H;
+  const ticks: number[] = [];
+  for (let c = 0; c <= top; c += 10) ticks.push(c);
+  const sorted = [...marks].sort((a, b) => b.cm - a.cm);
+  const labelTops = placeLabels(sorted.map((m) => Y(m.cm) - 9), 19, PAD, PAD + H - 4);
+  return (
+    <View style={{ height: H + PAD * 2, backgroundColor: t.bg2, borderRadius: 18, borderWidth: 1, borderColor: t.line, overflow: "hidden", flexDirection: "row" }}>
+      <View style={{ flex: 1 }} />
+      <View style={{ width: 84 }}>
+        <View style={{ position: "absolute", left: 0, top: PAD - 4, bottom: PAD, width: 6, borderRadius: 3, backgroundColor: t.outline, opacity: 0.55 }} />
+        <View style={{ position: "absolute", right: 0, top: PAD - 4, bottom: PAD, width: 6, borderRadius: 3, backgroundColor: t.outline, opacity: 0.55 }} />
+        {ticks.map((c) => (
+          <React.Fragment key={c}>
+            <View style={{ position: "absolute", left: 6, width: c % 50 === 0 ? 16 : 8, top: Y(c) - 0.75, height: 1.5, backgroundColor: t.ink3, opacity: 0.55 }} />
+            {/* the numbers at full strength (inside the faint tick they were too pale to read) */}
+            {c % 50 === 0 ? <Text style={{ position: "absolute", left: 24, top: Y(c) - 7.75, width: 40, fontSize: 10, color: t.ink2, fontWeight: "700" }}>{Math.round(fromCm(c, unit))}</Text> : null}
+          </React.Fragment>
+        ))}
+        {sorted.map((m) => (
+          <View key={m.id} style={{ position: "absolute", left: 0, right: 0, top: Y(m.cm) - 2, height: 4, borderRadius: 2, backgroundColor: m.colour }} />
+        ))}
+      </View>
+      <View style={{ flex: 2 }}>
+        {sorted.map((m, i) => (
+          <View key={m.id} style={{ position: "absolute", left: 10, right: 6, top: labelTops[i], flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: m.colour }} />
+            <Text numberOfLines={1} style={{ color: t.ink, fontSize: 12.5, fontWeight: "700", flexShrink: 1 }}>
+              {m.name} · {formatHeight(m.cm, unit)}{m.note ? <Text style={{ color: t.ink3, fontWeight: "600" }}> · {m.note}</Text> : null}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}

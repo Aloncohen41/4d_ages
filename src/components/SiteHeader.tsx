@@ -133,12 +133,20 @@ function goTo(href: string) {
 /** The profiles, side by side: each with its picture, name and age; the chosen one filled in. */
 function Profiles() {
   const t = useTheme();
+  const path = usePathname();
   const kids = useStore((s) => s.kids);
   const setActive = useStore((s) => s.setActive);
   const active = useActiveChild();
   const [adding, setAdding] = useState(false);
   return (
     <View role="group" aria-label="Profiles" style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      {kids.length > 1 ? (
+        // everyone together (app/my-family.tsx)
+        <Pressable onPress={() => router.navigate("/my-family")} accessibilityRole="link" aria-current={path === "/my-family" ? "page" : undefined} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, path === "/my-family" ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], { backgroundColor: withAlpha(t.ink, 0.05) })}>
+          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name="family" size={18} color={t.onAccentSoft} /></View>
+          <Text style={[TYPE.labelLarge, { color: path === "/my-family" ? t.onChipOn : t.ink }]}>My family</Text>
+        </Pressable>
+      ) : null}
       {kids.map((k) => {
         const on = k.id === active?.id;
         const a = smartAge(k.birth);

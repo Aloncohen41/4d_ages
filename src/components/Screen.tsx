@@ -64,6 +64,16 @@ export function TopBar() {
         <Image source={WORDMARKS[t.key]} accessibilityLabel={APP_NAME} style={{ height: 42, aspectRatio: WORDMARK_ASPECT }} contentFit="contain" contentPosition="left" />
       </View>
       <HScroll contentContainerStyle={{ gap: 8, paddingHorizontal: 14, paddingTop: 10 }}>
+        {kids.length > 1 ? (
+          // everyone together: one timeline, and their heights side by side (app/my-family.tsx)
+          <Pressable onPress={() => router.push("/my-family")} accessibilityRole="link" android_ripple={{ color: withAlpha(t.ink, 0.1) }} style={[st.chip, { backgroundColor: "transparent", borderColor: t.outline }]}>
+            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name="family" size={18} color={t.onAccentSoft} /></View>
+            <View>
+              <Text style={[TYPE.labelLarge, { color: t.ink }]}>My family</Text>
+              <Text style={[TYPE.labelSmall, { color: t.ink3 }]}>Everyone</Text>
+            </View>
+          </Pressable>
+        ) : null}
         {kids.map((k) => {
           const on = k.id === active?.id;
           const a = smartAge(k.birth);
