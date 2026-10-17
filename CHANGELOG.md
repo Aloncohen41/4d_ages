@@ -2,6 +2,51 @@
 
 Notable changes in each release of 4D Ages.
 
+## 1.1.5
+
+**4D Ages in Hebrew**
+- The whole app, the website and the books are now in Hebrew as well as English, laid out right to left. 4D Ages uses your phone's language, or choose one in Settings, Language.
+
+**First foods**
+- Keep track of the foods your baby tries, from about 100 foods in the NHS's weaning advice, with the UK's 14 allergens and how to give each one safely.
+- Each food is tried three times. Log one food or a whole meal at once, with how much, how they liked it and any reaction.
+- See what to try next, get a reminder to space out new allergens and to keep giving the ones they've had, and share a one-page summary with your doctor or health visitor.
+- Find it on the Growth tab, or under Food tried in the + menu. Reactions also show in Health.
+
+**My family**
+- A new My family button beside the profiles shows everyone's posts together in one timeline.
+- The family door frame shows every child's height side by side: on any date, or with Same age, how tall each of them was at the same age.
+
+**The family tree**
+- A new Family tree page (from Family): press and hold someone and drag them next to another person to connect them (mother or father, partner, brother or sister, son or daughter), or onto a row to move them there.
+- Two parents, or two grandparents on the same side, are shown as a couple. Press and hold the heart between them to separate them.
+- Pets always sit at the end of their row, in the app and in the book.
+
+**Adding memories**
+- Sharing photos from another app into 4D Ages now works even when 4D Ages wasn't already open.
+- Tag who's in your photos straight away, whichever way you add them.
+- Big videos now reach the other parent and the website: a smaller copy is uploaded, and the original stays on your phone.
+- When tagging people, Mummy and Daddy come first, then everyone else from A to Z.
+
+**Growth**
+- The height and weight summary shows the date of its numbers. Use the arrows to go back through every earlier measurement and its percentile.
+
+**Profiles and family**
+- Press and hold a profile to change the order of your profiles.
+- On the Family page, press and hold someone to move or remove people.
+- An invite can add the person you're inviting to the family first.
+
+**Look and feel**
+- Light mode is now the default for everyone. If you chose dark mode, it stays dark.
+- Signing out on one device no longer signs you out everywhere, so you can stay signed in on your phone and on 4dages.com at the same time.
+- In the book maker, the download button replaces the share button.
+
+**On 4dages.com**
+- A full-width layout on computers: a header with every page and profile, wide pages, and pop-ups in the middle of the screen.
+- Upload photos with the Upload button, or drag them from your computer onto the page.
+- Deleting a post, the date picker, music previews and the Home link all work properly now. Books saved on the website include every photo.
+- A cookie policy, with a choice of which optional cookies to allow.
+
 ## 1.1.4
 
 **4D Ages on the web**
