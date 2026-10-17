@@ -118,7 +118,7 @@ ok("[FAM-06] the Family page has a drag handle per row in Edit mode (the arrows 
 
 /* ---------------- dark mode in Settings */
 ok("Settings → Appearance: Light (the default for everyone), Same as phone or Dark; the app and the phone's own pickers follow it",
-  /<Section title="Appearance">/.test(read("app/settings.tsx")) && /label: "Same as phone"/.test(read("app/settings.tsx")) && /appearance: "light",/.test(read("src/lib/store.ts")) && /s\.appearance === "system" \? \{ \.\.\.s, appearance: "light" \}/.test(read("src/lib/migrate.ts")) &&
+  /<Section title="Appearance">/.test(read("app/settings.tsx")) && /"Same as phone"/.test(read("app/settings.tsx")) && /appearance: "light",/.test(read("src/lib/store.ts")) && /s\.appearance === "system" \? \{ \.\.\.s, appearance: "light" \}/.test(read("src/lib/migrate.ts")) &&
   /appearance: s\.appearance/.test(read("src/lib/store.ts")) && /appearance === "system" \? phone === "dark" : appearance === "dark"/.test(read("src/lib/useTheme.ts")) &&
   /Appearance\.setColorScheme\(appearance === "system" \? "unspecified" : appearance\)/.test(read("app/_layout.tsx")));
 

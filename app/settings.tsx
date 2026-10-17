@@ -228,10 +228,33 @@ function LanguageChoice() {
       { text: next === "he" ? "סגירה עכשיו" : "Close now", onPress: () => BackHandler.exitApp() },
     ]);
   };
+  // a list of the languages, and a tick to follow the browser's (or phone's) language instead
+  const [open, setOpen] = useState(false);
+  const system = language === "system";
+  const shown = LANGS.find((l) => l.id === resolveLang(language)) ?? LANGS[0];
   return (
     <View>
-      <Seg options={[{ id: "system" as const, label: onWeb ? tr("Same as browser") : tr("Same as phone") }, ...LANGS.map((l) => ({ id: l.id, label: l.name }))]} value={language} onChange={change} />
-      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{language === "system" ? tr("4D Ages uses your {0}'s language when it's one of these, and English otherwise.", [onWeb ? tr("browser") : tr("phone")]) : tr("Always in this language.")}</Text>
+      <Pressable onPress={() => setOpen((o) => !o)} disabled={system} accessibilityRole="button" accessibilityLabel={tr("Language: {0}", [shown.name])} aria-expanded={open}
+        style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: t.outline, opacity: system ? 0.5 : 1 }}>
+        <Icon name="earth" size={20} color={t.ink2} />
+        <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>{shown.name}</Text>
+        <Icon name={open ? "chevron-up" : "chevron-down"} size={20} color={t.ink2} />
+      </Pressable>
+      {open && !system ? (
+        <View accessibilityRole="radiogroup" style={{ marginTop: 6, borderRadius: 14, borderWidth: 1, borderColor: t.line, backgroundColor: t.card, overflow: "hidden" }}>
+          {LANGS.map((l) => (
+            <Pressable key={l.id} onPress={() => { setOpen(false); change(l.id); }} accessibilityRole="radio" aria-checked={l.id === shown.id} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12 }}>
+              <Text style={[TYPE.bodyLarge, { color: t.ink, flex: 1 }]}>{l.name}</Text>
+              {l.id === shown.id ? <Icon name="check" size={20} color={t.accent} /> : null}
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      <Pressable onPress={() => { setOpen(false); change(system ? shown.id : "system"); }} accessibilityRole="checkbox" aria-checked={system} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 }}>
+        <Icon name={system ? "check-square" : "square"} size={22} color={system ? t.accent : t.ink3} />
+        <Text style={[TYPE.bodyMedium, { color: t.ink, flex: 1 }]}>{onWeb ? tr("Same as my browser") : tr("Same as my phone")}</Text>
+      </Pressable>
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{system ? tr("4D Ages uses your {0}'s language when it's one of these, and English otherwise.", [onWeb ? tr("browser") : tr("phone")]) : tr("Always in this language.")}</Text>
     </View>
   );
 }
@@ -243,8 +266,8 @@ function AppearanceChoice() {
   const setAppearance = useStore((s) => s.setAppearance);
   return (
     <View>
-      <Seg options={[{ id: "system" as const, label: tr("Same as phone") }, { id: "light" as const, label: tr("Light") }, { id: "dark" as const, label: tr("Dark") }]} value={appearance} onChange={setAppearance} />
-      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{appearance === "system" ? tr("Dark mode turns on and off with your phone's setting.") : appearance === "dark" ? tr("Always dark, whatever the phone is set to.") : tr("Always light, whatever the phone is set to.")}</Text>
+      <Seg options={[{ id: "light" as const, label: tr("Light") }, { id: "dark" as const, label: tr("Dark") }, { id: "system" as const, label: onWeb ? tr("Automatic") : tr("Same as phone") }]} value={appearance} onChange={setAppearance} />
+      <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 6 }]}>{appearance === "system" ? (onWeb ? tr("Light or dark, following your computer's or browser's setting.") : tr("Dark mode turns on and off with your phone's setting.")) : appearance === "dark" ? tr("Always dark.") : tr("Always light.")}</Text>
     </View>
   );
 }

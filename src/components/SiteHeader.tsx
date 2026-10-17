@@ -21,6 +21,11 @@ import { Action, ICON, LABEL, actionsFor } from "./Fab";
 import { VoiceRecorderSheet } from "./Voice";
 import { AddChildSheet, MoveButton } from "./Screen";
 import { Wiggle } from "./Wiggle";
+import { DropArea, chooseFiles } from "./DropArea";
+import { Btn, Sheet } from "./ui";
+import { filesToItems } from "../lib/shareIntake";
+import { skippedMessage } from "../lib/sharedMedia";
+import { toast } from "../lib/toast";
 
 import { tr } from "../lib/i18n";
 /*
@@ -49,6 +54,7 @@ export function SiteHeader() {
   const preview = useStore((s) => s.preview);
   const clearSample = useStore((s) => s.clearSample);
   const [adding, setAdding] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Escape closes an open menu, as on any website
   useEffect(() => {
@@ -103,13 +109,14 @@ export function SiteHeader() {
         ) : null}
       </View>
 
+      {uploading ? <UploadSheet onClose={() => setUploading(false)} /> : null}
       {/* every profile side by side, as on the phone, with adding on the right */}
       <View style={{ backgroundColor: t.bg2 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 16, width: "100%", maxWidth: SITE_MAX, alignSelf: "center", paddingHorizontal: 32, paddingVertical: 10 }}>
           <Profiles />
           {active && active.role !== "viewer" ? (
-            // choosing files from the computer (they can also be dragged onto the page: see DropZone)
-            <Pressable onPress={() => addPhotosFlow()} accessibilityRole="button" accessibilityHint={tr("Or drag photos and videos onto the page")} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 18, borderRadius: 22, borderWidth: 1, borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
+            // the Upload window: drag files onto it, or choose them from the computer
+            <Pressable onPress={() => setUploading(true)} accessibilityRole="button" accessibilityHint={tr("Choose files, or drag them from your computer")} style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 18, borderRadius: 22, borderWidth: 1, borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
               <Icon name="upload" size={20} color={t.accentDeep} />
               <Text style={[TYPE.labelLarge, { color: t.accentDeep, fontSize: 15 }]}>{tr("Upload")}</Text>
             </Pressable>
@@ -139,6 +146,35 @@ function goTo(href: string) {
   router.navigate(href as never);
 }
 
+/**
+ * Uploading on the website: a window with a place to drag photos, videos and sound recordings from the computer, and a button to choose
+ * them. They then open in the new-post screen (whose, what, the date, who's in them).
+ */
+function UploadSheet({ onClose }: { onClose: () => void }) {
+  const t = useTheme();
+  const [busy, setBusy] = useState(false);
+  const take = async (files: File[]) => {
+    if (!files.length) return;
+    setBusy(true);
+    const r = await filesToItems(files);
+    setBusy(false);
+    if (r.skipped.length) toast(skippedMessage(r.skipped), true);
+    if (!r.items.length) return;
+    onClose();
+    setTimeout(() => useStore.getState().setIncoming({ items: r.items, source: "picker" }), 250);
+  };
+  return (
+    <Sheet visible onClose={onClose} title={tr("Upload")}>
+      <DropArea onFiles={take} label={tr("Drag photos, videos or recordings here")} style={{ alignItems: "center", gap: 10, paddingVertical: 40, paddingHorizontal: 20, borderRadius: 20, borderWidth: 2, borderStyle: "dashed", borderColor: t.outline }}>
+        <Icon name="upload" size={44} color={t.accent} />
+        <Text style={[TYPE.titleMedium, { color: t.ink, textAlign: "center" }]}>{busy ? tr("Getting your photos ready…") : tr("Drag photos, videos or recordings here")}</Text>
+        <Text style={[TYPE.bodySmall, { color: t.ink3 }]}>{tr("or")}</Text>
+        <Btn label={tr("Choose files")} icon="image" onPress={() => chooseFiles("image/*,video/*,audio/*", true).then(take)} disabled={busy} />
+      </DropArea>
+    </Sheet>
+  );
+}
+
 /** The profiles, side by side: each with its picture, name and age; the chosen one filled in. */
 function Profiles() {
   const t = useTheme();
@@ -153,7 +189,7 @@ function Profiles() {
     <View role="group" aria-label={tr("Profiles")} style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
       {kids.length > 1 ? (
         // everyone together (app/my-family.tsx)
-        <Pressable onPress={() => router.navigate("/my-family")} accessibilityRole="link" aria-current={path === "/my-family" ? "page" : undefined} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, path === "/my-family" ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], { backgroundColor: withAlpha(t.ink, 0.05) })}>
+        <Pressable onPress={() => router.navigate("/my-family")} accessibilityRole="link" aria-current={path === "/my-family" ? "page" : undefined} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingStart: 4, paddingEnd: 14, height: 44, borderRadius: 22, borderWidth: 1 }, path === "/my-family" ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], { backgroundColor: withAlpha(t.ink, 0.05) })}>
           <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name="family" size={18} color={t.onAccentSoft} /></View>
           <Text style={[TYPE.labelLarge, { color: path === "/my-family" ? t.onChipOn : t.ink }]}>{tr("My family")}</Text>
         </Pressable>
@@ -164,7 +200,7 @@ function Profiles() {
         return (
           <Wiggle key={k.id} on={arranging} seed={i} style={{ flexDirection: "row", alignItems: "center" }}>
           {arranging ? <MoveButton dir={-1} name={k.name} disabled={i === 0} onPress={() => moveKid(k.id, -1)} /> : null}
-          <Pressable onPress={() => (arranging ? undefined : setActive(k.id))} onLongPress={() => setArranging(true)} delayLongPress={350} accessibilityRole="button" aria-pressed={on} accessibilityHint={tr("Press and hold to change the order")} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 14, height: 44, borderRadius: 22, borderWidth: 1 }, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], on ? {} : { backgroundColor: withAlpha(t.ink, 0.05) })}>
+          <Pressable onPress={() => (arranging ? undefined : setActive(k.id))} onLongPress={() => setArranging(true)} delayLongPress={350} accessibilityRole="button" aria-pressed={on} accessibilityHint={tr("Press and hold to change the order")} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingStart: 4, paddingEnd: 14, height: 44, borderRadius: 22, borderWidth: 1 }, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], on ? {} : { backgroundColor: withAlpha(t.ink, 0.05) })}>
             <Avatar child={k} size={34} />
             <View>
               <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]} numberOfLines={1}>{k.name}</Text>

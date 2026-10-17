@@ -608,7 +608,7 @@ const statNum = (c: string) => ({ ...TYPE.titleLarge, color: c });
 const statLbl = (c: string) => ({ fontSize: 10.5, fontWeight: "700" as const, color: c });
 
 const st = StyleSheet.create({
-  chip: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6, paddingLeft: 6, paddingRight: 14, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6, paddingStart: 6, paddingEnd: 14, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   plus: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   pen: { position: "absolute", right: -2, bottom: -2, width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   stat: { flex: 1, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 12 },

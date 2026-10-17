@@ -2,7 +2,7 @@
 import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { createMaterialTopTabNavigator, MaterialTopTabBarProps, MaterialTopTabNavigationEventMap, MaterialTopTabNavigationOptions } from "expo-router/js-top-tabs";
 import type { ParamListBase, TabNavigationState } from "expo-router/react-navigation";
-import { withLayoutContext } from "expo-router";
+import { Slot, withLayoutContext } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useActiveChild } from "../../src/lib/store";
 import { isPet } from "../../src/lib/types";
@@ -116,12 +116,25 @@ export default function TabsLayout() {
   // Open on the tab you were last on. The pager starts on Home, so it jumps (without animating) to the saved tab while a cover that
   // looks exactly like the splash screen hides that moment; a timeout guarantees the cover can never get stuck.
   const saved = useRef<TabName>(isTab(resume.get().tab) ? (resume.get().tab as TabName) : "index").current;
-  const [restoring, setRestoring] = useState(saved !== "index");
+  const [restoring, setRestoring] = useState(saved !== "index" && !wide);
   useEffect(() => {
     if (!restoring) return;
     const id = setTimeout(() => setRestoring(false), 1500);
     return () => clearTimeout(id);
   }, [restoring]);
+
+  // The website on a computer: just the page the address says, under the site's header, like any website. No pager (nothing to swipe
+  // here, and the pager's idea of which page was showing could disagree with the address and send every link to the same page), no
+  // tab bar and no + button (the header has Add and Upload).
+  if (wide) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <StatusBar style={t.dark ? "light" : "dark"} />
+        <SiteHeader />
+        <View style={{ flex: 1 }}><Slot /></View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>

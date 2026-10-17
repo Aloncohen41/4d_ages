@@ -1,10 +1,10 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PanResponder, Pressable, Text, View } from "react-native";
 import { Page } from "../src/components/Page";
 import { Avatar, Btn, MemberAvatar, Sheet } from "../src/components/ui";
 import { Icon } from "../src/components/Icon";
 import { familyOf } from "../src/lib/family";
-import { LINK_WORDS, Link, ME, Row, connect, isCouple, kinOf, linkChoices, placeInRow, separate, sideChoices, treeLayout } from "../src/lib/kinship";
+import { descentGroups, LINK_WORDS, Link, ME, Row, connect, isCouple, kinOf, linkChoices, placeInRow, separate, sideChoices, treeLayout } from "../src/lib/kinship";
 import { useShownChild, useStore } from "../src/lib/store";
 import { useTheme } from "../src/lib/useTheme";
 import { displayName, relationLine } from "../src/lib/tags";
@@ -57,6 +57,44 @@ export default function TreePage() {
   const [ask, setAsk] = useState<{ who: Relative; target?: Target } | null>(null);
   const latest = useRef({ family, child });
   latest.current = { family, child };
+
+  // the lines from parents down to their children, worked out from where everyone sits once the tree is drawn (and again whenever it moves)
+  const [lines, setLines] = useState<{ x: number; y: number; w: number; h: number }[]>([]);
+  const layoutTick = useRef(0);
+  const drawLines = () => {
+    const tick = ++layoutTick.current;
+    setTimeout(async () => {
+      const base = await measure(root.current);
+      if (!base || tick !== layoutTick.current) return;
+      const at = new Map<string, { cx: number; top: number; mid: number; bottom: number }>();
+      for (const [id, v] of nodes.current) {
+        const b = await measure(v);
+        if (b && b.w) at.set(id, { cx: b.x - base.x + b.w / 2, top: b.y - base.y, mid: b.y - base.y + 26, bottom: b.y - base.y + b.h });
+      }
+      if (tick !== layoutTick.current) return;
+      const T = 2; // the lines' thickness
+      const out: { x: number; y: number; w: number; h: number }[] = [];
+      for (const g of descentGroups(latest.current.family)) {
+        const ps = g.parents.map((id) => at.get(id)).filter((p): p is NonNullable<typeof p> => !!p);
+        const cs = g.children.map((id) => at.get(id)).filter((c): c is NonNullable<typeof c> => !!c);
+        if (!ps.length || !cs.length) continue;
+        // from the middle of a couple (on the line between them), or below a single parent
+        const x0 = ps.reduce((n, p) => n + p.cx, 0) / ps.length;
+        const y0 = ps.length > 1 ? Math.max(...ps.map((p) => p.mid)) : ps[0].bottom + 2;
+        // a couple joined by a line between them (however far apart their places are), with the ♥ on it
+        if (ps.length > 1) out.push({ x: Math.min(...ps.map((p) => p.cx)), y: y0 - T / 2, w: Math.abs(ps[1].cx - ps[0].cx), h: T });
+        const top = Math.min(...cs.map((c) => c.top));
+        if (top <= y0) continue;
+        const bar = Math.max(y0 + 6, top - 14);
+        const xs = [x0, ...cs.map((c) => c.cx)];
+        out.push({ x: x0 - T / 2, y: y0, w: T, h: bar - y0 });
+        out.push({ x: Math.min(...xs), y: bar - T / 2, w: Math.max(...xs) - Math.min(...xs), h: T });
+        for (const c of cs) out.push({ x: c.cx - T / 2, y: bar, w: T, h: c.top - bar });
+      }
+      setLines(out);
+    }, 60);
+  };
+  useEffect(() => { drawLines(); }, [family]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const apply = (patches: { id: string; patch: Partial<Relative> }[]) => patches.forEach((p) => updateRelative(p.id, p.patch));
 
@@ -180,15 +218,13 @@ export default function TreePage() {
     const ps = family.filter((x) => kinOf(x) === "parent");
     const bond = row === "parent" && sided && ps.length === 2 && isCouple(ps[0], ps[1], family) ? (
       <Pressable key="bond" onLongPress={() => apply(separate(ps[0], ps[1]))} delayLongPress={450} accessibilityRole="button" accessibilityLabel={tr("{0} and {1} are together. Press and hold to separate them", [displayName(ps[0]), displayName(ps[1])])}
-        style={{ alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
-        <View style={{ width: 40, height: 2, backgroundColor: withAlpha(t.accent, 0.5) }} />
-        <Text style={{ color: t.accent, fontSize: 16 }}>♥</Text>
-        <View style={{ width: 40, height: 2, backgroundColor: withAlpha(t.accent, 0.5) }} />
+        style={{ alignSelf: "center", flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 6, marginTop: 10 }}>
+        <Text style={{ color: t.accent, fontSize: 16, backgroundColor: t.bg, paddingHorizontal: 4 }}>♥</Text>
       </Pressable>
     ) : null;
     return (
       <View key={row} style={{ marginBottom: 18 }}>
-        <Text role="heading" aria-level={2} style={[TYPE.titleSmall, { color: t.ink2, marginBottom: 6 }]}>{ROW_TITLES[row]}</Text>
+        <Text role="heading" aria-level={2} style={[TYPE.titleSmall, { color: t.ink2, marginBottom: 6, alignSelf: "flex-start", backgroundColor: t.bg, paddingEnd: 8 }]}>{ROW_TITLES[row]}</Text>
         {sided ? (
           <View style={{ flexDirection: "row", gap: 6 }}>
             {column({ row, side: 0 }, r.left)}
@@ -204,7 +240,15 @@ export default function TreePage() {
 
   return (
     <Page title={tr("{0}'s family tree", [child.name])}>
-      <View ref={root}>
+      <View ref={root} onLayout={drawLines}>
+        {/* the lines joining parents and children, behind everyone (hidden while someone is being carried) */}
+        {!carry ? (
+          <View pointerEvents="none" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}>
+            {lines.map((l, i) => <View key={i} style={{ position: "absolute", left: l.x, top: l.y, width: Math.max(2, l.w), height: Math.max(2, l.h), backgroundColor: withAlpha(t.ink, 0.3), borderRadius: 1 }} />)}
+          </View>
+        ) : null}
+        {/* everyone above the lines */}
+        <View style={{ zIndex: 1 }}>
         <Text style={[TYPE.bodySmall, { color: t.ink3, marginBottom: 14 }]}>
           {tr("Press and hold someone, then drag them next to a person to connect them, or onto an empty spot in a row to move them there. Tap someone for the same choices. Press and hold the ♥ between two people to separate them.")}
         </Text>
@@ -223,6 +267,7 @@ export default function TreePage() {
           </View>
         ) : null}
         {family.length === 0 ? <Text style={{ color: t.ink3, textAlign: "center", padding: 24 }}>{tr("No one in {0}'s family yet. Add people in Family first.", [child.name])}</Text> : null}
+        </View>
 
         {carry && carried ? (
           <View pointerEvents="none" style={{ position: "absolute", left: carry.x - origin.current.x - 42, top: carry.y - origin.current.y - 40, width: 84, alignItems: "center", transform: [{ scale: 1.12 }], zIndex: 10 }}>

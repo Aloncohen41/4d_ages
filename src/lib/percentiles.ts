@@ -68,7 +68,7 @@ export function percentileLabel(p: number): string {
   if (p > 99) return tr("Above the 99th percentile");
   const n = Math.round(p);
   const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
-  return `${n}${suffix} percentile`;
+  return tr("{0}{1} percentile", [n, suffix]);
 }
 
 /**

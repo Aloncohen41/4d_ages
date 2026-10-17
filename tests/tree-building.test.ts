@@ -5,7 +5,7 @@
 import { untr } from "./untr";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { APART, ME, connect, isCouple, linkChoices, placeInRow, separate, treeLayout } from "../src/lib/kinship";
+import { APART, ME, connect, descentGroups, isCouple, linkChoices, placeInRow, separate, treeLayout } from "../src/lib/kinship";
 import type { Relative } from "../src/lib/types";
 
 let fails = 0; const ok = (n: string, c: boolean) => { console.log(c ? "PASS" : "FAIL", n); if (!c) fails++; };
@@ -48,6 +48,12 @@ const tree = read("app/tree.tsx");
 ok("the tree page: press and hold to pick someone up, drop next to a person (how are they joined?) or on a row; tap for the same without dragging", /setTimeout\(async \(\) => \{\s*lifted = true/.test(tree) && /setAsk\(\{ who, target: best\.target \}\)/.test(tree) && /placeInRow\(who, row/.test(tree) && /else if \(!moved\)/.test(tree) && /LINK_WORDS\[l\]/.test(tree));
 ok("…the choices read \"Ruth is Dana's… Mother or father, Partner, Brother or sister, Son or daughter\"", /\$\{name\} is \$\{tName\}'s…/.test(tree) && /child: "Son or daughter"/.test(read("src/lib/kinship.ts")));
 ok("the Family page links the tree, and a long press makes everyone wiggle with a remove badge", /router\.push\("\/tree"\)/.test(read("app/family.tsx")) && /onLongPress=\{\(\) => \{ if \(!editing\) setEditing\(true\); \}\}/.test(read("app/family.tsx")) && /<Wiggle on=\{editing && !held\}/.test(read("app/family.tsx")) && /isReduceMotionEnabled/.test(read("src/components/Wiggle.tsx")));
+
+// the lines joining parents and children
+const lines = descentGroups([...family, p("marco", "Uncle", { kin: "aunt-uncle", side: "sarah" }), p("zoe", "Cousin", { kin: "cousin", through: "priya" }), p("sam", "Brother", { kin: "sibling" })]);
+const has = (ps: string[], cs: string[]) => lines.some((g) => ps.every((x) => g.parents.includes(x)) && cs.every((x) => g.children.includes(x)));
+ok("lines: the parents to the child and their brothers and sisters; a side's grandparents to that parent and the aunts and uncles; an aunt to her children", has(["sarah", "tom"], [ME, "sam"]) && has(["rosa", "henrik"], ["sarah", "marco"]) && has(["priya"], ["zoe"]));
+ok("…drawn from where everyone sits, behind them, joining a couple with a line and hanging their children below it", /descentGroups\(latest\.current\.family\)/.test(read("app/tree.tsx")) && /onLayout=\{drawLines\}/.test(read("app/tree.tsx")) && /a couple joined by a line between them/.test(read("app/tree.tsx")));
 
 console.log(fails ? `${fails} FAILED` : "all tree-building tests passed");
 if (fails) process.exit(1);

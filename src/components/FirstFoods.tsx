@@ -78,7 +78,7 @@ export function FirstFoodsCard({ child }: { child: Child }) {
         <Text style={{ fontSize: 26 }}>🥄</Text>
         <View style={{ flex: 1 }}>
           <Text style={[TYPE.titleMedium, { color: t.ink }]}>{tr("First foods")}</Text>
-          <Text style={[TYPE.bodySmall, { color: t.ink2 }]}>{tr("{0} foods tried · {1} of {2} allergens done{3}", [tried, allergens.filter((a) => a.status === "done").length, allergens.length, reactions ? ` · ${reactions} reaction${reactions === 1 ? "" : "s"}` : ""])}</Text>
+          <Text style={[TYPE.bodySmall, { color: t.ink2 }]}>{tr("{0} foods tried · {1} of {2} allergens done{3}", [tried, allergens.filter((a) => a.status === "done").length, allergens.length, reactions ? ` · ${reactions === 1 ? tr("1 reaction") : tr("{0} reactions", [reactions])}` : ""])}</Text>
         </View>
         <Icon name="chevron-right" size={22} color={t.ink3} />
       </View>

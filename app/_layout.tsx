@@ -21,7 +21,6 @@ import { WebToast } from "../src/components/WebToast";
 import { WebAlert } from "../src/components/WebAlert";
 import { LANGS, Lang, resolveLang, setLang } from "../src/lib/i18n";
 import { CookieBanner } from "../src/components/CookieBanner";
-import { DropZone } from "../src/components/DropZone";
 import { AppColumn } from "../src/components/AppColumn";
 import { AgreementGate } from "../src/components/AgreementGate";
 import { BirthdayConfetti } from "../src/components/BirthdayConfetti";
@@ -229,7 +228,6 @@ export default function RootLayout() {
       <WebToast />
       <WebAlert />
       <CookieBanner />
-      {signedIn && hasKids ? <DropZone /> : null}
       {signedIn && hasKids ? <BirthdayConfetti /> : null}
     </SafeAreaProvider>
   );

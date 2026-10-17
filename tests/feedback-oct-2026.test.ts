@@ -109,7 +109,7 @@ ok("[FAM-01] existing people keep what they were shown as, now as text", migrate
 ok("[FAM-01] the title is the nickname (or name); the relationship is under it", displayName({ name: "Ruth", nickname: "Nana", relation: "Grandma" }) === "Nana" && relationLine({ name: "Ruth", nickname: "Nana", relation: "Grandma" }) === "Grandma · Ruth" && displayName({ name: "Tom", relation: "Daddy" }) === "Tom");
 ok("[FAM-02] people without a photo get their initials, never an emoji", initialsOf("Rosa Lind") === "RL" && initialsOf("nana") === "N" && /initials=\{initialsOf\(/.test(read("src/components/ui.tsx")) && !/EmojiPicker/.test(member));
 ok("[FAM-03] the photo buttons: Remove on the left, Change photo on the right", member.indexOf('label="Remove"') < member.indexOf('"Change photo"'));
-ok("[FAM-04] profile pictures are scaled down when chosen, and earlier ones once in the background", /shrinkImage\(picked\[0\]\.uri\)/.test(member) && /photoSized/.test(read("app/family.tsx")));
+ok("[FAM-04] profile pictures are scaled down when chosen, and earlier ones once in the background", /shrinkImage\((picked\[0\]\.uri|uri)\)/.test(member) && /photoSized/.test(read("app/family.tsx")));
 const fam = read("app/family.tsx");
 ok("[FAM-05] “Set up siblings” is gone", !/Set up siblings/.test(fam));
 const people = [{ id: "a", name: "Ann", relation: "Mum" }, { id: "b", name: "Bob", relation: "Grandpa", nickname: "Pops" }, { id: "c", name: "Cat", relation: "Aunt" }] as never[];

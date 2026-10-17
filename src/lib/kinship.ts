@@ -348,3 +348,35 @@ export function placeInRow(who: Person, row: Exclude<Row, "other">, side: 0 | 1 
   if (old && kinInfo(kinOf(old)).row !== row) { patch.partnerId = undefined; out.push({ id: old.id, patch: { partnerId: undefined } }); }
   return out;
 }
+
+/**
+ * Who in the tree is whose child, for the lines that join them: the parents (one, or a couple) and their children. The child the tree is
+ * for is ME. Parents → the child and their brothers and sisters; each side's grandparents → that side's parent and their brothers and
+ * sisters (the aunts and uncles); great-grandparents → the grandparent they're "through"; an aunt or uncle (and their partner) → their
+ * children, the cousins. Anyone whose place isn't known (no side, no "through") simply has no line.
+ */
+export function descentGroups(family: Person[]): { parents: string[]; children: string[] }[] {
+  const out: { parents: string[]; children: string[] }[] = [];
+  const parents = parentsOf(family);
+  const kidsRow = family.filter((r) => ["sibling", "half-sibling"].includes(kinOf(r))).map((r) => r.id);
+  if (parents.length) out.push({ parents: parents.map((p) => p.id), children: [ME, ...kidsRow] });
+  for (const s of [0, 1] as const) {
+    const grands = family.filter((r) => kinOf(r) === "grandparent" && sideIndex(r, family) === s);
+    // an aunt and her husband are one couple: the line goes to the first of them (the other is joined to them by the ♥)
+    const aunts: Person[] = [];
+    for (const r of family) if (kinOf(r) === "aunt-uncle" && sideIndex(r, family) === s && !aunts.some((x) => isCouple(x, r, family))) aunts.push(r);
+    const kids = [...(parents[s] ? [parents[s].id] : []), ...aunts.map((r) => r.id)];
+    if (grands.length && kids.length) out.push({ parents: grands.slice(0, 2).map((g) => g.id), children: kids });
+  }
+  const byThrough = new Map<string, string[]>();
+  for (const r of family) if (kinOf(r) === "great-grandparent" && r.through && family.some((x) => x.id === r.through)) byThrough.set(r.through, [...(byThrough.get(r.through) ?? []), r.id]);
+  for (const [g, ps] of byThrough) out.push({ parents: ps.slice(0, 2), children: [g] });
+  const cousins = new Map<string, string[]>();
+  for (const r of family) if (kinOf(r) === "cousin" && r.through && family.some((x) => x.id === r.through)) cousins.set(r.through, [...(cousins.get(r.through) ?? []), r.id]);
+  for (const [a, cs] of cousins) {
+    const aunt = family.find((x) => x.id === a)!;
+    const partner = family.find((x) => x.id !== a && isCouple(aunt, x, family));
+    out.push({ parents: partner ? [a, partner.id] : [a], children: cs });
+  }
+  return out;
+}

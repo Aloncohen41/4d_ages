@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { DropArea } from "./DropArea";
+import { filesToItems } from "../lib/shareIntake";
 import { SPECIES, petRelation } from "../lib/pets";
 import { TYPE } from "../theme";
 import { Alert, Pressable, Text, View } from "react-native";
@@ -60,11 +62,20 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
 
   const choosePhoto = async () => {
     const picked = await pickMedia({ videos: false, multiple: false });
-    if (!picked.length) return;
+    if (picked.length) await takePhoto(picked[0].uri);
+  };
+  // a picture dragged from the computer onto the photo (the website)
+  const dropPhoto = async (files: File[]) => {
+    const image = files.find((x) => x.type.startsWith("image/"));
+    if (!image) return;
+    const r = await filesToItems([image]);
+    if (r.items[0]) await takePhoto(r.items[0].uri);
+  };
+  const takePhoto = async (uri: string) => {
     setPreparing(true);
     // a profile picture is only ever shown small: keep a small copy, so lists of people scroll smoothly
-    const small = await shrinkImage(picked[0].uri);
-    if (small !== picked[0].uri) deleteFile(picked[0].uri);
+    const small = await shrinkImage(uri);
+    if (small !== uri) deleteFile(uri);
     setPreparing(false);
     if (photoUri && photoUri !== original) deleteFile(photoUri); // an earlier choice that was never saved
     setPhotoUri(small);
@@ -129,12 +140,12 @@ export function MemberSheet({ memberId, onClose, pet = false }: { memberId?: str
       <Input value={name} onChangeText={setName} placeholder={tr("Their name")} maxLength={40} accessibilityLabel={tr("Name")} />
 
       <Label>{tr("Photo (optional)")}</Label>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <DropArea onFiles={dropPhoto} label={tr("Drop a photo here")} style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, borderWidth: 1, borderColor: "transparent", padding: 4 }}>
         <MemberAvatar member={{ photoUri, crop, name: nickname || name, relation }} size={56} />
         {/* Remove on the left, Change photo on the right */}
         {photoUri ? <Btn label={tr("Remove")} kind="soft" onPress={removePhoto} style={{ flex: 0.8 }} /> : null}
         <Btn label={preparing ? tr("Preparing…") : photoUri ? tr("Change photo") : tr("Choose a photo")} icon="image" kind="line" onPress={choosePhoto} disabled={preparing} style={{ flex: 1 }} />
-      </View>
+      </DropArea>
       {photoUri ? (
         <View style={{ marginTop: 14 }}>
           <AvatarCropper uri={photoUri} value={crop} onChange={setCrop} />

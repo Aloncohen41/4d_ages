@@ -4,6 +4,7 @@ import { usePathname } from "expo-router";
 import { useTheme } from "../lib/useTheme";
 import { APP_NAME } from "../brand";
 import { WIDE } from "../lib/useWide";
+import { lang } from "../lib/i18n";
 
 /**
  * On a computer the website fills the window, with its own header, wide pages and footer (see SiteHeader). In a browser window narrower
@@ -27,6 +28,32 @@ export function AppColumn({ children }: { children: React.ReactNode }) {
     const name = TITLES.find(([re]) => re.test(path))?.[1];
     document.title = name ? `${name} · ${APP_NAME}` : APP_NAME;
   }, [path]);
+  // Hebrew in a modern Hebrew typeface (Heebo, see public/index.html): the website's base text style puts it first. Changing that one rule
+  // (rather than every piece of text) leaves the icons, which have their own font, alone.
+  useEffect(() => {
+    if (lang() !== "he") return;
+    const patch = () => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules: CSSRuleList;
+        try { rules = sheet.cssRules; } catch { continue; }
+        for (const r of Array.from(rules)) {
+          const rule = r as CSSStyleRule;
+          // the rules that set the system font (the base text style, text boxes, and text styles that name the system font)
+          const family = rule.style?.fontFamily;
+          if (family && /^-apple-system/.test(family)) rule.style.fontFamily = `"Heebo", ${family}`;
+        }
+      }
+    };
+    const ids = [0, 300, 1500, 4000].map((ms) => setTimeout(patch, ms));
+    return () => ids.forEach(clearTimeout);
+  }, []);
+  // pictures on the page are never dragged out by the browser (Firefox ignores the CSS for it): dragging is the app's own, like moving
+  // someone in the family tree
+  useEffect(() => {
+    const stop = (e: DragEvent) => { if ((e.target as HTMLElement | null)?.tagName === "IMG") e.preventDefault(); };
+    document.addEventListener("dragstart", stop);
+    return () => document.removeEventListener("dragstart", stop);
+  }, []);
   // the page's own light or dark, for the keyboard focus outline's colour (see public/index.html)
   useEffect(() => { document.documentElement.dataset.theme = t.dark ? "dark" : "light"; }, [t.dark]);
   // the few screens with no header of their own (a welcome, joining a book, signing in) stay a centred block on a computer

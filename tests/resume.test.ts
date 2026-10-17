@@ -69,7 +69,7 @@ const wait = () => new Promise((r) => setTimeout(r, 5));
   ok("the current tab is saved whenever it changes", /resume\.save\(\{ tab: current \}\)/.test(tabsSrc));
   ok("…but not while the saved tab is still being restored (or Home would overwrite it)", /if \(restoreTo\) \{[\s\S]*return;\s*\}\s*if \(isTab\(current\)\) resume\.save/.test(tabsSrc));
   ok("the saved tab is restored without animation, hidden behind a cover that matches the splash, with a timeout so it can't stick", /animationEnabled: !restoring/.test(tabsSrc) && /restoring \? <View style=\{StyleSheet\.absoluteFill\}><BrandScreen \/>/.test(tabsSrc) && /setTimeout\(\(\) => setRestoring\(false\), 1500\)/.test(tabsSrc));
-  ok("a first launch (no saved tab) restores nothing and shows no cover", /useState\(saved !== "index"\)/.test(tabsSrc));
+  ok("a first launch (no saved tab) restores nothing and shows no cover", /useState\(saved !== "index"( && !wide)?\)/.test(tabsSrc));
   ok("the persisted data is unchanged (the saved-data key and shape are untouched)", /const STORE_KEY = "4d-ages-v1";/.test(read("src/lib/store.ts")) && /activeId: s\.activeId,/.test(read("src/lib/store.ts")));
   console.log(fails ? `${fails} FAILED` : "all open-where-I-left-off tests passed");
   process.exit(fails ? 1 : 0);
