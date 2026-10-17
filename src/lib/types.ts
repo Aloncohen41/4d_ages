@@ -328,8 +328,25 @@ export interface SharedItem {
 }
 
 /** A deletion that still has to be sent to the cloud for a shared child. */
+/**
+ * One try of a food in First foods (see foods.ts): which food, when, how much, how they liked it, and any reaction. Kept in its own list
+ * (and its own table in the account), seen only by the parents and editors, never by family who only view.
+ */
+export interface FoodTry extends SyncFields {
+  id: string;
+  childId: string;
+  /** a food from FOODS (foods.ts), or the name of one added by hand */
+  food: string;
+  date: string; // YYYY-MM-DD
+  amount?: import("./foods").Amount;
+  liked?: import("./foods").Liked;
+  reaction?: import("./foods").Reaction;
+  /** what the reaction was (a rash, tummy ache), and when */
+  note?: string;
+}
+
 export interface Tombstone {
-  table: "memories" | "custom_defs" | "classics";
+  table: "memories" | "custom_defs" | "classics" | "food_tries";
   childId: string;
   id: string;
   ts: number;

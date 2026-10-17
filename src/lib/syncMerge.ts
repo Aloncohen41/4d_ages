@@ -1,4 +1,4 @@
-import { Child, MediaItem, Memory, MilestoneDef, Relative, SyncFields, Tag } from "./types";
+import { Child, FoodTry, MediaItem, Memory, MilestoneDef, Relative, SyncFields, Tag } from "./types";
 import { inFamily } from "./family";
 import type { ClassicEntry } from "./classics";
 
@@ -206,6 +206,31 @@ export function mergeClassics(all: ClassicEntry[], rows: any[], onRemove?: (e: C
     }
     if (!cur) out.push(rowToClassic(r, undefined, ts));
     else if (ts > (cur.updatedAt ?? 0)) out[i] = rowToClassic(r, cur, ts);
+    else if (ts === (cur.updatedAt ?? 0)) out[i] = { ...cur, syncedTs: ts };
+  }
+  return out;
+}
+
+/* ---------- First foods: one row per try (see foods.ts) ---------- */
+
+export function foodTryToRow(x: FoodTry, ts: number) {
+  return { child_id: x.childId, id: x.id, food: x.food, date: x.date, amount: x.amount ?? null, liked: x.liked ?? null, reaction: x.reaction ?? null, note: x.note ?? null, client_ts: ts, deleted: false };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mergeFoodTries(all: FoodTry[], rows: any[]): FoodTry[] {
+  const out = all.slice();
+  for (const r of rows) {
+    const i = out.findIndex((x) => x.childId === r.child_id && x.id === r.id);
+    const cur = i >= 0 ? out[i] : undefined;
+    const ts = tsOf(r);
+    if (r.deleted) {
+      if (cur && (cur.updatedAt ?? 0) <= ts) out.splice(i, 1);
+      continue;
+    }
+    const row: FoodTry = { id: r.id, childId: r.child_id, food: r.food, date: String(r.date), amount: r.amount ?? undefined, liked: r.liked ?? undefined, reaction: r.reaction ?? undefined, note: r.note ?? undefined, updatedAt: ts, syncedTs: ts };
+    if (!cur) out.push(row);
+    else if (ts > (cur.updatedAt ?? 0)) out[i] = row;
     else if (ts === (cur.updatedAt ?? 0)) out[i] = { ...cur, syncedTs: ts };
   }
   return out;

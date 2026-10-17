@@ -168,6 +168,7 @@ export default function RootLayout() {
           <Stack.Screen name="family" />
           <Stack.Screen name="tree" />
           <Stack.Screen name="my-family" />
+          <Stack.Screen name="foods" />
           <Stack.Screen name="person/[id]" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="classics" />

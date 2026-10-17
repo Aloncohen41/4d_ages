@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useActiveChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
-import { EntryKind, isPet } from "../lib/types";
+import { Child, EntryKind, FoodTry, isPet } from "../lib/types";
+import { router } from "expo-router";
+import { foodsShown } from "./FirstFoods";
 import { KIND_META } from "../lib/entries";
 import { addPhotosFlow } from "../lib/addPhotos";
 import { withAlpha } from "../lib/m3";
@@ -11,19 +13,27 @@ import { Icon, IconName } from "./Icon";
 import { VoiceRecorderSheet } from "./Voice";
 
 export const FAB_GAP = 16;
-export type Action = EntryKind | "photo" | "voice";
-export const ACTIONS: Action[] = ["story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
+export type Action = EntryKind | "photo" | "voice" | "food";
+export const ACTIONS: Action[] = ["food", "story", "milestone", "measure", "first", "last", "voice", "photo"]; // photo / video sits nearest the button
 /** A pet's: no milestones or lasts; weight, and health (it has its own tab). */
 export const PET_ACTIONS: Action[] = ["story", "health", "measure", "first", "voice", "photo"];
-export const ICON: Record<Action, IconName> = { story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", health: "health", photo: "add-photo", voice: "voice" };
-export const LABEL = (a: Action, pet = false) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : pet && a === "measure" ? "Weight" : KIND_META[a].label);
+export const ICON: Record<Action, IconName> = { food: "food", story: "add-story", milestone: "add-milestone", measure: "add-measure", first: "add-first", last: "add-last", health: "health", photo: "add-photo", voice: "voice" };
+export const LABEL = (a: Action, pet = false) => (a === "photo" ? "Photo or video" : a === "voice" ? "Voice note" : a === "food" ? "Food tried" : pet && a === "measure" ? "Weight" : KIND_META[a].label);
+
+/** The + menu's choices for a profile: a pet's own; a child's, with "Food tried" only while First foods is for them (see FirstFoods). */
+export function actionsFor(child: Child | undefined, tries: FoodTry[]): Action[] {
+  if (isPet(child)) return PET_ACTIONS;
+  return child && foodsShown(child, tries) ? ACTIONS : ACTIONS.filter((a) => a !== "food");
+}
 
 /** Floating "+" in the bottom-right corner. Tap to fan out the quick-add options upward. */
 export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
   const t = useTheme();
   const setEntrySheet = useStore((s) => s.setEntrySheet);
   const pet = isPet(useActiveChild());
-  const actions = pet ? PET_ACTIONS : ACTIONS;
+  const tries = useStore((s) => s.foodTries);
+  const active = useActiveChild();
+  const actions = actionsFor(active, tries);
   const [open, setOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -34,7 +44,8 @@ export function Fab({ bottom = FAB_GAP }: { bottom?: number }) {
 
   const choose = (kind: Action) => {
     setOpen(false);
-    if (kind === "photo") addPhotosFlow();
+    if (kind === "food") router.push({ pathname: "/foods", params: { meal: "1" } });
+    else if (kind === "photo") addPhotosFlow();
     else if (kind === "voice") setRecording(true); // record (or choose a file), then it becomes a story you can add words to
     else setEntrySheet({ kind });
   };

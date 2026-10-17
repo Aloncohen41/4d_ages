@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import { isApplying, syncAll } from "./sync";
 
 /** Tables whose changes are sent to the other phone at once (the database's privacy rules still decide who hears about what). */
-const TABLES = ["memories", "custom_defs", "relatives", "classics", "reactions"] as const;
+const TABLES = ["memories", "custom_defs", "relatives", "classics", "food_tries", "reactions"] as const;
 
 /**
  * Live updates: while the app is open, a change made on the other phone (a photo, a story, a heart…) is announced by the database, and this

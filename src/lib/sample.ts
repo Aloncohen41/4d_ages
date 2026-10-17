@@ -1,3 +1,4 @@
+import type { FoodTry } from "./types";
 import { addDays, addMonths, toISO } from "./date";
 import { Child, MILESTONE_DEFS, Memory, Relative, Tag, TagCategory } from "./types";
 import { KIND_META, milestoneMemoryId } from "./entries";
@@ -101,5 +102,13 @@ export function buildSample() {
     measure("lh0", "leo", L(0), 51, 3.8, "At birth"), measure("lh1", "leo", L(2), 59.5, 5.3), measure("lh2", "leo", L(4), 65.5, 6.6),
   ];
 
-  return { kids, relatives, memories, tags: registry };
+  // First foods: Maya's, from about 6 months (with one mild reaction, to show how it looks)
+  const at = (months: number, day = 1) => toISO(new Date(now.getFullYear() - 2, now.getMonth() - 1 + months, now.getDate() + day));
+  const foodTries: FoodTry[] = [
+    ["broccoli", 6, 1], ["broccoli", 6, 4], ["broccoli", 6, 9], ["carrot", 6, 2], ["carrot", 6, 6], ["carrot", 6, 12], ["sweet-potato", 6, 3], ["sweet-potato", 6, 8],
+    ["banana", 6, 5], ["banana", 6, 10], ["banana", 6, 15], ["avocado", 6, 7], ["oats", 6, 14], ["oats", 6, 18], ["oats", 6, 25], ["egg", 7, 1], ["egg", 7, 5], ["egg", 7, 12],
+    ["yoghurt", 7, 3], ["yoghurt", 7, 8], ["yoghurt", 7, 15], ["peanut", 7, 20], ["peanut", 7, 24], ["salmon", 8, 2], ["strawberry", 8, 4], ["pasta", 8, 6],
+  ].map(([food, m, d], i) => ({ id: `sample-food-${i}`, childId: "maya", food: food as string, date: at(m as number, d as number), amount: "some" as const, liked: i % 4 === 1 ? ("meh" as const) : ("yes" as const), reaction: "none" as const }));
+  foodTries.push({ id: "sample-food-r", childId: "maya", food: "strawberry", date: at(8, 9), amount: "taste", liked: "yes", reaction: "mild", note: "Red blotches round the mouth after a few minutes; gone within the hour" });
+  return { kids, relatives, memories, tags: registry, foodTries };
 }

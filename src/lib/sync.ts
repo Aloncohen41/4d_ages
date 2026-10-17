@@ -6,7 +6,7 @@ import { personTag, relationLabel, upsertTagIn } from "./tags";
 import { kinColumns } from "./syncMerge";
 import { deleteFile } from "./media";
 import { Child, MediaItem } from "./types";
-import { classicToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow, petColumns, petFromRow } from "./syncMerge";
+import { classicToRow, foodTryToRow, isDirty, memoryToRow, mergeChild, mergeClassics, mergeDefs, mergeFoodTries, mergeMemories, mergeRelatives, newestCursor, relativesToPush, tagsInRow, petColumns, petFromRow } from "./syncMerge";
 import { classicMedia } from "./classics";
 import { loadReactions } from "./reactions";
 
@@ -298,13 +298,19 @@ export async function syncChild(childId: string): Promise<void> {
   const since = (q: any) => (cursor ? q.gte("updated_at", cursor) : q);
   const access = await myAccess(childId);
   const viewer = access.role === "viewer";
-  const [cRes, mRes, dRes, rRes, kRes] = await Promise.all([
+  const [cRes, mRes, dRes, rRes, kRes, fRes] = await Promise.all([
     sb.from("children").select("*").eq("id", childId).maybeSingle(),
     since(sb.from("memories").select("*").eq("child_id", childId)),
     since(sb.from("custom_defs").select("*").eq("child_id", childId)),
     sb.from("relatives").select("*").eq("child_id", childId),
     viewer ? Promise.resolve({ data: [], error: null }) : since(sb.from("classics").select("*").eq("child_id", childId)),
+    // First foods are health information: only parents and editors see them
+    viewer ? Promise.resolve({ data: [], error: null }) : since(sb.from("food_tries").select("*").eq("child_id", childId)),
   ]);
+  // a database not yet updated for First foods (npm run db:setup): everything else still syncs, and the tries wait on this phone
+  const noFoods = !!fRes.error && /food_tries/i.test(fRes.error.message) && /exist|schema cache/i.test(fRes.error.message);
+  if (fRes.error && !noFoods) throw new Error(fRes.error.message);
+  const fRows = (noFoods ? [] : fRes.data ?? []) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   // a database not yet updated for Classics (npm run db:setup) has no classics table: everything else still syncs
   const noClassics = !!kRes.error && /classics/i.test(kRes.error.message) && /exist|schema cache/i.test(kRes.error.message);
   check(cRes, mRes, dRes, rRes, noClassics ? { error: null } : kRes);
@@ -328,15 +334,16 @@ export async function syncChild(childId: string): Promise<void> {
       memories: mergeMemories(s.memories, mRows, (m) => m.media.forEach((x) => x.uri && removedFiles.push(x.uri))),
       classics: mergeClassics(s.classics, kRows, (e) => classicMedia(e).forEach((x) => x.uri && removedFiles.push(x.uri))),
       customDefs: { ...s.customDefs, [childId]: mergeDefs(s.customDefs[childId] || [], dRows) },
+      foodTries: mergeFoodTries(s.foodTries, fRows),
       relatives,
       tags,
     };
   });
   removedFiles.forEach(deleteFile);
-  const newCursor = newestCursor(cursor, [cRes.data], mRows, dRows, kRows);
+  const newCursor = newestCursor(cursor, [cRes.data], mRows, dRows, kRows, fRows);
 
   /* 2 ── PUSH: what changed on this phone (a viewer only looks, so nothing is sent) */
-  if (!viewer) await pushChild(childId, rRows, !noClassics);
+  if (!viewer) await pushChild(childId, rRows, !noClassics, !noFoods);
 
   /* 3 ── DOWNLOAD: pictures and videos we don't have yet, and the hearts and comments */
   await loadReactions(childId);
@@ -345,7 +352,7 @@ export async function syncChild(childId: string): Promise<void> {
   apply((s) => ({ syncMeta: { ...s.syncMeta, [childId]: { cursor: newCursor, lastSync: new Date().toISOString() } } }));
 }
 
-async function pushChild(childId: string, remoteRelatives: { id: string; client_ts?: number; child_ref?: string | null }[], classicsReady = true) {
+async function pushChild(childId: string, remoteRelatives: { id: string; client_ts?: number; child_ref?: string | null }[], classicsReady = true, foodsReady = true) {
   const sb = client();
   let s = useStore.getState();
 
@@ -440,9 +447,19 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
     }));
   }
 
+  // First foods: the tries made or changed on this phone
+  s = useStore.getState();
+  const foods = foodsReady ? s.foodTries.filter((x) => x.childId === childId && isDirty(x)) : [];
+  if (foods.length) {
+    const rows = foods.map((x) => foodTryToRow(x, x.updatedAt ?? Date.now()));
+    const { error } = await sb.from("food_tries").upsert(rows, { onConflict: "child_id,id" });
+    if (error) throw new Error(error.message);
+    apply((st) => ({ foodTries: st.foodTries.map((x) => { const r = rows.find((y) => y.id === x.id && y.child_id === x.childId); return r && (x.updatedAt ?? 0) === r.client_ts ? { ...x, syncedTs: r.client_ts } : x; }) }));
+  }
+
   // things deleted on this phone
   s = useStore.getState();
-  const tombs = s.tombstones.filter((t) => t.childId === childId);
+  const tombs = s.tombstones.filter((t) => t.childId === childId && (foodsReady || t.table !== "food_tries"));
   for (const t of tombs) {
     const q = sb.from(t.table).update({ deleted: true, client_ts: t.ts });
     const { error } = t.table === "memories" ? await q.eq("id", t.id).eq("child_id", childId) : await q.eq("child_id", childId).eq("id", t.id);
@@ -511,7 +528,7 @@ export function everythingSynced(s: State = useStore.getState()): boolean {
   if (kids.some((k) => !k.shared || isDirty(k))) return false;
   const shared = new Set(kids.map((k) => k.id));
   const mine = (childId: string) => shared.has(childId) && s.kids.find((k) => k.id === childId)?.role !== "viewer";
-  return !s.memories.some((m) => mine(m.childId) && isDirty(m)) && !s.classics.some((c) => mine(c.childId) && isDirty(c)) && !s.tombstones.length;
+  return !s.memories.some((m) => mine(m.childId) && isDirty(m)) && !s.classics.some((c) => mine(c.childId) && isDirty(c)) && !s.foodTries.some((x) => mine(x.childId) && isDirty(x)) && !s.tombstones.length;
 }
 
 /**

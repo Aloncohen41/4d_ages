@@ -15,7 +15,7 @@ const MAP = {
   "help-circle": "help-circle-outline", bell: "bell-outline",
   pause: "pause", loop: "repeat", place: "map-marker-outline", scale: "scale-bathroom", birthday: "cake-variant-outline", reorder: "swap-vertical", drag: "drag", "t-moon": "weather-night", "t-star": "star-four-points", "t-flower": "flower", "t-leaf": "leaf", "t-plane": "airplane", "t-cloud": "cloud", "t-rainbow": "looks", "t-balloon": "balloon", "t-kite": "kite", "t-font": "format-font", "t-sun": "weather-sunny", "t-teddy": "teddy-bear",
   health: "medical-bag", mic: "microphone", stop: "stop", voice: "microphone-plus", food: "food-apple-outline", tooth: "tooth-outline", classics: "book-heart-outline", haircut: "content-cut", hand: "hand-back-left-outline", sleep: "sleep", school: "school-outline", trip: "airplane",
-  menu: "menu", minus: "minus", tree: "family-tree", family: "account-group-outline", settings: "cog-outline", logout: "logout", "delete-account": "delete-forever-outline",
+  menu: "menu", minus: "minus", "alert-triangle": "alert-outline", tree: "family-tree", family: "account-group-outline", settings: "cog-outline", logout: "logout", "delete-account": "delete-forever-outline",
   mail: "email-outline", lock: "lock-outline", eye: "eye-outline", "eye-off": "eye-off-outline", google: "google", info: "information-outline",
   select: "checkbox-multiple-marked-outline", images: "image-multiple-outline", pdf: "file-pdf-box", "play-circle": "play-circle-outline", share: "share-variant-outline", copy: "content-copy",
   // the door frame's reference objects: simple outlined pictures instead of emoji

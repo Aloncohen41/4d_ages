@@ -17,7 +17,7 @@ import { ACCESSIBILITY_URL, APP_NAME, CONTACT_EMAIL, COOKIES_URL, LICENCES_URL, 
 import { TYPE } from "../theme";
 import { Avatar } from "./ui";
 import { Icon, IconName } from "./Icon";
-import { ACTIONS, Action, ICON, LABEL, PET_ACTIONS } from "./Fab";
+import { Action, ICON, LABEL, actionsFor } from "./Fab";
 import { VoiceRecorderSheet } from "./Voice";
 import { AddChildSheet } from "./Screen";
 
@@ -199,17 +199,20 @@ const Divider = () => {
 
 function AddMenu({ pet, onClose }: { pet: boolean; onClose: () => void }) {
   const setEntrySheet = useStore((s) => s.setEntrySheet);
+  const active = useActiveChild();
+  const tries = useStore((s) => s.foodTries);
   const [recording, setRecording] = useState(false);
   // the same choices as the phone's "+" button, photos first
   const choose = (a: Action) => {
-    if (a === "photo") { onClose(); addPhotosFlow(); }
+    if (a === "food") { onClose(); router.navigate({ pathname: "/foods", params: { meal: "1" } }); }
+    else if (a === "photo") { onClose(); addPhotosFlow(); }
     else if (a === "voice") setRecording(true);
     else { onClose(); setEntrySheet({ kind: a }); }
   };
   return (
     <>
       <Dropdown label="Add">
-        {[...(pet ? PET_ACTIONS : ACTIONS)].reverse().map((a) => <Item key={a} icon={ICON[a]} label={LABEL(a, pet)} onPress={() => choose(a)} />)}
+        {[...actionsFor(active, tries)].reverse().map((a) => <Item key={a} icon={ICON[a]} label={LABEL(a, pet)} onPress={() => choose(a)} />)}
       </Dropdown>
       {recording ? (
         <VoiceRecorderSheet onClose={() => { setRecording(false); onClose(); }} onDone={(item) => { setRecording(false); onClose(); setTimeout(() => setEntrySheet({ kind: "story", title: "Voice note", media: [item] }), 250); }} />

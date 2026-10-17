@@ -97,6 +97,22 @@ create table if not exists public.classics (
   primary key (child_id, id)
 );
 
+-- First foods: one row per try of a food (see src/lib/foods.ts). Health information, so only parents and editors may read it.
+create table if not exists public.food_tries (
+  child_id text not null references public.children(id) on delete cascade,
+  id text not null,
+  food text not null,                        -- a food from the app's list ('egg', 'peanut'…) or one added by hand
+  date date,
+  amount text,                               -- 'taste' | 'some' | 'portion'
+  liked text,                                -- 'yes' | 'meh' | 'no'
+  reaction text,                             -- 'none' | 'mild' | 'serious'
+  note text,                                 -- what the reaction was
+  client_ts bigint not null default 0,
+  deleted boolean not null default false,
+  updated_at timestamptz not null default now(),
+  primary key (child_id, id)
+);
+
 -- hearts and comments: one per person per post (a heart, a comment, or both), from anyone who can see the post
 create table if not exists public.reactions (
   child_id text not null references public.children(id) on delete cascade,
@@ -168,7 +184,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['children','memories','custom_defs','relatives','classics','reactions'] loop
+  foreach t in array array['children','memories','custom_defs','relatives','classics','food_tries','reactions'] loop
     execute format('drop trigger if exists trg_touch on public.%I', t);
     execute format('create trigger trg_touch before insert or update on public.%I for each row execute function public.touch_updated_at()', t);
   end loop;
@@ -203,6 +219,7 @@ alter table public.memories enable row level security;
 alter table public.custom_defs enable row level security;
 alter table public.relatives enable row level security;
 alter table public.classics enable row level security;
+alter table public.food_tries enable row level security;
 alter table public.reactions enable row level security;
 
 drop policy if exists children_select on public.children;
@@ -239,7 +256,7 @@ create policy invites_delete on public.invites for delete to authenticated using
 do $$
 declare t text;
 begin
-  foreach t in array array['memories','custom_defs','relatives','classics'] loop
+  foreach t in array array['memories','custom_defs','relatives','classics','food_tries'] loop
     execute format('drop policy if exists member_all on public.%I', t);
     execute format('drop policy if exists member_read on public.%I', t);
     execute format('drop policy if exists editor_write on public.%I', t);
@@ -254,6 +271,7 @@ create policy member_read on public.memories for select to authenticated using (
 create policy member_read on public.custom_defs for select to authenticated using (public.is_member(child_id));
 create policy member_read on public.relatives for select to authenticated using (public.is_member(child_id));
 create policy member_read on public.classics for select to authenticated using (public.is_editor(child_id));
+create policy member_read on public.food_tries for select to authenticated using (public.is_editor(child_id));   -- not view-only family
 
 -- reactions: seen by whoever can see the post; each person writes only their own
 create or replace function public.can_see_post(p_memory text) returns boolean
@@ -444,7 +462,7 @@ do $$
 declare t text;
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
-    foreach t in array array['children','memories','custom_defs','relatives','classics','child_members','reactions'] loop
+    foreach t in array array['children','memories','custom_defs','relatives','classics','food_tries','child_members','reactions'] loop
       if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t) then
         execute format('alter publication supabase_realtime add table public.%I', t);
       end if;

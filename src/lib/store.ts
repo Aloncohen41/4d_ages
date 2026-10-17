@@ -5,7 +5,7 @@ import { createDataStorage } from "./dataStorage";
 import { addSiblingsForNewChild, addToFamily, followChild, pinToExistingChildren, setFamilies, setUpSiblings } from "./family";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { swapAccounts } from "./accounts";
-import { Child, EntryKind, MilestoneDef, Memory, NotifPrefs, Relative, SharedItem, Tag, Tombstone } from "./types";
+import { Child, EntryKind, MilestoneDef, Memory, NotifPrefs, Relative, SharedItem, Tag, Tombstone, FoodTry } from "./types";
 import { personTag, upsertTagIn, uniqueIds } from "./tags";
 import type { HeightUnit, WeightUnit } from "./growth";
 import type { BookPrefs } from "./bookPages";
@@ -58,6 +58,7 @@ export interface State {
   relatives: Relative[];
   customDefs: Record<string, MilestoneDef[]>; // each child's own milestones (the catalogue; logging one makes a memory)
   classics: ClassicEntry[]; // the fill-in pages (teeth, birth story, food…): one per template per child
+  foodTries: FoodTry[]; // First foods: every try of every food, for every child (see foods.ts)
   growSpeed: number;
   heightUnit: HeightUnit;
   weightUnit: WeightUnit;
@@ -118,6 +119,10 @@ export interface State {
   /** Save a fill-in page (creates it the first time). Pictures taken out of it are deleted from the phone. */
   saveClassic: (childId: string, templateId: string, values: Record<string, string>, photos: Record<string, import("./types").MediaItem[]>) => void;
   /** Clear a fill-in page: its words and pictures are removed. */
+  /** First foods: log tries (a whole meal at once), change one, or take one away. */
+  addFoodTries: (tries: Omit<FoodTry, "id" | "updatedAt" | "syncedTs">[]) => void;
+  updateFoodTry: (id: string, patch: Partial<Omit<FoodTry, "id" | "childId">>) => void;
+  removeFoodTry: (id: string) => void;
   removeClassic: (childId: string, templateId: string) => void;
   deleteCustomDef: (childId: string, milestoneId: string) => void;
   addRelative: (r: Relative) => void;
@@ -209,6 +214,7 @@ export const useStore = create<State>()(
       relatives: [],
       customDefs: {},
       classics: [],
+      foodTries: [],
       growSpeed: 1,
       heightUnit: "cm",
       weightUnit: "kg",
@@ -355,6 +361,24 @@ export const useStore = create<State>()(
           return { classics: s.classics.filter((c) => c !== old), tombstones: addTomb(s, childId, { table: "classics", id: templateId, paths }) };
         }),
 
+      addFoodTries: (tries) =>
+        set((s) => {
+          const ok = tries.filter((x) => !isViewOnly(s, x.childId));
+          return ok.length ? { foodTries: [...s.foodTries, ...ok.map((x) => ({ ...x, id: uid("food"), updatedAt: now() }))] } : {};
+        }),
+      updateFoodTry: (id, patch) =>
+        set((s) => {
+          const old = s.foodTries.find((x) => x.id === id);
+          if (!old || isViewOnly(s, old.childId)) return {};
+          return { foodTries: s.foodTries.map((x) => (x === old ? { ...x, ...patch, updatedAt: now() } : x)) };
+        }),
+      removeFoodTry: (id) =>
+        set((s) => {
+          const old = s.foodTries.find((x) => x.id === id);
+          if (!old || isViewOnly(s, old.childId)) return {};
+          return { foodTries: s.foodTries.filter((x) => x !== old), tombstones: addTomb(s, old.childId, { table: "food_tries", id }) };
+        }),
+
       addRelative: (r) => set((s) => ({ relatives: [...s.relatives, { ...r, updatedAt: now() }] })),
       importFamily: (childId, relativeIds) => set((s) => ({ relatives: addToFamily(s.relatives, childId, relativeIds, now()) })),
       setupSiblings: () => set((s) => ({ relatives: setUpSiblings(s.relatives, s.kids, now(), () => uid("rel")) })),
@@ -417,6 +441,7 @@ export const useStore = create<State>()(
           activeId: s.activeId || d.kids[0].id,
           memories: [...s.memories.filter((m) => !d.memories.some((x) => x.id === m.id)), ...d.memories],
           relatives: [...s.relatives.filter((r) => !d.relatives.some((x) => x.id === r.id)), ...d.relatives],
+          foodTries: [...s.foodTries.filter((x) => !d.foodTries.some((y) => y.id === x.id)), ...d.foodTries],
           tags: d.tags.reduce((acc, t) => upsertTagIn(acc, t), s.tags),
         }));
       },
@@ -435,6 +460,7 @@ export const useStore = create<State>()(
             relatives: s.relatives.filter((r) => !relIds.has(r.id)),
             customDefs: Object.fromEntries(Object.entries(s.customDefs).filter(([id]) => !kidIds.has(id))),
             classics: s.classics.filter((c) => !kidIds.has(c.childId)),
+            foodTries: s.foodTries.filter((x) => !kidIds.has(x.childId)),
             familyOrder: Object.fromEntries(Object.entries(s.familyOrder).filter(([id]) => !kidIds.has(id))),
             bookPrefs: Object.fromEntries(Object.entries(s.bookPrefs).filter(([id]) => !kidIds.has(id))),
           };
@@ -454,6 +480,7 @@ export const useStore = create<State>()(
             activeId: st.activeId === childId ? kids[0]?.id ?? "" : st.activeId,
             memories: st.memories.filter((m) => m.childId !== childId),
             classics: st.classics.filter((c) => c.childId !== childId),
+            foodTries: st.foodTries.filter((x) => x.childId !== childId),
             customDefs: drop(st.customDefs),
             familyOrder: drop(st.familyOrder),
             bookPrefs: drop(st.bookPrefs),
@@ -478,7 +505,7 @@ export const useStore = create<State>()(
         get().memories.forEach(deleteMedia);
         get().relatives.forEach((r) => r.photoUri && deleteFile(r.photoUri));
         get().classics.forEach((c) => filesOf(classicMedia(c)).forEach(deleteFile));
-        set({ kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, classics: [], tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, bookPrefs: {}, videoEvents: {}, preview: false, accountUserId: undefined });
+        set({ kids: [], activeId: "", memories: [], relatives: [], customDefs: {}, classics: [], foodTries: [], tags: [], milestoneAnswers: {}, tombstones: [], syncMeta: {}, familyOrder: {}, bookPrefs: {}, videoEvents: {}, preview: false, accountUserId: undefined });
       },
     }),
     {
@@ -493,6 +520,7 @@ export const useStore = create<State>()(
         relatives: s.relatives,
         customDefs: s.customDefs,
         classics: s.classics,
+        foodTries: s.foodTries,
         growSpeed: s.growSpeed,
         heightUnit: s.heightUnit,
         weightUnit: s.weightUnit,

@@ -10,6 +10,30 @@ import { byMoment } from "../src/lib/display";
 import { ageShort, formatDate } from "../src/lib/date";
 import { HealthKind } from "../src/lib/types";
 import { TYPE } from "../src/theme";
+import { router } from "expo-router";
+import { foodById } from "../src/lib/foods";
+
+/** Reactions noted in First foods, at the top of Health: what, when, and how bad. */
+function FoodReactions({ childId }: { childId: string }) {
+  const t = useTheme();
+  const tries = useStore((s) => s.foodTries);
+  const list = tries.filter((x) => x.childId === childId && x.reaction && x.reaction !== "none").sort((a, b) => b.date.localeCompare(a.date));
+  if (!list.length) return null;
+  return (
+    <Pressable onPress={() => router.push("/foods")} accessibilityRole="link" style={{ marginBottom: 16, padding: 14, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.danger }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Icon name="alert-triangle" size={18} color={t.danger} />
+        <Text style={[TYPE.titleSmall, { color: t.ink, flex: 1 }]}>Food reactions</Text>
+        <Icon name="chevron-right" size={18} color={t.ink3} />
+      </View>
+      {list.slice(0, 5).map((x) => (
+        <Text key={x.id} style={[TYPE.bodySmall, { color: t.ink2, marginTop: 6 }]}>
+          {formatDate(x.date)} · {foodById(x.food)?.name ?? x.food} · <Text style={{ color: t.danger, fontWeight: "700" }}>{x.reaction === "serious" ? "serious" : "mild"}</Text>{x.note ? ` · ${x.note}` : ""}
+        </Text>
+      ))}
+    </Pressable>
+  );
+}
 
 /**
  * The health log: check-ups, vaccinations, illnesses and medicines, newest first. Kept apart from the story and the book. Each entry is added
@@ -32,6 +56,7 @@ export default function HealthPage() {
 
   return (
     <Page title={`${child.name}'s health`}>
+      <FoodReactions childId={child.id} />
       {viewOnly ? null : (
         <>
           <Btn label="Add a health entry" icon="health" onPress={() => setEntrySheet({ kind: "health", healthKind: kind === "all" ? "checkup" : kind })} />

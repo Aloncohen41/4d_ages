@@ -95,6 +95,7 @@ export function prepareRestore(data: Record<string, unknown>): Record<string, un
     kids,
     memories: unsynced(data.memories),
     classics: unsynced(data.classics),
+    foodTries: unsynced(data.foodTries),
     relatives: unsynced(data.relatives),
     syncMeta: {}, // read everything in the account again
     tombstones: [],
