@@ -15,7 +15,7 @@ export const COLUMN = 560;
 /** Each screen's name, for the page's title. */
 const TITLES: [RegExp, string][] = [
   [/^\/$/, "Home"], [/^\/milestones/, "Milestones"], [/^\/growth/, "Growth"], [/^\/book/, "Book"], [/^\/settings/, "Settings"],
-  [/^\/family/, "Family"], [/^\/tree/, "Family tree"], [/^\/my-family/, "My family"], [/^\/foods/, "First foods"], [/^\/person\//, "Family member"], [/^\/classics/, "Classics"], [/^\/classic\//, "Classics"], [/^\/health/, "Health"],
+  [/^\/family/, "Family"], [/^\/tree/, "Family tree"], [/^\/my-family/, "My family"], [/^\/foods/, "Foods & allergens"], [/^\/person\//, "Family member"], [/^\/classics/, "Classics"], [/^\/classic\//, "Classics"], [/^\/health/, "Health"],
   [/^\/pregnancy/, "Pregnancy"], [/^\/access/, "Who can see your memories"], [/^\/share/, "Share"], [/^\/login/, "Sign in"], [/^\/welcome/, "Welcome"],
   [/^\/join/, "Join a book"], [/^\/auth-callback/, "Signing in"],
 ];

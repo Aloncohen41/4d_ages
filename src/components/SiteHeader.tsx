@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Linking, Pressable, PressableStateCallbackType, StyleProp, Text, View, ViewStyle } from "react-native";
+import { Animated, Linking, Pressable, PressableStateCallbackType, StyleProp, Text, View, ViewStyle } from "react-native";
 import { router, usePathname } from "expo-router";
 import { Image } from "expo-image";
 import { useActiveChild, useStore } from "../lib/store";
@@ -201,19 +201,19 @@ function Profiles() {
         const on = k.id === active?.id;
         const a = smartAge(k.birth);
         return (
-          <Wiggle key={k.id} on={!!drag.held && drag.held.id !== k.id} seed={i}>
-          <View ref={drag.register(k.id)} {...drag.handler(k.id).panHandlers} focusable
+          <Wiggle key={k.id} on={!!drag.held && drag.held.id !== k.id} seed={i} style={{ zIndex: drag.held?.id === k.id ? 10 : 0 }}>
+          <Animated.View ref={drag.register(k.id)} {...drag.handler(k.id).panHandlers} focusable
             accessible accessibilityRole="button" aria-pressed={on} accessibilityLabel={k.name} accessibilityHint={tr("Press and hold, then drag to change the order")}
             accessibilityActions={[{ name: "earlier", label: tr("Move {0} earlier", [k.name]) }, { name: "later", label: tr("Move {0} later", [k.name]) }, { name: "activate" }]}
             onAccessibilityAction={(e) => (e.nativeEvent.actionName === "earlier" ? moveKid(k.id, -1) : e.nativeEvent.actionName === "later" ? moveKid(k.id, 1) : setActive(k.id))}
             {...({ onKeyDown: (e: { key: string }) => { if (e.key === "Enter" || e.key === " ") setActive(k.id); } } as object)}
-            style={[{ flexDirection: "row", alignItems: "center", gap: 8, paddingStart: 4, paddingEnd: 14, height: 44, borderRadius: 22, borderWidth: 1, cursor: "grab" } as object, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }, drag.held?.id === k.id ? { transform: [{ translateX: drag.held.dx }, { translateY: drag.held.dy }, { scale: 1.08 }], zIndex: 10, opacity: 0.95, boxShadow: "0 8px 24px rgba(0,0,0,.2)" } as object : null]}>
+            style={[{ flexDirection: "row", alignItems: "center", gap: 8, paddingStart: 4, paddingEnd: 14, height: 44, borderRadius: 22, borderWidth: 1, cursor: "grab" } as object, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }, drag.style(k.id), drag.held?.id === k.id ? { opacity: 0.95, boxShadow: "0 8px 24px rgba(0,0,0,.2)", cursor: "grabbing" } as object : null]}>
             <Avatar child={k} size={34} />
             <View>
               <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]} numberOfLines={1}>{k.name}</Text>
               <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
             </View>
-          </View>
+          </Animated.View>
           </Wiggle>
         );
       })}

@@ -31,7 +31,7 @@ export default function MilestonesTab() {
   );
 }
 
-/** The three sections: the milestones, the firsts and lasts together, and First foods (with the allergens). */
+/** The three sections: the milestones, the firsts and lasts together, and Foods & allergens. */
 type Section = "milestones" | "firsts" | "foods";
 
 function Milestones() {
@@ -46,7 +46,7 @@ function Milestones() {
   const copy: Record<Section, { title: string; desc?: string }> = {
     milestones: { title: tr("Milestones") },
     firsts: { title: tr("Firsts & lasts") },
-    foods: { title: tr("First foods") },
+    foods: { title: tr("Foods & allergens") },
   };
   return (
     <View>
@@ -56,7 +56,7 @@ function Milestones() {
       </View>
       {copy[section].desc ? <Text style={{ color: t.ink3, fontSize: 14, lineHeight: 20, marginBottom: 12 }}>{copy[section].desc}</Text> : null}
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "milestones" as Section, label: tr("Milestones") }, { id: "firsts" as Section, label: tr("Firsts & lasts") }, { id: "foods" as Section, label: tr("First foods") }]} value={section} onChange={setSection} />
+        <Seg options={[{ id: "milestones" as Section, label: tr("Milestones") }, { id: "firsts" as Section, label: tr("Firsts & lasts") }, { id: "foods" as Section, label: tr("Foods & allergens") }]} value={section} onChange={setSection} />
       </View>
       {section === "milestones" ? <MilestoneChecklist /> : section === "foods" ? <FirstFoodsView /> : (
         // the firsts, then the lasts, each with its own ideas and Add button

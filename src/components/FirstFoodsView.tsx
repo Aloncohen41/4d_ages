@@ -3,47 +3,53 @@ import { Linking, Pressable, Text, View } from "react-native";
 import { Btn, Input } from "./ui";
 import { Icon } from "./Icon";
 import { HScroll } from "./HScroll";
-import { FoodSheet, FoodTile, LogTrySheet, statusColour } from "./FirstFoods";
+import { FoodPicture, FoodSheet, FoodTile, LogTrySheet, statusColour } from "./FirstFoods";
+import { AppSlider } from "./AppSlider";
 import { useShownChild, useStore } from "../lib/store";
 import { useTheme } from "../lib/useTheme";
 import { withAlpha } from "../lib/m3";
-import { ALLERGENS, FOOD_GROUPS, Food, FoodGroup, FoodStatus, NHS_WEANING_URL, allergenNotes, allergenProgress, foodProgress, suggestions } from "../lib/foods";
+import { ALLERGENS, FOOD_GROUPS, Food, FoodGroup, FoodStatus, NHS_WEANING_URL, TRIES_CHOICES, allergenNotes, allergenProgress, foodProgress, inGroup, suggestions, triesGoal } from "../lib/foods";
 import { shareFoodSummary } from "../lib/foodSummary";
 import { daysBetween, todayISO } from "../lib/date";
 import { TYPE } from "../theme";
 
 import { tr } from "../lib/i18n";
 /*
- * First foods: the progress at the top (foods tried, allergens done), what to try next, then the foods one group at a time (allergens
- * first), each a tile with its three tries as dots. Tap a food to see it and log a try; "Log a meal" picks several at once. Reactions show
+ * Foods & allergens: how many tries make a food done (3, 4 or 5, a slider at the top), the progress (foods tried, allergens done), what to
+ * try next, then the foods one group at a time (allergens first), each a tile with its photo and its tries as dots. A food can be in more
+ * than one group (cheese is in Dairy and in Allergens) and it's the same food in each, with the same tries. Tap a food to see it and log a try; "Log a meal" picks several at once. Reactions show
  * on the tiles and in Health, and the summary for the doctor is one tap away.
  */
 const FILTERS: { id: "all" | FoodStatus; label: string }[] = [
   { id: "all", get label() { return tr("All"); } }, { id: "trying", get label() { return tr("Trying"); } }, { id: "new", get label() { return tr("Not tried"); } }, { id: "done", get label() { return tr("Done"); } }, { id: "reaction", get label() { return tr("Reactions"); } },
 ];
 
-/** First foods, the whole of it: the Milestones tab's First foods section, and its own page (opened by "Food tried" in the + menu). */
+/** Foods & allergens, the whole of it: the Milestones tab's third section, and its own page (opened by "Food tried" in the + menu). */
 export function FirstFoodsView({ startMeal = false }: { startMeal?: boolean }) {
   const t = useTheme();
   const child = useShownChild();
   const tries = useStore((s) => s.foodTries);
+  const updateChild = useStore((s) => s.updateChild);
+  const saved = triesGoal(child);
+  const [goalDraft, setGoalDraft] = useState<number | null>(null); // while the slider moves
+  const goal = goalDraft ?? saved;
   const [group, setGroup] = useState<FoodGroup>("allergens");
   const [filter, setFilter] = useState<"all" | FoodStatus>("all");
   const [query, setQuery] = useState("");
   const [meal, setMeal] = useState<string[] | null>(startMeal ? [] : null); // choosing a meal: the foods ticked so far
   const [open, setOpen] = useState<Food | null>(null);
   const [logging, setLogging] = useState<Food[] | null>(null);
-  const progress = useMemo(() => (child ? foodProgress(tries, child.id) : new Map()), [tries, child]);
+  const progress = useMemo(() => (child ? foodProgress(tries, child.id, goal) : new Map()), [tries, child, goal]);
   if (!child) return null;
 
   const months = daysBetween(child.birth, todayISO()) / 30.4375;
   const all = [...progress.values()];
   const allergens = allergenProgress(progress);
-  const notes = allergenNotes(tries, child.id, todayISO());
+  const notes = allergenNotes(tries, child.id, todayISO(), goal);
   const next = suggestions(progress, months);
   const q = query.trim().toLowerCase();
   const shown = all
-    .filter((p) => (q ? p.food.name.toLowerCase().includes(q) : group === "allergens" ? !!p.food.allergen : p.food.group === group && !p.food.allergen))
+    .filter((p) => (q ? p.food.name.toLowerCase().includes(q) : inGroup(p.food, group)))
     .filter((p) => filter === "all" || p.status === filter)
     // the allergens in the NHS's order (milk, egg, gluten, peanut…), not the order of the food groups
     .sort((x, y) => (group === "allergens" && !q ? ALLERGENS.findIndex((a) => a.id === x.food.allergen) - ALLERGENS.findIndex((a) => a.id === y.food.allergen) : 0));
@@ -63,6 +69,21 @@ export function FirstFoodsView({ startMeal = false }: { startMeal?: boolean }) {
 
   return (
     <View>
+      {/* how many tries make a food done: changing it never removes a try, the foods just move between Trying and Done */}
+      <View style={{ padding: 14, paddingBottom: 6, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, marginBottom: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <Text style={[TYPE.titleSmall, { color: t.ink, flex: 1 }]}>{tr("Tries before a food is done")}</Text>
+          <Text style={[TYPE.titleMedium, { color: t.accentDeep }]}>{goal}</Text>
+        </View>
+        <AppSlider label={tr("Tries before a food is done")} valueText={tr("{0} tries", [goal])} minimumValue={TRIES_CHOICES[0]} maximumValue={TRIES_CHOICES[TRIES_CHOICES.length - 1]} step={1} value={goal}
+          onValueChange={(v) => setGoalDraft(Math.round(v))}
+          onSlidingComplete={(v) => { const n = Math.round(v); setGoalDraft(null); if (n !== saved) updateChild(child.id, { foodGoal: n }); }}
+          minimumTrackTintColor={t.accent} maximumTrackTintColor={t.outline} thumbTintColor={t.accent} style={{ marginTop: 4 }} />
+        <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 8 }}>
+          {TRIES_CHOICES.map((n) => <Text key={n} style={[TYPE.labelSmall, { color: n === goal ? t.accentDeep : t.ink3, fontWeight: n === goal ? "700" : "400" }]}>{n}</Text>)}
+        </View>
+        <Text style={[TYPE.bodySmall, { color: t.ink3, marginTop: 4, marginBottom: 6 }]}>{tr("Every try is kept when you change this.")}</Text>
+      </View>
       <View style={{ flexDirection: "row", gap: 10 }}>
         {ring("Foods tried", tried, all.length)}
         {ring("Allergens done", allergensDone, allergens.length)}
@@ -76,8 +97,8 @@ export function FirstFoodsView({ startMeal = false }: { startMeal?: boolean }) {
           <Text style={[TYPE.titleSmall, { color: t.ink, marginBottom: 6 }]}>{tr("Try next")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {next.map((f) => (
-              <Pressable key={f.id} onPress={() => setLogging([f])} accessibilityRole="button" accessibilityLabel={tr("Log a try of {0}", [f.name])} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, backgroundColor: t.chipOn }}>
-                <Text style={{ fontSize: 18 }}>{f.emoji}</Text><Text style={[TYPE.labelLarge, { color: t.onChipOn }]}>{f.name}</Text>
+              <Pressable key={f.id} onPress={() => setLogging([f])} accessibilityRole="button" accessibilityLabel={tr("Log a try of {0}", [f.name])} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 6, paddingLeft: 6, paddingRight: 12, borderRadius: 20, backgroundColor: t.chipOn }}>
+                <FoodPicture food={f} size={26} /><Text style={[TYPE.labelLarge, { color: t.onChipOn }]}>{f.name}</Text>
               </Pressable>
             ))}
           </View>
@@ -126,7 +147,7 @@ export function FirstFoodsView({ startMeal = false }: { startMeal?: boolean }) {
       </View>
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "flex-start" }}>
-        {shown.map((p) => <FoodTile key={p.food.id} p={p} onPress={() => tap(p.food)} chosen={meal ? meal.includes(p.food.id) : undefined} />)}
+        {shown.map((p) => <FoodTile key={p.food.id} p={p} goal={goal} onPress={() => tap(p.food)} chosen={meal ? meal.includes(p.food.id) : undefined} />)}
       </View>
       {!shown.length ? <Text style={{ color: t.ink3, textAlign: "center", padding: 20 }}>{tr("No foods here.")}</Text> : null}
 

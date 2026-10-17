@@ -106,7 +106,7 @@ export async function shareChild(childId: string): Promise<void> {
   const ts = child.updatedAt ?? Date.now();
   const { error: e1 } = await sb.from("children").upsert({
     id: child.id, name: child.name, birth: child.birth, theme: child.theme, emoji: child.emoji,
-    avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, ...petColumns(child), owner_id: user.id, client_ts: ts,
+    avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, food_goal: child.foodGoal ?? null, ...petColumns(child), owner_id: user.id, client_ts: ts,
   });
   if (e1) throw new Error(e1.message);
   // already a member (a first try that stopped half way, or sharing again): nothing to change
@@ -379,7 +379,7 @@ async function pushChild(childId: string, remoteRelatives: { id: string; client_
     const ts = child.updatedAt ?? Date.now();
     const { error } = await sb.from("children").update({
       name: child.name, birth: child.birth, theme: child.theme, emoji: child.emoji,
-      avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, ...petColumns(child), client_ts: ts,
+      avatar_photo_id: child.avatarPhotoId ?? null, growth_ref: child.growthRef ?? null, gender: child.gender ?? null, expecting: !!child.expecting, food_goal: child.foodGoal ?? null, ...petColumns(child), client_ts: ts,
     }).eq("id", childId);
     if (error) throw new Error(error.message);
     apply((st) => ({ kids: st.kids.map((k) => (k.id === childId ? { ...k, updatedAt: ts, syncedTs: ts } : k)) }));
@@ -525,7 +525,7 @@ async function downloadMissing(childId: string) {
 
 /* ---------- the account: every child is kept in it ---------- */
 
-interface ChildRow { id: string; name: string; birth: string; theme: string; emoji: string; avatar_photo_id?: string | null; growth_ref?: string | null; gender?: string | null; expecting?: boolean | null; client_ts?: number; kind?: string | null; species?: string | null; breed?: string | null; dog_size?: string | null; birth_approx?: boolean | null; gotcha_day?: string | null }
+interface ChildRow { id: string; name: string; birth: string; theme: string; emoji: string; avatar_photo_id?: string | null; growth_ref?: string | null; gender?: string | null; expecting?: boolean | null; food_goal?: number | null; client_ts?: number; kind?: string | null; species?: string | null; breed?: string | null; dog_size?: string | null; birth_approx?: boolean | null; gotcha_day?: string | null }
 
 /** A child as the cloud sends it. */
 function childFromRow(row: ChildRow): Child {
@@ -534,6 +534,7 @@ function childFromRow(row: ChildRow): Child {
     avatarPhotoId: row.avatar_photo_id ?? undefined, growthRef: (row.growth_ref as Child["growthRef"]) ?? undefined,
     gender: (row.gender as Child["gender"]) ?? undefined,
     ...(row.expecting ? { expecting: true } : {}),
+    ...(row.food_goal ? { foodGoal: Number(row.food_goal) } : {}),
     ...Object.fromEntries(Object.entries(petFromRow(row)).filter(([, v]) => v !== undefined)),
     shared: true, updatedAt: Number(row.client_ts) || 0, syncedTs: Number(row.client_ts) || 0,
   };

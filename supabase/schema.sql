@@ -172,6 +172,7 @@ update public.relatives r set deleted = true, client_ts = (extract(epoch from no
   where r.child_ref is not null and not r.deleted and not exists (select 1 from public.children c where c.id = r.child_ref);
 alter table public.memories add column if not exists health_kind text;      -- health log entries: 'checkup' | 'vaccination' | 'illness' | 'medicine' | 'other'
 alter table public.children add column if not exists expecting boolean not null default false;   -- not born yet: birth is the due date
+alter table public.children add column if not exists food_goal smallint;   -- Foods & allergens: tries without a reaction for a food to be done (3, 4 or 5; empty is 3)
 
 -- ---------- the server stamps every change (used as the "what's new" cursor) ----------
 create or replace function public.touch_updated_at() returns trigger

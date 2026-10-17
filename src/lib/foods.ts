@@ -1,7 +1,9 @@
 /*
- * First foods: the foods a baby tries as they start solids, and the 14 major allergens, following the NHS's weaning advice (the same list
- * for everyone). Each food is tried a few times (three, with no reaction, counts as done); a reaction is noted with the try. Nothing here is
- * medical advice: the app shows the NHS's guidance and points to it. Pure, for tests.
+ * Foods and allergens: the foods a baby tries as they start solids, and the 14 major allergens, following the NHS's weaning advice (the same
+ * list for everyone). Each food is tried a few times (three by default, or four or five if the family chooses, with no reaction, counts as
+ * done); a reaction is noted with the try. A food can be in more than one group (cheese is Dairy and an allergen; edamame is a vegetable and
+ * a protein) and is the same food in each, with the same tries. Nothing here is medical advice: the app shows the NHS's guidance and points
+ * to it. Pure, for tests.
  */
 import type { FoodTry } from "./types";
 
@@ -44,6 +46,8 @@ export interface Food {
   name: string;
   emoji: string;
   group: Exclude<FoodGroup, "allergens">;
+  /** the other groups it's shown in too (the same food, the same tries) */
+  also?: Exclude<FoodGroup, "allergens">[];
   /** one of the 14 allergens it is (or contains) */
   allergen?: AllergenId;
   /** how to give it safely at the start (NHS) */
@@ -152,6 +156,8 @@ export const FOODS: Food[] = [
   f("cheese", "Cheese", "🧀", "dairy", "Pasteurised, full-fat (grated cheddar).", "milk"),
   f("cream-cheese", "Cream cheese", "🧀", "dairy", "Full-fat, pasteurised.", "milk"),
   f("cottage-cheese", "Cottage cheese", "🧀", "dairy", "Full-fat.", "milk"),
+  f("fromage-frais", "Fromage frais", "🥣", "dairy", "Plain, full-fat, no added sugar.", "milk"),
+  f("mozzarella", "Mozzarella", "🧀", "dairy", "Pasteurised, torn into soft pieces.", "milk"),
   f("butter", "Butter", "🧈", "dairy", "A little, unsalted.", "milk"),
   f("soya-yoghurt", "Soya yoghurt", "🥣", "dairy", "Unsweetened, with added calcium.", "soya"),
   // herbs, spices and the rest
@@ -165,6 +171,17 @@ export const FOODS: Food[] = [
   f("honey", "Honey", "🍯", "extras", "Not before 1 year (it can cause botulism).", undefined, 12),
 ];
 
+/** The foods that belong in a second group as well (the group they're listed under above is their first). */
+const ALSO: Record<string, Exclude<FoodGroup, "allergens">[]> = {
+  peas: ["protein"], "green-beans": ["protein"], edamame: ["veg"], sweetcorn: ["grains"], polenta: ["veg"], lentils: ["veg"], chickpeas: ["veg"], beans: ["veg"],
+  "soya-yoghurt": ["protein"], tofu: ["dairy"], sesame: ["extras"], lupin: ["grains"], "cows-milk": ["protein"], cheese: ["protein"], egg: ["dairy"],
+  avocado: ["veg"], tomato: ["fruit"], pumpkin: ["fruit"], celery: ["extras"],
+};
+for (const x of FOODS) if (ALSO[x.id]) x.also = ALSO[x.id];
+
+/** Whether a food is shown in a group: the allergens are every food that is one; the others, the foods in that group, allergen or not. */
+export const inGroup = (x: Food, g: FoodGroup) => (g === "allergens" ? !!x.allergen : x.group === g || !!x.also?.includes(g));
+
 export const foodById = (id: string) => FOODS.find((x) => x.id === id);
 export const allergenFoods = (a: AllergenId) => FOODS.filter((x) => x.allergen === a);
 
@@ -173,15 +190,21 @@ export type Reaction = "none" | "mild" | "serious";
 export type Liked = "yes" | "meh" | "no";
 export type Amount = "taste" | "some" | "portion";
 
-/** Three tries without a reaction: the food is done. */
+/** Three tries without a reaction: the food is done (unless the family chose four or five; see triesGoal). */
 export const TRIES_TO_DONE = 3;
+export const TRIES_CHOICES = [3, 4, 5] as const;
+/** How many tries without a reaction make a food done for this child: their family's choice, else three. */
+export const triesGoal = (child?: { foodGoal?: number } | null) => (child?.foodGoal && child.foodGoal >= 3 && child.foodGoal <= 5 ? child.foodGoal : TRIES_TO_DONE);
 
 export type FoodStatus = "new" | "trying" | "done" | "reaction";
 
 export interface FoodProgress { food: Food; tries: number; status: FoodStatus; liked?: Liked; last?: string; reaction?: Reaction }
 
-/** Where each food stands for one child: how many tries, done (three without a reaction), or a reaction. */
-export function foodProgress(tries: FoodTry[], childId: string): Map<string, FoodProgress> {
+/**
+ * Where each food stands for one child: how many tries, done (the goal, three by default, without a reaction), or a reaction. Worked out from
+ * the tries each time, so changing the goal never loses a try: a food simply moves between Trying and Done.
+ */
+export function foodProgress(tries: FoodTry[], childId: string, goal = TRIES_TO_DONE): Map<string, FoodProgress> {
   const mine = tries.filter((x) => x.childId === childId).sort((a, b) => a.date.localeCompare(b.date));
   const out = new Map<string, FoodProgress>();
   for (const food of FOODS) out.set(food.id, { food, tries: 0, status: "new" });
@@ -196,7 +219,7 @@ export function foodProgress(tries: FoodTry[], childId: string): Map<string, Foo
   }
   for (const p of out.values()) {
     if (!p.tries) continue;
-    p.status = p.reaction ? "reaction" : p.tries >= TRIES_TO_DONE ? "done" : "trying";
+    p.status = p.reaction ? "reaction" : p.tries >= goal ? "done" : "trying";
   }
   return out;
 }
@@ -230,8 +253,8 @@ export function suggestions(progress: Map<string, FoodProgress>, ageMonths: numb
  * A gentle nudge about allergens (NHS): one new allergen at a time, a couple of days apart, so a reaction can be traced; and once one is in
  * the diet, keep giving it regularly. Returns what to say, if anything.
  */
-export function allergenNotes(tries: FoodTry[], childId: string, today: string): { wait?: string; keepUp: string[] } {
-  const progress = foodProgress(tries, childId);
+export function allergenNotes(tries: FoodTry[], childId: string, today: string, goal = TRIES_TO_DONE): { wait?: string; keepUp: string[] } {
+  const progress = foodProgress(tries, childId, goal);
   const firsts = new Map<string, string>(); // allergen → the day it was first given
   for (const t of tries.filter((x) => x.childId === childId).sort((a, b) => a.date.localeCompare(b.date))) {
     const a = foodById(t.food)?.allergen;
@@ -244,6 +267,6 @@ export function allergenNotes(tries: FoodTry[], childId: string, today: string):
   return { ...(wait ? { wait } : {}), keepUp };
 }
 
-/** The NHS's weaning pages, shown on the First foods page. */
+/** The NHS's weaning pages, shown on the Foods & allergens page. */
 export const NHS_WEANING_URL = "https://www.nhs.uk/start-for-life/baby/weaning/";
 export const NHS_ALLERGY_URL = "https://www.nhs.uk/start-for-life/baby/weaning/safe-weaning/food-allergies/";

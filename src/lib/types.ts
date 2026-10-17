@@ -79,6 +79,8 @@ export interface Child extends SyncFields {
   dogSize?: import("./pets").DogSize; // for the age in dog years
   birthApprox?: boolean; // the birthday is a guess (a rescue): ages say "about"
   gotchaDay?: string; // the day they came home (YYYY-MM-DD)
+  /** Foods & allergens: how many tries without a reaction make a food done (3, 4 or 5; missing is 3). */
+  foodGoal?: number;
 }
 
 /** A pet's book, not a child's. */

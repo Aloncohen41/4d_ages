@@ -151,6 +151,7 @@ export function mergeChild(cur: Child, row: any): Child {
       growthRef: row.growth_ref ?? undefined,
       gender: row.gender ?? cur.gender,
       expecting: row.expecting === true ? true : undefined,
+      foodGoal: row.food_goal ? Number(row.food_goal) : undefined,
       ...petFromRow(row),
       updatedAt: ts,
       syncedTs: ts,

@@ -335,18 +335,21 @@ export function separate(a: Person, b: Person): Patch[] {
   return [{ id: a.id, patch: { partnerId: APART } }, { id: b.id, patch: { partnerId: APART } }];
 }
 
-/** The place someone takes when dropped on an empty part of a row (a generation, on one side or in the middle). */
-export function placeInRow(who: Person, row: Exclude<Row, "other">, side: 0 | 1 | null, family: Person[]): Patch[] {
+/**
+ * The place someone takes when dropped on an empty part of a row (a generation, on one side or in the middle), or in Friends of the family:
+ * in the tree, but joined to no one (a godparent or a carer stays one; anyone else becomes a family friend).
+ */
+export function placeInRow(who: Person, row: Row, side: 0 | 1 | null, family: Person[]): Patch[] {
   if (kinOf(who) === "pet") return [];
   const others = family.filter((x) => x.id !== who.id);
-  const kin: Kin = row === "great" ? "great-grandparent" : row === "grand" ? "grandparent"
+  const kin: Kin = row === "other" ? (kinInfo(kinOf(who)).row === "other" && kinOf(who) !== "other" ? kinOf(who) : "friend")
+    : row === "great" ? "great-grandparent" : row === "grand" ? "grandparent"
     : row === "parent" ? (side == null && parentsOf(others).length < 2 ? "parent" : "aunt-uncle")
     : side == null ? "sibling" : "cousin";
   const patch: Patch["patch"] = { kin, side: kinInfo(kin).sided ? sideValue(side, others) : undefined, through: undefined };
   const out: Patch[] = [{ id: who.id, patch }];
   const old = who.partnerId && who.partnerId !== APART ? family.find((x) => x.id === who.partnerId) : undefined;
-  if (old && kinInfo(kinOf(old)).row !== row) { patch.partnerId = undefined; out.push({ id: old.id, patch: { partnerId: undefined } }); }
-  return out;
+  if (old && kinInfo(kinOf(old)).row !== row) { patch.partnerId = undefined; out.push({ id: old.id, patch: { partnerId: undefined } }); }  return out;
 }
 
 /**
@@ -369,10 +372,11 @@ export function descentGroups(family: Person[]): { parents: string[]; children: 
     if (grands.length && kids.length) out.push({ parents: grands.slice(0, 2).map((g) => g.id), children: kids });
   }
   const byThrough = new Map<string, string[]>();
-  for (const r of family) if (kinOf(r) === "great-grandparent" && r.through && family.some((x) => x.id === r.through)) byThrough.set(r.through, [...(byThrough.get(r.through) ?? []), r.id]);
+  for (const r of family) if (kinOf(r) === "great-grandparent" && r.through && family.some((x) => x.id === r.through && kinOf(x) === "grandparent")) byThrough.set(r.through, [...(byThrough.get(r.through) ?? []), r.id]);
   for (const [g, ps] of byThrough) out.push({ parents: ps.slice(0, 2), children: [g] });
   const cousins = new Map<string, string[]>();
-  for (const r of family) if (kinOf(r) === "cousin" && r.through && family.some((x) => x.id === r.through)) cousins.set(r.through, [...(cousins.get(r.through) ?? []), r.id]);
+  // (only from someone who is still an aunt or uncle: a friend of the family is joined to no one)
+  for (const r of family) if (kinOf(r) === "cousin" && r.through && family.some((x) => x.id === r.through && kinOf(x) === "aunt-uncle")) cousins.set(r.through, [...(cousins.get(r.through) ?? []), r.id]);
   for (const [a, cs] of cousins) {
     const aunt = family.find((x) => x.id === a)!;
     const partner = family.find((x) => x.id !== a && isCouple(aunt, x, family));

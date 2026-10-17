@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -86,18 +86,18 @@ export function TopBar() {
           const a = smartAge(k.birth);
           return (
             // Material 3 filter chips: the selected child is a tonal container, the others are outlined. Press and hold to drag one to a new place.
-            <Wiggle key={k.id} on={!!drag.held && drag.held.id !== k.id} seed={i}>
-              <View ref={drag.register(k.id)} {...drag.handler(k.id).panHandlers}
+            <Wiggle key={k.id} on={!!drag.held && drag.held.id !== k.id} seed={i} style={{ zIndex: drag.held?.id === k.id ? 10 : 0 }}>
+              <Animated.View ref={drag.register(k.id)} {...drag.handler(k.id).panHandlers}
                 accessible accessibilityRole="button" aria-pressed={on} accessibilityLabel={k.name} accessibilityHint={tr("Press and hold, then drag to change the order")}
                 accessibilityActions={[{ name: "earlier", label: tr("Move {0} earlier", [k.name]) }, { name: "later", label: tr("Move {0} later", [k.name]) }, { name: "activate" }]}
                 onAccessibilityAction={(e) => (e.nativeEvent.actionName === "earlier" ? moveKid(k.id, -1) : e.nativeEvent.actionName === "later" ? moveKid(k.id, 1) : setActive(k.id))}
-                style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }, drag.held?.id === k.id ? { transform: [{ translateX: drag.held.dx }, { translateY: drag.held.dy }, { scale: 1.08 }], zIndex: 10, elevation: 6, opacity: 0.95 } : null]}>
+                style={[st.chip, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { backgroundColor: "transparent", borderColor: t.outline }, drag.style(k.id), drag.held?.id === k.id ? { elevation: 6, opacity: 0.95 } : null]}>
                 <Avatar child={k} size={32} />
                 <View>
                   <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]}>{k.name}</Text>
                   <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
                 </View>
-              </View>
+              </Animated.View>
             </Wiggle>
           );
         })}

@@ -2,7 +2,7 @@
  * The First foods summary for the doctor or health visitor, as a page (see foodSummary.ts for sharing it). Pure, for tests.
  */
 import type { Child, FoodTry } from "./types";
-import { ALLERGENS, allergenFoods, allergenProgress, foodById, foodProgress } from "./foods";
+import { ALLERGENS, allergenFoods, allergenProgress, foodById, foodProgress, triesGoal } from "./foods";
 import { formatDate } from "./date";
 import { cleanPart, FILE_BRAND } from "./fileNames";
 
@@ -11,7 +11,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 /** The page, as HTML (pure, for tests). */
 export function foodSummaryHtml(child: Child, tries: FoodTry[], today: string): string {
   const mine = tries.filter((x) => x.childId === child.id);
-  const progress = foodProgress(mine, child.id);
+  const progress = foodProgress(mine, child.id, triesGoal(child));
   const allergens = allergenProgress(progress);
   const first = (a: string) => mine.filter((x) => foodById(x.food)?.allergen === a).map((x) => x.date).sort()[0];
   const reactions = mine.filter((x) => x.reaction && x.reaction !== "none").sort((a, b) => a.date.localeCompare(b.date));

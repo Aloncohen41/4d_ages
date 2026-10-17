@@ -55,5 +55,18 @@ const has = (ps: string[], cs: string[]) => lines.some((g) => ps.every((x) => g.
 ok("lines: the parents to the child and their brothers and sisters; a side's grandparents to that parent and the aunts and uncles; an aunt to her children", has(["sarah", "tom"], [ME, "sam"]) && has(["rosa", "henrik"], ["sarah", "marco"]) && has(["priya"], ["zoe"]));
 ok("…drawn from where everyone sits, behind them, joining a couple with a line and hanging their children below it", /descentGroups\(latest\.current\.family\)/.test(read("app/tree.tsx")) && /onLayout=\{drawLines\}/.test(read("app/tree.tsx")) && /a couple joined by a line between them/.test(read("app/tree.tsx")));
 
-console.log(fails ? `${fails} FAILED` : "all tree-building tests passed");
+// October 2026: the tree keeps its shape on a phone, and friends of the family have a place
+const treeSrc = read("app/tree.tsx");
+ok("each row is one line that never wraps (a wide tree scrolls sideways, smaller on a phone); each side as wide as its widest row, its people towards the middle", /flexWrap: "nowrap", justifyContent: z\.side === 0 \? "flex-end" : z\.side === 1 \? "flex-start" : "center"/.test(treeSrc) && /<ScrollView ref=\{scroller\} horizontal/.test(treeSrc) && /const NW = narrow \? 72 : 84/.test(treeSrc) && /left: Math\.max\(NW \+ 2 \* PAD, \.\.\.ROWS\.map\(\(r\) => span\(L\[r\]\.left\)\)\)/.test(treeSrc));
+const withAunt = [...family, p("dana", "Shahar", { kin: "aunt-uncle", side: "tom" })];
+const LA = treeLayout(withAunt);
+const tomOnLeft = LA.parent.left.some((r) => r.id === "tom");
+const tomsRow = tomOnLeft ? LA.parent.left : LA.parent.right;
+ok("a parent's brother or sister sits on the outside of that parent, and the grandparents' line goes to both (an upside-down T)", tomsRow.some((r) => r.id === "dana") && (tomOnLeft ? tomsRow[tomsRow.length - 1].id === "tom" : tomsRow[0].id === "tom") && descentGroups([...withAunt, p("g", "Grandma", { kin: "grandparent", side: "tom" })]).some((g) => g.parents.includes("g") && g.children.includes("tom") && g.children.includes("dana")));
+const fr = placeInRow(p("shahar", "Best friend", { kin: "aunt-uncle", side: "tom" }), "other", null, family)[0].patch;
+const god = placeInRow(p("gm", "Godmother"), "other", null, family)[0].patch;
+ok("Friends of the family: dropped there (or chosen from the tap menu), someone is in the tree with no line to anyone; a godparent stays a godparent", fr.kin === "friend" && fr.side === undefined && god.kin === "godparent" && treeLayout([...family, { ...p("shahar", "Best friend"), ...fr }]).other.some((r) => r.id === "shahar") && /\["other", null, "Friend of the family, not connected"\]/.test(treeSrc) && />Friends of the family</.test(treeSrc));
+ok("…and nobody hangs from a friend: a cousin's line only comes from an aunt or uncle", !descentGroups([...family, p("fz", "Friend", { kin: "friend" }), p("kid", "Cousin", { kin: "cousin", through: "fz" })]).some((g) => g.parents.includes("fz")));
+
+console.log(fails ? fails + " FAILED" : "all tree-building tests passed");
 if (fails) process.exit(1);

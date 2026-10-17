@@ -1,0 +1,476 @@
+{
+  "broccoli": {
+    "title": "File:Good broccoli Deal!.jpg",
+    "author": "Renee Comet (Photographer)",
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Good_broccoli_Deal!.jpg"
+  },
+  "parsnip": {
+    "title": "File:Parsnip with honey and mustard.JPG",
+    "author": "Takeaway",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Parsnip_with_honey_and_mustard.JPG"
+  },
+  "sweet-potato": {
+    "title": "File:Ipomoea batatas 006.JPG",
+    "author": "Llez",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ipomoea_batatas_006.JPG"
+  },
+  "potato": {
+    "title": "File:Potato with sprouts.jpg",
+    "author": "ZooFari",
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Potato_with_sprouts.jpg"
+  },
+  "courgette": {
+    "title": "File:Five Zucchini (30066254678).jpg",
+    "author": "Willis Lam",
+    "licence": "CC BY-SA 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Five_Zucchini_(30066254678).jpg"
+  },
+  "peas": {
+    "title": "File:(Pisum sativum), A pea is a most commonly green.JPG",
+    "author": "David Adam Kess",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:(Pisum_sativum),_A_pea_is_a_most_commonly_green.JPG"
+  },
+  "green-beans": {
+    "title": "File:Macro of Fresh Green Beans Buncis.jpg",
+    "author": "Undeka 11",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Macro_of_Fresh_Green_Beans_Buncis.jpg"
+  },
+  "spinach": {
+    "title": "File:Spinach leaves.jpg",
+    "author": "Nillerdk",
+    "licence": "CC BY 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Spinach_leaves.jpg"
+  },
+  "kale": {
+    "title": "File:Kale-Bundle.jpg",
+    "author": "Evan-Amos",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Kale-Bundle.jpg"
+  },
+  "tomato": {
+    "title": "File:Tomato je.jpg",
+    "author": "Softeis",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Tomato_je.jpg"
+  },
+  "beetroot": {
+    "title": "File:Detroitdarkredbeets.png",
+    "author": "BriannaWalther",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Detroitdarkredbeets.png"
+  },
+  "swede": {
+    "title": "File:Turnips in a box.jpg",
+    "author": "Mike Mozart",
+    "licence": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Turnips_in_a_box.jpg"
+  },
+  "mushroom": {
+    "title": "File:ChampignonMushroom.jpg",
+    "author": "chris_73",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:ChampignonMushroom.jpg"
+  },
+  "asparagus": {
+    "title": "File:Fresh asparagus spears on plate.jpg",
+    "author": "Nutrition, Food Safety &amp; Health",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Fresh_asparagus_spears_on_plate.jpg"
+  },
+  "onion": {
+    "title": "File:Onion on White.JPG",
+    "author": "Colin",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Onion_on_White.JPG"
+  },
+  "sprouts": {
+    "title": "File:Brussels sprout closeup.jpg",
+    "author": "Eric Hunt",
+    "licence": "CC BY 2.5",
+    "source": "https://commons.wikimedia.org/wiki/File:Brussels_sprout_closeup.jpg"
+  },
+  "celery": {
+    "title": "File:Celery 1.jpg",
+    "author": "Lombroso",
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Celery_1.jpg"
+  },
+  "plum": {
+    "title": "File:Plums African Rose - whole, halved and slice.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Plums_African_Rose_-_whole,_halved_and_slice.jpg"
+  },
+  "apricot": {
+    "title": "File:Apricot whole444.jpg",
+    "author": "Benjamint444",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Apricot_whole444.jpg"
+  },
+  "kiwi": {
+    "title": "File:Kiwi aka.jpg",
+    "author": "André Karwath aka Aka",
+    "licence": "CC BY-SA 2.5",
+    "source": "https://commons.wikimedia.org/wiki/File:Kiwi_aka.jpg"
+  },
+  "orange": {
+    "title": "File:Oranges - whole-halved-segment.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Oranges_-_whole-halved-segment.jpg"
+  },
+  "grapes": {
+    "title": "File:Grapes, Rostov-on-Don, Russia.jpg",
+    "author": "Vyacheslav Argenberg",
+    "licence": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Grapes,_Rostov-on-Don,_Russia.jpg"
+  },
+  "prunes": {
+    "title": "File:Rosales - Dried Prunus domestica d.jpg",
+    "author": "Emőke Dénes",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Rosales_-_Dried_Prunus_domestica_d.jpg"
+  },
+  "dried-apricot": {
+    "title": "File:Ab food 04.jpg",
+    "author": "Andrey Butko",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ab_food_04.jpg"
+  },
+  "raisins": {
+    "title": "File:2023 Rodzynki (1).jpg",
+    "author": "Jacek Halicki",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Rodzynki_(1).jpg"
+  },
+  "baby-rice": {
+    "title": "File:Steamed rice in bowl 01.jpg",
+    "author": "Anna Frodesiak",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Steamed_rice_in_bowl_01.jpg"
+  },
+  "oats": {
+    "title": "File:Cooked steel-cut oats.jpg",
+    "author": "Acsenray",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cooked_steel-cut_oats.jpg"
+  },
+  "wheat": {
+    "title": "File:Vehnäpelto 6.jpg",
+    "author": "kallerna",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Vehn%C3%A4pelto_6.jpg"
+  },
+  "bread": {
+    "title": "File:Bread slices.jpg",
+    "author": "Saral Shots",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bread_slices.jpg"
+  },
+  "pasta": {
+    "title": "File:(Pasta) by David Adam Kess (pic.2).jpg",
+    "author": "David Adam Kess",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:(Pasta)_by_David_Adam_Kess_(pic.2).jpg"
+  },
+  "couscous": {
+    "title": "File:CouscousDromadaire (2).JPG",
+    "author": "Ji-Elle",
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:CouscousDromadaire_(2).JPG"
+  },
+  "barley": {
+    "title": "File:Pearled barley.JPG",
+    "author": "Glane23",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Pearled_barley.JPG"
+  },
+  "rye": {
+    "title": "File:Fresh made bread 05.jpg",
+    "author": "FranHogan",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Fresh_made_bread_05.jpg"
+  },
+  "quinoa": {
+    "title": "File:Quinoa closeup.jpg",
+    "author": "Pom²",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Quinoa_closeup.jpg"
+  },
+  "polenta": {
+    "title": "File:Polenta.jpg",
+    "author": "it:User:Dorothy61n1",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Polenta.jpg"
+  },
+  "millet": {
+    "title": "File:A closeup of Pearl Millet (Cumbu).JPG",
+    "author": "Thamizhpparithi Maari",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:A_closeup_of_Pearl_Millet_(Cumbu).JPG"
+  },
+  "egg": {
+    "title": "File:Boiled Egg - Crossection.jpg",
+    "author": "Ramesh NG",
+    "licence": "CC BY-SA 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Boiled_Egg_-_Crossection.jpg"
+  },
+  "chicken": {
+    "title": "File:Max's Roasted Chicken - Evan Swigart.jpg",
+    "author": "Evan Swigart from Chicago, USA",
+    "licence": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Max%27s_Roasted_Chicken_-_Evan_Swigart.jpg"
+  },
+  "turkey": {
+    "title": "File:Thanksgiving Turkey.jpg",
+    "author": "Patrick Fitzgerald from Atlanta, GA, USA",
+    "licence": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Thanksgiving_Turkey.jpg"
+  },
+  "beef": {
+    "title": "File:Standing-rib-roast.jpg",
+    "author": "Michael C. Berch, aka MCB at en.wikipedia",
+    "licence": "CC BY-SA 2.5",
+    "source": "https://commons.wikimedia.org/wiki/File:Standing-rib-roast.jpg"
+  },
+  "lamb": {
+    "title": "File:Lamb meat (1).jpg",
+    "author": "I would appreciate being notified if you use my work outside Wikimedia.\nDo not copy this image illegally by ignoring the terms of the license below, as it is not in the public domain. If you would like special permission to use, license, or purchase the image please contact me to negotiate terms.\n\nMore of my work can be found in my personal gallery.",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Lamb_meat_(1).jpg"
+  },
+  "pork": {
+    "title": "File:Schweinebauch-2.jpg",
+    "author": "Rainer Zenz",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Schweinebauch-2.jpg"
+  },
+  "chickpeas": {
+    "title": "File:Ordinary chickpeas in a ceramic bowl.jpg",
+    "author": "AlixSaz",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ordinary_chickpeas_in_a_ceramic_bowl.jpg"
+  },
+  "beans": {
+    "title": "File:Small red beans 2.jpg",
+    "author": "Bean appreciator",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Small_red_beans_2.jpg"
+  },
+  "tofu": {
+    "title": "File:Japanese SilkyTofu (Kinugoshi Tofu).JPG",
+    "author": "DryPot",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Japanese_SilkyTofu_(Kinugoshi_Tofu).JPG"
+  },
+  "edamame": {
+    "title": "File:Edamame by Zesmerelda in Chicago.jpg",
+    "author": "Tammy Green (aka Zesmerelda) from Chicago Upscale Dining + Lounge Republic Pan-Asian Restaurant [1] in Ontario &amp; Rush Street, Chicago, Illinois 60611",
+    "licence": "CC BY-SA 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Edamame_by_Zesmerelda_in_Chicago.jpg"
+  },
+  "salmon": {
+    "title": "File:Atlantic Salmon.png",
+    "author": "Robpedia at English Wikipedia",
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Atlantic_Salmon.png"
+  },
+  "white-fish": {
+    "title": "File:Sous vide cod 2018.jpg",
+    "author": "https://sousvideguy.com/",
+    "licence": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Sous_vide_cod_2018.jpg"
+  },
+  "sardines": {
+    "title": "File:2014 03 19 397 Eingelegte Fische.jpg",
+    "author": "Friedrich Haag",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2014_03_19_397_Eingelegte_Fische.jpg"
+  },
+  "tuna": {
+    "title": "File:Ahi tuna steak on green peas - Massachusetts.jpg",
+    "author": "Daderot",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ahi_tuna_steak_on_green_peas_-_Massachusetts.jpg"
+  },
+  "prawns": {
+    "title": "File:Prawns cooked in Orange, Olhão, 30 June 2015 (1).JPG",
+    "author": "Kolforn (Kolforn)\nI'd appreciate if you could mail me (Kolforn@gmail.com) if you want to use this picture out of the Wikimedia project scope.\n\n\n\n This file is licensed under the Creative Commons Attribution-Share Alike 4.0 International license.\nYou are free:\nto share – to copy, distribute and transmit the work\nto remix – to adapt the work\nUnder the following conditions:\nattribution – You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.\nshare alike – If you remix, transform, or build upon the material, you must distribute your contributions under the same or compatible license as the original.https://creativecommons.org/licenses/by-sa/4.0CC BY-SA 4.0 Creative Commons Attribution-Share Alike 4.0 truetrue",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Prawns_cooked_in_Orange,_Olh%C3%A3o,_30_June_2015_(1).JPG"
+  },
+  "crab": {
+    "title": "File:Cancer pagurus.jpg",
+    "author": "Hans Hillewaert",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cancer_pagurus.jpg"
+  },
+  "mussels": {
+    "title": "File:Miesmuscheln-2.jpg",
+    "author": "Rainer Zenz",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Miesmuscheln-2.jpg"
+  },
+  "squid": {
+    "title": "File:Calamares tapas.jpg",
+    "author": "Flickr.com user \"deramaenrama\"",
+    "licence": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Calamares_tapas.jpg"
+  },
+  "peanut": {
+    "title": "File:Peanuts (Arachis hypogaea) - in shell, shell cracked open, shelled, peeled.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Peanuts_(Arachis_hypogaea)_-_in_shell,_shell_cracked_open,_shelled,_peeled.jpg"
+  },
+  "almond": {
+    "title": "File:Almonds - in shell, shell cracked open, shelled, blanched.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Almonds_-_in_shell,_shell_cracked_open,_shelled,_blanched.jpg"
+  },
+  "cashew": {
+    "title": "File:CASHEW NUTS.jpg",
+    "author": "Ranjithkumar Murugesan",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:CASHEW_NUTS.jpg"
+  },
+  "hazelnut": {
+    "title": "File:Hazelnuts (Corylus avellana) - whole with kernels.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Hazelnuts_(Corylus_avellana)_-_whole_with_kernels.jpg"
+  },
+  "walnut": {
+    "title": "File:Walnuts - whole and open with halved kernel.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Walnuts_-_whole_and_open_with_halved_kernel.jpg"
+  },
+  "pistachio": {
+    "title": "File:Pistachio vera.jpg",
+    "author": "THOR",
+    "licence": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Pistachio_vera.jpg"
+  },
+  "sesame": {
+    "title": "File:Tahina.JPG",
+    "author": "Gilabrand",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Tahina.JPG"
+  },
+  "lupin": {
+    "title": "File:Ciotola di lupini.jpg",
+    "author": "Lupino",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ciotola_di_lupini.jpg"
+  },
+  "yoghurt": {
+    "title": "File:Joghurt.jpg",
+    "author": "No machine-readable author provided. Rainer Zenz assumed (based on copyright claims).",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Joghurt.jpg"
+  },
+  "cows-milk": {
+    "title": "File:Glass of milk on tablecloth.jpg",
+    "author": "Janine Chedid",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Glass_of_milk_on_tablecloth.jpg"
+  },
+  "cheese": {
+    "title": "File:Somerset-Cheddar.jpg",
+    "author": "J.P.Lon",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Somerset-Cheddar.jpg"
+  },
+  "cream-cheese": {
+    "title": "File:Modern Kitchen strawberry cream cheese 3.jpg",
+    "author": "Mx. Granger",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Modern_Kitchen_strawberry_cream_cheese_3.jpg"
+  },
+  "cottage-cheese": {
+    "title": "File:Cottagecheese200px.jpg",
+    "author": "FASTILY (TALK)",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cottagecheese200px.jpg"
+  },
+  "fromage-frais": {
+    "title": "File:Fromage blanc.jpg",
+    "author": "Kaouther Bedoui",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Fromage_blanc.jpg"
+  },
+  "mozzarella": {
+    "title": "File:Bocconcini gobeirne.jpg",
+    "author": "Photograph by Greg O'Beirne",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bocconcini_gobeirne.jpg"
+  },
+  "butter": {
+    "title": "File:2023 Masło w maselniczce.jpg",
+    "author": "Jacek Halicki",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Mas%C5%82o_w_maselniczce.jpg"
+  },
+  "soya-yoghurt": {
+    "title": "File:Vegan yogurt, March 2012.jpg",
+    "author": "Veganbaking.net from USA",
+    "licence": "CC BY-SA 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Vegan_yogurt,_March_2012.jpg"
+  },
+  "cinnamon": {
+    "title": "File:Cinnamomum verum spices.jpg",
+    "author": "Simon A. Eugster",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cinnamomum_verum_spices.jpg"
+  },
+  "cumin": {
+    "title": "File:Caraway Seed.jpg",
+    "author": "OttawaAC",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Caraway_Seed.jpg"
+  },
+  "garlic": {
+    "title": "File:Garlic bulbs and cloves.jpg",
+    "author": "Ivar Leidus",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Garlic_bulbs_and_cloves.jpg"
+  },
+  "ginger": {
+    "title": "File:Liat Portal for Foodie Disorder - Fresh ginger root from San Francisco farmers market.jpg",
+    "author": "HaJunkiyada",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Fresh_ginger_root_from_San_Francisco_farmers_market.jpg"
+  },
+  "herbs": {
+    "title": "File:Ocimum basilicum 8zz.jpg",
+    "author": "Photo by David J. Stang",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ocimum_basilicum_8zz.jpg"
+  },
+  "mustard": {
+    "title": "File:Mustard.JPG",
+    "author": "fuji01",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Mustard.JPG"
+  },
+  "olive-oil": {
+    "title": "File:Bottle of olive oil.jpg",
+    "author": "margenauer from Pixabay",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bottle_of_olive_oil.jpg"
+  },
+  "honey": {
+    "title": "File:Runny hunny.jpg",
+    "author": "Scott Bauer, USDA ARS",
+    "licence": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Runny_hunny.jpg"
+  }
+}
