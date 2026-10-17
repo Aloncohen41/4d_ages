@@ -6,7 +6,6 @@ import { TagRow } from "../../src/components/TagChip";
 import { Icon } from "../../src/components/Icon";
 import { DoorFrame, LineChart } from "../../src/components/GrowthChart";
 import { GrowthSummary } from "../../src/components/GrowthSummary";
-import { FirstFoodsCard } from "../../src/components/FirstFoods";
 import { PregnancyGrowth } from "../../src/components/Pregnancy";
 import { PetCare } from "../../src/components/PetHealth";
 import { PetWeight } from "../../src/components/PetWeight";
@@ -147,7 +146,6 @@ function Growth() {
       <Heading title={tr("Growth")} />
       <Btn label={tr("Add a measurement")} icon="add-measure" onPress={() => setEntrySheet({ kind: "measure" })} />
       <GrowthSummary child={child} memories={memories} />
-      <FirstFoodsCard child={child} />
       <View style={{ marginTop: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
         {/* units (cm or in, kg or lb) are chosen in Settings */}
         <View style={{ flex: 1 }}><Seg options={[{ id: "height" as const, label: tr("Height") }, { id: "weight" as const, label: tr("Weight") }, { id: "head" as const, label: tr("Head") }]} value={mode} onChange={setMode} /></View>

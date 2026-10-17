@@ -22,6 +22,7 @@ import { Icon } from "../../src/components/Icon";
 import { formatDate, formatTime } from "../../src/lib/date";
 
 import { tr } from "../../src/lib/i18n";
+import { FirstFoodsView } from "../../src/components/FirstFoodsView";
 export default function MilestonesTab() {
   return (
     <Screen>
@@ -30,7 +31,8 @@ export default function MilestonesTab() {
   );
 }
 
-type Section = "milestones" | "firsts" | "lasts";
+/** The three sections: the milestones, the firsts and lasts together, and First foods (with the allergens). */
+type Section = "milestones" | "firsts" | "foods";
 
 function Milestones() {
   const t = useTheme();
@@ -43,8 +45,8 @@ function Milestones() {
   if (isPet(child)) return <PetStories />;
   const copy: Record<Section, { title: string; desc?: string }> = {
     milestones: { title: tr("Milestones") },
-    firsts: { title: tr("Firsts"), desc: tr("Things they did for the very first time. Add a photo and a few words while you still remember it.") },
-    lasts: { title: tr("Lasts"), desc: tr("The last time for something — easy to miss when it happens, precious to look back on.") },
+    firsts: { title: tr("Firsts & lasts") },
+    foods: { title: tr("First foods") },
   };
   return (
     <View>
@@ -54,9 +56,19 @@ function Milestones() {
       </View>
       {copy[section].desc ? <Text style={{ color: t.ink3, fontSize: 14, lineHeight: 20, marginBottom: 12 }}>{copy[section].desc}</Text> : null}
       <View style={{ marginBottom: 14 }}>
-        <Seg options={[{ id: "milestones" as Section, label: tr("Milestones") }, { id: "firsts" as Section, label: tr("Firsts") }, { id: "lasts" as Section, label: tr("Lasts") }]} value={section} onChange={setSection} />
+        <Seg options={[{ id: "milestones" as Section, label: tr("Milestones") }, { id: "firsts" as Section, label: tr("Firsts & lasts") }, { id: "foods" as Section, label: tr("First foods") }]} value={section} onChange={setSection} />
       </View>
-      {section === "milestones" ? <MilestoneChecklist /> : <EntryList kind={section === "firsts" ? "first" : "last"} />}
+      {section === "milestones" ? <MilestoneChecklist /> : section === "foods" ? <FirstFoodsView /> : (
+        // the firsts, then the lasts, each with its own ideas and Add button
+        <View>
+          <Text role="heading" aria-level={2} style={[TYPE.titleLarge, { color: t.ink }]}>{tr("Firsts")}</Text>
+          <Text style={{ color: t.ink3, fontSize: 14, lineHeight: 20, marginTop: 2, marginBottom: 10 }}>{tr("Things they did for the very first time. Add a photo and a few words while you still remember it.")}</Text>
+          <EntryList kind="first" />
+          <Text role="heading" aria-level={2} style={[TYPE.titleLarge, { color: t.ink, marginTop: 28 }]}>{tr("Lasts")}</Text>
+          <Text style={{ color: t.ink3, fontSize: 14, lineHeight: 20, marginTop: 2, marginBottom: 10 }}>{tr("The last time for something — easy to miss when it happens, precious to look back on.")}</Text>
+          <EntryList kind="last" />
+        </View>
+      )}
       <ReinforceSheet visible={reinforce} onClose={() => setReinforce(false)} />
     </View>
   );

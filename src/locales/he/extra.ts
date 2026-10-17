@@ -74,4 +74,6 @@ export const heExtra: Record<string, string> = {
   "Drag photos, videos or recordings here": "גררו לכאן תמונות, סרטונים או הקלטות",
   "Choose files": "בחירת קבצים",
   "Drop a photo here": "שחררו כאן תמונה",
+  "Firsts & lasts": "פעמים ראשונות ואחרונות",
+  "Press and hold, then drag to change the order": "לחיצה ארוכה וגרירה כדי לשנות את הסדר",
 };

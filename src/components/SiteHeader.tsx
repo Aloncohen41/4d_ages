@@ -19,7 +19,8 @@ import { Avatar } from "./ui";
 import { Icon, IconName } from "./Icon";
 import { Action, ICON, LABEL, actionsFor } from "./Fab";
 import { VoiceRecorderSheet } from "./Voice";
-import { AddChildSheet, MoveButton } from "./Screen";
+import { AddChildSheet } from "./Screen";
+import { useDragOrder } from "./useDragOrder";
 import { Wiggle } from "./Wiggle";
 import { DropArea, chooseFiles } from "./DropArea";
 import { Btn, Sheet } from "./ui";
@@ -182,9 +183,11 @@ function Profiles() {
   const kids = useStore((s) => s.kids);
   const setActive = useStore((s) => s.setActive);
   const moveKid = useStore((s) => s.moveKid);
+  const moveKidTo = useStore((s) => s.moveKidTo);
   const active = useActiveChild();
   const [adding, setAdding] = useState(false);
-  const [arranging, setArranging] = useState(false); // a long press on a profile (or "Change the order"): move them with the arrows
+  // press and hold a profile, then drag it to its new place (like apps on a phone)
+  const drag = useDragOrder(kids.map((k) => k.id), moveKidTo, setActive);
   return (
     <View role="group" aria-label={tr("Profiles")} style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
       {kids.length > 1 ? (
@@ -198,28 +201,22 @@ function Profiles() {
         const on = k.id === active?.id;
         const a = smartAge(k.birth);
         return (
-          <Wiggle key={k.id} on={arranging} seed={i} style={{ flexDirection: "row", alignItems: "center" }}>
-          {arranging ? <MoveButton dir={-1} name={k.name} disabled={i === 0} onPress={() => moveKid(k.id, -1)} /> : null}
-          <Pressable onPress={() => (arranging ? undefined : setActive(k.id))} onLongPress={() => setArranging(true)} delayLongPress={350} accessibilityRole="button" aria-pressed={on} accessibilityHint={tr("Press and hold to change the order")} style={hover([{ flexDirection: "row", alignItems: "center", gap: 8, paddingStart: 4, paddingEnd: 14, height: 44, borderRadius: 22, borderWidth: 1 }, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }], on ? {} : { backgroundColor: withAlpha(t.ink, 0.05) })}>
+          <Wiggle key={k.id} on={!!drag.held && drag.held.id !== k.id} seed={i}>
+          <View ref={drag.register(k.id)} {...drag.handler(k.id).panHandlers} focusable
+            accessible accessibilityRole="button" aria-pressed={on} accessibilityLabel={k.name} accessibilityHint={tr("Press and hold, then drag to change the order")}
+            accessibilityActions={[{ name: "earlier", label: tr("Move {0} earlier", [k.name]) }, { name: "later", label: tr("Move {0} later", [k.name]) }, { name: "activate" }]}
+            onAccessibilityAction={(e) => (e.nativeEvent.actionName === "earlier" ? moveKid(k.id, -1) : e.nativeEvent.actionName === "later" ? moveKid(k.id, 1) : setActive(k.id))}
+            {...({ onKeyDown: (e: { key: string }) => { if (e.key === "Enter" || e.key === " ") setActive(k.id); } } as object)}
+            style={[{ flexDirection: "row", alignItems: "center", gap: 8, paddingStart: 4, paddingEnd: 14, height: 44, borderRadius: 22, borderWidth: 1, cursor: "grab" } as object, on ? { backgroundColor: t.chipOn, borderColor: t.chipOn } : { borderColor: t.outline }, drag.held?.id === k.id ? { transform: [{ translateX: drag.held.dx }, { translateY: drag.held.dy }, { scale: 1.08 }], zIndex: 10, opacity: 0.95, boxShadow: "0 8px 24px rgba(0,0,0,.2)" } as object : null]}>
             <Avatar child={k} size={34} />
             <View>
               <Text style={[TYPE.labelLarge, { color: on ? t.onChipOn : t.ink }]} numberOfLines={1}>{k.name}</Text>
               <Text style={[TYPE.labelSmall, { color: on ? t.onChipOn : t.ink3 }]}>{k.expecting ? weekLabel(k.birth, todayISO()) : `${a.value} ${a.unit}`}</Text>
             </View>
-          </Pressable>
-          {arranging ? <MoveButton dir={1} name={k.name} disabled={i === kids.length - 1} onPress={() => moveKid(k.id, 1)} /> : null}
+          </View>
           </Wiggle>
         );
       })}
-      {arranging ? (
-        <Pressable onPress={() => setArranging(false)} accessibilityRole="button" style={hover({ height: 44, paddingHorizontal: 18, borderRadius: 22, justifyContent: "center", backgroundColor: t.accent }, { opacity: 0.9 })}>
-          <Text style={[TYPE.labelLarge, { color: t.onAccent }]}>{tr("Done")}</Text>
-        </Pressable>
-      ) : kids.length > 1 ? (
-        <Pressable onPress={() => setArranging(true)} accessibilityRole="button" style={hover({ height: 44, paddingHorizontal: 12, borderRadius: 22, justifyContent: "center" }, { backgroundColor: withAlpha(t.ink, 0.05) })}>
-          <Text style={[TYPE.labelLarge, { color: t.ink2 }]}>{tr("Change the order")}</Text>
-        </Pressable>
-      ) : null}
       <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={hover({ flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1.5, borderStyle: "dashed", borderColor: t.accent }, { backgroundColor: withAlpha(t.accent, 0.08) })}>
         <Icon name="plus" size={18} color={t.accentDeep} />
         <Text style={[TYPE.labelLarge, { color: t.accentDeep }]}>{tr("Add a profile")}</Text>

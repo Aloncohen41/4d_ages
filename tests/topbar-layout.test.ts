@@ -45,5 +45,5 @@ ok("no other tab puts the child's name in its title" + (withName.length ? " — 
 ok("Home keeps “<Name>'s Story” as its title", /\{child\.name\}'s Story/.test(read("app/(tabs)/index.tsx")));
 const want: Record<string, RegExp> = { milestones: /title: "Milestones"/, growth: /<Heading title="Growth"/, book: /<Heading title=\{bookName\(child, todayISO\(\)\)\}/ };
 ok("each other tab has a plain title of its own (Milestones, Growth, and the book: Maya's Days)", Object.entries(want).every(([t, re]) => re.test(read(`app/(tabs)/${t}.tsx`))));
-ok("Firsts and Lasts (inside the Milestones tab) are titled plainly too", /firsts: \{ title: "Firsts"/.test(read("app/(tabs)/milestones.tsx")) && /lasts: \{ title: "Lasts"/.test(read("app/(tabs)/milestones.tsx")));
+ok("Firsts & lasts and First foods (inside the Milestones tab) are titled plainly too", /firsts: \{ title: "Firsts & lasts"/.test(read("app/(tabs)/milestones.tsx")) && /foods: \{ title: "First foods"/.test(read("app/(tabs)/milestones.tsx")));
 console.log(fails ? `${fails} FAILED` : "all top-bar layout tests passed");

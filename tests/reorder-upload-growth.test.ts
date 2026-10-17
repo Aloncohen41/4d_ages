@@ -11,8 +11,8 @@ const read = (f: string) => untr(readFileSync(join(__dirname, "..", f), "utf8"))
 
 const store = read("src/lib/store.ts"), screen = read("src/components/Screen.tsx"), site = read("src/components/SiteHeader.tsx");
 ok("profiles can be put in any order: moved one place at a time", /moveKid: \(id, by\) =>/.test(store) && /\[kids\[i\], kids\[j\]\] = \[kids\[j\], kids\[i\]\]/.test(store));
-ok("…on the phone: a long press makes them wiggle with arrows, and Done", /onLongPress=\{\(\) => setArranging\(true\)\}/.test(screen) && /<Wiggle key=\{k\.id\} on=\{arranging\}/.test(screen) && /moveKid\(k\.id, -1\)/.test(screen) && /export function MoveButton/.test(screen));
-ok("…on the website too, with a Change the order button as well", /onLongPress=\{\(\) => setArranging\(true\)\}/.test(site) && /Change the order/.test(site) && /<MoveButton dir=\{1\}/.test(site));
+ok("…on the phone: press and hold a profile, then drag it to its new place (the others wiggle); screen readers can move it earlier or later", /useDragOrder\(kids\.map\(\(k\) => k\.id\), moveKidTo, setActive\)/.test(screen) && /<Wiggle key=\{k\.id\} on=\{!!drag\.held && drag\.held\.id !== k\.id\}/.test(screen) && /name: "earlier"/.test(screen) && /translateX: drag\.held\.dx/.test(screen));
+ok("…on the website too, with the mouse, and no separate Change the order button", /useDragOrder\(kids\.map\(\(k\) => k\.id\), moveKidTo, setActive\)/.test(site) && !/Change the order/.test(site) && /const latest = latest|setTimeout\(async \(\) => \{\s*lifted = true/.test(read("src/components/useDragOrder.ts")) && /kids\.splice\(to, 0, k\)/.test(store));
 
 const kt = read("modules/share-intake/android/src/main/java/expo/modules/shareintake/ShareIntakeModule.kt");
 ok("sharing in when the app wasn't open: picked up once the screen is up, never taken twice", /OnActivityEntersForeground \{/.test(kt) && /synchronized\(this\) \{\s*if \(!isShare\(intent\)\) return emptyList\(\)/.test(kt));

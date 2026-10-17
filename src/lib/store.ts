@@ -108,6 +108,8 @@ export interface State {
   setActive: (id: string) => void;
   /** Moves a profile one place earlier (-1) or later (1) in the row of profiles (the order is kept on this phone or browser). */
   moveKid: (id: string, by: -1 | 1) => void;
+  /** Puts a profile at a place in the row of profiles (dragging it there). */
+  moveKidTo: (id: string, to: number) => void;
   addChild: (c: Child) => void;
   updateChild: (id: string, patch: Partial<Child>) => void;
   addMemories: (list: Memory[]) => void;
@@ -248,6 +250,15 @@ export const useStore = create<State>()(
       incoming: null,
 
       setActive: (activeId) => set({ activeId }),
+      moveKidTo: (id, to) =>
+        set((s) => {
+          const from = s.kids.findIndex((k) => k.id === id);
+          if (from < 0 || to < 0 || to >= s.kids.length || from === to) return {};
+          const kids = s.kids.slice();
+          const [k] = kids.splice(from, 1);
+          kids.splice(to, 0, k);
+          return { kids };
+        }),
       moveKid: (id, by) =>
         set((s) => {
           const i = s.kids.findIndex((k) => k.id === id), j = i + by;
